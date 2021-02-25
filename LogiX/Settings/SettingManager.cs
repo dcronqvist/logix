@@ -102,9 +102,11 @@ namespace LogiX.Settings
             }
         }
 
-        public static string GetSetting(string key)
+        public static string GetSetting(string key, string def)
         {
-            return settings[key];
+            if(settings.ContainsKey(key))
+                return settings[key];
+            return def;
         }
 
         public static void SetSetting(string key, string value)
