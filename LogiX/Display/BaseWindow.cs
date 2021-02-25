@@ -48,6 +48,7 @@ namespace LogiX.Display
                 Render();
             }
 
+            Unload();
             Raylib.CloseWindow();
         }
 
@@ -55,5 +56,6 @@ namespace LogiX.Display
         public abstract void LoadContent();
         public abstract void Update();
         public abstract void Render();
+        public abstract void Unload();
     }
 }

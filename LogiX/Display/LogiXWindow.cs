@@ -1,4 +1,6 @@
-﻿using Raylib_cs;
+﻿using LogiX.Logging;
+using LogiX.Settings;
+using Raylib_cs;
 using System;
 using System.Collections.Generic;
 using System.Numerics;
@@ -19,6 +21,7 @@ namespace LogiX.Display
             // Load settings files etc.
 
             // Set window icon and stuff can also be done with this.
+            SettingManager.LoadSettings();
         }
 
         public override void LoadContent()
@@ -37,6 +40,11 @@ namespace LogiX.Display
         public override void Update()
         {
             
+        }
+
+        public override void Unload()
+        {
+            LogManager.DumpToFile();
         }
     }
 }
