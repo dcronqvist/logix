@@ -42,6 +42,11 @@ namespace LogiX.Display
             }
         }
 
+        public BaseWindow() : this(new Vector2(800, 600), "Base Window")
+        {
+
+        }
+
         public BaseWindow(Vector2 windowSize, string title)
         {
             this._windowSize = windowSize;
