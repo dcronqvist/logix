@@ -22,6 +22,13 @@ namespace LogiX.Display
 
             // Set window icon and stuff can also be done with this.
             SettingManager.LoadSettings();
+
+            // Apply window size settings to window
+            int windowWidth = int.Parse(SettingManager.GetSetting("window-width", "1440"));
+            int windowHeight = int.Parse(SettingManager.GetSetting("window-height", "768"));
+            Vector2 size = new Vector2(windowWidth, windowHeight);
+            SetWindowSize(size, false);
+            LogManager.AddEntry($"Creating LogiX window with width = {(int)size.X} and height = {(int)size.Y}");
         }
 
         public override void LoadContent()
