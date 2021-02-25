@@ -5,6 +5,7 @@ using System.Diagnostics;
 using System.Text;
 using Newtonsoft.Json;
 using System.IO;
+using LogiX.Logs;
 
 namespace LogiX.Settings
 {
@@ -26,10 +27,12 @@ namespace LogiX.Settings
         {
             if (SettingsFileExists() && LogiXDirectoryExists())
             {
+                LogManager.AddEntry("LogiX Settings found.");
                 LoadSettingsFile();
             }
             else
             {
+                LogManager.AddEntry("Could not find settings file or LogiX directory.", LogEntryType.WARNING);
                 CreateLogiXDirectory();
                 CreateDefaultSettingsFile();
                 LoadSettings();
@@ -49,6 +52,7 @@ namespace LogiX.Settings
         {
             try
             {
+                LogManager.AddEntry("Creating default settings file.");
                 Dictionary<string, string> s = GenerateDefaultSettings();
 
                 using(StreamWriter wr = new StreamWriter(Utility.SETTINGS_FILE))
@@ -58,17 +62,20 @@ namespace LogiX.Settings
                 }
 
                 // Successfully created default settings file
+                LogManager.AddEntry("Successfully created default settings file.");
                 return true;
             }
             catch(Exception ex)
             {
                 // Failed to create default settings file.
+                LogManager.AddEntry("Failed to create default settings file.", LogEntryType.ERROR);
                 return false;
             }
         }
 
         public static bool CreateLogiXDirectory()
         {
+            LogManager.AddEntry("Creating LogiX directory in AppData/Roaming.");
             Directory.CreateDirectory(Utility.LOGIX_DIR);
             return true;
         }
@@ -77,19 +84,27 @@ namespace LogiX.Settings
         {
             try
             {
+                LogManager.AddEntry("Loading settings...");
                 using(StreamReader sr = new StreamReader(Utility.SETTINGS_FILE))
                 {
                     settings = JsonConvert.DeserializeObject<Dictionary<string, string>>(sr.ReadToEnd());
                 }
 
                 // Could load settings successfully.
+                LogManager.AddEntry("Successfully loaded settings!");
                 return true;
             }
             catch(Exception ex)
             {
                 // Failed to load settings.
+                LogManager.AddEntry("Failed to load settings!", LogEntryType.ERROR);
                 return false;
             }
+        }
+
+        public static string GetSetting(string key)
+        {
+            return settings[key];
         }
     }
 }
