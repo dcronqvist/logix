@@ -1,8 +1,8 @@
-﻿using Raylib_cs;
+﻿using LogiX.Utils;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Text;
+using System.IO;
 
 namespace LogiX.Logging
 {
@@ -13,6 +13,28 @@ namespace LogiX.Logging
         static LogManager()
         {
             Entries = new List<LogEntry>();
+        }
+
+        public static void DumpToFile()
+        {
+            // We do not need to check if the directory exists, it always will upon start up
+            Entries.Sort((a, b) =>
+            {
+                if (a.Time > b.Time)
+                    return 1;
+                else
+                    return -1;
+            });
+
+            using(StreamWriter sw = new StreamWriter(Utility.LOG_FILE, false))
+            {
+                for (int i = 0; i < Entries.Count; i++)
+                {
+                    LogEntry entry = Entries[i];
+
+                    sw.WriteLine(entry.ToString());
+                }
+            }
         }
 
         public static void AddEntry(LogEntry entry)
