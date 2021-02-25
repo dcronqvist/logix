@@ -24,5 +24,12 @@ namespace LogiX.Logging
             this.Text = text;
             this.Type = type;
         }
+
+        public override string ToString()
+        {
+            // [2021-02-25 23:27 INFO]: This is some random log text
+            string dateTime = Time.ToString("G");
+            return $"[{dateTime} {Type}]: {Text}";
+        }
     }
 }

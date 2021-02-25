@@ -1,6 +1,7 @@
 ﻿using Raylib_cs;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Text;
 
 namespace LogiX.Logging
@@ -17,6 +18,7 @@ namespace LogiX.Logging
         public static void AddEntry(LogEntry entry)
         {
             Entries.Add(entry);
+            Debug.WriteLine(entry.ToString());
         }
 
         public static void AddEntry(string text, LogEntryType type = LogEntryType.INFO)
