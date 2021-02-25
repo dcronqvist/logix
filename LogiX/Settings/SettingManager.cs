@@ -5,7 +5,7 @@ using System.Diagnostics;
 using System.Text;
 using Newtonsoft.Json;
 using System.IO;
-using LogiX.Logs;
+using LogiX.Logging;
 
 namespace LogiX.Settings
 {
@@ -105,6 +105,22 @@ namespace LogiX.Settings
         public static string GetSetting(string key)
         {
             return settings[key];
+        }
+
+        public static void SetSetting(string key, string value)
+        {
+            settings[key] = value;
+            LogManager.AddEntry($"Setting {key} now has value {value}");
+        }
+
+        public static void SaveSettings()
+        {
+            using(StreamWriter sw = new StreamWriter(Utility.SETTINGS_FILE))
+            {
+                string jsonString = JsonConvert.SerializeObject(settings, Formatting.Indented);
+                sw.Write(jsonString);
+                LogManager.AddEntry("Settings saved!");
+            }
         }
     }
 }
