@@ -1,4 +1,5 @@
-﻿using Raylib_cs;
+﻿using LogiX.Display;
+using Raylib_cs;
 using System;
 
 namespace LogiX
@@ -7,20 +8,9 @@ namespace LogiX
     {
         static void Main(string[] args)
         {
-            Raylib.InitWindow(800, 480, "Hello World");
-
-            while (!Raylib.WindowShouldClose())
-            {
-                Raylib.BeginDrawing();
-                Raylib.ClearBackground(Color.WHITE);
-
-                Raylib.DrawText("Hello, world!", 12, 12, 20, Color.BLACK);
-
-                Raylib.DrawFPS(5, 5);
-                Raylib.EndDrawing();
-            }
-
-            Raylib.CloseWindow();
+            // Creates the LogiX window and then runs the program.
+            BaseWindow logix = new LogiXWindow();
+            logix.Run();
         }
     }
 }

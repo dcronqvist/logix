@@ -8,39 +8,8 @@ namespace LogiX.Display
 {
     abstract class BaseWindow
     {
-        private Vector2 _windowSize;
-        /// <summary>
-        /// Window size prop. Automatically changes the window size when changed.
-        /// </summary>
-        public Vector2 WindowSize
-        {
-            get
-            {
-                return _windowSize;
-            }
-            set
-            {
-                _windowSize = value;
-                Raylib.SetWindowSize((int)value.X, (int)value.Y);
-            }
-        }
-
-        private string _title;
-        /// <summary>
-        /// Changes window title instantly as you change the value of this property.
-        /// </summary>
-        public string Title
-        {
-            get
-            {
-                return _title;
-            }
-            set
-            {
-                _title = value;
-                Raylib.SetWindowTitle(value);
-            }
-        }
+        private Vector2 WindowSize { get; set; }
+        public string Title { get; set; }
 
         public BaseWindow() : this(new Vector2(800, 600), "Base Window")
         {
@@ -49,8 +18,20 @@ namespace LogiX.Display
 
         public BaseWindow(Vector2 windowSize, string title)
         {
-            this._windowSize = windowSize;
-            this._title = title;
+            this.WindowSize = windowSize;
+            this.Title = title;
+        }
+
+        /// <summary>
+        /// Sets the size of the window to the specific Vector.
+        /// </summary>
+        /// <param name="size">Vector2 of the window size.</param>
+        /// <param name="immediately">If true, then the window will be updated immediately. Should be set to false if ever run before LoadContent().</param>
+        public void SetWindowSize(Vector2 size, bool immediately)
+        {
+            this.WindowSize = size;
+            if (immediately)
+                Raylib.SetWindowSize((int)size.X, (int)size.Y);
         }
 
         public void Run()
