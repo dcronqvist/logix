@@ -34,6 +34,13 @@ namespace LogiX.Display
                 Raylib.SetWindowSize((int)size.X, (int)size.Y);
         }
 
+        public void SetWindowTitle(string title, bool immediately)
+        {
+            this.Title = title;
+            if (immediately)
+                Raylib.SetWindowTitle(title);
+        }
+
         public void Run()
         {
             Initialize();
