@@ -76,5 +76,15 @@ namespace LogiX.Circuits
             UpdateInputs();
             PerformLogic();
         }
+
+        public void SetInputWire(int index, CircuitWire cw)
+        {
+            Inputs[index].SetSignal(cw);
+        }
+
+        public void AddOutputWire(int index, CircuitWire cw)
+        {
+            Outputs[index].AddOutputSignal(cw);
+        }
     }
 }
