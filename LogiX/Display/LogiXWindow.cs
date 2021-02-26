@@ -1,10 +1,7 @@
 ﻿using LogiX.Logging;
 using LogiX.Settings;
 using Raylib_cs;
-using System;
-using System.Collections.Generic;
 using System.Numerics;
-using System.Text;
 
 namespace LogiX.Display
 {
