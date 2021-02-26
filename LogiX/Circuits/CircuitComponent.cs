@@ -39,6 +39,16 @@ namespace LogiX.Circuits
 
         protected abstract void PerformLogic();
 
+        public bool AnyInputNAN()
+        {
+            foreach(CircuitInput ci in Inputs)
+            {
+                if (ci.Value == LogicValue.NAN)
+                    return true;
+            }
+            return false;
+        }
+
         private void UpdateInputs()
         {
             foreach(CircuitInput ci in Inputs)
