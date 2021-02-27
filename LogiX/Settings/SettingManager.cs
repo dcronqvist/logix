@@ -44,7 +44,8 @@ namespace LogiX.Settings
             return new Dictionary<string, string>()
             {
                 { "window-width", "1280" },
-                { "window-height", "720" }
+                { "window-height", "720" },
+                { "grid-size", "250" },
             };
         }
         
