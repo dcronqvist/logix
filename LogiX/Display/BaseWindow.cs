@@ -8,7 +8,7 @@ namespace LogiX.Display
 {
     abstract class BaseWindow
     {
-        private Vector2 WindowSize { get; set; }
+        public Vector2 WindowSize { get; set; }
         public string Title { get; set; }
 
         public BaseWindow() : this(new Vector2(800, 600), "Base Window")
