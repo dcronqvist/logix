@@ -46,6 +46,7 @@ namespace LogiX.Display
             Initialize();
 
             Raylib.InitWindow((int)WindowSize.X, (int)WindowSize.Y, Title);
+            Raylib.SetExitKey((KeyboardKey)(-1));
 
             LoadContent();
 
