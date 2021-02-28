@@ -1,4 +1,4 @@
-﻿using LogiX.Circuits.GateLogic;
+﻿using LogiX.Circuits.Logic;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -16,7 +16,7 @@ namespace LogiX.Circuits.Minimals
 
         protected override void PerformLogic()
         {
-            this.Outputs[0].Value = logic.GetGateOutput(Inputs[0].Value, Inputs[1].Value);
+            this.Outputs[0].Value = logic.GetOutput(Inputs[0].Value, Inputs[1].Value);
         }
     }
 }
