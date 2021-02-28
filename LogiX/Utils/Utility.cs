@@ -1,6 +1,7 @@
 ﻿using Raylib_cs;
 using System;
 using System.Collections.Generic;
+using System.Numerics;
 using System.Text;
 
 namespace LogiX.Utils
@@ -17,6 +18,11 @@ namespace LogiX.Utils
         public static Color Opacity(this Color a, float f) 
         {
             return new Color(a.r, a.g, a.b, (byte)(a.a * f));
+        }
+
+        public static System.Drawing.PointF ToPoint(this Vector2 vec)
+        {
+            return new System.Drawing.PointF(vec.X, vec.Y);
         }
     }
 }
