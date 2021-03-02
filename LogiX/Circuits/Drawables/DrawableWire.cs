@@ -1,4 +1,5 @@
-﻿using Raylib_cs;
+﻿using LogiX.Utils;
+using Raylib_cs;
 using System;
 using System.Collections.Generic;
 using System.Numerics;
@@ -25,7 +26,7 @@ namespace LogiX.Circuits.Drawables
         {
             float thickness = 3f;
 
-            Color col = base.Value == LogicValue.NAN ? Color.RED : (base.Value == LogicValue.HIGH ? Color.SKYBLUE : Color.WHITE);
+            Color col = base.Value == LogicValue.NAN ? Utility.COLOR_NAN : (base.Value == LogicValue.HIGH ? Utility.COLOR_ON : Utility.COLOR_OFF);
 
             Raylib.DrawLineBezier(From.GetOutputPosition(FromIndex), To.GetInputPosition(ToIndex), thickness, col);
         }

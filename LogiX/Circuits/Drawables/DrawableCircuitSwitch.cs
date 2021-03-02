@@ -21,12 +21,12 @@ namespace LogiX.Circuits.Drawables
         {
             if(Value == LogicValue.HIGH)
             {
-                BlockColor = Color.SKYBLUE;
+                BlockColor = Utility.COLOR_ON;
             }
             else
             {
-                BlockColor = Color.WHITE;
-            }
+                BlockColor = Utility.COLOR_BLOCK_DEFAULT;
+            }     
 
             base.Draw(mousePosInWorld);
         }

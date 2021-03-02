@@ -8,12 +8,17 @@ namespace LogiX.Utils
 {
     static class Utility
     {
+        // Files and directories
         public static string ROAMING_DIR = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
         public static string LOGIX_DIR = ROAMING_DIR + @"/LogiX";
-
         public static string SETTINGS_FILE = LOGIX_DIR + @"/settings.json";
-
         public static string LOG_FILE = LOGIX_DIR + @"/log.txt";
+
+        // Colors
+        public static Color COLOR_ON = Color.BLUE;
+        public static Color COLOR_OFF = Color.WHITE;
+        public static Color COLOR_NAN = Color.RED;
+        public static Color COLOR_BLOCK_DEFAULT = Color.WHITE;
 
         public static Color Opacity(this Color a, float f) 
         {

@@ -154,6 +154,14 @@ namespace LogiX.Display
                 {
                     sim.AddComponent(new DrawableCircuitSwitch(GetMousePositionInWorld()));
                 }
+                if (Raylib.IsKeyPressed(KeyboardKey.KEY_X))
+                {
+                    sim.AddComponent(new DrawableLogicGate(GetMousePositionInWorld(), "XOR", new XORGateLogic()));
+                }
+                if (Raylib.IsKeyPressed(KeyboardKey.KEY_O))
+                {
+                    sim.AddComponent(new DrawableLogicGate(GetMousePositionInWorld(), "OR", new ORGateLogic()));
+                }
 
                 DrawableComponent hovered = sim.GetComponentFromPosition(mousePos);
 

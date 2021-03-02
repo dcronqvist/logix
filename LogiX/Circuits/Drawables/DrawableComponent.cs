@@ -1,4 +1,5 @@
-﻿using Raylib_cs;
+﻿using LogiX.Utils;
+using Raylib_cs;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -20,7 +21,6 @@ namespace LogiX.Circuits.Drawables
         public Vector2 Size { get; set; }
         public System.Drawing.RectangleF Box { get; set; }
         public Color BlockColor { get; set; }
-        public Color IOColor { get; set; }
         public Color BorderColor { get; set; }
         public Color IOHoverColor { get; set; }
 
@@ -29,8 +29,7 @@ namespace LogiX.Circuits.Drawables
 
         public DrawableComponent(Vector2 position, string text, int inputs, int outputs) : base(inputs, outputs)
         {
-            this.BlockColor = Color.WHITE;
-            this.IOColor = Color.WHITE;
+            this.BlockColor = Utility.COLOR_BLOCK_DEFAULT;
             this.BorderColor = Color.BLACK;
             this.IOHoverColor = Color.SKYBLUE;
 
@@ -110,9 +109,9 @@ namespace LogiX.Circuits.Drawables
             {
                 Vector2 pos = GetInputPosition(i);
 
-                Color col = IOColor;
+                Color col = Inputs[i].Value == LogicValue.NAN ? Utility.COLOR_NAN : (Inputs[i].Value == LogicValue.HIGH ? Utility.COLOR_ON : Utility.COLOR_OFF);
 
-                if((mousePosInWorld - pos).Length() < IO_RADIUS)
+                if ((mousePosInWorld - pos).Length() < IO_RADIUS)
                 {
                     col = IOHoverColor;
                 }
@@ -131,7 +130,7 @@ namespace LogiX.Circuits.Drawables
             {
                 Vector2 pos = GetOutputPosition(i);
 
-                Color col = IOColor;
+                Color col = Outputs[i].Value == LogicValue.NAN ? Utility.COLOR_NAN : (Outputs[i].Value == LogicValue.HIGH ? Utility.COLOR_ON : Utility.COLOR_OFF);
 
                 if ((mousePosInWorld - pos).Length() < IO_RADIUS)
                 {
