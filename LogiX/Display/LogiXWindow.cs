@@ -99,12 +99,9 @@ namespace LogiX.Display
         {
             Raylib.BeginDrawing();
             Raylib.BeginMode2D(cam);
-
             Raylib.ClearBackground(Color.LIGHTGRAY);
             RenderGrid();
-
             sim.Render(GetMousePositionInWorld());
-
             if(outtup != null)
             {
                 Raylib.DrawLineBezier(outtup.Item2.GetOutputPosition(outtup.Item1), GetMousePositionInWorld(), 2f, Color.WHITE);
@@ -113,7 +110,6 @@ namespace LogiX.Display
             {
                 Raylib.DrawLineBezier(intup.Item2.GetInputPosition(intup.Item1), GetMousePositionInWorld(), 2f, Color.WHITE);
             }
-
             Raylib.EndMode2D();
             Raylib.DrawRectangle(0, 0, 250, (int)base.WindowSize.Y, Color.DARKGRAY.Opacity(0.8f));
             Raylib.DrawFPS(5, 5);
@@ -192,7 +188,6 @@ namespace LogiX.Display
                     {
                         DrawableWire dw = new DrawableWire(outtup.Item2, tempintup.Item2, outtup.Item1, tempintup.Item1);
                         sim.AddWire(dw);
-
                         outtup.Item2.AddOutputWire(outtup.Item1, dw);
                         tempintup.Item2.SetInputWire(tempintup.Item1, dw);
                         outtup = null;
