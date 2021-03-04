@@ -43,11 +43,21 @@ namespace LogiX.Simulation
 
         public void AddSelectedComponent(DrawableComponent dc)
         {
-            SelectedComponents.Add(dc);
+            if(!SelectedComponents.Contains(dc))
+                SelectedComponents.Add(dc);
         }
 
         public void ClearSelectedComponents()
         {
+            SelectedComponents.Clear();
+        }
+
+        public void DeleteSelectedComponents()
+        {
+            foreach(DrawableComponent dc in SelectedComponents)
+            {
+                AllComponents.Remove(dc);
+            }
             SelectedComponents.Clear();
         }
 

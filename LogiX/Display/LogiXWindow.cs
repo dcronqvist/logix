@@ -58,6 +58,7 @@ namespace LogiX.Display
         public override void LoadContent()
         {
             // Load files for use in the program.
+            Raylib.SetTargetFPS(144);
         }
 
         public Vector2 GetMousePositionInWorld()
@@ -138,6 +139,10 @@ namespace LogiX.Display
                 {
                     cam.target -= (currentMousePos - previousMousePos) * 1f / cam.zoom;
                 }
+                if (Raylib.IsKeyPressed(KeyboardKey.KEY_BACKSPACE) || Raylib.IsKeyPressed(KeyboardKey.KEY_DELETE))
+                {
+                    sim.DeleteSelectedComponents();
+                }
                 if (Raylib.IsKeyPressed(KeyboardKey.KEY_A))
                 {
                     sim.AddComponent(new DrawableLogicGate(mousePos, "AND", new ANDGateLogic()));
@@ -161,12 +166,17 @@ namespace LogiX.Display
 
                 DrawableComponent hovered = sim.GetComponentFromPosition(mousePos);
 
-                if(hovered != null)
+                if(Raylib.IsMouseButtonDown(MouseButton.MOUSE_LEFT_BUTTON))
                 {
-                    if(Raylib.IsMouseButtonDown(MouseButton.MOUSE_LEFT_BUTTON))
+                    if(hovered != null)
                     {
-                        hovered.Position += (currentMousePos - previousMousePos) / cam.zoom;
-                        sim.AddSelectedComponent(hovered);
+                        if(sim.SelectedComponents.Contains(hovered))
+                        {
+                            foreach (DrawableComponent dc in sim.SelectedComponents)
+                            {
+                                dc.Position += (currentMousePos - previousMousePos) / cam.zoom;
+                            }
+                        }
                     }
                 }
 
@@ -175,8 +185,21 @@ namespace LogiX.Display
 
                 if (Raylib.IsMouseButtonPressed(MouseButton.MOUSE_LEFT_BUTTON))
                 {
+                    if(hovered != null)
+                    {
+                        if (Raylib.IsKeyDown(KeyboardKey.KEY_LEFT_SHIFT))
+                        {
+                            sim.AddSelectedComponent(hovered);
+                        }
+                        else 
+                        {
+                            sim.ClearSelectedComponents();
+                            sim.AddSelectedComponent(hovered);
+                        }
+                    }
+
                     // Pressing output first and then input
-                    if(outtup == null && tempintup == null)
+                    if (outtup == null && tempintup == null)
                     {
                         if(tempouttup != null)
                         {
