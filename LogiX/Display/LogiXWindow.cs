@@ -1,8 +1,10 @@
-﻿using LogiX.Circuits.Drawables;
+﻿using ImGuiNET;
+using LogiX.Circuits.Drawables;
 using LogiX.Circuits.Logic;
 using LogiX.Logging;
 using LogiX.Settings;
 using LogiX.Simulation;
+using LogiX.UI;
 using LogiX.Utils;
 using Raylib_cs;
 using System;
@@ -26,12 +28,14 @@ namespace LogiX.Display
 
         Simulator sim;
 
-        Tuple<int, DrawableComponent> intup;
         Tuple<int, DrawableComponent> outtup;
+
+        ImGUIController controller;
+        float _f;
 
         public LogiXWindow() : base(new Vector2(1280, 720), "LogiX")
         {
-
+            
         }
 
         public override void Initialize()
@@ -59,6 +63,8 @@ namespace LogiX.Display
         {
             // Load files for use in the program.
             Raylib.SetTargetFPS(144);
+            controller = new ImGUIController();
+            controller.Load((int)base.WindowSize.X, (int)base.WindowSize.Y);
         }
 
         public Vector2 GetMousePositionInWorld()
@@ -107,121 +113,117 @@ namespace LogiX.Display
             {
                 Raylib.DrawLineBezier(outtup.Item2.GetOutputPosition(outtup.Item1), GetMousePositionInWorld(), 2f, Color.WHITE);
             }
-            if(intup != null)
-            {
-                Raylib.DrawLineBezier(intup.Item2.GetInputPosition(intup.Item1), GetMousePositionInWorld(), 2f, Color.WHITE);
-            }
             Raylib.EndMode2D();
-            Raylib.DrawRectangle(0, 0, 250, (int)base.WindowSize.Y, Color.DARKGRAY.Opacity(0.8f));
+            controller.Draw();
+
             Raylib.DrawFPS(5, 5);
             Raylib.EndDrawing();
         }
 
         public override void Update()
         {
+            controller.Update(Raylib.GetFrameTime());
+            SubmitUI();
+
             // TODO: Move this to more suitable place
             currentMousePos = Raylib.GetMousePosition();
             sim.Update(GetMousePositionInWorld());
 
-            if (Raylib.GetMousePosition().X > 250)
+            Vector2 mousePos = GetMousePositionInWorld();
+            if (Raylib.GetMouseWheelMove() > 0)
             {
-                Vector2 mousePos = GetMousePositionInWorld();
+                cam.zoom *= 1.05f;
+            }
+            if (Raylib.GetMouseWheelMove() < 0)
+            {
+                cam.zoom *= 1/ 1.05f;
+            }
+            if (Raylib.IsMouseButtonDown(MouseButton.MOUSE_MIDDLE_BUTTON))
+            {
+                cam.target -= (currentMousePos - previousMousePos) * 1f / cam.zoom;
+            }
+            if (Raylib.IsKeyPressed(KeyboardKey.KEY_BACKSPACE) || Raylib.IsKeyPressed(KeyboardKey.KEY_DELETE))
+            {
+                sim.DeleteSelectedComponents();
+            }
+            if (Raylib.IsKeyPressed(KeyboardKey.KEY_A))
+            {
+                sim.AddComponent(new DrawableLogicGate(mousePos, "AND", new ANDGateLogic()));
+            }
+            if (Raylib.IsKeyPressed(KeyboardKey.KEY_Z))
+            {
+                cam.zoom = 1f;
+            }
+            if (Raylib.IsKeyPressed(KeyboardKey.KEY_S))
+            {
+                sim.AddComponent(new DrawableCircuitSwitch(GetMousePositionInWorld()));
+            }
+            if (Raylib.IsKeyPressed(KeyboardKey.KEY_X))
+            {
+                sim.AddComponent(new DrawableLogicGate(GetMousePositionInWorld(), "XOR", new XORGateLogic()));
+            }
+            if (Raylib.IsKeyPressed(KeyboardKey.KEY_O))
+            {
+                sim.AddComponent(new DrawableLogicGate(GetMousePositionInWorld(), "OR", new ORGateLogic()));
+            }
 
-                if (Raylib.GetMouseWheelMove() > 0)
-                {
-                    cam.zoom *= 1.05f;
-                }
-                if (Raylib.GetMouseWheelMove() < 0)
-                {
-                    cam.zoom *= 1/ 1.05f;
-                }
-                if (Raylib.IsMouseButtonDown(MouseButton.MOUSE_MIDDLE_BUTTON))
-                {
-                    cam.target -= (currentMousePos - previousMousePos) * 1f / cam.zoom;
-                }
-                if (Raylib.IsKeyPressed(KeyboardKey.KEY_BACKSPACE) || Raylib.IsKeyPressed(KeyboardKey.KEY_DELETE))
-                {
-                    sim.DeleteSelectedComponents();
-                }
-                if (Raylib.IsKeyPressed(KeyboardKey.KEY_A))
-                {
-                    sim.AddComponent(new DrawableLogicGate(mousePos, "AND", new ANDGateLogic()));
-                }
-                if (Raylib.IsKeyPressed(KeyboardKey.KEY_Z))
-                {
-                    cam.zoom = 1f;
-                }
-                if (Raylib.IsKeyPressed(KeyboardKey.KEY_S))
-                {
-                    sim.AddComponent(new DrawableCircuitSwitch(GetMousePositionInWorld()));
-                }
-                if (Raylib.IsKeyPressed(KeyboardKey.KEY_X))
-                {
-                    sim.AddComponent(new DrawableLogicGate(GetMousePositionInWorld(), "XOR", new XORGateLogic()));
-                }
-                if (Raylib.IsKeyPressed(KeyboardKey.KEY_O))
-                {
-                    sim.AddComponent(new DrawableLogicGate(GetMousePositionInWorld(), "OR", new ORGateLogic()));
-                }
+            DrawableComponent hovered = sim.GetComponentFromPosition(mousePos);
 
-                DrawableComponent hovered = sim.GetComponentFromPosition(mousePos);
-
-                if(Raylib.IsMouseButtonDown(MouseButton.MOUSE_LEFT_BUTTON))
+            if(Raylib.IsMouseButtonDown(MouseButton.MOUSE_LEFT_BUTTON))
+            {
+                if(hovered != null)
                 {
-                    if(hovered != null)
+                    if(sim.SelectedComponents.Contains(hovered))
                     {
-                        if(sim.SelectedComponents.Contains(hovered))
+                        foreach (DrawableComponent dc in sim.SelectedComponents)
                         {
-                            foreach (DrawableComponent dc in sim.SelectedComponents)
-                            {
-                                dc.Position += (currentMousePos - previousMousePos) / cam.zoom;
-                            }
+                            dc.Position += (currentMousePos - previousMousePos) / cam.zoom;
                         }
                     }
                 }
+            }
 
-                Tuple<int, DrawableComponent> tempintup = sim.GetComponentAndInputFromPos(mousePos);
-                Tuple<int, DrawableComponent> tempouttup = sim.GetComponentAndOutputFromPos(mousePos);
+            Tuple<int, DrawableComponent> tempintup = sim.GetComponentAndInputFromPos(mousePos);
+            Tuple<int, DrawableComponent> tempouttup = sim.GetComponentAndOutputFromPos(mousePos);
 
-                if (Raylib.IsMouseButtonPressed(MouseButton.MOUSE_LEFT_BUTTON))
+            if (Raylib.IsMouseButtonPressed(MouseButton.MOUSE_LEFT_BUTTON))
+            {
+                if(hovered != null)
                 {
-                    if(hovered != null)
+                    if (Raylib.IsKeyDown(KeyboardKey.KEY_LEFT_SHIFT))
                     {
-                        if (Raylib.IsKeyDown(KeyboardKey.KEY_LEFT_SHIFT))
-                        {
-                            sim.AddSelectedComponent(hovered);
-                        }
-                        else 
-                        {
-                            sim.ClearSelectedComponents();
-                            sim.AddSelectedComponent(hovered);
-                        }
+                        sim.AddSelectedComponent(hovered);
                     }
+                    else 
+                    {
+                        sim.ClearSelectedComponents();
+                        sim.AddSelectedComponent(hovered);
+                    }
+                }
 
-                    // Pressing output first and then input
-                    if (outtup == null && tempintup == null)
+                // Pressing output first and then input
+                if (outtup == null && tempintup == null)
+                {
+                    if(tempouttup != null)
                     {
-                        if(tempouttup != null)
-                        {
-                            outtup = tempouttup;
-                        }
+                        outtup = tempouttup;
                     }
+                }
                      
-                    if(tempintup != null && outtup != null)
-                    {
-                        DrawableWire dw = new DrawableWire(outtup.Item2, tempintup.Item2, outtup.Item1, tempintup.Item1);
-                        sim.AddWire(dw);
-                        outtup.Item2.AddOutputWire(outtup.Item1, dw);
-                        tempintup.Item2.SetInputWire(tempintup.Item1, dw);
-                        outtup = null;
-                        return;
-                    }
-                }
-
-                if (Raylib.IsKeyPressed(KeyboardKey.KEY_ESCAPE))
+                if(tempintup != null && outtup != null)
                 {
-                    sim.ClearSelectedComponents();
+                    DrawableWire dw = new DrawableWire(outtup.Item2, tempintup.Item2, outtup.Item1, tempintup.Item1);
+                    sim.AddWire(dw);
+                    outtup.Item2.AddOutputWire(outtup.Item1, dw);
+                    tempintup.Item2.SetInputWire(tempintup.Item1, dw);
+                    outtup = null;
+                    return;
                 }
+            }
+
+            if (Raylib.IsKeyPressed(KeyboardKey.KEY_ESCAPE))
+            {
+                sim.ClearSelectedComponents();
             }
 
             previousMousePos = currentMousePos;
@@ -230,6 +232,14 @@ namespace LogiX.Display
         public override void Unload()
         {
             LogManager.DumpToFile();
+        }
+
+        public void SubmitUI()
+        {
+            {
+                ImGui.Text("Hello World!");
+                ImGui.SliderFloat("float", ref _f, 0, 1, _f.ToString("0.00"));
+            }
         }
     }
 }
