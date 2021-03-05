@@ -86,5 +86,15 @@ namespace LogiX.Circuits
         {
             Outputs[index].AddOutputSignal(cw);
         }
+
+        public void RemoveOutputWire(int index, CircuitWire cw)
+        {
+            Outputs[index].RemoveOutputSignal(cw);
+        }
+
+        public void RemoveInputWire(int index)
+        {
+            Inputs[index].RemoveSignal();
+        }
     }
 }

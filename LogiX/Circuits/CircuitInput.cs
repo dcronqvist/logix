@@ -18,6 +18,11 @@ namespace LogiX.Circuits
             this.Signal = wire;
         }
 
+        public void RemoveSignal()
+        {
+            this.Signal = null;
+        }
+
         public void GetValueFromSignal()
         {
             if (this.Signal != null)

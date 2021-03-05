@@ -32,6 +32,7 @@ namespace LogiX.Display
 
         ImGUIController controller;
         float _f;
+        bool on;
 
         public LogiXWindow() : base(new Vector2(1280, 720), "LogiX")
         {
@@ -57,6 +58,7 @@ namespace LogiX.Display
             // This should maybe be done somewhere else. But is good for testing atm.
             cam = new Camera2D(size / 2f, Vector2.Zero, 0f, 1f);
             sim = new Simulator();
+            on = true;
         }
 
         public override void LoadContent()
@@ -127,7 +129,9 @@ namespace LogiX.Display
 
             // TODO: Move this to more suitable place
             currentMousePos = Raylib.GetMousePosition();
-            sim.Update(GetMousePositionInWorld());
+
+            if(on)
+                sim.Update(GetMousePositionInWorld());
 
             Vector2 mousePos = GetMousePositionInWorld();
             if (Raylib.GetMouseWheelMove() > 0)
@@ -212,18 +216,22 @@ namespace LogiX.Display
                      
                 if(tempintup != null && outtup != null)
                 {
-                    DrawableWire dw = new DrawableWire(outtup.Item2, tempintup.Item2, outtup.Item1, tempintup.Item1);
-                    sim.AddWire(dw);
-                    outtup.Item2.AddOutputWire(outtup.Item1, dw);
-                    tempintup.Item2.SetInputWire(tempintup.Item1, dw);
-                    outtup = null;
-                    return;
+                    if(tempintup.Item2.Inputs[tempintup.Item1].Signal == null)
+                    {
+                        DrawableWire dw = new DrawableWire(outtup.Item2, tempintup.Item2, outtup.Item1, tempintup.Item1);
+                        sim.AddWire(dw);
+                        outtup.Item2.AddOutputWire(outtup.Item1, dw);
+                        tempintup.Item2.SetInputWire(tempintup.Item1, dw);
+                        outtup = null;
+                        return;
+                    }
                 }
             }
 
             if (Raylib.IsKeyPressed(KeyboardKey.KEY_ESCAPE))
             {
                 sim.ClearSelectedComponents();
+                outtup = null;
             }
 
             previousMousePos = currentMousePos;
@@ -237,8 +245,13 @@ namespace LogiX.Display
         public void SubmitUI()
         {
             {
-                ImGui.Text("Hello World!");
-                ImGui.SliderFloat("float", ref _f, 0, 1, _f.ToString("0.00"));
+                ImGui.Begin("Cool Window!", ImGuiWindowFlags.AlwaysAutoResize);
+                ImGui.BeginGroup();
+
+                ImGui.Checkbox("Simulation status: ", ref on);
+
+                ImGui.EndGroup();
+                ImGui.End();
             }
         }
     }

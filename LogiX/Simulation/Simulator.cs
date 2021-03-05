@@ -1,4 +1,5 @@
-﻿using LogiX.Circuits.Drawables;
+﻿using LogiX.Circuits;
+using LogiX.Circuits.Drawables;
 using LogiX.Utils;
 using Raylib_cs;
 using System;
@@ -38,7 +39,8 @@ namespace LogiX.Simulation
 
         public void RemoveWire(DrawableWire wire)
         {
-            AllWires.Remove(wire);
+            if(AllWires.Contains(wire))
+                AllWires.Remove(wire);
         }
 
         public void AddSelectedComponent(DrawableComponent dc)
@@ -56,6 +58,25 @@ namespace LogiX.Simulation
         {
             foreach(DrawableComponent dc in SelectedComponents)
             {
+                foreach(CircuitInput ci in dc.Inputs)
+                {
+                    if (ci.Signal != null)
+                    {
+                        DrawableWire dw = (DrawableWire)ci.Signal;
+                        dw.From.RemoveOutputWire(dw.FromIndex, dw);
+                        RemoveWire((DrawableWire)ci.Signal);
+                    }
+                }
+                foreach (CircuitOutput co in dc.Outputs)
+                {
+                    co.Signals.ForEach(x =>
+                    {
+                        DrawableWire dw = (DrawableWire)x;
+                        dw.To.RemoveInputWire(dw.ToIndex);
+                        RemoveWire((DrawableWire)x);
+                    });
+                }
+
                 AllComponents.Remove(dc);
             }
             SelectedComponents.Clear();
