@@ -131,7 +131,8 @@ namespace LogiX.Display
             currentMousePos = Raylib.GetMousePosition();
 
             if(on)
-                sim.Update(GetMousePositionInWorld());
+                sim.UpdateLogic(GetMousePositionInWorld());
+            sim.Update(GetMousePositionInWorld());
 
             Vector2 mousePos = GetMousePositionInWorld();
             if (Raylib.GetMouseWheelMove() > 0)
@@ -244,14 +245,25 @@ namespace LogiX.Display
 
         public void SubmitUI()
         {
+            // SIMULATION WINDOW
             {
-                ImGui.Begin("Cool Window!", ImGuiWindowFlags.AlwaysAutoResize);
+                ImGui.SetNextWindowPos(new Vector2(25, 25), ImGuiCond.Appearing);
+                ImGui.SetNextWindowCollapsed(true, ImGuiCond.Appearing);
+                ImGui.Begin("Simulation", ImGuiWindowFlags.AlwaysAutoResize);
                 ImGui.BeginGroup();
 
-                ImGui.Checkbox("Simulation status: ", ref on);
+                ImGui.Checkbox("Simulating", ref on);
+                if(ImGui.Button("Update simulation"))
+                {
+                    sim.UpdateLogic(GetMousePositionInWorld());
+                }             
 
                 ImGui.EndGroup();
                 ImGui.End();
+            }
+
+            {
+
             }
         }
     }

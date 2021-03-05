@@ -134,6 +134,14 @@ namespace LogiX.Simulation
 
         public void Update(Vector2 mousePosInWorld)
         {
+            foreach (DrawableComponent dc in Interactables)
+            {
+                ((IUpdateable)dc).Update(this, mousePosInWorld);
+            }
+        }
+
+        public void UpdateLogic(Vector2 mousePosInWorld)
+        {
             foreach(DrawableComponent dc in AllComponents)
             {
                 dc.UpdateInputsAndLogic();
@@ -142,11 +150,6 @@ namespace LogiX.Simulation
             foreach (DrawableComponent dc in AllComponents)
             {
                 dc.UpdateOutputs();
-            }
-
-            foreach(DrawableComponent dc in Interactables)
-            {
-                ((IUpdateable)dc).Update(this, mousePosInWorld);
             }
         }
 
