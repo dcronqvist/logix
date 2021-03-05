@@ -19,5 +19,10 @@ namespace LogiX.Circuits.Drawables
         {
             this.Outputs[0].Value = logic.GetOutput(Inputs[0].Value, Inputs[1].Value);
         }
+
+        public string GetLogicName()
+        {
+            return logic.GetType().Name;
+        }
     }
 }

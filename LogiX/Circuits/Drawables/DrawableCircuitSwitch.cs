@@ -15,6 +15,9 @@ namespace LogiX.Circuits.Drawables
         public DrawableCircuitSwitch(Vector2 position) : base(position, "", 0, 1)
         {
             Value = LogicValue.LOW;
+            Size = new Vector2(25, 30);
+            Text = "0";
+            CalculateOffsets();
         }
 
         public override void Draw(Vector2 mousePosInWorld)
@@ -22,11 +25,13 @@ namespace LogiX.Circuits.Drawables
             if(Value == LogicValue.HIGH)
             {
                 BlockColor = Utility.COLOR_ON;
+                Text = "1";
             }
             else
             {
                 BlockColor = Utility.COLOR_BLOCK_DEFAULT;
-            }     
+                Text = "0";
+            }
 
             base.Draw(mousePosInWorld);
         }

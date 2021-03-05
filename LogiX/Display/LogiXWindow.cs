@@ -1,5 +1,6 @@
 ﻿using ImGuiNET;
 using LogiX.Circuits.Drawables;
+using LogiX.Circuits.Integrated;
 using LogiX.Circuits.Logic;
 using LogiX.Logging;
 using LogiX.Settings;
@@ -27,12 +28,10 @@ namespace LogiX.Display
         }
 
         Simulator sim;
-
         Tuple<int, DrawableComponent> outtup;
 
         ImGUIController controller;
-        float _f;
-        bool on;
+        bool _simulationOn;
 
         public LogiXWindow() : base(new Vector2(1280, 720), "LogiX")
         {
@@ -58,7 +57,7 @@ namespace LogiX.Display
             // This should maybe be done somewhere else. But is good for testing atm.
             cam = new Camera2D(size / 2f, Vector2.Zero, 0f, 1f);
             sim = new Simulator();
-            on = true;
+            _simulationOn = true;
         }
 
         public override void LoadContent()
@@ -130,7 +129,7 @@ namespace LogiX.Display
             // TODO: Move this to more suitable place
             currentMousePos = Raylib.GetMousePosition();
 
-            if(on)
+            if(_simulationOn)
                 sim.UpdateLogic(GetMousePositionInWorld());
             sim.Update(GetMousePositionInWorld());
 
@@ -171,6 +170,11 @@ namespace LogiX.Display
             {
                 sim.AddComponent(new DrawableLogicGate(GetMousePositionInWorld(), "OR", new ORGateLogic()));
             }
+            if (Raylib.IsKeyPressed(KeyboardKey.KEY_L))
+            {
+                sim.AddComponent(new DrawableCircuitLamp(GetMousePositionInWorld()));
+            }
+
 
             DrawableComponent hovered = sim.GetComponentFromPosition(mousePos);
 
@@ -228,6 +232,16 @@ namespace LogiX.Display
                     }
                 }
             }
+            if (Raylib.IsMouseButtonPressed(MouseButton.MOUSE_RIGHT_BUTTON))
+            {
+                if(tempintup != null)
+                {
+                    DrawableWire dw = (DrawableWire)tempintup.Item2.Inputs[tempintup.Item1].Signal;
+                    tempintup.Item2.Inputs[tempintup.Item1].RemoveSignal();
+                    dw.From.RemoveOutputWire(dw.FromIndex, dw);
+                    sim.RemoveWire(dw);
+                }
+            }
 
             if (Raylib.IsKeyPressed(KeyboardKey.KEY_ESCAPE))
             {
@@ -252,13 +266,20 @@ namespace LogiX.Display
                 ImGui.Begin("Simulation", ImGuiWindowFlags.AlwaysAutoResize);
                 ImGui.BeginGroup();
 
-                ImGui.Checkbox("Simulating", ref on);
+                ImGui.Checkbox("Simulating", ref _simulationOn);
                 if(ImGui.Button("Update simulation"))
                 {
                     sim.UpdateLogic(GetMousePositionInWorld());
                 }             
 
                 ImGui.EndGroup();
+
+                if(ImGui.Button("Create IC"))
+                {
+                    ICDescription icd = new ICDescription(sim.SelectedComponents);
+                    sim.AddComponent(new DrawableIC(new Vector2(100, 100), "TESTER", icd));
+                }
+
                 ImGui.End();
             }
 

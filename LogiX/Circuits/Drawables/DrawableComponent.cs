@@ -34,11 +34,19 @@ namespace LogiX.Circuits.Drawables
             this.IOHoverColor = Color.SKYBLUE;
 
             // Measure text size.
-            this.TextSize = Raylib.MeasureTextEx(Raylib.GetFontDefault(), text, TEXT_SIZE, 1f);
-            this.Size = new Vector2(TextSize.X + 15, (Math.Max(inputs, outputs)) * DIST_BETWEEN_INPUTS);
-
             this.Text = text;
-            this.Position = position - Size / 2;
+            this.Position = position;
+            CalculateOffsets();
+        }
+
+        public void CalculateOffsets()
+        {
+            // Measure text size.
+            this.TextSize = Raylib.MeasureTextEx(Raylib.GetFontDefault(), Text, TEXT_SIZE, 1f);
+            if(this.Size == Vector2.Zero)
+                this.Size = new Vector2(TextSize.X + 15, (Math.Max(this.Inputs.Count, this.Outputs.Count)) * DIST_BETWEEN_INPUTS);
+
+            this.Position = Position - Size / 2;
             this.MiddlePosition = Position + Size / 2;
         }
 
