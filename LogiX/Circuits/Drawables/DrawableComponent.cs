@@ -60,7 +60,7 @@ namespace LogiX.Circuits.Drawables
             }
 
             if (this.Size == Vector2.Zero)
-                this.Size = new Vector2(TextSize.X + 30 + Math.Max(maxInp, maxOutp) * 2, (Math.Max(this.Inputs.Count, this.Outputs.Count)) * DIST_BETWEEN_INPUTS);
+                this.Size = new Vector2(TextSize.X + (15 * (Math.Sign(Math.Max(maxInp, maxOutp)) + 1)) + Math.Max(maxInp, maxOutp) * 2, (Math.Max(this.Inputs.Count, this.Outputs.Count)) * DIST_BETWEEN_INPUTS);
 
             this.Position = Position - Size / 2;
             this.MiddlePosition = Position + Size / 2;
