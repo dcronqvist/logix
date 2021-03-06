@@ -11,6 +11,7 @@ namespace LogiX.Circuits.Drawables
     class DrawableCircuitSwitch : DrawableComponent, IUpdateable
     {
         public LogicValue Value { get; set; }
+        public string ID = "";
 
         public DrawableCircuitSwitch(Vector2 position) : base(position, "", 0, 1)
         {

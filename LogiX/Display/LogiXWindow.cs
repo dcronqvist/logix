@@ -29,6 +29,7 @@ namespace LogiX.Display
 
         Simulator sim;
         Tuple<int, DrawableComponent> outtup;
+        DrawableComponent lastSelectedComponent;
 
         ImGUIController controller;
         bool _simulationOn;
@@ -63,7 +64,7 @@ namespace LogiX.Display
         public override void LoadContent()
         {
             // Load files for use in the program.
-            Raylib.SetTargetFPS(144);
+            Raylib.SetTargetFPS(500);
             controller = new ImGUIController();
             controller.Load((int)base.WindowSize.X, (int)base.WindowSize.Y);
         }
@@ -116,8 +117,6 @@ namespace LogiX.Display
             }
             Raylib.EndMode2D();
             controller.Draw();
-
-            Raylib.DrawFPS(5, 5);
             Raylib.EndDrawing();
         }
 
@@ -146,10 +145,11 @@ namespace LogiX.Display
             {
                 cam.target -= (currentMousePos - previousMousePos) * 1f / cam.zoom;
             }
-            if (Raylib.IsKeyPressed(KeyboardKey.KEY_BACKSPACE) || Raylib.IsKeyPressed(KeyboardKey.KEY_DELETE))
+            if (Raylib.IsKeyPressed(KeyboardKey.KEY_DELETE))
             {
                 sim.DeleteSelectedComponents();
             }
+            /*
             if (Raylib.IsKeyPressed(KeyboardKey.KEY_A))
             {
                 sim.AddComponent(new DrawableLogicGate(mousePos, "AND", new ANDGateLogic()));
@@ -174,7 +174,7 @@ namespace LogiX.Display
             {
                 sim.AddComponent(new DrawableCircuitLamp(GetMousePositionInWorld()));
             }
-
+            */
 
             DrawableComponent hovered = sim.GetComponentFromPosition(mousePos);
 
@@ -208,6 +208,7 @@ namespace LogiX.Display
                         sim.ClearSelectedComponents();
                         sim.AddSelectedComponent(hovered);
                     }
+                    lastSelectedComponent = hovered;
                 }
 
                 // Pressing output first and then input
@@ -259,32 +260,101 @@ namespace LogiX.Display
 
         public void SubmitUI()
         {
-            // SIMULATION WINDOW
-            {
-                ImGui.SetNextWindowPos(new Vector2(25, 25), ImGuiCond.Appearing);
-                ImGui.SetNextWindowCollapsed(true, ImGuiCond.Appearing);
-                ImGui.Begin("Simulation", ImGuiWindowFlags.AlwaysAutoResize);
-                ImGui.BeginGroup();
+            ImGui.BeginMainMenuBar();
 
+            // File thing
+            if (ImGui.BeginMenu("File"))
+            {
+                ImGui.MenuItem("Empty for now");
+                ImGui.EndMenu();
+            }
+            
+            // Edit thing
+            if(ImGui.BeginMenu("Edit"))
+            {
+                ImGui.MenuItem("Empty for now");
+                ImGui.EndMenu();
+            }
+
+            // Simulation
+            if (ImGui.BeginMenu("Simulation"))
+            {
                 ImGui.Checkbox("Simulating", ref _simulationOn);
-                if(ImGui.Button("Update simulation"))
+                if (ImGui.Button("Update simulation"))
                 {
                     sim.UpdateLogic(GetMousePositionInWorld());
-                }             
+                }
+                ImGui.EndMenu();
+            }
 
-                ImGui.EndGroup();
-
-                if(ImGui.Button("Create IC"))
+            if(ImGui.BeginMenu("Integrated Circuits"))
+            {
+                if(ImGui.MenuItem("Create From Selection"))
                 {
                     ICDescription icd = new ICDescription(sim.SelectedComponents);
                     sim.AddComponent(new DrawableIC(new Vector2(100, 100), "TESTER", icd));
+                }
+                ImGui.EndMenu();
+            }
+
+            ImGui.EndMainMenuBar();
+
+
+            // SIMULATION WINDOW
+            {
+                ImGui.SetNextWindowPos(new Vector2(25, 50), ImGuiCond.Appearing);
+                ImGui.SetNextWindowCollapsed(false, ImGuiCond.Appearing);
+                ImGui.Begin("Components", ImGuiWindowFlags.AlwaysAutoResize); 
+
+                if (ImGui.Button("Switch"))
+                {
+                    sim.AddComponent(new DrawableCircuitSwitch(GetMousePositionInWorld() + new Vector2(200, 0)));
+                }
+
+                if (ImGui.Button("Lamp"))
+                {
+                    sim.AddComponent(new DrawableCircuitLamp(GetMousePositionInWorld() + new Vector2(200, 0)));
+                }
+
+                if (ImGui.Button("AND"))
+                {
+                    sim.AddComponent(new DrawableLogicGate(GetMousePositionInWorld() + new Vector2(200, 0), "AND", new ANDGateLogic()));
+                }
+
+                if (ImGui.Button("XOR"))
+                {
+                    sim.AddComponent(new DrawableLogicGate(GetMousePositionInWorld() + new Vector2(200, 0), "XOR", new XORGateLogic()));
+                }
+
+                if (ImGui.Button("OR"))
+                {
+                    sim.AddComponent(new DrawableLogicGate(GetMousePositionInWorld() + new Vector2(200, 0), "OR", new ORGateLogic()));
+                }
+
+                if (ImGui.Button("NOR"))
+                {
+                    sim.AddComponent(new DrawableLogicGate(GetMousePositionInWorld() + new Vector2(200, 0), "NOR", new NORGateLogic()));
                 }
 
                 ImGui.End();
             }
 
+            if(lastSelectedComponent is DrawableCircuitSwitch || lastSelectedComponent is DrawableCircuitLamp)
             {
+                ImGui.Begin("Setting ID", ImGuiWindowFlags.AlwaysAutoResize);
 
+                if(lastSelectedComponent is DrawableCircuitSwitch)
+                {
+                    DrawableCircuitSwitch dcs = (DrawableCircuitSwitch)lastSelectedComponent;
+                    ImGui.InputText("ID", ref dcs.ID, 10); 
+                }
+                if (lastSelectedComponent is DrawableCircuitLamp)
+                {
+                    DrawableCircuitLamp dcl = (DrawableCircuitLamp)lastSelectedComponent;
+                    ImGui.InputText("ID", ref dcl.ID, 10);
+                }
+
+                ImGui.End();
             }
         }
     }

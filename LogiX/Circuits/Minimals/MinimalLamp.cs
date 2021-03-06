@@ -6,6 +6,8 @@ namespace LogiX.Circuits.Minimals
 {
     class MinimalLamp : CircuitComponent
     {
+        public string ID = "";
+
         public MinimalLamp() : base(1, 0)
         {
 

@@ -6,6 +6,8 @@ namespace LogiX.Circuits.Minimals
 {
     class MinimalSwitch : CircuitComponent
     {
+        public string ID = "";
+
         public MinimalSwitch() : base(0, 1)
         {
 

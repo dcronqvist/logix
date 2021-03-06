@@ -72,6 +72,14 @@ namespace LogiX.Circuits.Integrated
                 }
 
                 ICComponentDescription icccc = new ICComponentDescription(type, to);
+                if(comps[i] is DrawableCircuitLamp)
+                {
+                    icccc.SetID(((DrawableCircuitLamp)comps[i]).ID);
+                }
+                if (comps[i] is DrawableCircuitSwitch)
+                {
+                    icccc.SetID(((DrawableCircuitSwitch)comps[i]).ID);
+                }
 
                 llicc.Add(icccc);
             }
@@ -98,15 +106,18 @@ namespace LogiX.Circuits.Integrated
                     case "XORGateLogic":
                         dc = new MinimalLogicGate(new XORGateLogic());
                         break;
+                    case "NORGateLogic":
+                        dc = new MinimalLogicGate(new NORGateLogic());
+                        break;
                     case "Switch":
                         //CircuitSwitch cs = new CircuitSwitch(Vector2.Zero);
                         //cs.SetID(iccd.ID);
-                        dc = new MinimalSwitch();
+                        dc = new MinimalSwitch() { ID = iccd.ID };
                         break;
                     case "Lamp":
                         //CircuitLamp cl = new CircuitLamp(Vector2.Zero);
                         //cl.SetID(iccd.ID);
-                        dc = new MinimalLamp();
+                        dc = new MinimalLamp() { ID = iccd.ID };
                         break;
                     default:
                         // It is not a built in thing - look for it in the IC files folder

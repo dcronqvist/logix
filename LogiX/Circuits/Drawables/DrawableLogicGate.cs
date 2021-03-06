@@ -13,6 +13,7 @@ namespace LogiX.Circuits.Drawables
         public DrawableLogicGate(Vector2 position, string text, IGateLogic logic) : base(position, text, 2, 1)
         {
             this.logic = logic;
+            CalculateOffsets();
         }
 
         protected override void PerformLogic()

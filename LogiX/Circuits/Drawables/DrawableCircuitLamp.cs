@@ -8,6 +8,8 @@ namespace LogiX.Circuits.Drawables
 {
     class DrawableCircuitLamp : DrawableComponent
     {
+        public string ID = "";
+
         public DrawableCircuitLamp(Vector2 position) : base(position, "", 1, 0)
         {
             Size = new Vector2(25, 30);

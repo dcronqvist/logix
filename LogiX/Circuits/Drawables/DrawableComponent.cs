@@ -36,18 +36,43 @@ namespace LogiX.Circuits.Drawables
             // Measure text size.
             this.Text = text;
             this.Position = position;
-            CalculateOffsets();
         }
 
         public void CalculateOffsets()
         {
             // Measure text size.
             this.TextSize = Raylib.MeasureTextEx(Raylib.GetFontDefault(), Text, TEXT_SIZE, 1f);
-            if(this.Size == Vector2.Zero)
-                this.Size = new Vector2(TextSize.X + 15, (Math.Max(this.Inputs.Count, this.Outputs.Count)) * DIST_BETWEEN_INPUTS);
+
+            // Get longest input id & longest output id, add it.
+            int maxInp = 0;
+            int maxOutp = 0;
+            for (int i = 0; i < Inputs.Count; i++)
+            {
+                string inp = GetInputID(i);
+                int x = Raylib.MeasureText(inp, TEXT_SIZE);
+                maxInp = Math.Max(maxInp, x);
+            }
+            for (int i = 0; i < Outputs.Count; i++)
+            {
+                string outp = GetOutputID(i);
+                int y = Raylib.MeasureText(outp, TEXT_SIZE);
+                maxOutp = Math.Max(maxOutp, y);
+            }
+
+            if (this.Size == Vector2.Zero)
+                this.Size = new Vector2(TextSize.X + 30 + Math.Max(maxInp, maxOutp) * 2, (Math.Max(this.Inputs.Count, this.Outputs.Count)) * DIST_BETWEEN_INPUTS);
 
             this.Position = Position - Size / 2;
             this.MiddlePosition = Position + Size / 2;
+        }
+
+        public virtual string GetInputID(int index)
+        {
+            return null;
+        }
+        public virtual string GetOutputID(int index)
+        {
+            return null;
         }
 
         public float GetIOYPosition(int ios, int index)
@@ -129,6 +154,14 @@ namespace LogiX.Circuits.Drawables
 
                 Raylib.DrawCircle((int)pos.X, (int)pos.Y, IO_RADIUS, col);
                 Raylib.DrawCircleLines((int)pos.X, (int)pos.Y, IO_RADIUS, BorderColor);
+
+                string s = GetInputID(i);
+                if(s != null)
+                {
+                    Vector2 inputIdSize = Raylib.MeasureTextEx(Raylib.GetFontDefault(), s, TEXT_SIZE, 1f);
+
+                    Raylib.DrawText(s, (int)(pos.X + 5 + DIST_BLOCK_IO), (int)(pos.Y - inputIdSize.Y / 2f), TEXT_SIZE, BorderColor);
+                }
             }
         }
 
@@ -150,6 +183,14 @@ namespace LogiX.Circuits.Drawables
 
                 Raylib.DrawCircle((int)pos.X, (int)pos.Y, IO_RADIUS, col);
                 Raylib.DrawCircleLines((int)pos.X, (int)pos.Y, IO_RADIUS, BorderColor);
+
+                string s = GetOutputID(i);
+                if (s != null)
+                {
+                    Vector2 inputIdSize = Raylib.MeasureTextEx(Raylib.GetFontDefault(), s, TEXT_SIZE, 1f);
+
+                    Raylib.DrawText(s, (int)(pos.X - 5 - DIST_BLOCK_IO - inputIdSize.X), (int)(pos.Y - inputIdSize.Y / 2f), TEXT_SIZE, BorderColor);
+                }
             }
         }
 
