@@ -2,6 +2,8 @@
 using System.Numerics;
 using Raylib_cs;
 using ImGuiNET;
+using System.Text;
+using System.Linq;
 
 namespace LogiX.UI
 {
@@ -129,7 +131,17 @@ namespace LogiX.UI
             if (keyPressed > 0)
             {
                 ImGuiIOPtr io = ImGui.GetIO();
-                io.AddInputCharacter((uint)keyPressed);
+
+                KeyboardKey[] nono = new KeyboardKey[]
+                {
+                    KeyboardKey.KEY_LEFT_SHIFT,
+                    KeyboardKey.KEY_LEFT_ALT,
+                    KeyboardKey.KEY_LEFT_CONTROL,
+                    KeyboardKey.KEY_CAPS_LOCK,
+                };
+
+                if(!nono.Contains((KeyboardKey)keyPressed))
+                    io.AddInputCharacter((uint)(Encoding.UTF8.GetString(new byte[] { (byte)keyPressed })[0]));
             }
         }
 
