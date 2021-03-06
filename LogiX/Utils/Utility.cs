@@ -11,6 +11,7 @@ namespace LogiX.Utils
         // Files and directories
         public static string ROAMING_DIR = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
         public static string LOGIX_DIR = ROAMING_DIR + @"/LogiX";
+        public static string ASSETS_DIR = LOGIX_DIR + @"/assets";
         public static string SETTINGS_FILE = LOGIX_DIR + @"/settings.json";
         public static string LOG_FILE = LOGIX_DIR + @"/log.txt";
 

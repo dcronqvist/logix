@@ -1,4 +1,5 @@
 ﻿using ImGuiNET;
+using LogiX.Assets;
 using LogiX.Circuits.Drawables;
 using LogiX.Circuits.Integrated;
 using LogiX.Circuits.Logic;
@@ -9,6 +10,7 @@ using LogiX.UI;
 using LogiX.Utils;
 using Raylib_cs;
 using System;
+using System.Collections.Generic;
 using System.Numerics;
 
 namespace LogiX.Display
@@ -33,6 +35,8 @@ namespace LogiX.Display
 
         ImGUIController controller;
         bool _simulationOn;
+        bool _makingIc;
+        string newIcName = "";
 
         public LogiXWindow() : base(new Vector2(1280, 720), "LogiX")
         {
@@ -59,6 +63,7 @@ namespace LogiX.Display
             cam = new Camera2D(size / 2f, Vector2.Zero, 0f, 1f);
             sim = new Simulator();
             _simulationOn = true;
+            _makingIc = false;
         }
 
         public override void LoadContent()
@@ -67,6 +72,9 @@ namespace LogiX.Display
             Raylib.SetTargetFPS(500);
             controller = new ImGUIController();
             controller.Load((int)base.WindowSize.X, (int)base.WindowSize.Y);
+
+            // Load all ics and stuff
+            AssetManager.LoadAllAssets();
         }
 
         public Vector2 GetMousePositionInWorld()
@@ -289,18 +297,32 @@ namespace LogiX.Display
 
             if(ImGui.BeginMenu("Integrated Circuits"))
             {
-                if(ImGui.MenuItem("Create From Selection"))
+                if (ImGui.InputText("New IC", ref newIcName, 16, ImGuiInputTextFlags.EnterReturnsTrue))
                 {
+                    _makingIc = true;
                     ICDescription icd = new ICDescription(sim.SelectedComponents);
-                    sim.AddComponent(new DrawableIC(new Vector2(100, 100), "TESTER", icd));
+                    icd.SaveToFile(newIcName);
+                    sim.AddComponent(new DrawableIC(new Vector2(100, 100), newIcName, icd));
+                    
+                }    
+
+                List<ICDescription> ics = AssetManager.GetAllAssetsOfType<ICDescription>();
+                foreach(ICDescription ic in ics)
+                {
+                    if (ImGui.MenuItem(ic.Name))
+                    {
+                        sim.AddComponent(new DrawableIC(new Vector2(100, 100), ic.Name, ic));
+                       
+                    }
                 }
+
                 ImGui.EndMenu();
             }
 
             ImGui.EndMainMenuBar();
 
 
-            // SIMULATION WINDOW
+            // Components window
             {
                 ImGui.SetNextWindowPos(new Vector2(25, 50), ImGuiCond.Appearing);
                 ImGui.SetNextWindowCollapsed(false, ImGuiCond.Appearing);
@@ -352,6 +374,19 @@ namespace LogiX.Display
                 {
                     DrawableCircuitLamp dcl = (DrawableCircuitLamp)lastSelectedComponent;
                     ImGui.InputText("ID", ref dcl.ID, 10);
+                }
+
+                ImGui.End();
+            }
+
+            if (_makingIc)
+            {
+                ImGui.SetNextWindowPos(WindowSize / 2f, ImGuiCond.Appearing);
+                ImGui.Begin("Create Integrated Circuit", ref _makingIc, ImGuiWindowFlags.AlwaysAutoResize | ImGuiWindowFlags.Modal);
+
+                if (ImGui.Button("Close"))
+                {
+                    _makingIc = false;
                 }
 
                 ImGui.End();

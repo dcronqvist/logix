@@ -1,15 +1,19 @@
-﻿using LogiX.Circuits.Drawables;
+﻿using LogiX.Assets;
+using LogiX.Circuits.Drawables;
 using LogiX.Circuits.Logic;
 using LogiX.Circuits.Minimals;
+using LogiX.Utils;
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Numerics;
 using System.Text;
 
 namespace LogiX.Circuits.Integrated
 {
-    class ICDescription
+    class ICDescription : Asset
     {
         public List<ICComponentDescription> Descriptions { get; set; }
         public int Inputs { get; set; }
@@ -58,6 +62,10 @@ namespace LogiX.Circuits.Integrated
                 else if (comps[i] is DrawableCircuitSwitch)
                 {
                     type = "Switch";
+                }
+                else if (comps[i] is DrawableIC)
+                {
+                    type = ((DrawableIC)comps[i]).Description.Name;
                 }
 
                 List<ICConnectionDescription> to = new List<ICConnectionDescription>();
@@ -122,7 +130,8 @@ namespace LogiX.Circuits.Integrated
                     default:
                         // It is not a built in thing - look for it in the IC files folder
                         //ICDescription icd = ResourceManager.GetResource<ICDescription>("ic_" + iccd.Type.Replace(" ", "-"));
-                        //dc = new ICComponent(icd, Vector2.Zero);
+                        ICDescription icd = AssetManager.GetAsset<ICDescription>(iccd.Type);
+                        dc = new DrawableIC(Vector2.Zero, icd.Name, icd);
                         break;
                 }
                 components[i] = dc;
@@ -142,6 +151,16 @@ namespace LogiX.Circuits.Integrated
             }
 
             return components.ToList();
+        }
+
+        public void SaveToFile(string name)
+        {
+            base.Name = name;
+            using(StreamWriter sw = new StreamWriter(Utility.ASSETS_DIR + @$"/{name}.lxic"))
+            {
+                sw.Write(JsonConvert.SerializeObject(this, Formatting.Indented));
+            }
+            AssetManager.AddAsset(name, this);
         }
     }
 }
