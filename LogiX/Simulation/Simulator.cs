@@ -4,7 +4,6 @@ using LogiX.Utils;
 using Raylib_cs;
 using System;
 using System.Collections.Generic;
-using System.Drawing;
 using System.Linq;
 using System.Numerics;
 using System.Text;
@@ -44,11 +43,12 @@ namespace LogiX.Simulation
                 AllWires.Remove(wire);
         }
 
-        public void SelectComponentsInRectangle(RectangleF rec)
+        public void SelectComponentsInRectangle(Rectangle rec)
         {
+            ClearSelectedComponents();
             foreach(DrawableComponent dc in AllComponents)
             {
-                if (dc.Box.IntersectsWith(rec))
+                if (Raylib.CheckCollisionRecs(rec, dc.Box))
                 {
                     AddSelectedComponent(dc);
                 }
@@ -108,7 +108,7 @@ namespace LogiX.Simulation
         {
             foreach(DrawableComponent dc in AllComponents)
             {
-                if (dc.Box.Contains(position.ToPoint()))
+                if (Raylib.CheckCollisionPointRec(position, dc.Box))
                 {
                     return dc;
                 }

@@ -41,7 +41,7 @@ namespace LogiX.Circuits.Drawables
         {
             if (Raylib.IsMouseButtonPressed(MouseButton.MOUSE_RIGHT_BUTTON))
             {
-                if (Box.Contains(mousePosInWorld.ToPoint()))
+                if (Raylib.CheckCollisionPointRec(mousePosInWorld, Box))
                 {
                     Value = Value == LogicValue.HIGH ? LogicValue.LOW : LogicValue.HIGH;
                 }

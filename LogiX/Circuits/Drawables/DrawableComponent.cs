@@ -19,7 +19,7 @@ namespace LogiX.Circuits.Drawables
         public Vector2 Position { get; set; }
         public Vector2 MiddlePosition { get; set; }
         public Vector2 Size { get; set; }
-        public System.Drawing.RectangleF Box { get; set; }
+        public Rectangle Box { get; set; }
         public Color BlockColor { get; set; }
         public Color BorderColor { get; set; }
         public Color IOHoverColor { get; set; }
@@ -196,16 +196,15 @@ namespace LogiX.Circuits.Drawables
 
         public virtual void Draw(Vector2 mousePosInWorld)
         {
-            Box = new System.Drawing.RectangleF(Position.X, Position.Y, Size.X, Size.Y);
-            Rectangle rec = new Rectangle(Position.X, Position.Y, Size.X, Size.Y);
-            Raylib.DrawRectanglePro(rec, Vector2.Zero, 0f, BlockColor);
+            Box = new Rectangle(Position.X, Position.Y, Size.X, Size.Y);
+            Raylib.DrawRectanglePro(Box, Vector2.Zero, 0f, BlockColor);
             DrawInputs(mousePosInWorld);
             DrawOutputs(mousePosInWorld);
 
             Vector2 middle = Position + Size / 2f;
             Vector2 textPos = middle - TextSize / 2f;
             Raylib.DrawTextEx(Raylib.GetFontDefault(), Text, new Vector2((int)textPos.X, (int)textPos.Y), TEXT_SIZE, 1f, BorderColor);
-            Raylib.DrawRectangleLinesEx(rec, 1, BorderColor);
+            Raylib.DrawRectangleLinesEx(Box, 1, BorderColor);
         }
 
         public void DrawSelected()
