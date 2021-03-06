@@ -88,5 +88,11 @@ namespace LogiX.Assets
             a.Name = name;
             LoadedAssets.Add(name, a);
         }
+
+        public static void RemoveAsset(string name)
+        {
+            if(LoadedAssets.ContainsKey(name))
+                LoadedAssets.Remove(name);
+        }
     }
 }

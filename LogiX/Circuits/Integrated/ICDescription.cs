@@ -24,6 +24,14 @@ namespace LogiX.Circuits.Integrated
 
         }
 
+        public static bool ValidateComponents(List<DrawableComponent> components)
+        {
+            if (components.Count < 1)
+                return false;
+
+            return GenerateDescription(components) != null;
+        }
+
         public ICDescription(List<DrawableComponent> components)
         {
             this.Descriptions = GenerateDescription(components);
@@ -42,7 +50,7 @@ namespace LogiX.Circuits.Integrated
             return count;
         }
 
-        private List<ICComponentDescription> GenerateDescription(List<DrawableComponent> comps)
+        private static List<ICComponentDescription> GenerateDescription(List<DrawableComponent> comps)
         {
             List<ICComponentDescription> llicc = new List<ICComponentDescription>();
 
@@ -74,7 +82,12 @@ namespace LogiX.Circuits.Integrated
                 {
                     foreach (DrawableWire cw in co.Signals)
                     {
-                        ICConnectionDescription iccd = new ICConnectionDescription(comps.IndexOf(cw.To), cw.FromIndex, cw.ToIndex);
+                        int indexOf = comps.IndexOf(cw.To);
+                        if(indexOf == -1)
+                        {
+                            return null;
+                        }
+                        ICConnectionDescription iccd = new ICConnectionDescription(indexOf, cw.FromIndex, cw.ToIndex);
                         to.Add(iccd);
                     }
                 }
@@ -82,10 +95,16 @@ namespace LogiX.Circuits.Integrated
                 ICComponentDescription icccc = new ICComponentDescription(type, to);
                 if(comps[i] is DrawableCircuitLamp)
                 {
+                    if (((DrawableCircuitLamp)comps[i]).ID == "")
+                        return null;
+
                     icccc.SetID(((DrawableCircuitLamp)comps[i]).ID);
                 }
                 if (comps[i] is DrawableCircuitSwitch)
                 {
+                    if (((DrawableCircuitSwitch)comps[i]).ID == "")
+                        return null;
+
                     icccc.SetID(((DrawableCircuitSwitch)comps[i]).ID);
                 }
 
@@ -161,6 +180,19 @@ namespace LogiX.Circuits.Integrated
                 sw.Write(JsonConvert.SerializeObject(this, Formatting.Indented));
             }
             AssetManager.AddAsset(name, this);
+        }
+
+        public bool DeleteFile()
+        {
+            string file = Utility.ASSETS_DIR + @$"/{base.Name}.lxic";
+
+            if (File.Exists(file))
+            {
+                File.Delete(file);
+                
+                return true;
+            }
+            return false;
         }
     }
 }

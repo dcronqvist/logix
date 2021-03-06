@@ -4,6 +4,7 @@ using LogiX.Utils;
 using Raylib_cs;
 using System;
 using System.Collections.Generic;
+using System.Drawing;
 using System.Linq;
 using System.Numerics;
 using System.Text;
@@ -41,6 +42,17 @@ namespace LogiX.Simulation
         {
             if(AllWires.Contains(wire))
                 AllWires.Remove(wire);
+        }
+
+        public void SelectComponentsInRectangle(RectangleF rec)
+        {
+            foreach(DrawableComponent dc in AllComponents)
+            {
+                if (dc.Box.IntersectsWith(rec))
+                {
+                    AddSelectedComponent(dc);
+                }
+            }
         }
 
         public void AddSelectedComponent(DrawableComponent dc)
@@ -155,14 +167,14 @@ namespace LogiX.Simulation
 
         public void Render(Vector2 mousePosInWorld)
         {
-            foreach (DrawableComponent dc in AllComponents)
-            {
-                dc.Draw(mousePosInWorld);
-            }
-
             foreach(DrawableWire wire in AllWires)
             {
                 wire.Draw();
+            }
+
+            foreach (DrawableComponent dc in AllComponents)
+            {
+                dc.Draw(mousePosInWorld);
             }
             
             foreach(DrawableComponent dc in SelectedComponents)
