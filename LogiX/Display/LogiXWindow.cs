@@ -42,6 +42,11 @@ namespace LogiX.Display
         // OutputToInput
         Tuple<int, DrawableComponent> tempOutput;
 
+        // Creating new IC
+        DrawableComponent[] icInputs;
+        DrawableComponent[] icOutputs;
+        DrawableComponent[] theRest;
+
         // World camera
         Camera2D cam;
 
@@ -67,6 +72,7 @@ namespace LogiX.Display
         bool _makingIc;
         string newIcName = "";
         bool yes = true;
+        string[] arr = { "dani", "saga", "carl", "benji" };
 
         public LogiXWindow() : base(new Vector2(1280, 720), "LogiX")
         {
@@ -568,18 +574,71 @@ namespace LogiX.Display
             if (_makingIc)
             {
                 ImGui.OpenPopup("Create Integrated Circuit");
+
+                if (icInputs == null)
+                {
+                    icInputs = sim.SelectedComponents.Where(x => x.GetType() == typeof(DrawableCircuitSwitch)).ToArray();
+                    icOutputs = sim.SelectedComponents.Where(x => x.GetType() == typeof(DrawableCircuitLamp)).ToArray();
+                    theRest = sim.SelectedComponents.Where(x => x.GetType() != typeof(DrawableCircuitLamp) && x.GetType() != typeof(DrawableCircuitSwitch)).ToArray();
+                }
             }
 
             //ImGui.SetNextWindowPos(WindowSize / 2f, ImGuiCond.Appearing, new Vector2(0.5f, 0.5f));
-            if (ImGui.BeginPopupModal("Create Integrated Circuit", ref yes, ImGuiWindowFlags.AlwaysAutoResize))
+            if (ImGui.BeginPopupModal("Create Integrated Circuit", ref yes, ImGuiWindowFlags.AlwaysAutoResize | ImGuiWindowFlags.NoMove | ImGuiWindowFlags.NoSavedSettings | ImGuiWindowFlags.NoTitleBar))
             {
                 ImGui.InputText("Name", ref newIcName, 18);
+                ImGui.Columns(2);
+                ImGui.Text("Inputs");
+                ImGui.NextColumn();
+                ImGui.Text("Outputs");
+                ImGui.Columns(1);
+                ImGui.Columns(2, "IOs");
+                ImGui.Separator();
 
+                for (int n = 0; n < icInputs.Length; n++)
+                {
+                    DrawableCircuitSwitch item = (DrawableCircuitSwitch)icInputs[n];
+                    ImGui.Selectable(item.ID);
+
+                    if (ImGui.IsItemActive() && !ImGui.IsItemHovered())
+                    {
+                        int n_next = n + (ImGui.GetMouseDragDelta(0).Y < 0 ? -1 : 1);
+                        if (n_next >= 0 && n_next < icInputs.Length)
+                        {
+                            icInputs[n] = icInputs[n_next];
+                            icInputs[n_next] = item;
+                            ImGui.ResetMouseDragDelta();
+                        }
+                    }
+                }
+
+                ImGui.NextColumn();
+
+                for (int n = 0; n < icOutputs.Length; n++)
+                {
+                    DrawableCircuitLamp item = (DrawableCircuitLamp)icOutputs[n];
+                    ImGui.Selectable(item.ID);
+
+                    if (ImGui.IsItemActive() && !ImGui.IsItemHovered())
+                    {
+                        int n_next = n + (ImGui.GetMouseDragDelta(0).Y < 0 ? -1 : 1);
+                        if (n_next >= 0 && n_next < icOutputs.Length)
+                        {
+                            icOutputs[n] = icOutputs[n_next];
+                            icOutputs[n_next] = item;
+                            ImGui.ResetMouseDragDelta();
+                        }
+                    }
+                }
+
+                ImGui.NextColumn();
+                ImGui.Columns(1);
                 ImGui.Separator();
 
                 if (ImGui.Button("Close", new Vector2(120, 0)))
                 {
                     _makingIc = false;
+                    icInputs = null;
                     ImGui.CloseCurrentPopup();
                 }
 
@@ -589,11 +648,16 @@ namespace LogiX.Display
                 {
                     if (ICDescription.ValidateComponents(sim.SelectedComponents))
                     {
-                        ICDescription icd = new ICDescription(sim.SelectedComponents);
+                        List<DrawableComponent> comps = icInputs.ToList();
+                        comps.AddRange(icOutputs);
+                        comps.AddRange(theRest);
+
+                        ICDescription icd = new ICDescription(comps);
                         icd.SaveToFile(newIcName);
                         sim.AddComponent(new DrawableIC(new Vector2(100, 100), newIcName, icd));
                         newIcName = "";
                         _makingIc = false;
+                        icInputs = null;
                         ImGui.CloseCurrentPopup();
                     }
                     else
