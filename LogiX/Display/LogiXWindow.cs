@@ -76,7 +76,7 @@ namespace LogiX.Display
         bool _makingIc;
         string newIcName = "";
         bool yes = true;
-        string[] arr = { "dani", "saga", "carl", "benji" };
+        bool editingSettings = false;
 
         public LogiXWindow() : base(new Vector2(1280, 720), "LogiX")
         {
@@ -414,7 +414,10 @@ namespace LogiX.Display
             // File thing
             if (ImGui.BeginMenu("File"))
             {
-                ImGui.MenuItem("Empty for now");
+                if (ImGui.MenuItem("Settings"))
+                {
+                    editingSettings = true;
+                }
                 ImGui.EndMenu();
             }
             
@@ -472,7 +475,7 @@ namespace LogiX.Display
                 ImGui.Begin("Components", ImGuiWindowFlags.AlwaysAutoResize);
 
                 ImGui.Text("Input/Output");
-                Vector2 buttonSize = new Vector2(80, 20);
+                Vector2 buttonSize = Utility.BUTTON_DEFAULT_SIZE;
 
                 ImGui.Button("SWITCH", buttonSize);
                 if (ImGui.IsItemClicked())
@@ -588,7 +591,7 @@ namespace LogiX.Display
                 ImGui.TextWrapped("Make sure you've named all IOs and selected all components!");
                 ImGui.Separator();
 
-                if (ImGui.Button("Close"))
+                if (ImGui.Button("Close", Utility.BUTTON_DEFAULT_SIZE))
                 {
                     ImGui.CloseCurrentPopup();
                 }
@@ -649,7 +652,7 @@ namespace LogiX.Display
                 ImGui.Columns(1);
                 ImGui.Separator();
 
-                if (ImGui.Button("Close", new Vector2(120, 0)))
+                if (ImGui.Button("Close", Utility.BUTTON_DEFAULT_SIZE))
                 {
                     _makingIc = false;
                     icInputs = null;
@@ -658,7 +661,7 @@ namespace LogiX.Display
 
                 ImGui.SameLine();
 
-                if (ImGui.Button("Create", new Vector2(120, 0)))
+                if (ImGui.Button("Create", Utility.BUTTON_DEFAULT_SIZE))
                 {
                     List<DrawableComponent> comps = icInputs.ToList();
                     comps.AddRange(icOutputs);
@@ -702,6 +705,47 @@ namespace LogiX.Display
             }
 
             #endregion
+
+            #region WINDOWS WINDOW
+
+            if (editingSettings)
+            {
+                if (ImGui.Begin("Settings", ImGuiWindowFlags.AlwaysAutoResize))
+                {
+                    if (ImGui.BeginTabBar("Settings"))
+                    {
+                        if (ImGui.BeginTabItem("Appearance"))
+                        {
+                            // IO Vertical distance
+                            float vioDist = float.Parse(SettingManager.GetSetting("io-vertical-distance", "16"));
+                            ImGui.SliderFloat("IO Vertical Distance", ref vioDist, 1, 40, "%.1f");
+                            if (ImGui.BeginPopupContextItem("io-v-dist"))
+                            {
+                                if(ImGui.Selectable("Set to default (14)")) { vioDist = 14f; }
+                                ImGui.InputFloat("", ref vioDist, 0.1f, 1f, "%.1f");
+                                ImGui.EndPopup();
+                            }
+                            SettingManager.SetSetting("io-vertical-distance", vioDist.ToString());
+                        }
+
+                        ImGui.EndTabBar();
+                    }
+
+                    if (ImGui.Button("Save", Utility.BUTTON_DEFAULT_SIZE))
+                    {
+                        SettingManager.SaveSettings();
+                        editingSettings = false;
+                    }
+                    ImGui.SameLine();
+                    if (ImGui.Button("Close", Utility.BUTTON_DEFAULT_SIZE))
+                    {
+                        editingSettings = false;
+                    }
+                    ImGui.End();
+                }
+            }
+
+            #endregion  
         }
     }
 }

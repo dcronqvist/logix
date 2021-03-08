@@ -10,12 +10,6 @@ namespace LogiX.Circuits.Drawables
 {
     abstract class DrawableComponent : CircuitComponent
     {
-        const float DIST_BETWEEN_INPUTS = 16;
-        const float DIST_BLOCK_IO = 10;
-        const float IO_RADIUS = 6;
-        const int TEXT_SIZE = 10;
-        const int UNDERTEXT_SIZE = 10;
-
         public Vector2 Position { get; set; }
         public Vector2 MiddlePosition { get; set; }
         public Vector2 Size { get; set; }
@@ -40,8 +34,15 @@ namespace LogiX.Circuits.Drawables
 
         public void CalculateOffsets()
         {
+            CalculateSizes();
+            this.Position = Position - Size / 2;
+            this.MiddlePosition = Position + Size / 2;
+        }
+
+        public void CalculateSizes()
+        {
             // Measure text size.
-            this.TextSize = Raylib.MeasureTextEx(Raylib.GetFontDefault(), Text, TEXT_SIZE, 1f);
+            this.TextSize = Raylib.MeasureTextEx(Raylib.GetFontDefault(), Text, Utility.TEXT_SIZE, 1f);
 
             // Get longest input id & longest output id, add it.
             int maxInp = 0;
@@ -49,21 +50,17 @@ namespace LogiX.Circuits.Drawables
             for (int i = 0; i < Inputs.Count; i++)
             {
                 string inp = GetInputID(i);
-                int x = Raylib.MeasureText(inp, TEXT_SIZE);
+                int x = Raylib.MeasureText(inp, Utility.TEXT_SIZE);
                 maxInp = Math.Max(maxInp, x);
             }
             for (int i = 0; i < Outputs.Count; i++)
             {
                 string outp = GetOutputID(i);
-                int y = Raylib.MeasureText(outp, TEXT_SIZE);
+                int y = Raylib.MeasureText(outp, Utility.TEXT_SIZE);
                 maxOutp = Math.Max(maxOutp, y);
             }
 
-            if (this.Size == Vector2.Zero)
-                this.Size = new Vector2(TextSize.X + (15 * (Math.Sign(Math.Max(maxInp, maxOutp)) + 1)) + Math.Max(maxInp, maxOutp) * 2, (Math.Max(this.Inputs.Count, this.Outputs.Count)) * DIST_BETWEEN_INPUTS);
-
-            this.Position = Position - Size / 2;
-            this.MiddlePosition = Position + Size / 2;
+            this.Size = new Vector2(TextSize.X + (15 * (Math.Sign(Math.Max(maxInp, maxOutp)) + 1)) + Math.Max(maxInp, maxOutp) * 2, (Math.Max(this.Inputs.Count, this.Outputs.Count)) * Utility.DIST_BETWEEN_INPUTS);
         }
 
         public virtual string GetInputID(int index)
@@ -78,9 +75,9 @@ namespace LogiX.Circuits.Drawables
         public float GetIOYPosition(int ios, int index)
         {
             // height/2 - ((max(in, out) - 1) * dist_between)/2
-            float start = Size.Y / 2 - ((ios - 1) * DIST_BETWEEN_INPUTS) / 2;
+            float start = Size.Y / 2 - ((ios - 1) * Utility.DIST_BETWEEN_INPUTS) / 2;
 
-            float pos = start + index * DIST_BETWEEN_INPUTS;
+            float pos = start + index * Utility.DIST_BETWEEN_INPUTS;
 
             return pos;
         }
@@ -90,7 +87,7 @@ namespace LogiX.Circuits.Drawables
             Vector2 basePos = Position;
             int inputs = Inputs.Count;
 
-            return basePos + new Vector2(-DIST_BLOCK_IO, GetIOYPosition(inputs, index));
+            return basePos + new Vector2(-Utility.DIST_BLOCK_IO, GetIOYPosition(inputs, index));
         }
 
         public Vector2 GetOutputPosition(int index)
@@ -98,7 +95,7 @@ namespace LogiX.Circuits.Drawables
             Vector2 basePos = Position;
             int outputs = Outputs.Count;
 
-            return basePos + new Vector2(Size.X + DIST_BLOCK_IO, GetIOYPosition(outputs, index));
+            return basePos + new Vector2(Size.X + Utility.DIST_BLOCK_IO, GetIOYPosition(outputs, index));
         }
 
         public int GetInputIndexFromPosition(Vector2 pos)
@@ -106,7 +103,7 @@ namespace LogiX.Circuits.Drawables
             for (int i = 0; i < Inputs.Count; i++)
             {
                 Vector2 inputPos = GetInputPosition(i);
-                if((pos - inputPos).Length() < IO_RADIUS)
+                if((pos - inputPos).Length() < Utility.IO_RADIUS)
                 {
                     return i;
                 }
@@ -119,7 +116,7 @@ namespace LogiX.Circuits.Drawables
             for (int i = 0; i < Outputs.Count; i++)
             {
                 Vector2 outputPos = GetOutputPosition(i);
-                if ((pos - outputPos).Length() < IO_RADIUS)
+                if ((pos - outputPos).Length() < Utility.IO_RADIUS)
                 {
                     return i;
                 }
@@ -144,7 +141,7 @@ namespace LogiX.Circuits.Drawables
 
                 Color col = Inputs[i].Value == LogicValue.NAN ? Utility.COLOR_NAN : (Inputs[i].Value == LogicValue.HIGH ? Utility.COLOR_ON : Utility.COLOR_OFF);
 
-                if ((mousePosInWorld - pos).Length() < IO_RADIUS)
+                if ((mousePosInWorld - pos).Length() < Utility.IO_RADIUS)
                 {
                     col = IOHoverColor;
                 }
@@ -155,14 +152,14 @@ namespace LogiX.Circuits.Drawables
                 Vector2[] points = new Vector2[] { startPos, pos };
                 Raylib.DrawLineStrip(points, points.Length, BorderColor);
 
-                Raylib.DrawCircleV(pos, IO_RADIUS, col);
+                Raylib.DrawCircleV(pos, Utility.IO_RADIUS, col);
 
                 string s = GetInputID(i);
                 if(s != null)
                 {
-                    Vector2 inputIdSize = Raylib.MeasureTextEx(Raylib.GetFontDefault(), s, TEXT_SIZE, 1f);
+                    Vector2 inputIdSize = Raylib.MeasureTextEx(Raylib.GetFontDefault(), s, Utility.TEXT_SIZE, 1f);
 
-                    Raylib.DrawTextEx(Raylib.GetFontDefault(), s, new Vector2(pos.X + DIST_BLOCK_IO + 3, pos.Y - inputIdSize.Y / 2f), TEXT_SIZE, 1f, BorderColor);
+                    Raylib.DrawTextEx(Raylib.GetFontDefault(), s, new Vector2(pos.X + Utility.DIST_BLOCK_IO + 3, pos.Y - inputIdSize.Y / 2f), Utility.TEXT_SIZE, 1f, BorderColor);
                 }
             }
         }
@@ -175,7 +172,7 @@ namespace LogiX.Circuits.Drawables
 
                 Color col = Outputs[i].Value == LogicValue.NAN ? Utility.COLOR_NAN : (Outputs[i].Value == LogicValue.HIGH ? Utility.COLOR_ON : Utility.COLOR_OFF);
 
-                if ((mousePosInWorld - pos).Length() < IO_RADIUS)
+                if ((mousePosInWorld - pos).Length() < Utility.IO_RADIUS)
                 {
                     col = IOHoverColor;
                 }
@@ -186,20 +183,21 @@ namespace LogiX.Circuits.Drawables
                 Vector2[] points = new Vector2[] { startPos, pos };
                 Raylib.DrawLineStrip(points, points.Length, BorderColor);
 
-                Raylib.DrawCircleV(pos, IO_RADIUS, col);
+                Raylib.DrawCircleV(pos, Utility.IO_RADIUS, col);
 
                 string s = GetOutputID(i);
                 if (s != null)
                 {
-                    Vector2 inputIdSize = Raylib.MeasureTextEx(Raylib.GetFontDefault(), s, TEXT_SIZE, 1f);
+                    Vector2 inputIdSize = Raylib.MeasureTextEx(Raylib.GetFontDefault(), s, Utility.TEXT_SIZE, 1f);
 
-                    Raylib.DrawTextEx(Raylib.GetFontDefault(), s, new Vector2(pos.X - inputIdSize.X - 3 - DIST_BLOCK_IO, pos.Y - inputIdSize.Y / 2f), TEXT_SIZE, 1f, BorderColor);
+                    Raylib.DrawTextEx(Raylib.GetFontDefault(), s, new Vector2(pos.X - inputIdSize.X - 3 - Utility.DIST_BLOCK_IO, pos.Y - inputIdSize.Y / 2f), Utility.TEXT_SIZE, 1f, BorderColor);
                 }
             }
         }
 
         public virtual void Draw(Vector2 mousePosInWorld)
         {
+            CalculateSizes();
             Box = new Rectangle(Position.X, Position.Y, Size.X, Size.Y);
             Raylib.DrawRectanglePro(Box, Vector2.Zero, 0f, BlockColor);
             DrawInputs(mousePosInWorld);
@@ -207,7 +205,7 @@ namespace LogiX.Circuits.Drawables
 
             Vector2 middle = Position + Size / 2f;
             Vector2 textPos = middle - TextSize / 2f;
-            Raylib.DrawTextEx(Raylib.GetFontDefault(), Text, new Vector2(textPos.X, textPos.Y), TEXT_SIZE, 1f, BorderColor);
+            Raylib.DrawTextEx(Raylib.GetFontDefault(), Text, new Vector2(textPos.X, textPos.Y), Utility.TEXT_SIZE, 1f, BorderColor);
 
             Vector2 topLeft = new Vector2(Box.x, Box.y);
             Vector2 topRight = new Vector2(Box.x + Box.width, Box.y);
@@ -220,9 +218,15 @@ namespace LogiX.Circuits.Drawables
 
         public void DrawSelected()
         {
-            int offset = 3;
-            Rectangle selectionRec = new Rectangle(Position.X - offset, Position.Y - offset, (Size.X + offset * 2), (Size.Y + offset * 2));
-            Raylib.DrawRectangleLinesEx(selectionRec, 2, Color.BLUE);
+            float offset = 3f;
+            float thick = 2f;
+
+            Vector2 topLeft = new Vector2(Box.x - offset, Box.y - offset);
+            Vector2 topRight = new Vector2(Box.x + Box.width + offset, Box.y - offset);
+            Vector2 bottomLeft = new Vector2(Box.x - offset, Box.y + Box.height + offset);
+            Vector2 bottomRight = new Vector2(Box.x + Box.width + offset, Box.y + Box.height + offset);
+
+            Utility.DrawRectangleLines(topLeft, topRight, bottomRight, bottomLeft, thick, Utility.COLOR_SELECTED_DEFAULT);
         }
     }
 }

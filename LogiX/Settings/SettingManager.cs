@@ -11,7 +11,7 @@ namespace LogiX.Settings
 {
     static class SettingManager
     {
-        private static Dictionary<string, string> settings;
+        public static Dictionary<string, string> settings;
 
         public static bool SettingsFileExists()
         {
@@ -105,15 +105,22 @@ namespace LogiX.Settings
 
         public static string GetSetting(string key, string def)
         {
-            if(settings.ContainsKey(key))
-                return settings[key];
-            return def;
+            try
+            {
+                if(settings.ContainsKey(key))
+                    return settings[key];
+                return def;
+            }
+            catch(Exception ex)
+            {
+                LogManager.AddEntry($"Failed to retrieve setting '{key}': {ex.Message}");
+                return def;
+            }
         }
 
         public static void SetSetting(string key, string value)
         {
             settings[key] = value;
-            LogManager.AddEntry($"Setting {key} now has value {value}");
         }
 
         public static void SaveSettings()
