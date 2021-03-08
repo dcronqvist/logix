@@ -1,4 +1,5 @@
 ﻿using LogiX.Circuits.Logic;
+using LogiX.Utils;
 using System;
 using System.Collections.Generic;
 using System.Numerics;
@@ -10,7 +11,7 @@ namespace LogiX.Circuits.Drawables
     {
         private IGateLogic logic;
 
-        public DrawableLogicGate(Vector2 position, string text, IGateLogic logic) : base(position, text, 2, 1)
+        public DrawableLogicGate(Vector2 position, string text, IGateLogic logic) : base(position, text, logic.GetExpectedInputAmount(), 1)
         {
             this.logic = logic;
             CalculateOffsets();
@@ -18,7 +19,7 @@ namespace LogiX.Circuits.Drawables
 
         protected override void PerformLogic()
         {
-            this.Outputs[0].Value = logic.GetOutput(Inputs[0].Value, Inputs[1].Value);
+            this.Outputs[0].Value = logic.GetOutput(Utility.GetLogicValues(Inputs));
         }
 
         public string GetLogicName()

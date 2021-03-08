@@ -30,8 +30,8 @@ namespace LogiX.Circuits.Drawables
         public DrawableComponent(Vector2 position, string text, int inputs, int outputs) : base(inputs, outputs)
         {
             this.BlockColor = Utility.COLOR_BLOCK_DEFAULT;
-            this.BorderColor = Color.BLACK;
-            this.IOHoverColor = Color.SKYBLUE;
+            this.BorderColor = Utility.COLOR_BLOCK_BORDER_DEFAULT;
+            this.IOHoverColor = Utility.COLOR_IO_HOVER_DEFAULT;
 
             // Measure text size.
             this.Text = text;
@@ -150,17 +150,19 @@ namespace LogiX.Circuits.Drawables
                 }
 
                 // Line to IO ball
-                Raylib.DrawLine((int)Position.X, (int)pos.Y, (int)(Position.X - DIST_BLOCK_IO), (int)pos.Y, BorderColor);
+                Vector2 startPos = new Vector2(Position.X, pos.Y);
 
-                Raylib.DrawCircle((int)pos.X, (int)pos.Y, IO_RADIUS, col);
-                Raylib.DrawCircleLines((int)pos.X, (int)pos.Y, IO_RADIUS, BorderColor);
+                Vector2[] points = new Vector2[] { startPos, pos };
+                Raylib.DrawLineStrip(points, points.Length, BorderColor);
+
+                Raylib.DrawCircleV(pos, IO_RADIUS, col);
 
                 string s = GetInputID(i);
                 if(s != null)
                 {
                     Vector2 inputIdSize = Raylib.MeasureTextEx(Raylib.GetFontDefault(), s, TEXT_SIZE, 1f);
 
-                    Raylib.DrawText(s, (int)(pos.X + 5 + DIST_BLOCK_IO), (int)(pos.Y - inputIdSize.Y / 2f), TEXT_SIZE, BorderColor);
+                    Raylib.DrawTextEx(Raylib.GetFontDefault(), s, new Vector2(pos.X + DIST_BLOCK_IO + 3, pos.Y - inputIdSize.Y / 2f), TEXT_SIZE, 1f, BorderColor);
                 }
             }
         }
@@ -179,17 +181,19 @@ namespace LogiX.Circuits.Drawables
                 }
 
                 // Line to IO ball
-                Raylib.DrawLine((int)(Position.X + Size.X), (int)pos.Y, (int)(Position.X + Size.X + DIST_BLOCK_IO), (int)pos.Y, BorderColor);
+                Vector2 startPos = new Vector2(Position.X + Box.width, pos.Y);
 
-                Raylib.DrawCircle((int)pos.X, (int)pos.Y, IO_RADIUS, col);
-                Raylib.DrawCircleLines((int)pos.X, (int)pos.Y, IO_RADIUS, BorderColor);
+                Vector2[] points = new Vector2[] { startPos, pos };
+                Raylib.DrawLineStrip(points, points.Length, BorderColor);
+
+                Raylib.DrawCircleV(pos, IO_RADIUS, col);
 
                 string s = GetOutputID(i);
                 if (s != null)
                 {
                     Vector2 inputIdSize = Raylib.MeasureTextEx(Raylib.GetFontDefault(), s, TEXT_SIZE, 1f);
 
-                    Raylib.DrawText(s, (int)(pos.X - 5 - DIST_BLOCK_IO - inputIdSize.X), (int)(pos.Y - inputIdSize.Y / 2f), TEXT_SIZE, BorderColor);
+                    Raylib.DrawTextEx(Raylib.GetFontDefault(), s, new Vector2(pos.X - inputIdSize.X - 3 - DIST_BLOCK_IO, pos.Y - inputIdSize.Y / 2f), TEXT_SIZE, 1f, BorderColor);
                 }
             }
         }
@@ -203,14 +207,21 @@ namespace LogiX.Circuits.Drawables
 
             Vector2 middle = Position + Size / 2f;
             Vector2 textPos = middle - TextSize / 2f;
-            Raylib.DrawTextEx(Raylib.GetFontDefault(), Text, new Vector2((int)textPos.X, (int)textPos.Y), TEXT_SIZE, 1f, BorderColor);
-            Raylib.DrawRectangleLinesEx(Box, 1, BorderColor);
+            Raylib.DrawTextEx(Raylib.GetFontDefault(), Text, new Vector2(textPos.X, textPos.Y), TEXT_SIZE, 1f, BorderColor);
+
+            Vector2 topLeft = new Vector2(Box.x, Box.y);
+            Vector2 topRight = new Vector2(Box.x + Box.width, Box.y);
+            Vector2 bottomLeft = new Vector2(Box.x, Box.y + Box.height);
+            Vector2 bottomRight = new Vector2(Box.x + Box.width, Box.y + Box.height);
+            Vector2[] points = new Vector2[] { topLeft, topRight, bottomRight, bottomLeft, topLeft };
+
+            Raylib.DrawLineStrip(points, points.Length, BorderColor);
         }
 
         public void DrawSelected()
         {
             int offset = 3;
-            Rectangle selectionRec = new Rectangle((int)Position.X - offset, (int)Position.Y - offset, (int)(Size.X + offset * 2), (int)(Size.Y + offset * 2));
+            Rectangle selectionRec = new Rectangle(Position.X - offset, Position.Y - offset, (Size.X + offset * 2), (Size.Y + offset * 2));
             Raylib.DrawRectangleLinesEx(selectionRec, 2, Color.BLUE);
         }
     }

@@ -6,6 +6,8 @@ namespace LogiX.Circuits.Logic
 {
     interface IGateLogic
     {
-        public LogicValue GetOutput(LogicValue a, LogicValue b);
+        public int GetExpectedInputAmount();
+
+        public LogicValue GetOutput(LogicValue[] inputs);
     }
 }

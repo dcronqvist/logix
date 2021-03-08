@@ -2,6 +2,8 @@
 using System;
 using System.Collections.Generic;
 using System.Text;
+using System.Linq;
+using LogiX.Utils;
 
 namespace LogiX.Circuits.Minimals
 {
@@ -9,14 +11,15 @@ namespace LogiX.Circuits.Minimals
     {
         private IGateLogic logic;
 
-        public MinimalLogicGate(IGateLogic logic) : base(2, 1)
+        public MinimalLogicGate(IGateLogic logic) : base(logic.GetExpectedInputAmount(), 1)
         {
             this.logic = logic;
         }
 
         protected override void PerformLogic()
         {
-            this.Outputs[0].Value = logic.GetOutput(Inputs[0].Value, Inputs[1].Value);
+            LogicValue[] inputs = Utility.GetLogicValues(Inputs);
+            this.Outputs[0].Value = logic.GetOutput(inputs);
         }
     }
 }

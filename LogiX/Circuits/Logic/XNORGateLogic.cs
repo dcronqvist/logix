@@ -4,7 +4,7 @@ using System.Text;
 
 namespace LogiX.Circuits.Logic
 {
-    class XORGateLogic : IGateLogic
+    class XNORGateLogic : IGateLogic
     {
         public int GetExpectedInputAmount()
         {
@@ -21,13 +21,13 @@ namespace LogiX.Circuits.Logic
                 return LogicValue.NAN;
             }
 
-            if((a == LogicValue.HIGH && b == LogicValue.LOW) || (a == LogicValue.LOW && b == LogicValue.HIGH))
+            if ((a == LogicValue.HIGH && b == LogicValue.LOW) || (a == LogicValue.LOW && b == LogicValue.HIGH))
             {
-                return LogicValue.HIGH;
+                return LogicValue.LOW;
             }
             else
             {
-                return LogicValue.LOW;
+                return LogicValue.HIGH;
             }
         }
     }

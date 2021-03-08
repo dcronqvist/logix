@@ -175,7 +175,8 @@ namespace LogiX.Circuits.Integrated
         public void SaveToFile(string name)
         {
             base.Name = name;
-            using(StreamWriter sw = new StreamWriter(Utility.ASSETS_DIR + @$"/{name}.lxic"))
+            string filePath = Utility.CreateICFilePath(name);
+            using(StreamWriter sw = new StreamWriter(filePath))
             {
                 sw.Write(JsonConvert.SerializeObject(this, Formatting.Indented));
             }
@@ -184,7 +185,7 @@ namespace LogiX.Circuits.Integrated
 
         public bool DeleteFile()
         {
-            string file = Utility.ASSETS_DIR + @$"/{base.Name}.lxic";
+            string file = Utility.CreateICFilePath(base.Name);
 
             if (File.Exists(file))
             {
