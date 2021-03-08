@@ -47,15 +47,27 @@ namespace LogiX.Utils
         }
 
         // Drawable components
-        public static float DIST_BETWEEN_INPUTS
+        public static float IO_V_DIST
         {
             get
             {
-                return float.Parse(SettingManager.GetSetting("io-vertical-distance", "16"));
+                return float.Parse(SettingManager.GetSetting("io-v-dist", "14"));
             }
         }
-        public static float DIST_BLOCK_IO = 10;
-        public static float IO_RADIUS = 6;
+        public static float IO_H_DIST
+        {
+            get
+            {
+                return float.Parse(SettingManager.GetSetting("io-h-dist", "10"));
+            }
+        }
+        public static float IO_SIZE
+        {
+            get
+            {
+                return float.Parse(SettingManager.GetSetting("io-size", "6"));
+            }
+        }
         public static int TEXT_SIZE = 10;
 
         // Vectoring & positions
@@ -77,6 +89,19 @@ namespace LogiX.Utils
                 ImGui.PopTextWrapPos();
                 ImGui.EndTooltip();
             }
+        }
+        public static void GuiSettingFloatSlider(string label, string setting, float def, float min, float max)
+        {
+            float value = float.Parse(SettingManager.GetSetting(setting, def.ToString()));
+            ImGui.SliderFloat(label, ref value, min, max, "%.1f");
+            if (ImGui.BeginPopupContextItem(setting))
+            {
+                if (ImGui.Selectable($"Set to default ({def})")) { value = def; }
+                ImGui.SetNextItemWidth(150);
+                ImGui.InputFloat("", ref value, 0.1f, 1f, "%.1f");
+                ImGui.EndPopup();
+            }
+            SettingManager.SetSetting(setting, value.ToString());
         }
 
         // Logic stuff

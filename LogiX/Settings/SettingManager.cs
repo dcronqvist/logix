@@ -46,6 +46,9 @@ namespace LogiX.Settings
                 { "window-width", "1280" },
                 { "window-height", "720" },
                 { "grid-size", "250" },
+                { "io-v-dist", "14" },
+                { "io-h-dist", "10" },
+                { "io-size", "6" }
             };
         }
         

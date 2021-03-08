@@ -717,15 +717,13 @@ namespace LogiX.Display
                         if (ImGui.BeginTabItem("Appearance"))
                         {
                             // IO Vertical distance
-                            float vioDist = float.Parse(SettingManager.GetSetting("io-vertical-distance", "16"));
-                            ImGui.SliderFloat("IO Vertical Distance", ref vioDist, 1, 40, "%.1f");
-                            if (ImGui.BeginPopupContextItem("io-v-dist"))
-                            {
-                                if(ImGui.Selectable("Set to default (14)")) { vioDist = 14f; }
-                                ImGui.InputFloat("", ref vioDist, 0.1f, 1f, "%.1f");
-                                ImGui.EndPopup();
-                            }
-                            SettingManager.SetSetting("io-vertical-distance", vioDist.ToString());
+                            Utility.GuiSettingFloatSlider("IO Vertical Distance", "io-v-dist", 14f, 1, 50);
+
+                            // IO Horizontal distance
+                            Utility.GuiSettingFloatSlider("IO Horizontal Distance", "io-h-dist", 10f, 1, 50);
+
+                            // IO Size
+                            Utility.GuiSettingFloatSlider("IO Size", "io-size", 6, 1, 20);
                         }
 
                         ImGui.EndTabBar();
