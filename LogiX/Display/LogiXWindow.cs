@@ -4,6 +4,7 @@ using LogiX.Circuits.Drawables;
 using LogiX.Circuits.Integrated;
 using LogiX.Circuits.Logic;
 using LogiX.Logging;
+using LogiX.Projects;
 using LogiX.Settings;
 using LogiX.Simulation;
 using LogiX.UI;
@@ -68,6 +69,7 @@ namespace LogiX.Display
 
         // Creating & dragging new component
         DrawableComponent newComponent;
+        FileDialog fd;
 
         // Controller for ImGui.NET
         ImGUIController controller;
@@ -77,6 +79,7 @@ namespace LogiX.Display
         string newIcName = "";
         bool yes = true;
         bool editingSettings = false;
+        bool icWindowOpen = false;
 
         public LogiXWindow() : base(new Vector2(1280, 720), "LogiX")
         {
@@ -207,13 +210,17 @@ namespace LogiX.Display
 
             // Allow for camera zooming with the mouse wheel.
             #region Mouse Wheel Camera Zoom
-            if (Raylib.GetMouseWheelMove() > 0)
+
+            if (!ImGui.GetIO().WantCaptureMouse)
             {
-                cam.zoom *= 1.05f;
-            }
-            if (Raylib.GetMouseWheelMove() < 0)
-            {
-                cam.zoom *= 1/ 1.05f;
+                if (Raylib.GetMouseWheelMove() > 0)
+                {
+                    cam.zoom *= 1.05f;
+                }
+                if (Raylib.GetMouseWheelMove() < 0)
+                {
+                    cam.zoom *= 1 / 1.05f;
+                }
             }
             #endregion
 
@@ -408,6 +415,7 @@ namespace LogiX.Display
 
         public void SubmitUI()
         {
+            yes = true;
             #region MAIN MENU BAR
             ImGui.BeginMainMenuBar();
 
@@ -418,6 +426,12 @@ namespace LogiX.Display
                 {
                     editingSettings = true;
                 }
+                if (ImGui.MenuItem("FileDialog"))
+                {
+                    fd = new FileDialog(Utility.LOGIX_DIR, "TESTO");
+
+                }
+
                 ImGui.EndMenu();
             }
             
@@ -451,13 +465,9 @@ namespace LogiX.Display
                     Utility.OpenPath(Utility.ASSETS_DIR);
                 }
 
-                List<ICDescription> ics = AssetManager.GetAllAssetsOfType<ICDescription>();
-                foreach(ICDescription ic in ics)
+                if(ImGui.MenuItem("Show Window", "", icWindowOpen))
                 {
-                    if (ImGui.MenuItem(ic.Name))
-                    {
-                        sim.AddComponent(new DrawableIC(new Vector2(100, 100), ic.Name, ic));
-                    }
+                    icWindowOpen = !icWindowOpen;
                 }
 
                 ImGui.EndMenu();
@@ -538,8 +548,60 @@ namespace LogiX.Display
 
             #endregion
 
+            #region IC WINDOW
+
+            if (icWindowOpen)
+            {
+                if (ImGui.Begin("ICs", ImGuiWindowFlags.AlwaysAutoResize))
+                {
+                    List<ICDescription> ics = AssetManager.GetAllAssetsOfType<ICDescription>();
+                    foreach (ICDescription ic in ics)
+                    {
+                        ImGui.Button(ic.Name, Utility.BUTTON_DEFAULT_SIZE);
+                        if (ImGui.IsItemClicked())
+                        {
+                            SetNewComponent(new DrawableIC(GetMousePositionInWorld(), ic.Name, ic));
+                        }
+                        if (ImGui.BeginPopupContextItem())
+                        {
+                            if (ImGui.Button("Delete"))
+                            {
+                                ImGui.OpenPopup("Delete IC");
+                            }
+
+                            ImGui.SetNextWindowPos(WindowSize / 2f, ImGuiCond.Always, new Vector2(0.5f, 0.5f));
+                            if (ImGui.BeginPopupModal("Delete IC", ref yes, ImGuiWindowFlags.AlwaysAutoResize))
+                            {
+                                ImGui.TextWrapped("This will delete the integrated circuit file forever.");
+                                ImGui.Separator();
+                                ImGui.TextWrapped("Are you sure?");
+
+                                if (ImGui.Button("Yes", Utility.BUTTON_DEFAULT_SIZE))
+                                {
+                                    // DElete stuff
+                                    ImGui.CloseCurrentPopup();
+                                }
+                                ImGui.SameLine();
+                                if (ImGui.Button("No", Utility.BUTTON_DEFAULT_SIZE))
+                                {
+                                    ImGui.CloseCurrentPopup();
+                                }
+
+                                ImGui.EndPopup();
+                            }
+
+                            ImGui.EndPopup();
+                        }
+                    }
+
+                    ImGui.End();
+                }
+            }
+
+            #endregion
+
             #region SET ID TO CIRCUIT IO WINDOW       
-            if(sim.SelectedComponents.Count == 1)
+            if (sim.SelectedComponents.Count == 1)
             {
                 if(sim.SelectedComponents[0] is DrawableCircuitSwitch || sim.SelectedComponents[0] is DrawableCircuitLamp)
                 {
@@ -706,7 +768,7 @@ namespace LogiX.Display
 
             #endregion
 
-            #region WINDOWS WINDOW
+            #region SETTINGS WINDOW
 
             if (editingSettings)
             {
@@ -743,7 +805,13 @@ namespace LogiX.Display
                 }
             }
 
-            #endregion  
+            #endregion
+
+            if (fd?.Done() == true)
+            {
+                LogManager.AddEntry($"Done: {fd.CurrentDirectory}");
+                fd = null;
+            }
         }
     }
 }

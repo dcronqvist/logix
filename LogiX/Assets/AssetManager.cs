@@ -17,7 +17,9 @@ namespace LogiX.Assets
         {
             fileExtensionToAssetLoader = new Dictionary<string, IAssetLoader>()
             {
-                { Utility.EXT_IC, new ICDescriptionLoader() }
+                { Utility.EXT_IC, new ICDescriptionLoader() },
+                { Utility.EXT_ICCOLLECTION, new ICCollectionLoader() },
+                { Utility.EXT_PROJ, new LogixProjectLoader() }
             };
 
             LoadedAssets = new Dictionary<string, Asset>();

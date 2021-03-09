@@ -5,6 +5,7 @@ using Raylib_cs;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.IO;
 using System.Linq;
 using System.Numerics;
 using System.Text;
@@ -28,6 +29,7 @@ namespace LogiX.Utils
         // File extensions
         public static string EXT_PROJ = ".lgxproj";
         public static string EXT_IC = ".lgxic";
+        public static string EXT_ICCOLLECTION = ".lgxcoll";
         public static string CreateICFilePath(string icName)
         {
             return ASSETS_DIR + @"/" + icName + EXT_IC;
@@ -128,6 +130,20 @@ namespace LogiX.Utils
             Raylib.DrawLineEx(topRight + new Vector2(0, -thick / 2f), bottomRight + new Vector2(0, thick / 2f), thick, col);
             Raylib.DrawLineEx(bottomRight, bottomLeft, thick, Utility.COLOR_SELECTED_DEFAULT);
             Raylib.DrawLineEx(bottomLeft + new Vector2(0, thick / 2f), topLeft + new Vector2(0, -thick / 2f), thick, col);
+        }
+
+        public static bool TryGetFileInfo(string fileName, out FileInfo realFile)
+        {
+            try
+            {
+                realFile = new FileInfo(fileName);
+                return true;
+            }
+            catch
+            {
+                realFile = null;
+                return false;
+            }
         }
     }
 }
