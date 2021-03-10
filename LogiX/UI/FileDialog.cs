@@ -40,15 +40,39 @@ namespace LogiX.UI
 
         public void Submit()
         {
+            Vector2 windowSize = new Vector2(440, 240);
+            float quickLinks = 0.25f;
+            float entries = 1f - quickLinks;     
+
             if (ImGui.Begin(Title, ImGuiWindowFlags.AlwaysAutoResize))
             {
                 ImGui.Text(CurrentDirectory);
 
-                if (ImGui.BeginChild("fs-entries", new Vector2(400, 200), true))
+                if(ImGui.BeginChild("quicklinks", new Vector2(windowSize.X * quickLinks, windowSize.Y), true))
                 {
+                    ImGui.Text("Quick Access");
+                    ImGui.Separator();
 
+                    ImGui.PushStyleColor(ImGuiCol.Text, new Vector4(0, 1, 1, 1f));
+                    foreach (KeyValuePair<string, string> kvp in Utility.QUICKLINK_DIRS)
+                    {
+                        if (ImGui.Selectable(kvp.Key))
+                        {
+                            ChangeDirectory(kvp.Value);
+                        }
+                    }
+                    ImGui.PopStyleColor();
+
+                    ImGui.EndChild();
+                }
+
+                ImGui.SameLine();
+
+                if (ImGui.BeginChild("fs-entries", new Vector2(windowSize.X * entries, windowSize.Y), true))
+                {
                     if (ImGui.Selectable(".."))
                     {
+                        // .. directory to move backwards.
                         ChangeDirectory(BackOneDirectory(CurrentDirectory));
                     }
 
@@ -56,16 +80,8 @@ namespace LogiX.UI
                     {
                         FileAttributes attr = File.GetAttributes(entry);
 
-                        if (attr.HasFlag(FileAttributes.Directory))
-                        {
-                            ImGui.PushStyleColor(ImGuiCol.Text, new Vector4(0, 1, 1, 1f));
-                            // This is a directory.
-                        }
-                        else
-                        {
-                            ImGui.PushStyleColor(ImGuiCol.Text, new Vector4(1, 1, 0, 1f));
-                            // This is a file
-                        }
+                        if (attr.HasFlag(FileAttributes.Directory)) { ImGui.PushStyleColor(ImGuiCol.Text, new Vector4(0, 1, 1, 1f)); }
+                        else { ImGui.PushStyleColor(ImGuiCol.Text, new Vector4(1, 1, 0, 1f)); }
 
                         if (PassFileTypeFilter(entry, fileTypeOptions[selectedFileType]))
                         {
@@ -87,20 +103,27 @@ namespace LogiX.UI
 
                     ImGui.EndChild();
 
-                    if(ImGui.BeginChildFrame(2, new Vector2(300, 20)))
+                    if(ImGui.BeginChildFrame(2, new Vector2(windowSize.X - 100, 20)))
                     {
-                        ImGui.Text(GetSelectedFilesAsString(new Vector2(300, 20)));
+                        ImGui.Text(GetSelectedFilesAsString(new Vector2(windowSize.X - 100, 20)));
                         ImGui.EndChildFrame();
                     }
 
                     ImGui.SameLine();
 
                     ImGui.SetNextItemWidth(100);
-                    ImGui.Combo("", ref selectedFileType, fileTypeOptions, fileTypeOptions.Length, 3);
+                    ImGui.Combo("", ref selectedFileType, fileTypeOptions, fileTypeOptions.Length, 5);
 
                     if (ImGui.Button("Close"))
                     {
-                        IsOpen = false;
+                        SelectedFiles.Clear();
+                        IsDone = true;
+                    }
+
+                    ImGui.SameLine();
+
+                    if (ImGui.Button("Select"))
+                    {
                         IsDone = true;
                     }
                 }
@@ -136,9 +159,17 @@ namespace LogiX.UI
                 SelectedFiles.Add(entry);
         }
 
+        public string GetSelectedFilesAsString()
+        {
+            return GetSelectedFilesAsString(new Vector2(10000, 0));
+        }
+
         public string GetSelectedFilesAsString(Vector2 sizeOfFrame)
         {
             string s = "";
+
+            if (ImGui.CalcTextSize(s).X > sizeOfFrame.X - 20)
+                return SelectedFiles.Count.ToString() + " selected files";
 
             foreach(string file in SelectedFiles)
             {
@@ -150,8 +181,6 @@ namespace LogiX.UI
                 }
             }
 
-            if (ImGui.CalcTextSize(s).X > sizeOfFrame.X - 20)
-                return SelectedFiles.Count.ToString() + " selected files";
 
             return s;
         }

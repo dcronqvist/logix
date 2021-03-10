@@ -20,6 +20,14 @@ namespace LogiX.Utils
         public static string ASSETS_DIR = LOGIX_DIR + @"/assets";
         public static string SETTINGS_FILE = LOGIX_DIR + @"/settings.json";
         public static string LOG_FILE = LOGIX_DIR + @"/log.txt";
+        public static Dictionary<string, string> QUICKLINK_DIRS = new Dictionary<string, string>()
+        {
+            { "LogiX", LOGIX_DIR },
+            { "AppData", ROAMING_DIR },
+            { "Desktop", Environment.GetFolderPath(Environment.SpecialFolder.Desktop) },
+            { "Documents", Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments) }
+        };
+
         public static void OpenPath(string path)
         {
             ProcessStartInfo psi = new ProcessStartInfo() { FileName = path, UseShellExecute = true };

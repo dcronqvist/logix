@@ -1,4 +1,6 @@
-﻿using Raylib_cs;
+﻿//#define MACOS
+
+using Raylib_cs;
 using System;
 using System.Collections.Generic;
 using System.Numerics;
@@ -31,7 +33,9 @@ namespace LogiX.Display
         {
             this.WindowSize = size;
             if (immediately)
-                Raylib.SetWindowSize((int)size.X, (int)size.Y);
+            {
+                Raylib.SetWindowSize((int)(size.X), (int)(size.Y));
+            }
         }
 
         public void SetWindowTitle(string title, bool immediately)
@@ -43,6 +47,10 @@ namespace LogiX.Display
 
         public void Run()
         {
+            #if MACOS
+            Raylib.SetConfigFlags(ConfigFlag.FLAG_WINDOW_HIGHDPI);
+            #endif
+
             Initialize();
 
             Raylib.InitWindow((int)WindowSize.X, (int)WindowSize.Y, Title);

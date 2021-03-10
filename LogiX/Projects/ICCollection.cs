@@ -12,7 +12,7 @@ namespace LogiX.Projects
 
         public ICCollection()
         {
-
+            
         }
 
         public ICCollection(List<ICDescription> descriptions)

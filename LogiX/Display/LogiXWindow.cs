@@ -16,6 +16,7 @@ using System.Diagnostics;
 using System.Linq;
 using System.Numerics;
 
+
 namespace LogiX.Display
 {
     enum EditorState
@@ -80,6 +81,10 @@ namespace LogiX.Display
         bool yes = true;
         bool editingSettings = false;
         bool icWindowOpen = false;
+        private bool creatingCollection;
+        List<ICDescription> descs;
+        bool[] selectedIcs;
+        string newCollectionName;
 
         public LogiXWindow() : base(new Vector2(1280, 720), "LogiX")
         {
@@ -118,6 +123,7 @@ namespace LogiX.Display
 
             // Load all ics and stuff
             AssetManager.LoadAllAssets();
+            SetWindowSize(WindowSize, true);
         }
 
         public Vector2 GetMousePositionInWorld()
@@ -137,8 +143,8 @@ namespace LogiX.Display
         public void RenderGrid()
         {
             // TODO: Move this to more suitable spot, also try to shorten this down.
-            int windowWidth = int.Parse(SettingManager.GetSetting("window-width", "1440"));
-            int windowHeight = int.Parse(SettingManager.GetSetting("window-height", "768"));
+            int windowWidth = (int)base.WindowSize.X;
+            int windowHeight = (int)base.WindowSize.Y;
             Vector2 size = new Vector2(windowWidth, windowHeight);
             Vector2 camPos = cam.target;
             Vector2 viewSize = size / cam.zoom;
@@ -151,6 +157,7 @@ namespace LogiX.Display
                 float lineX = i * pixelsBetweenLines;
                 float lineYstart = (camPos.Y - viewSize.Y / 2f);
                 float lineYend = (camPos.Y + viewSize.Y / 2f);
+
                 Raylib.DrawLine((int)lineX, (int)lineYstart, (int)lineX, (int)lineYend, Color.DARKGRAY.Opacity(0.3f));
             }
 
@@ -169,6 +176,7 @@ namespace LogiX.Display
             Raylib.BeginDrawing();
             Raylib.BeginMode2D(cam);
             Raylib.ClearBackground(Color.LIGHTGRAY);
+
             RenderGrid();
             sim.Render(GetMousePositionInWorld());
             if(state == EditorState.OutputToInput)
@@ -182,6 +190,7 @@ namespace LogiX.Display
                 Raylib.DrawRectangleLinesEx(selectionRec, 1, Color.BLUE.Opacity(0.8f));
             }
             Raylib.EndMode2D();
+            
             controller.Draw();
             Raylib.EndDrawing();
         }
@@ -408,7 +417,6 @@ namespace LogiX.Display
         }
 
         public override void Unload()
-
         {
             LogManager.DumpToFile();
         }
@@ -468,6 +476,11 @@ namespace LogiX.Display
                 if(ImGui.MenuItem("Show Window", "", icWindowOpen))
                 {
                     icWindowOpen = !icWindowOpen;
+                }
+
+                if(ImGui.MenuItem("Create Collection"))
+                {
+                    creatingCollection = true;
                 }
 
                 ImGui.EndMenu();
@@ -555,9 +568,11 @@ namespace LogiX.Display
                 if (ImGui.Begin("ICs", ImGuiWindowFlags.AlwaysAutoResize))
                 {
                     List<ICDescription> ics = AssetManager.GetAllAssetsOfType<ICDescription>();
-                    foreach (ICDescription ic in ics)
+                    for (int i = 0; i < ics.Count; i++)
                     {
-                        ImGui.Button(ic.Name, Utility.BUTTON_DEFAULT_SIZE);
+                        ICDescription ic = (ICDescription)ics[i];
+                        string t = ic.Name;
+                        ImGui.Button(t, Utility.BUTTON_DEFAULT_SIZE);
                         if (ImGui.IsItemClicked())
                         {
                             SetNewComponent(new DrawableIC(GetMousePositionInWorld(), ic.Name, ic));
@@ -807,9 +822,65 @@ namespace LogiX.Display
 
             #endregion
 
+            #region CREATE COLLECTION WINDOW
+
+            if (creatingCollection)
+            {
+                ImGui.OpenPopup("Create IC Collection");
+                creatingCollection = false;
+                descs = AssetManager.GetAllAssetsOfType<ICDescription>();
+                selectedIcs = new bool[descs.Count];
+                newCollectionName = "";
+            }
+
+            ImGui.SetNextWindowPos(WindowSize / 2f, ImGuiCond.Appearing, new Vector2(0.5f, 0.5f));
+            if (ImGui.BeginPopupModal("Create IC Collection", ref yes, ImGuiWindowFlags.AlwaysAutoResize))
+            {
+                ImGui.Text("Select integrated components.");
+
+                Vector2 size = new Vector2(300, 200);
+
+                if(ImGui.BeginChild("ics", size, true))
+                {
+                    for (int i = 0; i < descs.Count; i++)
+                    {
+                        ImGui.Checkbox(descs[i].Name, ref selectedIcs[i]);
+                    }
+
+                    ImGui.EndChild();
+                }
+
+                ImGui.InputText("Collection name", ref newCollectionName, 20);
+                ImGui.SameLine();
+                if (ImGui.Button("Close"))
+                {
+                    ImGui.CloseCurrentPopup();
+                }
+                ImGui.SameLine();
+                if (ImGui.Button("Create"))
+                {
+                    List<ICDescription> selected = new List<ICDescription>();
+
+                    for (int i = 0; i < selectedIcs.Length; i++)
+                    {
+                        if (selectedIcs[i])
+                        {
+                            selected.Add(descs[i]);
+                        }
+                    }
+
+                    ICCollection icc = new ICCollection(selected);
+
+                }
+
+                ImGui.EndPopup();
+            }
+
+            #endregion
+
             if (fd?.Done() == true)
             {
-                LogManager.AddEntry($"Done: {fd.CurrentDirectory}");
+                LogManager.AddEntry($"Done: {fd.GetSelectedFilesAsString()}");
                 fd = null;
             }
         }
