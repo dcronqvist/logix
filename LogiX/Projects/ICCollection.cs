@@ -15,8 +15,9 @@ namespace LogiX.Projects
             
         }
 
-        public ICCollection(List<ICDescription> descriptions)
+        public ICCollection(string name, List<ICDescription> descriptions)
         {
+            base.Name = name;
             this.Descriptions = descriptions;
         }
     }

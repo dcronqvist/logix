@@ -9,10 +9,12 @@ using LogiX.Settings;
 using LogiX.Simulation;
 using LogiX.UI;
 using LogiX.Utils;
+using Newtonsoft.Json;
 using Raylib_cs;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.IO;
 using System.Linq;
 using System.Numerics;
 
@@ -86,6 +88,8 @@ namespace LogiX.Display
         bool[] selectedIcs;
         string newCollectionName;
 
+        LogixProject currentProject;
+
         public LogiXWindow() : base(new Vector2(1280, 720), "LogiX")
         {
             state = EditorState.None;
@@ -112,6 +116,9 @@ namespace LogiX.Display
             sim = new Simulator();
             _simulationOn = true;
             _makingIc = false;
+
+            descs = new List<ICDescription>();
+            currentProject = new LogixProject("New Project");
         }
 
         public override void LoadContent()
@@ -567,7 +574,7 @@ namespace LogiX.Display
             {
                 if (ImGui.Begin("ICs", ImGuiWindowFlags.AlwaysAutoResize))
                 {
-                    List<ICDescription> ics = AssetManager.GetAllAssetsOfType<ICDescription>();
+                    List<ICDescription> ics = descs;
                     for (int i = 0; i < ics.Count; i++)
                     {
                         ICDescription ic = (ICDescription)ics[i];
@@ -869,8 +876,13 @@ namespace LogiX.Display
                         }
                     }
 
-                    ICCollection icc = new ICCollection(selected);
+                    ICCollection icc = new ICCollection(newCollectionName, selected);
 
+                    using(StreamWriter sw = new StreamWriter(Utility.ASSETS_DIR + @"/" + icc.Name + Utility.EXT_ICCOLLECTION))
+                    {
+                        sw.Write(JsonConvert.SerializeObject(icc, Formatting.Indented));
+                    }
+                    ImGui.CloseCurrentPopup();
                 }
 
                 ImGui.EndPopup();
@@ -880,8 +892,25 @@ namespace LogiX.Display
 
             if (fd?.Done() == true)
             {
-                LogManager.AddEntry($"Done: {fd.GetSelectedFilesAsString()}");
+                if (fd.SelectedFiles.Count > 0)
+                {
+                    string file = fd.SelectedFiles[0];
+                    IncludeCollection(file);
+                }
                 fd = null;
+            }
+        }
+
+        public void IncludeCollection(string coll)
+        {
+            currentProject.IncludeCollection(coll);
+
+            descs.Clear();
+            List<ICCollection> colls = currentProject.GetAllCollections();
+
+            foreach(ICCollection collection in colls)
+            {
+                descs.AddRange(collection.Descriptions);
             }
         }
     }
