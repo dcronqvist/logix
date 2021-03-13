@@ -34,7 +34,7 @@ namespace LogiX.UI
         // Convenient size variables
         private static Vector2 windowSize = new Vector2(440, 240);
         private static float quickLinksFactor = 0.25f;
-        private string saveFileName;
+        private string saveFileName = "";
 
         public FileDialog(string start, string title, FileDialogType type) : this(start, title, type, defaultFileTypes)
         {
@@ -146,18 +146,20 @@ namespace LogiX.UI
 
                     ImGui.EndChild();
 
-                    if(ImGui.BeginChildFrame(2, new Vector2(windowSize.X - 100, 20)))
+                    if(DialogType == FileDialogType.SaveFile)
                     {
-                        if(DialogType == FileDialogType.SaveFile)
-                        {
-                            ImGui.InputText("", ref saveFileName, 50);
-                        }
-                        else
+                        ImGui.SetNextItemWidth(windowSize.X - 100);
+                        ImGui.InputText("", ref saveFileName, 50);
+                    }
+                    else
+                    {
+                        if (ImGui.BeginChildFrame(2, new Vector2(windowSize.X - 100, 20), ImGuiWindowFlags.NoScrollbar))
                         {
                             ImGui.Text(GetSelectedFilesAsString(new Vector2(windowSize.X - 100, 20)));
+                            ImGui.EndChildFrame();
                         }
-                        ImGui.EndChildFrame();
                     }
+                    
 
                     ImGui.SameLine();
 
@@ -179,7 +181,7 @@ namespace LogiX.UI
                         IsDone = true;
                         if(DialogType == FileDialogType.SaveFile)
                         {
-                            SelectedFiles[0] = CurrentDirectory + @$"/{saveFileName}{fileTypeOptions[0]}";
+                            SelectedFiles.Add(CurrentDirectory + @$"/{saveFileName}{fileTypeOptions[0]}");
                         }
                     }
                 }

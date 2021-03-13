@@ -1,6 +1,8 @@
 ﻿using LogiX.Assets;
+using LogiX.Circuits.Drawables;
 using LogiX.Circuits.Integrated;
 using LogiX.Logging;
+using LogiX.Simulation;
 using LogiX.Utils;
 using Newtonsoft.Json;
 using System;
@@ -10,22 +12,28 @@ using System.Text;
 
 namespace LogiX.Projects
 {
-    class LogixProject : Asset
+    [JsonObject(MemberSerialization.OptOut)]
+    class LogiXProject : Asset
     {
         public string ProjectName { get; set; }
         public List<string> IncludedCollections { get; set; }
         public List<string> IncludedDescriptions { get; set; }
+        public WorkspaceContainer Container { get; set; }
 
-        public LogixProject()
+        [JsonIgnore]
+        public Simulator Simulation { get; set; }
+
+        public LogiXProject()
         {
 
         }
 
-        public LogixProject(string name)
+        public LogiXProject(string name)
         {
             this.ProjectName = name;
             this.IncludedCollections = new List<string>();
             this.IncludedDescriptions = new List<string>();
+            this.Simulation = new Simulator();
         }
 
         public void IncludeCollection(string collection)
@@ -42,6 +50,18 @@ namespace LogiX.Projects
         }
 
         public List<ICDescription> GetAllDescriptions()
+        {
+            List<ICDescription> nonColl = GetAllNonCollectionDescriptions();
+
+            foreach(ICCollection coll in GetAllCollections())
+            {
+                nonColl.AddRange(coll.Descriptions);
+            }
+
+            return nonColl;
+        }
+
+        public List<ICDescription> GetAllNonCollectionDescriptions()
         {
             List<ICDescription> descriptions = new List<ICDescription>();
 
@@ -94,18 +114,24 @@ namespace LogiX.Projects
             }
         }
 
-        public static LogixProject LoadFromFile(string path)
+        public static LogiXProject LoadFromFile(string path)
         {
             try
             {
                 using (StreamReader sr = new StreamReader(path))
                 {
-                    return JsonConvert.DeserializeObject<LogixProject>(sr.ReadToEnd());
+                    string json = sr.ReadToEnd();
+                    LogiXProject lp = JsonConvert.DeserializeObject<LogiXProject>(json);
+                    Tuple<List<DrawableComponent>, List<DrawableWire>> tup = lp.Container.GenerateDrawables(lp.GetAllDescriptions());
+                    lp.Simulation = new Simulator();
+                    lp.Simulation.AllComponents = tup.Item1;
+                    lp.Simulation.AllWires = tup.Item2;
+                    return lp;
                 }
             }
             catch(Exception ex)
             {
-                LogManager.AddEntry($"Failed to load project at {path}", LogEntryType.ERROR);
+                LogManager.AddEntry($"Failed to load project at {path}: {ex.Message}", LogEntryType.ERROR);
                 return null;
             }
         }
@@ -127,13 +153,15 @@ namespace LogiX.Projects
             return null;
         }
 
-        public string SaveProjectToFile()
+        public void SaveProjectToFile(string path)
         {
-            using(StreamWriter sw = new StreamWriter(Utility.CreateProjectFilePath(ProjectName)))
+            this.Container = new WorkspaceContainer(Simulation.AllComponents);
+            this.ProjectName = Path.GetFileNameWithoutExtension(path);
+
+            using(StreamWriter sw = new StreamWriter(path))
             {
-                sw.Write(JsonConvert.SerializeObject(this, Formatting.Indented));
+                sw.Write(JsonConvert.SerializeObject(this));
             }
-            return Utility.CreateProjectFilePath(ProjectName);
         }
     }
 }

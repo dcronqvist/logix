@@ -1,6 +1,7 @@
 ﻿using LogiX.Circuits;
 using LogiX.Circuits.Drawables;
 using LogiX.Utils;
+using Newtonsoft.Json;
 using Raylib_cs;
 using System;
 using System.Collections.Generic;
@@ -10,13 +11,15 @@ using System.Text;
 
 namespace LogiX.Simulation
 {
+    [JsonObject(MemberSerialization.OptOut)]
     class Simulator
     {
-
         public List<DrawableWire> AllWires { get; set; }
-
         public List<DrawableComponent> AllComponents { get; set; }
+
+        [JsonIgnore]
         public List<DrawableComponent> SelectedComponents { get; set; }
+        [JsonIgnore]
         public List<DrawableComponent> Interactables
         {
             get

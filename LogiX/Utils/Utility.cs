@@ -38,7 +38,7 @@ namespace LogiX.Utils
             string path = PROJECTS_DIR + @"/" + projName + EXT_PROJ;
             Directory.CreateDirectory(PROJECTS_DIR);
 
-            return path;
+            return path.Replace(@"\", "/");
         }
 
         // File extensions
@@ -49,7 +49,7 @@ namespace LogiX.Utils
         {
             string path = ASSETS_DIR + @"/" + icName + EXT_IC;
             Directory.CreateDirectory(ASSETS_DIR);
-            return path;
+            return path.Replace(@"\", "/");
         }
 
         // Colors

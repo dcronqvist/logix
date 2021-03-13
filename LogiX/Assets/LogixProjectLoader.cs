@@ -13,7 +13,7 @@ namespace LogiX.Assets
         {
             using (StreamReader sr = new StreamReader(filePath))
             {
-                return JsonConvert.DeserializeObject<LogixProject>(sr.ReadToEnd());
+                return JsonConvert.DeserializeObject<LogiXProject>(sr.ReadToEnd());
             }
         }
     }

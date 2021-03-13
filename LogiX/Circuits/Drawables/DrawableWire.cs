@@ -1,4 +1,5 @@
 ﻿using LogiX.Utils;
+using Newtonsoft.Json;
 using Raylib_cs;
 using System;
 using System.Collections.Generic;
@@ -7,9 +8,12 @@ using System.Text;
 
 namespace LogiX.Circuits.Drawables
 {
+    [JsonObject(MemberSerialization.OptOut)]
     class DrawableWire : CircuitWire
     {
+        [JsonIgnore]
         public DrawableComponent From { get; set; }
+        [JsonIgnore]
         public DrawableComponent To { get; set; }
         public int FromIndex { get; set; }
         public int ToIndex { get; set; }

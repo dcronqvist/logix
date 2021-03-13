@@ -176,14 +176,15 @@ namespace LogiX.Circuits.Integrated
             return components.ToList();
         }
 
-        public void SaveToFile(string name)
+        public string SaveToFile(string name)
         {
             base.Name = name;
             string filePath = Utility.CreateICFilePath(name);
             using(StreamWriter sw = new StreamWriter(filePath))
             {
-                sw.Write(JsonConvert.SerializeObject(this, Formatting.Indented));
+                sw.Write(JsonConvert.SerializeObject(this));
             }
+            return filePath;
             //AssetManager.AddAsset(name, this);
         }
 

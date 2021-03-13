@@ -1,4 +1,5 @@
 ﻿using LogiX.Utils;
+using Newtonsoft.Json;
 using Raylib_cs;
 using System;
 using System.Collections.Generic;
@@ -8,14 +9,20 @@ using System.Text;
 
 namespace LogiX.Circuits.Drawables
 {
+    [JsonObject(MemberSerialization.OptOut)]
     abstract class DrawableComponent : CircuitComponent
     {
         public Vector2 Position { get; set; }
+        [JsonIgnore]
         public Vector2 MiddlePosition { get; set; }
         public Vector2 Size { get; set; }
+        [JsonIgnore]
         public Rectangle Box { get; set; }
+        [JsonIgnore]
         public Color BlockColor { get; set; }
+        [JsonIgnore]
         public Color BorderColor { get; set; }
+        [JsonIgnore]
         public Color IOHoverColor { get; set; }
 
         public string Text { get; set; }
