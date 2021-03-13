@@ -18,6 +18,7 @@ namespace LogiX.Utils
         public static string ROAMING_DIR = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
         public static string LOGIX_DIR = ROAMING_DIR + @"/LogiX";
         public static string ASSETS_DIR = LOGIX_DIR + @"/assets";
+        public static string PROJECTS_DIR = LOGIX_DIR + @"/projects";
         public static string SETTINGS_FILE = LOGIX_DIR + @"/settings.json";
         public static string LOG_FILE = LOGIX_DIR + @"/log.txt";
         public static Dictionary<string, string> QUICKLINK_DIRS = new Dictionary<string, string>()
@@ -27,11 +28,17 @@ namespace LogiX.Utils
             { "Desktop", Environment.GetFolderPath(Environment.SpecialFolder.Desktop) },
             { "Documents", Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments) }
         };
-
         public static void OpenPath(string path)
         {
             ProcessStartInfo psi = new ProcessStartInfo() { FileName = path, UseShellExecute = true };
             Process.Start(psi);
+        }
+        public static string CreateProjectFilePath(string projName)
+        {
+            string path = PROJECTS_DIR + @"/" + projName + EXT_PROJ;
+            Directory.CreateDirectory(PROJECTS_DIR);
+
+            return path;
         }
 
         // File extensions
@@ -40,7 +47,9 @@ namespace LogiX.Utils
         public static string EXT_ICCOLLECTION = ".lgxcoll";
         public static string CreateICFilePath(string icName)
         {
-            return ASSETS_DIR + @"/" + icName + EXT_IC;
+            string path = ASSETS_DIR + @"/" + icName + EXT_IC;
+            Directory.CreateDirectory(ASSETS_DIR);
+            return path;
         }
 
         // Colors

@@ -8,6 +8,13 @@ using System.Text;
 
 namespace LogiX.UI
 {
+    enum FileDialogType
+    {
+        SelectFile,
+        SaveFile,
+        SelectMultipleFiles,
+    }
+
     class FileDialog
     {
         public string StartDirectory { get; set; }
@@ -22,12 +29,19 @@ namespace LogiX.UI
         string[] fileTypeOptions;
         int selectedFileType = 0;
 
-        public FileDialog(string start, string title) : this(start, title, defaultFileTypes)
+        FileDialogType DialogType { get; set; }
+
+        // Convenient size variables
+        private static Vector2 windowSize = new Vector2(440, 240);
+        private static float quickLinksFactor = 0.25f;
+        private string saveFileName;
+
+        public FileDialog(string start, string title, FileDialogType type) : this(start, title, type, defaultFileTypes)
         {
 
         }
 
-        public FileDialog(string start, string title, string[] fileTypeOptions)
+        public FileDialog(string start, string title, FileDialogType type, string[] fileTypeOptions)
         {
             this.StartDirectory = start.Replace(@"\", @"/");
             this.IsOpen = false;
@@ -35,7 +49,29 @@ namespace LogiX.UI
             this.Title = title;
             this.SelectedFiles = new List<string>();
             this.fileTypeOptions = fileTypeOptions;
+            this.DialogType = type;
             ChangeDirectory(StartDirectory);
+        }
+
+        public void SubmitQuickLinks()
+        {
+            if (ImGui.BeginChild("quicklinks", new Vector2(windowSize.X * quickLinksFactor, windowSize.Y), true))
+            {
+                ImGui.Text("Quick Access");
+                ImGui.Separator();
+
+                ImGui.PushStyleColor(ImGuiCol.Text, new Vector4(0, 1, 1, 1f));
+                foreach (KeyValuePair<string, string> kvp in Utility.QUICKLINK_DIRS)
+                {
+                    if (ImGui.Selectable(kvp.Key))
+                    {
+                        ChangeDirectory(kvp.Value);
+                    }
+                }
+                ImGui.PopStyleColor();
+
+                ImGui.EndChild();
+            }
         }
 
         public void Submit()
@@ -48,23 +84,7 @@ namespace LogiX.UI
             {
                 ImGui.Text(CurrentDirectory);
 
-                if(ImGui.BeginChild("quicklinks", new Vector2(windowSize.X * quickLinks, windowSize.Y), true))
-                {
-                    ImGui.Text("Quick Access");
-                    ImGui.Separator();
-
-                    ImGui.PushStyleColor(ImGuiCol.Text, new Vector4(0, 1, 1, 1f));
-                    foreach (KeyValuePair<string, string> kvp in Utility.QUICKLINK_DIRS)
-                    {
-                        if (ImGui.Selectable(kvp.Key))
-                        {
-                            ChangeDirectory(kvp.Value);
-                        }
-                    }
-                    ImGui.PopStyleColor();
-
-                    ImGui.EndChild();
-                }
+                SubmitQuickLinks();
 
                 ImGui.SameLine();
 
@@ -93,7 +113,30 @@ namespace LogiX.UI
                                 }
                                 else
                                 {
-                                    ToggleSelection(entry);
+                                    switch(DialogType)
+                                    {
+                                        case FileDialogType.SaveFile:
+                                            // Do nothing
+                                            break;
+
+                                        case FileDialogType.SelectFile:
+                                            if (!SelectedFiles.Contains(entry))
+                                            {
+                                                if (SelectedFiles.Count > 0)
+                                                    SelectedFiles[0] = entry;
+                                                else
+                                                    SelectedFiles.Add(entry);
+                                            }
+                                            else
+                                            {
+                                                SelectedFiles.Clear();
+                                            }
+                                            break;
+
+                                        case FileDialogType.SelectMultipleFiles:
+                                            ToggleSelection(entry);
+                                            break;
+                                    }
                                 }
                             }
                         }
@@ -105,7 +148,14 @@ namespace LogiX.UI
 
                     if(ImGui.BeginChildFrame(2, new Vector2(windowSize.X - 100, 20)))
                     {
-                        ImGui.Text(GetSelectedFilesAsString(new Vector2(windowSize.X - 100, 20)));
+                        if(DialogType == FileDialogType.SaveFile)
+                        {
+                            ImGui.InputText("", ref saveFileName, 50);
+                        }
+                        else
+                        {
+                            ImGui.Text(GetSelectedFilesAsString(new Vector2(windowSize.X - 100, 20)));
+                        }
                         ImGui.EndChildFrame();
                     }
 
@@ -122,9 +172,15 @@ namespace LogiX.UI
 
                     ImGui.SameLine();
 
-                    if (ImGui.Button("Select"))
+                    string submitButton = DialogType != FileDialogType.SaveFile ? "Select" : "Save";
+
+                    if (ImGui.Button(submitButton))
                     {
                         IsDone = true;
+                        if(DialogType == FileDialogType.SaveFile)
+                        {
+                            SelectedFiles[0] = CurrentDirectory + @$"/{saveFileName}{fileTypeOptions[0]}";
+                        }
                     }
                 }
                 ImGui.End();
@@ -175,7 +231,7 @@ namespace LogiX.UI
             {
                 s += "'" + Path.GetFileName(file) + "'";
 
-                if(s != SelectedFiles[SelectedFiles.Count - 1])
+                if(file != SelectedFiles[SelectedFiles.Count - 1])
                 {
                     s += ", ";
                 }
@@ -205,6 +261,12 @@ namespace LogiX.UI
         {
             if (IsDone)
             {
+                for (int i = 0; i < SelectedFiles.Count; i++)
+                {
+                    SelectedFiles[i] = SelectedFiles[i].Replace(@"\", "/");
+                }
+
+
                 IsDone = false;
                 return true;
             }

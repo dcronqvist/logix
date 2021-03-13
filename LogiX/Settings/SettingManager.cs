@@ -48,7 +48,8 @@ namespace LogiX.Settings
                 { "grid-size", "250" },
                 { "io-v-dist", "14" },
                 { "io-h-dist", "10" },
-                { "io-size", "6" }
+                { "io-size", "6" },
+                { "latest-project", "" }
             };
         }
         

@@ -30,7 +30,10 @@ namespace LogiX.Display
         HoveringUI,
         HoveringInput,
         HoveringOutput,
-        OutputToInput
+        OutputToInput,
+        SelectingProjectFile,
+        IncludeCollection,
+        IncludeDescription
     }
 
     class LogiXWindow : BaseWindow
@@ -84,7 +87,8 @@ namespace LogiX.Display
         bool editingSettings = false;
         bool icWindowOpen = false;
         private bool creatingCollection;
-        List<ICDescription> descs;
+        List<ICCollection> collections;
+        List<ICDescription> nonCollectionDescriptions;
         bool[] selectedIcs;
         string newCollectionName;
 
@@ -116,9 +120,6 @@ namespace LogiX.Display
             sim = new Simulator();
             _simulationOn = true;
             _makingIc = false;
-
-            descs = new List<ICDescription>();
-            currentProject = new LogixProject("New Project");
         }
 
         public override void LoadContent()
@@ -129,8 +130,29 @@ namespace LogiX.Display
             controller.Load((int)base.WindowSize.X, (int)base.WindowSize.Y);
 
             // Load all ics and stuff
-            AssetManager.LoadAllAssets();
+            //AssetManager.LoadAllAssets();
             SetWindowSize(WindowSize, true);
+
+            string latestProject = SettingManager.GetSetting("latest-project", "");
+            if(latestProject != "")
+            {
+                LogixProject lp = LogixProject.LoadFromFile(latestProject);
+                if(lp != null)
+                    SetProject(lp);
+                else
+                    SetProject(new LogixProject("new-project"));
+            }
+            else
+            {
+                SetProject(new LogixProject("new-project"));
+            }
+        }
+
+        public void SetProject(LogixProject project)
+        {
+            currentProject = project;
+            collections = currentProject.GetAllCollections();
+            nonCollectionDescriptions = currentProject.GetAllDescriptions();
         }
 
         public Vector2 GetMousePositionInWorld()
@@ -241,55 +263,58 @@ namespace LogiX.Display
             #endregion
 
             #region Decide Which Editor State
-            if (!ImGui.GetIO().WantCaptureMouse || newComponent != null)
+            if (state != EditorState.SelectingProjectFile && state != EditorState.IncludeCollection && state != EditorState.IncludeDescription)
             {
-                if (Raylib.IsMouseButtonPressed(MouseButton.MOUSE_MIDDLE_BUTTON) && state == EditorState.None)
+                if (!ImGui.GetIO().WantCaptureMouse || newComponent != null)
                 {
-                    state = EditorState.MovingCamera;
-                }
-                if (Raylib.IsMouseButtonReleased(MouseButton.MOUSE_MIDDLE_BUTTON) && state == EditorState.MovingCamera)
-                {
-                    state = EditorState.None;
-                }
-
-                if (Raylib.IsMouseButtonPressed(MouseButton.MOUSE_LEFT_BUTTON) && state == EditorState.None)
-                {
-                    if (hovered == null)
+                    if (Raylib.IsMouseButtonPressed(MouseButton.MOUSE_MIDDLE_BUTTON) && state == EditorState.None)
                     {
-                        state = EditorState.RectangleSelecting;
-                        startPos = GetMousePositionInWorld();
+                        state = EditorState.MovingCamera;
                     }
-                    else if (sim.SelectedComponents.Contains(hovered))
+                    if (Raylib.IsMouseButtonReleased(MouseButton.MOUSE_MIDDLE_BUTTON) && state == EditorState.MovingCamera)
                     {
-                        state = EditorState.MovingSelection;
+                        state = EditorState.None;
                     }
-                }
-                if (Raylib.IsMouseButtonReleased(MouseButton.MOUSE_LEFT_BUTTON) && (state == EditorState.MovingSelection || state == EditorState.RectangleSelecting))
-                {
-                    state = EditorState.None;
-                    newComponent = null;
-                }
 
-                if (state == EditorState.None)
-                {
-                    if (hoveredInput != null)
-                        state = EditorState.HoveringInput;
-                    else if (hoveredOutput != null)
-                        state = EditorState.HoveringOutput;
-                }
-                else if(state.HasFlag(EditorState.HoveringInput) || state.HasFlag(EditorState.HoveringOutput))
-                {
-                    if(hoveredInput == null && hoveredOutput == null && state != EditorState.OutputToInput)
+                    if (Raylib.IsMouseButtonPressed(MouseButton.MOUSE_LEFT_BUTTON) && state == EditorState.None)
+                    {
+                        if (hovered == null)
+                        {
+                            state = EditorState.RectangleSelecting;
+                            startPos = GetMousePositionInWorld();
+                        }
+                        else if (sim.SelectedComponents.Contains(hovered))
+                        {
+                            state = EditorState.MovingSelection;
+                        }
+                    }
+                    if (Raylib.IsMouseButtonReleased(MouseButton.MOUSE_LEFT_BUTTON) && (state == EditorState.MovingSelection || state == EditorState.RectangleSelecting))
+                    {
+                        state = EditorState.None;
+                        newComponent = null;
+                    }
+
+                    if (state == EditorState.None)
+                    {
+                        if (hoveredInput != null)
+                            state = EditorState.HoveringInput;
+                        else if (hoveredOutput != null)
+                            state = EditorState.HoveringOutput;
+                    }
+                    else if (state.HasFlag(EditorState.HoveringInput) || state.HasFlag(EditorState.HoveringOutput))
+                    {
+                        if (hoveredInput == null && hoveredOutput == null && state != EditorState.OutputToInput)
+                            state = EditorState.None;
+                    }
+
+                    if (state == EditorState.HoveringUI)
                         state = EditorState.None;
                 }
-
-                if (state == EditorState.HoveringUI)
-                    state = EditorState.None;
-            }
-            else
-            {
-                if(state != EditorState.MovingSelection)
-                    state = EditorState.HoveringUI;
+                else
+                {
+                    if (state != EditorState.MovingSelection)
+                        state = EditorState.HoveringUI;
+                }
             }
             #endregion
 
@@ -437,14 +462,43 @@ namespace LogiX.Display
             // File thing
             if (ImGui.BeginMenu("File"))
             {
+                if(ImGui.MenuItem("New Project..."))
+                {
+                    // TODO: Modal for new project
+                }
+
+                if(ImGui.MenuItem("Open Project"))
+                {
+                    state = EditorState.SelectingProjectFile;
+                    fd = new FileDialog(Utility.QUICKLINK_DIRS["Documents"], "Open Project", FileDialogType.SelectFile, new string[] { Utility.EXT_PROJ });
+                }
+
+                if (ImGui.BeginMenu("Include"))
+                {
+                    if(ImGui.MenuItem("IC Collection"))
+                    {
+                        state = EditorState.IncludeCollection;
+                        fd = new FileDialog(Utility.QUICKLINK_DIRS["Documents"], "Include Collection", FileDialogType.SelectMultipleFiles, new string[] { Utility.EXT_ICCOLLECTION });
+                    }
+                    if(ImGui.MenuItem("IC Description"))
+                    {
+                        state = EditorState.IncludeDescription;
+                        fd = new FileDialog(Utility.QUICKLINK_DIRS["Documents"], "Include Description", FileDialogType.SelectMultipleFiles, new string[] { Utility.EXT_IC });
+                    }
+                    ImGui.EndMenu();
+                }
+
+                ImGui.Separator();
+
+                if (ImGui.MenuItem("Save"))
+                {
+                    SettingManager.SetSetting("latest-project", currentProject.SaveProjectToFile());
+                    SettingManager.SaveSettings();
+                }
+
                 if (ImGui.MenuItem("Settings"))
                 {
                     editingSettings = true;
-                }
-                if (ImGui.MenuItem("FileDialog"))
-                {
-                    fd = new FileDialog(Utility.LOGIX_DIR, "TESTO");
-
                 }
 
                 ImGui.EndMenu();
@@ -574,45 +628,28 @@ namespace LogiX.Display
             {
                 if (ImGui.Begin("ICs", ImGuiWindowFlags.AlwaysAutoResize))
                 {
-                    List<ICDescription> ics = descs;
-                    for (int i = 0; i < ics.Count; i++)
+                    foreach(ICCollection collection in collections)
                     {
-                        ICDescription ic = (ICDescription)ics[i];
-                        string t = ic.Name;
-                        ImGui.Button(t, Utility.BUTTON_DEFAULT_SIZE);
+                        ImGui.Text(collection.Name);
+
+                        foreach(ICDescription descr in collection.Descriptions)
+                        {
+                            ImGui.Button(descr.Name, Utility.BUTTON_DEFAULT_SIZE);
+                            if (ImGui.IsItemClicked())
+                            {
+                                SetNewComponent(new DrawableIC(GetMousePositionInWorld(), descr.Name, descr));
+                            }
+                        }
+                        ImGui.Separator();
+                    }
+
+                    ImGui.Text("Non-collection");
+                    foreach(ICDescription desc in nonCollectionDescriptions)
+                    {
+                        ImGui.Button(desc.Name, Utility.BUTTON_DEFAULT_SIZE);
                         if (ImGui.IsItemClicked())
                         {
-                            SetNewComponent(new DrawableIC(GetMousePositionInWorld(), ic.Name, ic));
-                        }
-                        if (ImGui.BeginPopupContextItem())
-                        {
-                            if (ImGui.Button("Delete"))
-                            {
-                                ImGui.OpenPopup("Delete IC");
-                            }
-
-                            ImGui.SetNextWindowPos(WindowSize / 2f, ImGuiCond.Always, new Vector2(0.5f, 0.5f));
-                            if (ImGui.BeginPopupModal("Delete IC", ref yes, ImGuiWindowFlags.AlwaysAutoResize))
-                            {
-                                ImGui.TextWrapped("This will delete the integrated circuit file forever.");
-                                ImGui.Separator();
-                                ImGui.TextWrapped("Are you sure?");
-
-                                if (ImGui.Button("Yes", Utility.BUTTON_DEFAULT_SIZE))
-                                {
-                                    // DElete stuff
-                                    ImGui.CloseCurrentPopup();
-                                }
-                                ImGui.SameLine();
-                                if (ImGui.Button("No", Utility.BUTTON_DEFAULT_SIZE))
-                                {
-                                    ImGui.CloseCurrentPopup();
-                                }
-
-                                ImGui.EndPopup();
-                            }
-
-                            ImGui.EndPopup();
+                            SetNewComponent(new DrawableIC(GetMousePositionInWorld(), desc.Name, desc));
                         }
                     }
 
@@ -830,7 +867,7 @@ namespace LogiX.Display
             #endregion
 
             #region CREATE COLLECTION WINDOW
-
+            /*
             if (creatingCollection)
             {
                 ImGui.OpenPopup("Create IC Collection");
@@ -887,6 +924,7 @@ namespace LogiX.Display
 
                 ImGui.EndPopup();
             }
+            */
 
             #endregion
 
@@ -894,8 +932,27 @@ namespace LogiX.Display
             {
                 if (fd.SelectedFiles.Count > 0)
                 {
-                    string file = fd.SelectedFiles[0];
-                    IncludeCollection(file);
+                    switch (state)
+                    {
+                        case EditorState.SelectingProjectFile:
+                            SetProject(LogixProject.LoadFromFile(fd.SelectedFiles[0]));
+                            break;
+
+                        case EditorState.IncludeCollection:
+                            foreach(string collection in fd.SelectedFiles)
+                            {
+                                IncludeCollection(collection);
+                            }
+                            break;
+
+                        case EditorState.IncludeDescription:
+                            foreach (string description in fd.SelectedFiles)
+                            {
+                                IncludeDescriptions(description);
+                            }
+                            break;
+                    }
+                    state = EditorState.None;
                 }
                 fd = null;
             }
@@ -905,13 +962,14 @@ namespace LogiX.Display
         {
             currentProject.IncludeCollection(coll);
 
-            descs.Clear();
-            List<ICCollection> colls = currentProject.GetAllCollections();
+            SetProject(currentProject);
+        }
 
-            foreach(ICCollection collection in colls)
-            {
-                descs.AddRange(collection.Descriptions);
-            }
+        public void IncludeDescriptions(string description)
+        {
+            currentProject.IncludeDescription(description);
+
+            SetProject(currentProject);
         }
     }
 }

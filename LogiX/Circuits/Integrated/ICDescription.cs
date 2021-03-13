@@ -107,6 +107,11 @@ namespace LogiX.Circuits.Integrated
 
                     icccc.SetID(((DrawableCircuitSwitch)comps[i]).ID);
                 }
+                if (comps[i] is DrawableIC)
+                {
+                    DrawableIC dic = (DrawableIC)comps[i];
+                    icccc.SetDescription(dic.Description);
+                }
 
                 llicc.Add(icccc);
             }
@@ -148,8 +153,7 @@ namespace LogiX.Circuits.Integrated
                         break;
                     default:
                         // It is not a built in thing - look for it in the IC files folder
-                        //ICDescription icd = ResourceManager.GetResource<ICDescription>("ic_" + iccd.Type.Replace(" ", "-"));
-                        ICDescription icd = AssetManager.GetAsset<ICDescription>(iccd.Type);
+                        ICDescription icd = iccd.Description;
                         dc = new DrawableIC(Vector2.Zero, icd.Name, icd);
                         break;
                 }
@@ -180,7 +184,7 @@ namespace LogiX.Circuits.Integrated
             {
                 sw.Write(JsonConvert.SerializeObject(this, Formatting.Indented));
             }
-            AssetManager.AddAsset(name, this);
+            //AssetManager.AddAsset(name, this);
         }
 
         public bool DeleteFile()

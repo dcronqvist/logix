@@ -9,6 +9,7 @@ namespace LogiX.Circuits.Integrated
         public string Type { get; set; }
         public List<ICConnectionDescription> To { get; set; }
         public string ID { get; set; }
+        public ICDescription Description { get; set; }
 
         public ICComponentDescription(string type, List<ICConnectionDescription> to)
         {
@@ -19,6 +20,11 @@ namespace LogiX.Circuits.Integrated
         public void SetID(string s)
         {
             this.ID = s;
+        }
+
+        public void SetDescription(ICDescription desc)
+        {
+            this.Description = desc;
         }
     }
 }
