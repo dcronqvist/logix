@@ -47,9 +47,9 @@ namespace LogiX.Display
 
         public void Run()
         {
-            //#if MACOS
+            #if MACOS
             Raylib.SetConfigFlags(ConfigFlag.FLAG_WINDOW_HIGHDPI);
-            //#endif
+            #endif
 
             Initialize();
 

@@ -91,6 +91,7 @@ namespace LogiX.Display
         string newCollectionName;
 
         LogiXProject currentProject;
+        RenderTexture2D tex;
 
         public LogiXWindow() : base(new Vector2(1280, 720), "LogiX")
         {
@@ -122,10 +123,10 @@ namespace LogiX.Display
         public override void LoadContent()
         {
             // Load files for use in the program.
-            Raylib.SetTargetFPS(1000);
+            Raylib.SetTargetFPS(60);
             controller = new ImGUIController();
             controller.Load((int)base.WindowSize.X, (int)base.WindowSize.Y);
-
+            tex = Raylib.LoadRenderTexture((int)base.WindowSize.X, (int)base.WindowSize.Y);
             // Load all ics and stuff
             //AssetManager.LoadAllAssets();
             SetWindowSize(WindowSize, true);
@@ -200,6 +201,13 @@ namespace LogiX.Display
         public override void Render()
         {
             Raylib.BeginDrawing();
+            Raylib.BeginTextureMode(tex);
+            Raylib.ClearBackground(new Color(0, 0, 0, 0));
+            controller.Draw();
+
+            Raylib.EndTextureMode();
+
+
             Raylib.BeginMode2D(cam);
             Raylib.ClearBackground(Color.LIGHTGRAY);
 
@@ -217,7 +225,7 @@ namespace LogiX.Display
             }
             Raylib.EndMode2D();
             
-            controller.Draw();
+            Raylib.DrawTextureRec(tex.texture, new Rectangle(0, (int)base.WindowSize.Y, (int)base.WindowSize.X, -(int)base.WindowSize.Y), Vector2.Zero, Color.WHITE);
             Raylib.EndDrawing();
         }
 
