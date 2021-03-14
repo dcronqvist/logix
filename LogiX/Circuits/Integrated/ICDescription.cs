@@ -29,12 +29,12 @@ namespace LogiX.Circuits.Integrated
             if (components.Count < 1)
                 return false;
 
-            return GenerateDescription(components) != null;
+            return GenerateDescription(components.Where(x => x.GetType() != typeof(DrawableHexViewer)).ToList()) != null;
         }
 
         public ICDescription(List<DrawableComponent> components)
         {
-            this.Descriptions = GenerateDescription(components);
+            this.Descriptions = GenerateDescription(components.Where(x => x.GetType() != typeof(DrawableHexViewer)).ToList());
             this.Inputs = CountComponentsOfType<DrawableCircuitSwitch>(components);
             this.Outputs = CountComponentsOfType<DrawableCircuitLamp>(components);
         }
@@ -82,13 +82,16 @@ namespace LogiX.Circuits.Integrated
                 {
                     foreach (DrawableWire cw in co.Signals)
                     {
-                        int indexOf = comps.IndexOf(cw.To);
-                        if(indexOf == -1)
+                        if (comps.Contains(cw.To))
                         {
-                            return null;
+                            int indexOf = comps.IndexOf(cw.To);
+                            if (indexOf == -1)
+                            {
+                                return null;
+                            }
+                            ICConnectionDescription iccd = new ICConnectionDescription(indexOf, cw.FromIndex, cw.ToIndex);
+                            to.Add(iccd);
                         }
-                        ICConnectionDescription iccd = new ICConnectionDescription(indexOf, cw.FromIndex, cw.ToIndex);
-                        to.Add(iccd);
                     }
                 }
 

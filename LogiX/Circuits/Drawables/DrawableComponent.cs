@@ -212,9 +212,12 @@ namespace LogiX.Circuits.Drawables
             DrawInputs(mousePosInWorld);
             DrawOutputs(mousePosInWorld);
 
-            Vector2 middle = Position + Size / 2f;
-            Vector2 textPos = middle - TextSize / 2f;
-            Raylib.DrawTextEx(Raylib.GetFontDefault(), Text, new Vector2(textPos.X, textPos.Y), Utility.TEXT_SIZE, 1f, BorderColor);
+            if (Text != "")
+            {
+                Vector2 middle = Position + Size / 2f;
+                Vector2 textPos = middle - TextSize / 2f;
+                Raylib.DrawTextEx(Raylib.GetFontDefault(), Text, new Vector2(textPos.X, textPos.Y), Utility.TEXT_SIZE, 1f, BorderColor);
+            }
 
             Vector2 topLeft = new Vector2(Box.x, Box.y);
             Vector2 topRight = new Vector2(Box.x + Box.width, Box.y);

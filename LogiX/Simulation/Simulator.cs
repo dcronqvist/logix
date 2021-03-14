@@ -1,5 +1,6 @@
 ﻿using LogiX.Circuits;
 using LogiX.Circuits.Drawables;
+using LogiX.Settings;
 using LogiX.Utils;
 using Newtonsoft.Json;
 using Raylib_cs;
@@ -8,18 +9,16 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
 using System.Text;
+using System.Threading;
 
 namespace LogiX.Simulation
 {
-    [JsonObject(MemberSerialization.OptOut)]
     class Simulator
     {
         public List<DrawableWire> AllWires { get; set; }
         public List<DrawableComponent> AllComponents { get; set; }
 
-        [JsonIgnore]
         public List<DrawableComponent> SelectedComponents { get; set; }
-        [JsonIgnore]
         public List<DrawableComponent> Interactables
         {
             get
@@ -27,12 +26,16 @@ namespace LogiX.Simulation
                 return AllComponents.Where(x => x.GetType().GetInterfaces().Contains(typeof(IUpdateable))).ToList();
             }
         }
+        public float SimulationSpeed { get; set; }
+        public float CurrentSimulationCounter { get; set; }
 
         public Simulator()
         {
             AllComponents = new List<DrawableComponent>();
             SelectedComponents = new List<DrawableComponent>();
             AllWires = new List<DrawableWire>();
+            SimulationSpeed = 1f;
+            CurrentSimulationCounter = 0f;
         }
 
         public void AddWire(DrawableWire wire)
@@ -155,16 +158,26 @@ namespace LogiX.Simulation
             }
         }
 
-        public void UpdateLogic(Vector2 mousePosInWorld)
+        public void UpdateLogic()
         {
-            foreach(DrawableComponent dc in AllComponents)
-            {
-                dc.UpdateInputsAndLogic();
-            }
+            CurrentSimulationCounter += SimulationSpeed;
 
-            foreach (DrawableComponent dc in AllComponents)
+            if(CurrentSimulationCounter > 1)
             {
-                dc.UpdateOutputs();
+                while(CurrentSimulationCounter > 0)
+                {
+                    CurrentSimulationCounter -= 1f;
+
+                    foreach (DrawableComponent dc in AllComponents)
+                    {
+                        dc.UpdateInputsAndLogic();
+                    }
+
+                    foreach (DrawableComponent dc in AllComponents)
+                    {
+                        dc.UpdateOutputs();
+                    }
+                }
             }
         }
 
@@ -177,12 +190,21 @@ namespace LogiX.Simulation
 
             foreach (DrawableComponent dc in AllComponents)
             {
-                dc.Draw(mousePosInWorld);
+                dc?.Draw(mousePosInWorld);
             }
             
             foreach(DrawableComponent dc in SelectedComponents)
             {
-                dc.DrawSelected();
+                dc?.DrawSelected();
+            }
+        }
+    
+        private void Simulate()
+        {
+            while (true)
+            {
+                UpdateLogic();
+                Thread.Sleep(4);
             }
         }
     }

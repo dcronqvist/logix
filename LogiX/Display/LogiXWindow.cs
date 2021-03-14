@@ -122,7 +122,7 @@ namespace LogiX.Display
         public override void LoadContent()
         {
             // Load files for use in the program.
-            Raylib.SetTargetFPS(500);
+            Raylib.SetTargetFPS(1000);
             controller = new ImGUIController();
             controller.Load((int)base.WindowSize.X, (int)base.WindowSize.Y);
 
@@ -231,8 +231,10 @@ namespace LogiX.Display
             currentMousePos = Raylib.GetMousePosition();
 
             // This comes from being able to turn off simulation in the main menu
+            
             if(_simulationOn)
-                currentProject.Simulation.UpdateLogic(GetMousePositionInWorld());
+                currentProject.Simulation.UpdateLogic();
+            
             // Should always update all updateable components though, like being able
             // to turn off and on switches during sim-off.
             currentProject.Simulation.Update(GetMousePositionInWorld());
@@ -453,6 +455,10 @@ namespace LogiX.Display
 
         public override void Unload()
         {
+            string path = Utility.CreateProjectFilePath(currentProject.ProjectName);
+            currentProject.SaveProjectToFile(path);
+            SettingManager.SetSetting("latest-project", path);
+            SettingManager.SaveSettings();
             LogManager.DumpToFile();
         }
 
@@ -481,6 +487,12 @@ namespace LogiX.Display
                 if(ImGui.MenuItem("New Project..."))
                 {
                     // TODO: Modal for new project
+                    string path = Utility.CreateProjectFilePath(currentProject.ProjectName);
+                    currentProject.SaveProjectToFile(path);
+                    SettingManager.SetSetting("latest-project", path);
+                    SettingManager.SaveSettings();
+
+                    SetProject(new LogiXProject("new-project"));
                 }
 
                 if(ImGui.MenuItem("Open Project"))
@@ -541,8 +553,13 @@ namespace LogiX.Display
                 ImGui.Checkbox("Simulating", ref _simulationOn);
                 if (ImGui.Button("Update simulation"))
                 {
-                    currentProject.Simulation.UpdateLogic(GetMousePositionInWorld());
+                    currentProject.Simulation.UpdateLogic();
                 }
+                float v = currentProject.Simulation.SimulationSpeed;
+                ImGui.SliderFloat("Sim. Speed", ref v, 0.0001f, 100f, "%.2f", ImGuiSliderFlags.Logarithmic);
+                ImGui.SameLine();
+                Utility.GuiHelpMarker("Setting this too high might result in loss of performance. Play around with different values to find what suits your computer best.");
+                currentProject.Simulation.SimulationSpeed = v;
                 ImGui.EndMenu();
             }
 
@@ -601,6 +618,12 @@ namespace LogiX.Display
                     SetNewComponent(new DrawableCircuitLamp(GetMousePositionInWorld(), true));
                 }
 
+                ImGui.Button("HEX VIEW", buttonSize);
+                if (ImGui.IsItemClicked())
+                {
+                    SetNewComponent(new DrawableHexViewer(GetMousePositionInWorld(), true));
+                }
+
                 ImGui.Separator();
                 ImGui.Text("Logic Gates");
 
@@ -656,30 +679,36 @@ namespace LogiX.Display
             {
                 if (ImGui.Begin("ICs", ImGuiWindowFlags.AlwaysAutoResize))
                 {
-                    foreach(ICCollection collection in collections)
+                    if (ImGui.BeginChild("ic-scroll", new Vector2(Utility.BUTTON_DEFAULT_SIZE.X + 20, 230)))
                     {
-                        ImGui.Text(collection.Name);
-
-                        foreach(ICDescription descr in collection.Descriptions)
+                        foreach (ICCollection collection in collections)
                         {
-                            ImGui.Button(descr.Name, Utility.BUTTON_DEFAULT_SIZE);
+                            ImGui.Text(collection.Name);
+
+                            foreach (ICDescription descr in collection.Descriptions)
+                            {
+                                ImGui.Button(descr.Name, Utility.BUTTON_DEFAULT_SIZE);
+                                if (ImGui.IsItemClicked())
+                                {
+                                    SetNewComponent(new DrawableIC(GetMousePositionInWorld(), descr.Name, descr, true));
+                                }
+                            }
+                            ImGui.Separator();
+                        }
+
+                        ImGui.Text("In Project");
+                        foreach (ICDescription desc in nonCollectionDescriptions)
+                        {
+                            ImGui.Button(desc.Name, Utility.BUTTON_DEFAULT_SIZE);
                             if (ImGui.IsItemClicked())
                             {
-                                SetNewComponent(new DrawableIC(GetMousePositionInWorld(), descr.Name, descr, true));
+                                SetNewComponent(new DrawableIC(GetMousePositionInWorld(), desc.Name, desc, true));
                             }
                         }
-                        ImGui.Separator();
+
+                        ImGui.EndChild();
                     }
 
-                    ImGui.Text("In Project");
-                    foreach(ICDescription desc in nonCollectionDescriptions)
-                    {
-                        ImGui.Button(desc.Name, Utility.BUTTON_DEFAULT_SIZE);
-                        if (ImGui.IsItemClicked())
-                        {
-                            SetNewComponent(new DrawableIC(GetMousePositionInWorld(), desc.Name, desc, true));
-                        }
-                    }
 
                     ImGui.End();
                 }

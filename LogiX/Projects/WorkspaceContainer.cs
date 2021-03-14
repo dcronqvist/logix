@@ -51,6 +51,10 @@ namespace LogiX.Projects
                 {
                     type = ((DrawableIC)dc).Description.Name;
                 }
+                else if (dc is DrawableHexViewer)
+                {
+                    type = "HexViewer";
+                }
 
                 List<WorkspaceComponentConnection> connections = new List<WorkspaceComponentConnection>();
 
@@ -126,6 +130,9 @@ namespace LogiX.Projects
                         break;
                     case "Lamp":
                         dc = new DrawableCircuitLamp(wc.Position + offset, false) { ID = wc.ID };
+                        break;
+                    case "HexViewer":
+                        dc = new DrawableHexViewer(wc.Position + offset, false);
                         break;
                     default:
                         ICDescription icd = GetDescription(wc.Type, availableDescriptions);

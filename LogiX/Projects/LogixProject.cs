@@ -65,12 +65,21 @@ namespace LogiX.Projects
         public List<ICDescription> GetAllNonCollectionDescriptions()
         {
             List<ICDescription> descriptions = new List<ICDescription>();
+            List<string> notFound = new List<string>();
 
             foreach(string desc in IncludedDescriptions)
             {
                 string fileName = Path.GetFileName(desc);
 
-                descriptions.Add(GetDescription(fileName));
+                if(File.Exists(desc))
+                {
+                    descriptions.Add(GetDescription(fileName));
+                }
+                else
+                {
+                    notFound.Add(desc);
+                    LogManager.AddEntry($"Could not find description {desc}");
+                }
             }
 
             return descriptions;
@@ -78,41 +87,63 @@ namespace LogiX.Projects
 
         public List<ICCollection> GetAllCollections()
         {
+            // Initialize list for returning
             List<ICCollection> colls = new List<ICCollection>();
+            // Initialize list for not found collections for removal.
+            List<string> couldNotFind = new List<string>();
 
+            // Loop through all included collections
             foreach(string collection in IncludedCollections)
             {
+                // Get the filename, without extension, from the collection
                 string fileName = Path.GetFileName(collection);
 
-                colls.Add(GetCollection(fileName));
+                // If the collection file exists, load it and add it to the list of collections
+                if (File.Exists(collection))
+                {
+                    colls.Add(GetCollection(fileName));
+                }
+                else // If it does not exist, tell error to log and add collection to not found.
+                {
+                    couldNotFind.Add(collection);
+                    LogManager.AddEntry($"Could not find collection {collection}");
+                }
             }
 
+            // Loop through all non found collections and remove them from included collections.
+            foreach (string notFound in couldNotFind)
+            {
+                IncludedCollections.Remove(notFound);
+            }
+
+            // Return the collection list
             return colls;
         }
 
         public ICCollection GetCollection(string name)
         {
-            try
+            foreach(string collection in IncludedCollections)
             {
-                foreach(string collection in IncludedCollections)
-                {
-                    string fileName = Path.GetFileName(collection);
+                string fileName = Path.GetFileName(collection);
 
-                    if(fileName == name)
+                if(fileName == name)
+                {
+                    try
                     {
                         using (StreamReader sr = new StreamReader(collection))
                         {
-                            return JsonConvert.DeserializeObject<ICCollection>(sr.ReadToEnd());
+                            ICCollection co = JsonConvert.DeserializeObject<ICCollection>(sr.ReadToEnd());
+                            LogManager.AddEntry($"Successfully loaded collection {name}");
+                            return co;
                         }
-                    }    
-                }
-                return null;
+                    }
+                    catch(Exception ex)
+                    {
+                        LogManager.AddEntry($"Failed to load collection {collection}: {ex.Message} - {ex.StackTrace}");
+                    }
+                }    
             }
-            catch(Exception ex)
-            {
-                LogManager.AddEntry($"Failed to load collection '{name}': {ex.Message}");
-                return null;
-            }
+            return null;
         }
 
         public static LogiXProject LoadFromFile(string path)
@@ -145,9 +176,18 @@ namespace LogiX.Projects
 
                 if (fileName == name)
                 {
-                    using (StreamReader sr = new StreamReader(desc))
+                    try
                     {
-                        return JsonConvert.DeserializeObject<ICDescription>(sr.ReadToEnd());
+                        using (StreamReader sr = new StreamReader(desc))
+                        {
+                            ICDescription icd = JsonConvert.DeserializeObject<ICDescription>(sr.ReadToEnd());
+                            LogManager.AddEntry($"Successfully loaded description {name}");
+                            return icd; 
+                        }
+                    }
+                    catch(Exception ex)
+                    {
+                        LogManager.AddEntry($"Failed to load description {name}: {ex.Message} - {ex.StackTrace}");
                     }
                 }
             }
