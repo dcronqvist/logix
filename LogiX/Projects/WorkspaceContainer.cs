@@ -6,6 +6,7 @@ using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Numerics;
 using System.Text;
 
 namespace LogiX.Projects
@@ -89,7 +90,7 @@ namespace LogiX.Projects
             return null;
         }
 
-        public Tuple<List<DrawableComponent>, List<DrawableWire>> GenerateDrawables(List<ICDescription> availableDescriptions)
+        public Tuple<List<DrawableComponent>, List<DrawableWire>> GenerateDrawables(List<ICDescription> availableDescriptions, Vector2 offset)
         {
             DrawableComponent[] components = new DrawableComponent[Components.Count];
 
@@ -100,27 +101,36 @@ namespace LogiX.Projects
                 switch (wc.Type)
                 {
                     case "ANDGateLogic":
-                        dc = new DrawableLogicGate(wc.Position, "AND", new ANDGateLogic(), false);
+                        dc = new DrawableLogicGate(wc.Position + offset, "AND", new ANDGateLogic(), false);
+                        break;
+                    case "NANDGateLogic":
+                        dc = new DrawableLogicGate(wc.Position + offset, "NAND", new NANDGateLogic(), false);
                         break;
                     case "ORGateLogic":
-                        dc = new DrawableLogicGate(wc.Position, "OR", new ORGateLogic(), false);
-                        break;
-                    case "XORGateLogic":
-                        dc = new DrawableLogicGate(wc.Position, "XOR", new XORGateLogic(), false);
+                        dc = new DrawableLogicGate(wc.Position + offset, "OR", new ORGateLogic(), false);
                         break;
                     case "NORGateLogic":
-                        dc = new DrawableLogicGate(wc.Position, "NOR", new NORGateLogic(), false);
+                        dc = new DrawableLogicGate(wc.Position + offset, "NOR", new NORGateLogic(), false);
+                        break;
+                    case "XORGateLogic":
+                        dc = new DrawableLogicGate(wc.Position + offset, "XOR", new XORGateLogic(), false);
+                        break;
+                    case "XNORGateLogic":
+                        dc = new DrawableLogicGate(wc.Position + offset, "XNOR", new XNORGateLogic(), false);
+                        break;
+                    case "NOTGateLogic":
+                        dc = new DrawableLogicGate(wc.Position + offset, "NOT", new NOTGateLogic(), false);
                         break;
                     case "Switch":
-                        dc = new DrawableCircuitSwitch(wc.Position, false) { ID = wc.ID };
+                        dc = new DrawableCircuitSwitch(wc.Position + offset, false) { ID = wc.ID };
                         break;
                     case "Lamp":
-                        dc = new DrawableCircuitLamp(wc.Position) { ID = wc.ID };
+                        dc = new DrawableCircuitLamp(wc.Position + offset, false) { ID = wc.ID };
                         break;
                     default:
                         ICDescription icd = GetDescription(wc.Type, availableDescriptions);
                         if (icd != null)
-                            dc = new DrawableIC(wc.Position, icd.Name, icd, false);
+                            dc = new DrawableIC(wc.Position + offset, icd.Name, icd, false);
                         else
                             break;
                         break;
@@ -136,12 +146,19 @@ namespace LogiX.Projects
 
                 foreach (WorkspaceComponentConnection connection in iccd.ConnectedTo)
                 {
-                    DrawableWire cw = new DrawableWire(components[i], components[connection.To], connection.OutIndex, connection.InIndex);
+                    try
+                    {
+                        DrawableWire cw = new DrawableWire(components[i], components[connection.To], connection.OutIndex, connection.InIndex);
 
-                    components[i].AddOutputWire(connection.OutIndex, cw);
-                    components[connection.To].SetInputWire(connection.InIndex, cw);
+                        components[i].AddOutputWire(connection.OutIndex, cw);
+                        components[connection.To].SetInputWire(connection.InIndex, cw);
 
-                    wires.Add(cw);
+                        wires.Add(cw);
+                    }
+                    catch
+                    {
+
+                    }
                 }
             }
 

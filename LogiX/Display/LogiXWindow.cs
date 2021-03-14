@@ -264,6 +264,12 @@ namespace LogiX.Display
             {
                 if (!ImGui.GetIO().WantCaptureMouse || newComponent != null)
                 {
+                    if(Raylib.IsKeyDown(KeyboardKey.KEY_LEFT_SHIFT) && Raylib.IsKeyPressed(KeyboardKey.KEY_D))
+                    {
+
+                        CopySelectedComponentsNewOffsetPos(new Vector2(100, 100));
+                    }
+
                     if (Raylib.IsMouseButtonPressed(MouseButton.MOUSE_MIDDLE_BUTTON) && state == EditorState.None)
                     {
                         state = EditorState.MovingCamera;
@@ -450,6 +456,19 @@ namespace LogiX.Display
             LogManager.DumpToFile();
         }
 
+        public void CopySelectedComponentsNewOffsetPos(Vector2 offset)
+        {
+            WorkspaceContainer wc = new WorkspaceContainer(currentProject.Simulation.SelectedComponents);
+
+            Tuple<List<DrawableComponent>, List<DrawableWire>> tup = wc.GenerateDrawables(currentProject.GetAllDescriptions(), offset);
+
+            currentProject.Simulation.AllComponents.AddRange(tup.Item1);
+            currentProject.Simulation.AllWires.AddRange(tup.Item2);
+
+            currentProject.Simulation.ClearSelectedComponents();
+            currentProject.Simulation.SelectedComponents.AddRange(tup.Item1);
+        }
+
         public void SubmitUI()
         {
             yes = true;
@@ -579,7 +598,7 @@ namespace LogiX.Display
                 ImGui.Button("LAMP", buttonSize);
                 if (ImGui.IsItemClicked())
                 {
-                    SetNewComponent(new DrawableCircuitLamp(GetMousePositionInWorld()));
+                    SetNewComponent(new DrawableCircuitLamp(GetMousePositionInWorld(), true));
                 }
 
                 ImGui.Separator();

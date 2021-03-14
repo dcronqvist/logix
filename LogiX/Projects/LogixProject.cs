@@ -8,6 +8,7 @@ using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Numerics;
 using System.Text;
 
 namespace LogiX.Projects
@@ -122,7 +123,7 @@ namespace LogiX.Projects
                 {
                     string json = sr.ReadToEnd();
                     LogiXProject lp = JsonConvert.DeserializeObject<LogiXProject>(json);
-                    Tuple<List<DrawableComponent>, List<DrawableWire>> tup = lp.Container.GenerateDrawables(lp.GetAllDescriptions());
+                    Tuple<List<DrawableComponent>, List<DrawableWire>> tup = lp.Container.GenerateDrawables(lp.GetAllDescriptions(), Vector2.Zero);
                     lp.Simulation = new Simulator();
                     lp.Simulation.AllComponents = tup.Item1;
                     lp.Simulation.AllWires = tup.Item2;
