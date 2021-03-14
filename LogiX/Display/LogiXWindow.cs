@@ -573,7 +573,7 @@ namespace LogiX.Display
                 ImGui.Button("SWITCH", buttonSize);
                 if (ImGui.IsItemClicked())
                 {
-                    SetNewComponent(new DrawableCircuitSwitch(GetMousePositionInWorld()));
+                    SetNewComponent(new DrawableCircuitSwitch(GetMousePositionInWorld(), true));
                 }
 
                 ImGui.Button("LAMP", buttonSize);
@@ -589,40 +589,40 @@ namespace LogiX.Display
                 ImGui.Button("AND", buttonSize);
                 if (ImGui.IsItemClicked())
                 {
-                    SetNewComponent(new DrawableLogicGate(GetMousePositionInWorld(), "AND", new ANDGateLogic()));       
+                    SetNewComponent(new DrawableLogicGate(GetMousePositionInWorld(), "AND", new ANDGateLogic(), true));       
                 }
                 ImGui.Button("NAND", buttonSize);
                 if (ImGui.IsItemClicked())
                 {
-                    SetNewComponent(new DrawableLogicGate(GetMousePositionInWorld(), "NAND", new NANDGateLogic()));
+                    SetNewComponent(new DrawableLogicGate(GetMousePositionInWorld(), "NAND", new NANDGateLogic(), true));
                 }
 
                 ImGui.Button("OR", buttonSize);
                 if (ImGui.IsItemClicked())
                 {
-                    SetNewComponent(new DrawableLogicGate(GetMousePositionInWorld(), "OR", new ORGateLogic()));
+                    SetNewComponent(new DrawableLogicGate(GetMousePositionInWorld(), "OR", new ORGateLogic(), true));
                 }
                 ImGui.Button("NOR", buttonSize);
                 if (ImGui.IsItemClicked())
                 {
-                    SetNewComponent(new DrawableLogicGate(GetMousePositionInWorld(), "NOR", new NORGateLogic()));
+                    SetNewComponent(new DrawableLogicGate(GetMousePositionInWorld(), "NOR", new NORGateLogic(), true));
                 }
 
                 ImGui.Button("XOR", buttonSize);
                 if (ImGui.IsItemClicked())
                 {
-                    SetNewComponent(new DrawableLogicGate(GetMousePositionInWorld(), "XOR", new XORGateLogic()));
+                    SetNewComponent(new DrawableLogicGate(GetMousePositionInWorld(), "XOR", new XORGateLogic(), true));
                 }
                 ImGui.Button("XNOR", buttonSize);
                 if (ImGui.IsItemClicked())
                 {
-                    SetNewComponent(new DrawableLogicGate(GetMousePositionInWorld(), "XNOR", new XNORGateLogic()));
+                    SetNewComponent(new DrawableLogicGate(GetMousePositionInWorld(), "XNOR", new XNORGateLogic(), true));
                 }
 
                 ImGui.Button("NOT", buttonSize);
                 if (ImGui.IsItemClicked())
                 {
-                    SetNewComponent(new DrawableLogicGate(GetMousePositionInWorld(), "NOT", new NOTGateLogic()));
+                    SetNewComponent(new DrawableLogicGate(GetMousePositionInWorld(), "NOT", new NOTGateLogic(), true));
                 }
 
 
@@ -646,7 +646,7 @@ namespace LogiX.Display
                             ImGui.Button(descr.Name, Utility.BUTTON_DEFAULT_SIZE);
                             if (ImGui.IsItemClicked())
                             {
-                                SetNewComponent(new DrawableIC(GetMousePositionInWorld(), descr.Name, descr));
+                                SetNewComponent(new DrawableIC(GetMousePositionInWorld(), descr.Name, descr, true));
                             }
                         }
                         ImGui.Separator();
@@ -658,7 +658,7 @@ namespace LogiX.Display
                         ImGui.Button(desc.Name, Utility.BUTTON_DEFAULT_SIZE);
                         if (ImGui.IsItemClicked())
                         {
-                            SetNewComponent(new DrawableIC(GetMousePositionInWorld(), desc.Name, desc));
+                            SetNewComponent(new DrawableIC(GetMousePositionInWorld(), desc.Name, desc, true));
                         }
                     }
 
@@ -799,7 +799,7 @@ namespace LogiX.Display
 
                     ICDescription icd = new ICDescription(comps);
                     string path = icd.SaveToFile(newIcName);
-                    currentProject.Simulation.AddComponent(new DrawableIC(new Vector2(100, 100), newIcName, icd));
+                    //currentProject.Simulation.AddComponent(new DrawableIC(new Vector2(100, 100), newIcName, icd, true));
                     IncludeDescriptions(path);
                     newIcName = "";
                     _makingIc = false;

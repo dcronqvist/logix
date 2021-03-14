@@ -132,14 +132,23 @@ namespace LogiX.Circuits.Integrated
                     case "ANDGateLogic":
                         dc = new MinimalLogicGate(new ANDGateLogic());
                         break;
+                    case "NANDGateLogic":
+                        dc = new MinimalLogicGate(new NANDGateLogic());
+                        break;
                     case "ORGateLogic":
                         dc = new MinimalLogicGate(new ORGateLogic());
+                        break;
+                    case "NORGateLogic":
+                        dc = new MinimalLogicGate(new NORGateLogic());
                         break;
                     case "XORGateLogic":
                         dc = new MinimalLogicGate(new XORGateLogic());
                         break;
-                    case "NORGateLogic":
-                        dc = new MinimalLogicGate(new NORGateLogic());
+                    case "XNORGateLogic":
+                        dc = new MinimalLogicGate(new XNORGateLogic());
+                        break;
+                    case "NOTGateLogic":
+                        dc = new MinimalLogicGate(new NOTGateLogic());
                         break;
                     case "Switch":
                         //CircuitSwitch cs = new CircuitSwitch(Vector2.Zero);
@@ -154,7 +163,7 @@ namespace LogiX.Circuits.Integrated
                     default:
                         // It is not a built in thing - look for it in the IC files folder
                         ICDescription icd = iccd.Description;
-                        dc = new DrawableIC(Vector2.Zero, icd.Name, icd);
+                        dc = new DrawableIC(Vector2.Zero, icd.Name, icd, false);
                         break;
                 }
                 components[i] = dc;

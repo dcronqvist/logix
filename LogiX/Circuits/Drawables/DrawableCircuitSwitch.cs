@@ -13,12 +13,12 @@ namespace LogiX.Circuits.Drawables
         public LogicValue Value { get; set; }
         public string ID = "";
 
-        public DrawableCircuitSwitch(Vector2 position) : base(position, "", 0, 1)
+        public DrawableCircuitSwitch(Vector2 position, bool offsetMiddle) : base(position, "", 0, 1)
         {
             Value = LogicValue.LOW;
             Size = new Vector2(25, 30);
             Text = "0";
-            CalculateOffsets();
+            CalculateOffsets(offsetMiddle);
         }
 
         public override void Draw(Vector2 mousePosInWorld)

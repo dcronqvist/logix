@@ -11,10 +11,10 @@ namespace LogiX.Circuits.Drawables
     {
         private IGateLogic logic;
 
-        public DrawableLogicGate(Vector2 position, string text, IGateLogic logic) : base(position, text, logic.GetExpectedInputAmount(), 1)
+        public DrawableLogicGate(Vector2 position, string text, IGateLogic logic, bool offsetMiddle) : base(position, text, logic.GetExpectedInputAmount(), 1)
         {
             this.logic = logic;
-            CalculateOffsets();
+            CalculateOffsets(offsetMiddle);
         }
 
         protected override void PerformLogic()

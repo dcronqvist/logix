@@ -1,5 +1,6 @@
 ﻿using LogiX.Circuits.Integrated;
 using LogiX.Circuits.Minimals;
+using Newtonsoft.Json;
 using Raylib_cs;
 using System;
 using System.Collections.Generic;
@@ -9,6 +10,7 @@ using System.Text;
 
 namespace LogiX.Circuits.Drawables
 {
+    [JsonObject]
     class DrawableIC : DrawableComponent
     {
         public ICDescription Description { get; set; }
@@ -17,8 +19,8 @@ namespace LogiX.Circuits.Drawables
         public Dictionary<string, MinimalLamp> OutputDictionary { get; set; }
         public string[] InputIDS { get; set; }
         public string[] OutputIDS { get; set; }
-
-        public DrawableIC(Vector2 position, string text, ICDescription desc) : base(position, text, desc.Inputs, desc.Outputs)
+        
+        public DrawableIC(Vector2 position, string text, ICDescription desc, bool offsetMiddle) : base(position, text, desc.Inputs, desc.Outputs)
         {
             this.Description = desc;
             this.Components = desc.GenerateComponents();
@@ -26,7 +28,7 @@ namespace LogiX.Circuits.Drawables
             this.OutputDictionary = GetOutputDictionary(this.Components);
             this.InputIDS = GetInputIDS(this.InputDictionary);
             this.OutputIDS = GetOutputIDS(this.OutputDictionary);
-            CalculateOffsets();
+            CalculateOffsets(offsetMiddle);
         }
 
         private Dictionary<string, MinimalSwitch> GetInputDictionary(List<CircuitComponent> comps)

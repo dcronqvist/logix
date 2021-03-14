@@ -100,32 +100,27 @@ namespace LogiX.Projects
                 switch (wc.Type)
                 {
                     case "ANDGateLogic":
-                        dc = new DrawableLogicGate(wc.Position, "AND", new ANDGateLogic());
+                        dc = new DrawableLogicGate(wc.Position, "AND", new ANDGateLogic(), false);
                         break;
                     case "ORGateLogic":
-                        dc = new DrawableLogicGate(wc.Position, "OR", new ORGateLogic());
+                        dc = new DrawableLogicGate(wc.Position, "OR", new ORGateLogic(), false);
                         break;
                     case "XORGateLogic":
-                        dc = new DrawableLogicGate(wc.Position, "XOR", new XORGateLogic());
+                        dc = new DrawableLogicGate(wc.Position, "XOR", new XORGateLogic(), false);
                         break;
                     case "NORGateLogic":
-                        dc = new DrawableLogicGate(wc.Position, "NOR", new NORGateLogic());
+                        dc = new DrawableLogicGate(wc.Position, "NOR", new NORGateLogic(), false);
                         break;
                     case "Switch":
-                        //CircuitSwitch cs = new CircuitSwitch(Vector2.Zero);
-                        //cs.SetID(iccd.ID);
-                        dc = new DrawableCircuitSwitch(wc.Position) { ID = wc.ID };
+                        dc = new DrawableCircuitSwitch(wc.Position, false) { ID = wc.ID };
                         break;
                     case "Lamp":
-                        //CircuitLamp cl = new CircuitLamp(Vector2.Zero);
-                        //cl.SetID(iccd.ID);
                         dc = new DrawableCircuitLamp(wc.Position) { ID = wc.ID };
                         break;
                     default:
-                        // It is not a built in thing - look for it in the IC files folder
                         ICDescription icd = GetDescription(wc.Type, availableDescriptions);
                         if (icd != null)
-                            dc = new DrawableIC(wc.Position, icd.Name, icd);
+                            dc = new DrawableIC(wc.Position, icd.Name, icd, false);
                         else
                             break;
                         break;

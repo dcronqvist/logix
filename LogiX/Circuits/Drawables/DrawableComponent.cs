@@ -39,10 +39,12 @@ namespace LogiX.Circuits.Drawables
             this.Position = position;
         }
 
-        public void CalculateOffsets()
+        public void CalculateOffsets(bool offsetMiddle)
         {
             CalculateSizes();
-            this.Position = Position - Size / 2;
+
+            if(offsetMiddle)
+                this.Position = Position - Size / 2;
             this.MiddlePosition = Position + Size / 2;
         }
 

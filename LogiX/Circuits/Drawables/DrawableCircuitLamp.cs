@@ -13,7 +13,7 @@ namespace LogiX.Circuits.Drawables
         public DrawableCircuitLamp(Vector2 position) : base(position, "", 1, 0)
         {
             Size = new Vector2(25, 30);
-            CalculateOffsets();
+            CalculateOffsets(true);
         }
 
         public override void Draw(Vector2 mousePosInWorld)
