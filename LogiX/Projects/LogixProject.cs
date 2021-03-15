@@ -19,6 +19,7 @@ namespace LogiX.Projects
         public string ProjectName { get; set; }
         public List<string> IncludedCollections { get; set; }
         public List<string> IncludedDescriptions { get; set; }
+        public List<string> IncludedFileComponents { get; set; }
         public WorkspaceContainer Container { get; set; }
 
         [JsonIgnore]
@@ -34,6 +35,7 @@ namespace LogiX.Projects
             this.ProjectName = name;
             this.IncludedCollections = new List<string>();
             this.IncludedDescriptions = new List<string>();
+            this.IncludedFileComponents = new List<string>();
             this.Simulation = new Simulator();
         }
 
@@ -48,6 +50,12 @@ namespace LogiX.Projects
         public void IncludeDescription(string description)
         {
             this.IncludedDescriptions.Add(description);
+        }
+
+        public void IncludeFileComponent(string fileComponent)
+        {
+            if(!this.IncludedFileComponents.Contains(fileComponent))
+                this.IncludedFileComponents.Add(fileComponent);
         }
 
         public List<ICDescription> GetAllDescriptions()

@@ -1,4 +1,4 @@
-﻿#define MACOS
+﻿//#define MACOS
 
 using Raylib_cs;
 using System;

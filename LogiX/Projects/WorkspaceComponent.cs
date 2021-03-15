@@ -11,6 +11,7 @@ namespace LogiX.Projects
         public Vector2 Position { get; set; }
         public List<WorkspaceComponentConnection> ConnectedTo { get; set; }
         public string ID { get; set; }
+        public string FileComponentFile { get; set; }
 
         public WorkspaceComponent(string type, Vector2 position, List<WorkspaceComponentConnection> connectedTo)
         {
@@ -22,6 +23,11 @@ namespace LogiX.Projects
         public void SetID(string s)
         {
             this.ID = s;
+        }
+
+        public void SetFileComponentFile(string file)
+        {
+            this.FileComponentFile = file;
         }
     }
 }

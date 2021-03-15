@@ -34,7 +34,8 @@ namespace LogiX.Display
         SelectingProjectFile,
         IncludeCollection,
         IncludeDescription,
-        SavingProjectFile
+        SavingProjectFile,
+        CreatingFileComponent,
     }
 
     class LogiXWindow : BaseWindow
@@ -123,7 +124,7 @@ namespace LogiX.Display
         public override void LoadContent()
         {
             // Load files for use in the program.
-            Raylib.SetTargetFPS(60);
+            Raylib.SetTargetFPS(1000);
             controller = new ImGUIController();
             controller.Load((int)base.WindowSize.X, (int)base.WindowSize.Y);
             tex = Raylib.LoadRenderTexture((int)base.WindowSize.X, (int)base.WindowSize.Y);
@@ -270,7 +271,7 @@ namespace LogiX.Display
             #endregion
 
             #region Decide Which Editor State
-            if (state != EditorState.SelectingProjectFile && state != EditorState.IncludeCollection && state != EditorState.IncludeDescription && state != EditorState.SavingProjectFile)
+            if (state != EditorState.SelectingProjectFile && state != EditorState.IncludeCollection && state != EditorState.IncludeDescription && state != EditorState.SavingProjectFile && state != EditorState.CreatingFileComponent)
             {
                 if (!ImGui.GetIO().WantCaptureMouse || newComponent != null)
                 {
@@ -540,9 +541,17 @@ namespace LogiX.Display
                     fd = new FileDialog(Utility.PROJECTS_DIR, "Save Project As", FileDialogType.SaveFile, new string[] { Utility.EXT_PROJ });
                 }
 
+                ImGui.Separator();
+
                 if (ImGui.MenuItem("Settings"))
                 {
                     editingSettings = true;
+                }
+
+                if(ImGui.MenuItem("Create File Component"))
+                {
+                    state = EditorState.CreatingFileComponent;
+                    fd = new FileDialog(Utility.PROJECTS_DIR, "Open File Component File", FileDialogType.SelectFile);
                 }
 
                 ImGui.EndMenu();
@@ -1042,6 +1051,10 @@ namespace LogiX.Display
                             currentProject.SaveProjectToFile(fd.SelectedFiles[0]);
                             SettingManager.SetSetting("latest-project", fd.SelectedFiles[0]);
                             SettingManager.SaveSettings();
+                            break;
+
+                        case EditorState.CreatingFileComponent:
+                            SetNewComponent(new DrawableFileComponent(GetMousePositionInWorld(), fd.SelectedFiles[0], true));
                             break;
                     }
                     state = EditorState.None;

@@ -55,6 +55,10 @@ namespace LogiX.Projects
                 {
                     type = "HexViewer";
                 }
+                else if (dc is DrawableFileComponent)
+                {
+                    type = "FileComponent";
+                }
 
                 List<WorkspaceComponentConnection> connections = new List<WorkspaceComponentConnection>();
 
@@ -76,6 +80,10 @@ namespace LogiX.Projects
                 if (dc is DrawableCircuitSwitch)
                 {
                     wc.SetID(((DrawableCircuitSwitch)dc).ID);
+                }
+                if(dc is DrawableFileComponent)
+                {
+                    wc.SetFileComponentFile(((DrawableFileComponent)dc).FilePath);
                 }
 
                 comps.Add(wc);
@@ -133,6 +141,9 @@ namespace LogiX.Projects
                         break;
                     case "HexViewer":
                         dc = new DrawableHexViewer(wc.Position + offset, false);
+                        break;
+                    case "FileComponent":
+                        dc = new DrawableFileComponent(wc.Position + offset, wc.FileComponentFile, false);
                         break;
                     default:
                         ICDescription icd = GetDescription(wc.Type, availableDescriptions);
