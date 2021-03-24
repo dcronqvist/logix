@@ -21,7 +21,7 @@ void LogiXWindow::Initialize() {
 
 void LogiXWindow::LoadContent() {
     // Initialize window icon
-    windowIcon = LoadImage("../logo.png");
+    windowIcon = LoadImage("../assets/logo.png");
     ImageFormat(&windowIcon, UNCOMPRESSED_R8G8B8A8);
     SetWindowIcon(windowIcon);
 
@@ -30,7 +30,7 @@ void LogiXWindow::LoadContent() {
     SetTargetFPS(144);
 
     // Init imgui
-    ImGui_ImplRaylib_Init(windowWidth, windowHeight, { "../opensans.ttf", "../opensans-bold.ttf" }, 16.0F);
+    ImGui_ImplRaylib_Init(windowWidth, windowHeight, { "../assets/opensans.ttf", "../assets/opensans-bold.ttf" }, 16.0F);
     ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 3);
     ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, 3);
 
