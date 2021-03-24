@@ -5,6 +5,8 @@
 
 *.ini
 .vscode
+*.a
+build/
 
 # User-specific files
 *.rsuser
