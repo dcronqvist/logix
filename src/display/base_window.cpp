@@ -30,7 +30,7 @@ bool BaseWindow::UnfocusingWindow() {
     return unfocusing;
 }
 
-void BaseWindow::Run() {
+int BaseWindow::Run() {
     this->Initialize();
 
     raylib::Window window(windowWidth, windowHeight, title);
@@ -44,6 +44,7 @@ void BaseWindow::Run() {
     }
 
     this->Unload();
+    return 0;
 }
 
 bool BaseWindow::KeyCombinationPressed(KeyboardKey modifier, KeyboardKey key) {
