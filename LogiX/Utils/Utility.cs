@@ -60,7 +60,7 @@ namespace LogiX.Utils
         public static Color COLOR_BLOCK_BORDER_DEFAULT = Color.BLACK;
         public static Color COLOR_IO_HOVER_DEFAULT = Color.SKYBLUE;
         public static Color COLOR_SELECTED_DEFAULT = Color.BLUE;
-        public static Color Opacity(this Color a, float f) 
+        public static Color Opacity(this Color a, float f)
         {
             return new Color(a.r, a.g, a.b, (byte)(a.a * f));
         }
@@ -118,6 +118,20 @@ namespace LogiX.Utils
                 if (ImGui.Selectable($"Set to default ({def})")) { value = def; }
                 ImGui.SetNextItemWidth(150);
                 ImGui.InputFloat("", ref value, 0.1f, 1f, "%.1f");
+                ImGui.EndPopup();
+            }
+            SettingManager.SetSetting(setting, value.ToString());
+        }
+
+        public static void GuiSettingIntSlider(string label, string setting, int def, int min, int max)
+        {
+            int value = int.Parse(SettingManager.GetSetting(setting, def.ToString()));
+            ImGui.SliderInt(label, ref value, min, max, "%d");
+            if (ImGui.BeginPopupContextItem(setting))
+            {
+                if (ImGui.Selectable($"Set to default ({def})")) { value = def; }
+                ImGui.SetNextItemWidth(150);
+                ImGui.InputInt("", ref value, 1, 10, ImGuiInputTextFlags.None);
                 ImGui.EndPopup();
             }
             SettingManager.SetSetting(setting, value.ToString());

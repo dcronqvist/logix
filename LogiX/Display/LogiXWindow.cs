@@ -25,8 +25,8 @@ namespace LogiX.Display
     {
         None,
         MovingCamera,
-        MovingSelection, 
-        RectangleSelecting, 
+        MovingSelection,
+        RectangleSelecting,
         HoveringUI,
         HoveringInput,
         HoveringOutput,
@@ -124,7 +124,8 @@ namespace LogiX.Display
         public override void LoadContent()
         {
             // Load files for use in the program.
-            Raylib.SetTargetFPS(1000);
+            int targetFps = int.Parse(SettingManager.GetSetting("target-fps", "144"));
+            Raylib.SetTargetFPS(targetFps);
             controller = new ImGUIController();
             controller.Load((int)base.WindowSize.X, (int)base.WindowSize.Y);
             tex = Raylib.LoadRenderTexture((int)base.WindowSize.X, (int)base.WindowSize.Y);
@@ -133,10 +134,10 @@ namespace LogiX.Display
             SetWindowSize(WindowSize, true);
 
             string latestProject = SettingManager.GetSetting("latest-project", "");
-            if(latestProject != "")
+            if (latestProject != "")
             {
                 LogiXProject lp = LogiXProject.LoadFromFile(latestProject);
-                if(lp != null)
+                if (lp != null)
                     SetProject(lp);
                 else
                     SetProject(new LogiXProject("new-project"));
@@ -214,18 +215,18 @@ namespace LogiX.Display
 
             RenderGrid();
             currentProject.Simulation.Render(GetMousePositionInWorld());
-            if(state == EditorState.OutputToInput)
+            if (state == EditorState.OutputToInput)
             {
                 Raylib.DrawLineBezier(tempOutput.Item2.GetOutputPosition(tempOutput.Item1), GetMousePositionInWorld(), 2f, Color.WHITE);
             }
 
-            if(state == EditorState.RectangleSelecting)
+            if (state == EditorState.RectangleSelecting)
             {
                 Raylib.DrawRectangleRec(selectionRec, Color.BLUE.Opacity(0.3f));
                 Raylib.DrawRectangleLinesEx(selectionRec, 1, Color.BLUE.Opacity(0.8f));
             }
             Raylib.EndMode2D();
-            
+
             Raylib.DrawTextureRec(tex.texture, new Rectangle(0, (int)base.WindowSize.Y, (int)base.WindowSize.X, -(int)base.WindowSize.Y), Vector2.Zero, Color.WHITE);
             Raylib.EndDrawing();
         }
@@ -240,10 +241,10 @@ namespace LogiX.Display
             currentMousePos = Raylib.GetMousePosition();
 
             // This comes from being able to turn off simulation in the main menu
-            
-            if(_simulationOn)
+
+            if (_simulationOn)
                 currentProject.Simulation.UpdateLogic();
-            
+
             // Should always update all updateable components though, like being able
             // to turn off and on switches during sim-off.
             currentProject.Simulation.Update(GetMousePositionInWorld());
@@ -275,7 +276,7 @@ namespace LogiX.Display
             {
                 if (!ImGui.GetIO().WantCaptureMouse || newComponent != null)
                 {
-                    if(Raylib.IsKeyDown(KeyboardKey.KEY_LEFT_SHIFT) && Raylib.IsKeyPressed(KeyboardKey.KEY_D))
+                    if (Raylib.IsKeyDown(KeyboardKey.KEY_LEFT_SHIFT) && Raylib.IsKeyPressed(KeyboardKey.KEY_D))
                     {
 
                         CopySelectedComponentsNewOffsetPos(new Vector2(100, 100));
@@ -334,12 +335,12 @@ namespace LogiX.Display
 
             #region Perform Editor State 
 
-            if(state == EditorState.MovingCamera)
+            if (state == EditorState.MovingCamera)
             {
                 cam.target -= (currentMousePos - previousMousePos) * 1f / cam.zoom;
             }
 
-            if(state == EditorState.MovingSelection)
+            if (state == EditorState.MovingSelection)
             {
                 foreach (DrawableComponent dc in currentProject.Simulation.SelectedComponents)
                 {
@@ -347,21 +348,21 @@ namespace LogiX.Display
                 }
             }
 
-            if(state == EditorState.RectangleSelecting)
+            if (state == EditorState.RectangleSelecting)
             {
                 Vector2 current = GetMousePositionInWorld();
 
-                if(current.Y < startPos.Y && current.X > startPos.X)
+                if (current.Y < startPos.Y && current.X > startPos.X)
                 {
                     // First quadrant
                     selectionRec = new Rectangle(startPos.X, current.Y, current.X - startPos.X, startPos.Y - current.Y);
                 }
-                else if(current.Y < startPos.Y && current.X < startPos.X)
+                else if (current.Y < startPos.Y && current.X < startPos.X)
                 {
                     // Second quadrant
                     selectionRec = new Rectangle(current.X, current.Y, startPos.X - current.X, startPos.Y - current.Y);
                 }
-                else if(current.Y > startPos.Y && current.X < startPos.X)
+                else if (current.Y > startPos.Y && current.X < startPos.X)
                 {
                     // Third quadrant
                     selectionRec = new Rectangle(current.X, startPos.Y, startPos.X - current.X, current.Y - startPos.Y);
@@ -375,7 +376,7 @@ namespace LogiX.Display
                 currentProject.Simulation.SelectComponentsInRectangle(selectionRec);
             }
 
-            if(state == EditorState.HoveringOutput)
+            if (state == EditorState.HoveringOutput)
             {
                 if (Raylib.IsMouseButtonPressed(MouseButton.MOUSE_LEFT_BUTTON))
                 {
@@ -384,7 +385,7 @@ namespace LogiX.Display
                 }
             }
 
-            if(state == EditorState.HoveringInput)
+            if (state == EditorState.HoveringInput)
             {
                 if (Raylib.IsMouseButtonPressed(MouseButton.MOUSE_RIGHT_BUTTON))
                 {
@@ -398,7 +399,7 @@ namespace LogiX.Display
                 }
             }
 
-            if(state == EditorState.OutputToInput)
+            if (state == EditorState.OutputToInput)
             {
                 if (Raylib.IsMouseButtonPressed(MouseButton.MOUSE_LEFT_BUTTON) && hoveredInput != null)
                 {
@@ -434,8 +435,8 @@ namespace LogiX.Display
             //                                + Bonus: By setting state to MovingSelection, you can move any component you simply click.
             if (Raylib.IsMouseButtonPressed(MouseButton.MOUSE_LEFT_BUTTON) && state == EditorState.None)
             {
-                
-                if(hovered != null)
+
+                if (hovered != null)
                 {
                     if (Raylib.IsKeyDown(KeyboardKey.KEY_LEFT_SHIFT))
                     {
@@ -443,7 +444,7 @@ namespace LogiX.Display
                     }
                     else
                     {
-                        if(!currentProject.Simulation.SelectedComponents.Contains(hovered))
+                        if (!currentProject.Simulation.SelectedComponents.Contains(hovered))
                             currentProject.Simulation.ClearSelectedComponents();
 
                         currentProject.Simulation.AddSelectedComponent(hovered);
@@ -493,7 +494,7 @@ namespace LogiX.Display
             // File thing
             if (ImGui.BeginMenu("File"))
             {
-                if(ImGui.MenuItem("New Project..."))
+                if (ImGui.MenuItem("New Project..."))
                 {
                     // TODO: Modal for new project
                     string path = Utility.CreateProjectFilePath(currentProject.ProjectName);
@@ -504,7 +505,7 @@ namespace LogiX.Display
                     SetProject(new LogiXProject("new-project"));
                 }
 
-                if(ImGui.MenuItem("Open Project"))
+                if (ImGui.MenuItem("Open Project"))
                 {
                     state = EditorState.SelectingProjectFile;
                     fd = new FileDialog(Utility.QUICKLINK_DIRS["Documents"], "Open Project", FileDialogType.SelectFile, new string[] { Utility.EXT_PROJ });
@@ -512,12 +513,12 @@ namespace LogiX.Display
 
                 if (ImGui.BeginMenu("Include"))
                 {
-                    if(ImGui.MenuItem("IC Collection"))
+                    if (ImGui.MenuItem("IC Collection"))
                     {
                         state = EditorState.IncludeCollection;
                         fd = new FileDialog(Utility.QUICKLINK_DIRS["Documents"], "Include Collection", FileDialogType.SelectMultipleFiles, new string[] { Utility.EXT_ICCOLLECTION });
                     }
-                    if(ImGui.MenuItem("IC Description"))
+                    if (ImGui.MenuItem("IC Description"))
                     {
                         state = EditorState.IncludeDescription;
                         fd = new FileDialog(Utility.QUICKLINK_DIRS["Documents"], "Include Description", FileDialogType.SelectMultipleFiles, new string[] { Utility.EXT_IC });
@@ -535,7 +536,7 @@ namespace LogiX.Display
                     SettingManager.SaveSettings();
                 }
 
-                if(ImGui.MenuItem("Save as..."))
+                if (ImGui.MenuItem("Save as..."))
                 {
                     state = EditorState.SavingProjectFile;
                     fd = new FileDialog(Utility.PROJECTS_DIR, "Save Project As", FileDialogType.SaveFile, new string[] { Utility.EXT_PROJ });
@@ -548,7 +549,7 @@ namespace LogiX.Display
                     editingSettings = true;
                 }
 
-                if(ImGui.MenuItem("Create File Component"))
+                if (ImGui.MenuItem("Create File Component"))
                 {
                     state = EditorState.CreatingFileComponent;
                     fd = new FileDialog(Utility.PROJECTS_DIR, "Open File Component File", FileDialogType.SelectFile);
@@ -556,9 +557,9 @@ namespace LogiX.Display
 
                 ImGui.EndMenu();
             }
-            
+
             // Edit thing
-            if(ImGui.BeginMenu("Edit"))
+            if (ImGui.BeginMenu("Edit"))
             {
                 ImGui.MenuItem("Empty for now");
                 ImGui.EndMenu();
@@ -580,7 +581,7 @@ namespace LogiX.Display
                 ImGui.EndMenu();
             }
 
-            if(ImGui.BeginMenu("Integrated Circuits"))
+            if (ImGui.BeginMenu("Integrated Circuits"))
             {
                 if (ImGui.MenuItem("New..."))
                 {
@@ -592,12 +593,12 @@ namespace LogiX.Display
                     Utility.OpenPath(Utility.ASSETS_DIR);
                 }
 
-                if(ImGui.MenuItem("Show Window", "", icWindowOpen))
+                if (ImGui.MenuItem("Show Window", "", icWindowOpen))
                 {
                     icWindowOpen = !icWindowOpen;
                 }
 
-                if(ImGui.MenuItem("Create Collection"))
+                if (ImGui.MenuItem("Create Collection"))
                 {
                     creatingCollection = true;
                 }
@@ -648,7 +649,7 @@ namespace LogiX.Display
                 ImGui.Button("AND", buttonSize);
                 if (ImGui.IsItemClicked())
                 {
-                    SetNewComponent(new DrawableLogicGate(GetMousePositionInWorld(), "AND", new ANDGateLogic(), true));       
+                    SetNewComponent(new DrawableLogicGate(GetMousePositionInWorld(), "AND", new ANDGateLogic(), true));
                 }
                 ImGui.Button("NAND", buttonSize);
                 if (ImGui.IsItemClicked())
@@ -736,9 +737,9 @@ namespace LogiX.Display
             #region SET ID TO CIRCUIT IO WINDOW       
             if (currentProject.Simulation.SelectedComponents.Count == 1)
             {
-                if(currentProject.Simulation.SelectedComponents[0] is DrawableCircuitSwitch || currentProject.Simulation.SelectedComponents[0] is DrawableCircuitLamp)
+                if (currentProject.Simulation.SelectedComponents[0] is DrawableCircuitSwitch || currentProject.Simulation.SelectedComponents[0] is DrawableCircuitLamp)
                 {
-                    if(ImGui.Begin("Setting IO ID", ImGuiWindowFlags.AlwaysAutoResize))
+                    if (ImGui.Begin("Setting IO ID", ImGuiWindowFlags.AlwaysAutoResize))
                     {
                         if (currentProject.Simulation.SelectedComponents[0] is DrawableCircuitSwitch)
                         {
@@ -754,7 +755,7 @@ namespace LogiX.Display
                         ImGui.End();
                     }
                 }
-            }    
+            }
             #endregion
 
             #region CREATE NEW IC WINDOW
@@ -920,6 +921,9 @@ namespace LogiX.Display
 
                             // IO Size
                             Utility.GuiSettingFloatSlider("IO Size", "io-size", 6, 1, 20);
+
+                            // Target FPS
+                            Utility.GuiSettingIntSlider("Target FPS", "target-fps", 144, 15, 300);
                         }
 
                         ImGui.EndTabBar();
@@ -927,6 +931,7 @@ namespace LogiX.Display
 
                     if (ImGui.Button("Save", Utility.BUTTON_DEFAULT_SIZE))
                     {
+                        Raylib.SetTargetFPS(int.Parse(SettingManager.GetSetting("target-fps", "144")));
                         SettingManager.SaveSettings();
                         editingSettings = false;
                     }
@@ -942,7 +947,7 @@ namespace LogiX.Display
             #endregion
 
             #region CREATE COLLECTION WINDOW
-            
+
             if (creatingCollection)
             {
                 ImGui.OpenPopup("Create IC Collection");
@@ -958,15 +963,15 @@ namespace LogiX.Display
 
                 Vector2 size = new Vector2(300, 200);
 
-                if(ImGui.BeginChild("ics", size, true))
+                if (ImGui.BeginChild("ics", size, true))
                 {
-                    foreach(ICCollection coll in collections)
+                    foreach (ICCollection coll in collections)
                     {
                         ImGui.TextDisabled(coll.Name);
 
-                        foreach(ICDescription icd in coll.Descriptions)
+                        foreach (ICDescription icd in coll.Descriptions)
                         {
-                            if(ImGui.Selectable(icd.Name, selectedIcs.Contains(icd)))
+                            if (ImGui.Selectable(icd.Name, selectedIcs.Contains(icd)))
                             {
                                 if (!selectedIcs.Contains(icd))
                                 {
@@ -1011,7 +1016,7 @@ namespace LogiX.Display
                 {
                     ICCollection icc = new ICCollection(newCollectionName, selectedIcs);
 
-                    using(StreamWriter sw = new StreamWriter(Utility.ASSETS_DIR + @"/" + icc.Name + Utility.EXT_ICCOLLECTION))
+                    using (StreamWriter sw = new StreamWriter(Utility.ASSETS_DIR + @"/" + icc.Name + Utility.EXT_ICCOLLECTION))
                     {
                         sw.Write(JsonConvert.SerializeObject(icc));
                     }
@@ -1034,7 +1039,7 @@ namespace LogiX.Display
                             break;
 
                         case EditorState.IncludeCollection:
-                            foreach(string collection in fd.SelectedFiles)
+                            foreach (string collection in fd.SelectedFiles)
                             {
                                 IncludeCollection(collection);
                             }

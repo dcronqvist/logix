@@ -74,10 +74,19 @@ namespace LogiX.Circuits.Drawables
             int address = 0;
             for (int i = 0; i < base.Inputs.Count; i++)
             {
-                if(base.Inputs[i].Value == LogicValue.HIGH)
+                if (base.Inputs[i].Value == LogicValue.HIGH)
                 {
                     address += 0b1 << i;
                 }
+            }
+
+            if (address > Rows.Length - 1)
+            {
+                for (int i = 0; i < base.Outputs.Count; i++)
+                {
+                    base.Outputs[i].Value = LogicValue.NAN;
+                }
+                return;
             }
 
             string line = this.Rows[address];

@@ -49,10 +49,11 @@ namespace LogiX.Settings
                 { "io-v-dist", "14" },
                 { "io-h-dist", "10" },
                 { "io-size", "6" },
-                { "latest-project", "" }
+                { "latest-project", "" },
+                { "target-fps", "144"}
             };
         }
-        
+
         public static bool CreateDefaultSettingsFile()
         {
             try
@@ -60,7 +61,7 @@ namespace LogiX.Settings
                 LogManager.AddEntry("Creating default settings file.");
                 Dictionary<string, string> s = GenerateDefaultSettings();
 
-                using(StreamWriter wr = new StreamWriter(Utility.SETTINGS_FILE))
+                using (StreamWriter wr = new StreamWriter(Utility.SETTINGS_FILE))
                 {
                     string jsonString = JsonConvert.SerializeObject(s, Formatting.Indented);
                     wr.Write(jsonString);
@@ -70,7 +71,7 @@ namespace LogiX.Settings
                 LogManager.AddEntry("Successfully created default settings file.");
                 return true;
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 // Failed to create default settings file.
                 LogManager.AddEntry("Failed to create default settings file.", LogEntryType.ERROR);
@@ -90,7 +91,7 @@ namespace LogiX.Settings
             try
             {
                 LogManager.AddEntry("Loading settings...");
-                using(StreamReader sr = new StreamReader(Utility.SETTINGS_FILE))
+                using (StreamReader sr = new StreamReader(Utility.SETTINGS_FILE))
                 {
                     settings = JsonConvert.DeserializeObject<Dictionary<string, string>>(sr.ReadToEnd());
                 }
@@ -99,7 +100,7 @@ namespace LogiX.Settings
                 LogManager.AddEntry("Successfully loaded settings!");
                 return true;
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 // Failed to load settings.
                 LogManager.AddEntry("Failed to load settings!", LogEntryType.ERROR);
@@ -111,11 +112,11 @@ namespace LogiX.Settings
         {
             try
             {
-                if(settings.ContainsKey(key))
+                if (settings.ContainsKey(key))
                     return settings[key];
                 return def;
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 LogManager.AddEntry($"Failed to retrieve setting '{key}': {ex.Message}");
                 return def;
@@ -129,7 +130,7 @@ namespace LogiX.Settings
 
         public static void SaveSettings()
         {
-            using(StreamWriter sw = new StreamWriter(Utility.SETTINGS_FILE))
+            using (StreamWriter sw = new StreamWriter(Utility.SETTINGS_FILE))
             {
                 string jsonString = JsonConvert.SerializeObject(settings, Formatting.Indented);
                 sw.Write(jsonString);

@@ -127,7 +127,7 @@ namespace LogiX.UI
             UpdateMouseCursor();
             UpdateGamepads();
 
-            int keyPressed = Raylib.GetKeyPressed();
+            int keyPressed = Raylib.GetCharPressed();
             if (keyPressed > 0)
             {
                 ImGuiIOPtr io = ImGui.GetIO();
