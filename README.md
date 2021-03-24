@@ -6,3 +6,5 @@ This project is built using [raylib 3.5](https://github.com/raysan5/raylib), whi
 Put the downloaded static library file (.a) into the respective win/osx directory in `libs/raylib-cpp/` depending on which platform you're building on. 
 
 After that it's just a matter of performing a simple `mkdir build && cd build && cmake .. && make` and then you should have an executable! (currently only supports Windows and MacOS, Linux support is coming)
+
+To compile on windows, you're going to need MinGW.
