@@ -8,7 +8,6 @@ Editor* editor;
 
 void LogiXWindow::Initialize() {
     SetConfigFlags(FLAG_WINDOW_HIGHDPI);
-    editor = new Editor(this);
 }
 
 void LogiXWindow::LoadContent() {
@@ -29,6 +28,7 @@ void LogiXWindow::LoadContent() {
     // Fix UI render texture
     renTexUI = LoadRenderTexture(windowWidth, windowHeight);
     uiSourceRectangle = { 0, static_cast<float>(windowHeight), static_cast<float>(windowWidth), static_cast<float>(-windowHeight) };
+    editor = new Editor(this);
 }
 
 void LogiXWindow::Update() {
@@ -62,7 +62,6 @@ void LogiXWindow::Render() {
     // Begin drawing to screen
     BeginDrawing();
     // Clear to a white background color
-    ClearBackground(GRAY);
 
     editor->Draw();
 
