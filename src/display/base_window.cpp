@@ -33,7 +33,7 @@ bool BaseWindow::UnfocusingWindow() {
 int BaseWindow::Run() {
     this->Initialize();
 
-    raylib::Window window(windowWidth, windowHeight, title);
+    this->handle = new raylib::Window(windowWidth, windowHeight, title);
     SetExitKey(-1);
 
     this->LoadContent();

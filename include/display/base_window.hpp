@@ -4,16 +4,17 @@
 #include <string>
 
 class BaseWindow {
-public:
+    public:
     int windowWidth;
     int windowHeight;
     std::string title;
+    raylib::Window* handle;
 
-private:
+    private:
     bool closeSafely;
     bool isFocused;
 
-public:
+    public:
     BaseWindow(int windowWidth, int windowHeight, std::string tit);
     void CloseWindowSafely();
     int Run();
@@ -21,7 +22,7 @@ public:
     bool FocusingWindow();
     bool KeyCombinationPressed(KeyboardKey modifier, KeyboardKey key);
 
-protected:
+    protected:
     virtual void Initialize() = 0;
     virtual void LoadContent() = 0;
     virtual void Update() = 0;

@@ -19,7 +19,7 @@ static void ImGui_ImplRaylib_SetClipboardText(void* _, const char* text) {
     SetClipboardText(text);
 }
 
-Texture2D* ImGui_ImplRaylib_InitFontTexture(const char* font, float font_size) {
+static Texture2D* ImGui_ImplRaylib_InitFontTexture(const char* font, float font_size) {
     ImGuiIO* io = &ImGui::GetIO();
     unsigned char* pixels = NULL;
     int width = 0;
@@ -49,7 +49,7 @@ Texture2D* ImGui_ImplRaylib_InitFontTexture(const char* font, float font_size) {
     return tex;
 }
 
-bool ImGui_ImplRaylib_Init(int w, int h, std::vector<const char*> fonts = {}, const float font_size = 12.0F) {
+static bool ImGui_ImplRaylib_Init(int w, int h, std::vector<const char*> fonts = {}, const float font_size = 12.0F) {
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();
     ImGuiIO* io = &ImGui::GetIO(); (void)io;
@@ -94,7 +94,7 @@ bool ImGui_ImplRaylib_Init(int w, int h, std::vector<const char*> fonts = {}, co
     return true;
 }
 
-void ImGui_ImplRaylib_Shutdown() {
+static void ImGui_ImplRaylib_Shutdown() {
     g_Time = 0.0;
 }
 
@@ -132,7 +132,7 @@ static void ImGui_ImplRaylib_UpdateMousePosAndButtons() {
     }
 }
 
-void ImGui_ImplRaylib_NewFrame() {
+static void ImGui_ImplRaylib_NewFrame() {
     struct ImGuiIO* io = &ImGui::GetIO();
 
     io->DisplaySize = ImVec2((float)GetScreenWidth(), (float)GetScreenHeight());
@@ -264,7 +264,7 @@ void ImGui_ImplRaylib_NewFrame() {
 
 #define SET_KEY_DOWN(KEY) io->KeysDown[KEY] = IsKeyDown(KEY)
 
-bool ImGui_ImplRaylib_ProcessEvent() {
+static bool ImGui_ImplRaylib_ProcessEvent() {
     struct ImGuiIO* io = &ImGui::GetIO();
 
     FOR_ALL_KEYS(SET_KEY_DOWN);
@@ -278,7 +278,7 @@ bool ImGui_ImplRaylib_ProcessEvent() {
     return true;
 }
 
-void draw_triangle_vertex(ImDrawVert idx_vert) {
+static void draw_triangle_vertex(ImDrawVert idx_vert) {
     Color* c;
     c = (Color*)&idx_vert.col;
 
@@ -287,7 +287,7 @@ void draw_triangle_vertex(ImDrawVert idx_vert) {
     rlVertex2f(idx_vert.pos.x, idx_vert.pos.y);
 }
 
-void raylib_render_draw_triangles(unsigned int count, const ImDrawIdx* idx_buffer, const ImDrawVert* idx_vert, unsigned int texture_id) {
+static void raylib_render_draw_triangles(unsigned int count, const ImDrawIdx* idx_buffer, const ImDrawVert* idx_vert, unsigned int texture_id) {
     // Draw the imgui triangle data
     for (unsigned int i = 0; i <= (count - 3); i += 3) {
         rlPushMatrix();
@@ -314,7 +314,7 @@ void raylib_render_draw_triangles(unsigned int count, const ImDrawIdx* idx_buffe
     }
 }
 
-void raylib_render_imgui(ImDrawData* draw_data) {
+static void raylib_render_imgui(ImDrawData* draw_data) {
     rlDisableBackfaceCulling();
     for (int n = 0; n < draw_data->CmdListsCount; n++) {
         const ImDrawList* cmd_list = draw_data->CmdLists[n];
@@ -344,14 +344,14 @@ void raylib_render_imgui(ImDrawData* draw_data) {
     rlEnableBackfaceCulling();
 }
 
-void raylib_draw_triangle_vertex(ImDrawVert idxVert) {
+static void raylib_draw_triangle_vertex(ImDrawVert idxVert) {
     Color c = GetColor(idxVert.col);
     rlColor4ub(c.r, c.g, c.b, c.a);
     rlTexCoord2f(idxVert.uv.x, idxVert.uv.y);
     rlVertex2f(idxVert.pos.x, idxVert.pos.y);
 }
 
-void raylib_draw_triangles(unsigned int count, ImVector<ImWchar> idxBuffer, ImVector<ImDrawVert> idxVert, int idxOffset, int vtxOffset, unsigned int textureId) {
+static void raylib_draw_triangles(unsigned int count, ImVector<ImWchar> idxBuffer, ImVector<ImDrawVert> idxVert, int idxOffset, int vtxOffset, unsigned int textureId) {
     ImWchar index;
     ImDrawVert vertex;
 
@@ -382,7 +382,7 @@ void raylib_draw_triangles(unsigned int count, ImVector<ImWchar> idxBuffer, ImVe
     rlPopMatrix();
 }
 
-void raylib_render_imgui_own(ImDrawData* draw_data) {
+static void raylib_render_imgui_own(ImDrawData* draw_data) {
 
     int fbWidth = (int)(draw_data->DisplaySize.x * draw_data->FramebufferScale.x);
     int fbHeight = (int)(draw_data->DisplaySize.y * draw_data->FramebufferScale.y);
