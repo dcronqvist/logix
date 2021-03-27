@@ -3,14 +3,16 @@
 #include "imgui/imgui.h"
 #include "imgui/imgui_impl_raylib.h"
 #include "utils/utility.hpp"
+#include "drawables/drawable_gate.hpp"
+#include "drawables/drawable_wire.hpp"
+#include "gate-logic/and_gate_logic.hpp"
 #include <string>
 
 Image windowIcon;
 RenderTexture2D renTexUI;
-
-char textiBuf[128];
 Rectangle uiSourceRectangle;
 
+char textiBuf[128];
 const char* stuff[] = { "hej", "på", "rej", "rin", "lilla", "söting", "aslångt alternativ" };
 int selected = 0;
 bool open = true;
@@ -88,6 +90,8 @@ void SubmitUI(LogiXWindow& window) {
         }
         ImGui::End();
     }
+
+    ImGui::ShowDemoWindow();
 }
 
 void LogiXWindow::Render() {
@@ -112,6 +116,10 @@ void LogiXWindow::Render() {
     // Clear to a white background color
     ClearBackground(GRAY);
 
+    andGate->Draw();
+    andGate2->Draw();
+
+    c->Draw();
     // Draw UI rendertexture to screen. uiSourceRectangle is a 
     // source rec that is specified to be upside down, since rendering
     // actually takes place upside down when rendering to texture.

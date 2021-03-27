@@ -1,0 +1,54 @@
+#pragma once
+
+#include "circuits/circuit_input.hpp"
+#include "circuits/circuit_output.hpp"
+#include "circuits/circuit_io.hpp"
+#include "circuits/circuit_wire.hpp"
+#include <vector>
+
+class CircuitComponent {
+    protected:
+    std::vector<CircuitInput*> inputs;
+    std::vector<CircuitOutput*> outputs;
+
+    public:
+    CircuitComponent(int inputAmount, int outputAmount) {
+        for (int i = 0; i < inputAmount; i++) {
+            inputs.push_back(new CircuitInput(LogicValue_LOW));
+        }
+
+        for (int i = 0; i < outputAmount; i++) {
+            outputs.push_back(new CircuitOutput(LogicValue_LOW));
+        }
+    }
+
+    void SetInputWire(int index, CircuitWire* wire) {
+        inputs.at(index)->SetSignal(wire);
+    }
+
+    void AddOutputWire(int index, CircuitWire* wire) {
+        outputs.at(index)->AddOutputSignal(wire);
+    }
+
+    void UpdateInputs() {
+        for (int i = 0; i < inputs.size(); i++) {
+            CircuitInput* ci = inputs.at(i);
+            ci->GetValueFromSignal();
+        }
+    }
+
+    void UpdateOutputs() {
+        for (int i = 0; i < outputs.size(); i++) {
+            CircuitOutput* co = outputs.at(i);
+            co->SetSignals();
+        }
+    }
+
+    void UpdateInputsAndPerformLogic() {
+        UpdateInputs();
+        PerformLogic();
+    }
+
+    protected:
+    virtual void PerformLogic() = 0;
+};
