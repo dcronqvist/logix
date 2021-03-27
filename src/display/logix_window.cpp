@@ -115,11 +115,6 @@ void LogiXWindow::Render() {
     BeginDrawing();
     // Clear to a white background color
     ClearBackground(GRAY);
-
-    andGate->Draw();
-    andGate2->Draw();
-
-    c->Draw();
     // Draw UI rendertexture to screen. uiSourceRectangle is a 
     // source rec that is specified to be upside down, since rendering
     // actually takes place upside down when rendering to texture.
