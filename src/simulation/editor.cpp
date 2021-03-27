@@ -1,6 +1,7 @@
 #include "simulation/editor.hpp"
 #include "imgui/imgui.h"
 #include "imgui/imgui_impl_raylib.h"
+#include "utils/utility.hpp"
 
 void Editor::Update() {
     // Get current mouse pos
@@ -8,10 +9,9 @@ void Editor::Update() {
 
     // Perform logic simulation
     sim.Simulate();
+    ImGuiIO* io = &ImGui::GetIO();
 
 #pragma region MOUSE WHEEL CAMERA ZOOM
-
-    ImGuiIO* io = &ImGui::GetIO();
 
     if (!io->WantCaptureMouse) {
         if (GetMouseWheelMove() > 0) {
@@ -20,6 +20,27 @@ void Editor::Update() {
         if (GetMouseWheelMove() < 0) {
             cam.zoom *= 1.0F / 1.05F;
         }
+    }
+
+#pragma endregion
+
+#pragma region DECIDE WHICH EDITOR STATE
+
+    if (!io->WantCaptureMouse) {
+        if (IsMouseButtonPressed(MOUSE_MIDDLE_BUTTON) && currentState == EditorState_None) {
+            currentState = EditorState_MovingCamera;
+        }
+        if (IsMouseButtonReleased(MOUSE_MIDDLE_BUTTON) && currentState == EditorState_MovingCamera) {
+            currentState = EditorState_None;
+        }
+    }
+
+#pragma endregion
+
+#pragma region PERFORM EDITOR STATE
+
+    if (currentState == EditorState_MovingCamera) {
+        cam.target = cam.target - ((currentMousePosWindow - previousMousePosWindow) * 1.0F / cam.zoom);
     }
 
 #pragma endregion
