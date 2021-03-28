@@ -93,7 +93,7 @@ void Editor::Draw() {
 
     sim.Draw();
 
-    DrawCircleV(this->GetMousePositionInWorld(), 10.0F, RED);
+    DrawCircleV(this->GetMousePositionInWorld(), 2.0F, RED);
 
     EndMode2D();
 }

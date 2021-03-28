@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.10)
-project(raylib-cpp-cmake VERSION 0.1.0)
+project(LogiX VERSION 0.1.0)
 
 set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -17,14 +17,14 @@ include_directories(include)
 
 file(GLOB_RECURSE SOURCES ${CMAKE_CURRENT_SOURCE_DIR}/src/*.cpp)
 
-add_executable(raylib-cpp-cmake ${SOURCES})
+add_executable(LogiX ${SOURCES})
 
-target_link_libraries(raylib-cpp-cmake raylib)
+target_link_libraries(LogiX raylib)
 
 if(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
-    target_link_libraries(raylib-cpp-cmake winmm)
+    target_link_libraries(LogiX winmm)
 elseif (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
-    target_link_libraries(raylib-cpp-cmake
+    target_link_libraries(LogiX
         "-framework CoreVideo"
         "-framework IOKit"
         "-framework Cocoa"
@@ -32,7 +32,7 @@ elseif (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
         "-framework OpenGL"
     )
 elseif (${CMAKE_SYSTEM_NAME} MATCHES "Linux")
-    target_link_libraries(raylib-cpp-cmake
+    target_link_libraries(LogiX
         "-lGL"
         "-lm"
         "-lpthread"
