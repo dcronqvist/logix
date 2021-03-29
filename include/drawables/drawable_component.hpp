@@ -71,4 +71,11 @@ public:
         Vector2 textSize = MeasureTextEx(GetFontDefault(), text, fontSize, 1.0F);
         DrawTextEx(GetFontDefault(), this->text, this->position + middleOfBox - (textSize / 2.0F), fontSize, 1.0F, BLACK);
     }
+
+    void DrawSelected() {
+        float offset = 2.0F;
+        float thickness = 2.0F;
+        Rectangle outer = { position.x - offset, position.y - offset, box.width + 2 * offset, box.height + 2 * offset };
+        DrawRectangleLinesEx(outer, thickness, BLUE * 0.5F);
+    }
 };

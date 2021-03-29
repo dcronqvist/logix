@@ -26,3 +26,8 @@ Vector2 operator*(Vector2 v1, float scalar) {
 Vector2 operator/(Vector2 v1, float scalar) {
     return Vector2{ v1.x / scalar, v1.y / scalar };
 }
+
+
+Color operator*(Color col, float factor) {
+    return Color{ col.r, col.g, col.b, (unsigned char)(col.a * factor) };
+}

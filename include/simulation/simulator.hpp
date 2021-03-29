@@ -5,7 +5,7 @@
 #include <vector>
 
 class Simulator {
-    public:
+public:
     std::vector<DrawableComponent*> allComponents;
     std::vector<DrawableWire*> allWires;
 
@@ -21,6 +21,20 @@ class Simulator {
         allComponents.push_back(component);
     }
 
+    void RemoveComponent(DrawableComponent* component) {
+        std::vector<DrawableComponent*> comps;
+
+        for (int i = 0; i < allComponents.size(); i++) {
+            if (allComponents.at(i) != component) {
+                comps.push_back(allComponents.at(i));
+            }
+        }
+        allComponents = comps;
+        delete component;
+    }
+
     void Simulate();
     void Draw();
+
+    DrawableComponent* GetComponentFromPosition(Vector2 position);
 };

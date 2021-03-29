@@ -4,6 +4,7 @@
 #include "utils/utility.hpp"
 #include "drawables/drawable_gate.hpp"
 #include "gate-logic/and_gate_logic.hpp"
+#include "raylib-cpp/raylib-cpp.hpp"
 
 void Editor::Update() {
     // Get current mouse pos
@@ -12,6 +13,9 @@ void Editor::Update() {
     // Perform logic simulation
     sim.Simulate();
     ImGuiIO* io = &ImGui::GetIO();
+
+    // Get currently hovered component, no matter state.
+    DrawableComponent* hoveredComponent = sim.GetComponentFromPosition(GetMousePositionInWorld());
 
 #pragma region MOUSE WHEEL CAMERA ZOOM
 
@@ -46,6 +50,8 @@ void Editor::Update() {
     }
 
 #pragma endregion
+
+
 
     // Set previous mouse pos to old current
     previousMousePosWindow = currentMousePosWindow;
@@ -102,8 +108,6 @@ void Editor::Draw() {
     DrawGrid();
 
     sim.Draw();
-
-    DrawCircleV(this->GetMousePositionInWorld(), 2.0F, RED);
 
     EndMode2D();
 }
