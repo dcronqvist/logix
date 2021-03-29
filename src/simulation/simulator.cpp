@@ -19,8 +19,16 @@ void Simulator::Draw() {
     }
 }
 
+
+void Simulator::MoveAllSelectedComponents(Vector2 vec) {
+    for (int i = 0; i < this->selectedComponents.size(); i++) {
+        DrawableComponent* dc = this->selectedComponents.at(i);
+        dc->position = dc->position + vec;
+    }
+}
+
 DrawableComponent* Simulator::GetComponentFromPosition(Vector2 position) {
-    for (int i = 0; i < this->allComponents.size(); i++)     {
+    for (int i = 0; i < this->allComponents.size(); i++) {
         DrawableComponent* dc = this->allComponents.at(i);
         if (CheckCollisionPointRec(position, dc->box)) {
             return dc;

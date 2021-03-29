@@ -9,6 +9,7 @@
 void Editor::Update() {
     // Get current mouse pos
     currentMousePosWindow = GetMousePosition();
+    mouseDelta = (currentMousePosWindow - previousMousePosWindow) / cam.zoom;
 
     // Perform logic simulation
     sim.Simulate();
@@ -32,12 +33,28 @@ void Editor::Update() {
 
 #pragma region DECIDE WHICH EDITOR STATE
 
-    if (!io->WantCaptureMouse) {
+    if (!io->WantCaptureMouse || newComponent != NULL) {
+
+        // Start moving camera
         if (IsMouseButtonPressed(MOUSE_MIDDLE_BUTTON) && currentState == EditorState_None) {
             currentState = EditorState_MovingCamera;
         }
+        // Stop moving camera
         if (IsMouseButtonReleased(MOUSE_MIDDLE_BUTTON) && currentState == EditorState_MovingCamera) {
             currentState = EditorState_None;
+        }
+
+        if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON) && currentState == EditorState_None) {
+
+            if (hoveredComponent != NULL)
+                currentState = EditorState_MovingSelection;
+        }
+
+        // Stop moving selection
+        if (IsMouseButtonReleased(MOUSE_LEFT_BUTTON) && currentState == EditorState_MovingSelection) {
+            currentState = EditorState_None;
+
+            newComponent = NULL;
         }
     }
 
@@ -46,7 +63,11 @@ void Editor::Update() {
 #pragma region PERFORM EDITOR STATE
 
     if (currentState == EditorState_MovingCamera) {
-        cam.target = cam.target - ((currentMousePosWindow - previousMousePosWindow) * 1.0F / cam.zoom);
+        cam.target = cam.target - mouseDelta;
+    }
+
+    if (currentState == EditorState_MovingSelection) {
+        sim.MoveAllSelectedComponents(mouseDelta);
     }
 
 #pragma endregion
@@ -64,9 +85,14 @@ void Editor::SubmitUI() {
     ImGui::EndMainMenuBar();
 
     if (ImGui::Begin("Components", NULL, ImGuiWindowFlags_AlwaysAutoResize)) {
-        if (ImGui::Button("AND")) {
+        ImGui::Button("AND");
+        if (ImGui::IsItemClicked()) {
             DrawableComponent* dc = new DrawableGate(GetMousePositionInWorld(), new ANDGateLogic(), 2);
-            sim.AddComponent(dc);
+            newComponent = dc;
+            sim.ClearSelection();
+            sim.AddComponent(newComponent);
+            sim.SelectComponent(newComponent);
+            currentState = EditorState_MovingSelection;
         }
     }
     ImGui::End();

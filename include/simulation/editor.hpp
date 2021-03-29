@@ -12,23 +12,27 @@ enum EditorState {
 };
 
 class Editor {
-    public:
+public:
     LogiXWindow* logixWindow;
     Camera2D cam;
     Simulator sim;
 
-    private:
+private:
     Vector2 currentMousePosWindow;
     Vector2 previousMousePosWindow;
+    Vector2 mouseDelta;
 
-    private:
+private:
     EditorState currentState;
-    public:
+    DrawableComponent* newComponent;
+
+public:
     Editor(LogiXWindow* lgx) {
         currentState = EditorState_None;
         logixWindow = lgx;
         cam = { Vector2{lgx->handle->GetWidth() / 2.0F, lgx->handle->GetHeight() / 2.0F}, Vector2{0.0F, 0.0F}, 0.0F, 1.0F };
         sim = {};
+        newComponent = NULL;
     }
     void Update();
     void SubmitUI();

@@ -8,6 +8,7 @@ class Simulator {
 public:
     std::vector<DrawableComponent*> allComponents;
     std::vector<DrawableWire*> allWires;
+    std::vector<DrawableComponent*> selectedComponents;
 
     Simulator() {
 
@@ -19,6 +20,14 @@ public:
 
     void AddComponent(DrawableComponent* component) {
         allComponents.push_back(component);
+    }
+
+    void SelectComponent(DrawableComponent* component) {
+        selectedComponents.push_back(component);
+    }
+
+    void ClearSelection() {
+        selectedComponents = {};
     }
 
     void RemoveComponent(DrawableComponent* component) {
@@ -36,5 +45,6 @@ public:
     void Simulate();
     void Draw();
 
+    void MoveAllSelectedComponents(Vector2 vec);
     DrawableComponent* GetComponentFromPosition(Vector2 position);
 };
