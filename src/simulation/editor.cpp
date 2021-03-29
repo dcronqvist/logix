@@ -2,6 +2,8 @@
 #include "imgui/imgui.h"
 #include "imgui/imgui_impl_raylib.h"
 #include "utils/utility.hpp"
+#include "drawables/drawable_gate.hpp"
+#include "gate-logic/and_gate_logic.hpp"
 
 void Editor::Update() {
     // Get current mouse pos
@@ -54,6 +56,14 @@ void Editor::SubmitUI() {
     ImGui::BeginMainMenuBar();
 
     ImGui::EndMainMenuBar();
+
+    if (ImGui::Begin("Components", NULL, ImGuiWindowFlags_AlwaysAutoResize)) {
+        if (ImGui::Button("AND")) {
+            DrawableComponent* dc = new DrawableGate(GetMousePositionInWorld(), new ANDGateLogic(), 2);
+            sim.AddComponent(dc);
+        }
+    }
+    ImGui::End();
 
 
     ImGui::ShowDemoWindow();

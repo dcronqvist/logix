@@ -4,6 +4,7 @@
 #include <vector>
 
 class GateLogic {
-    public:
+public:
     virtual LogicValue PerformGateLogic(std::vector<CircuitInput*> inputs) = 0;
+    virtual const char* GetLogicName() = 0;
 };

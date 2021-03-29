@@ -5,6 +5,7 @@
 #include <vector>
 
 class ANDGateLogic : public GateLogic {
-    public:
+public:
     LogicValue PerformGateLogic(std::vector<CircuitInput*> inputs);
+    const char* GetLogicName();
 };

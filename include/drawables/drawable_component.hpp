@@ -2,16 +2,19 @@
 
 #include "circuits/circuit_component.hpp"
 #include "raylib-cpp/raylib-cpp.hpp"
+#include "utils/utility.hpp"
 
 class DrawableComponent : public CircuitComponent {
-    public:
+public:
     Vector2 position;
     Vector2 size;
     Rectangle box;
+    const char* text;
 
-    DrawableComponent(Vector2 pos, Vector2 siz, int inps, int outs) : CircuitComponent(inps, outs) {
+    DrawableComponent(Vector2 pos, Vector2 siz, const char* txt, int inps, int outs) : CircuitComponent(inps, outs) {
         this->position = pos;
         this->size = siz;
+        this->text = txt;
         this->UpdateBox();
     }
 
@@ -62,5 +65,10 @@ class DrawableComponent : public CircuitComponent {
         DrawRectanglePro(box, Vector2{ 0.0F, 0.0F }, 0.0F, WHITE);
         DrawInputs();
         DrawOutputs();
+
+        float fontSize = 12.0F;
+        Vector2 middleOfBox = Vector2{ box.width / 2.0F, box.height / 2.0F };
+        Vector2 textSize = MeasureTextEx(GetFontDefault(), text, fontSize, 1.0F);
+        DrawTextEx(GetFontDefault(), this->text, this->position + middleOfBox - (textSize / 2.0F), fontSize, 1.0F, BLACK);
     }
 };
