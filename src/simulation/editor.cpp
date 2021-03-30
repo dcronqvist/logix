@@ -50,6 +50,16 @@ void Editor::Update() {
                 currentState = EditorState_MovingSelection;
         }
 
+        // Start moving selection
+        if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON) && currentState == EditorState_None) {
+            if (hoveredComponent != NULL) {
+                currentState = EditorState_MovingSelection;
+            }
+            else {
+                // Want to do rectangle selection here
+            }
+        }
+
         // Stop moving selection
         if (IsMouseButtonReleased(MOUSE_LEFT_BUTTON) && currentState == EditorState_MovingSelection) {
             currentState = EditorState_None;
