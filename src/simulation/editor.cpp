@@ -44,16 +44,12 @@ void Editor::Update() {
             currentState = EditorState_None;
         }
 
-        if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON) && currentState == EditorState_None) {
-
-            if (hoveredComponent != NULL)
-                currentState = EditorState_MovingSelection;
-        }
-
         // Start moving selection
         if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON) && currentState == EditorState_None) {
             if (hoveredComponent != NULL) {
-                currentState = EditorState_MovingSelection;
+                if(sim.IsSelected(hoveredComponent)) {
+                    currentState = EditorState_MovingSelection;
+                }
             }
             else {
                 // Want to do rectangle selection here
@@ -82,7 +78,51 @@ void Editor::Update() {
 
 #pragma endregion
 
+#pragma region SELECTING/DESELECTING COMPONENTS
 
+    // When pressing LMB, we want to select the hovered component.
+    // If we're also pressing LSHIFT, we want to add the hovered component to
+    // the current selection, to select multiple components
+    // Pressing on nothing should clear the selected components.
+    // Pressing on one, when we have other selected, we want only the new one
+    // to be the selected one.
+
+    // LMB + hovering component -> clear current selection + add hovered to selection
+    // LMB + LSHIFT + hovering component -> add hovered to selection/remove hovered from selection
+    // (LMB or (LMB + LSHIFT)) + not hovering component -> clear current selection
+
+    // Can only perform selection/deselection when doing nothing else.
+    if(currentState == EditorState_None) {
+        // Pressing LMB (no LSHIFT)
+        if(IsMouseButtonPressed(MOUSE_LEFT_BUTTON) && !IsKeyDown(KEY_LEFT_SHIFT)) {
+            // Clear entire current selection no matter if we are hovering
+            // a component at all.
+            sim.ClearSelection();
+            // If we are hovering a component -> select it.
+            if(hoveredComponent != NULL) {
+                sim.SelectComponent(hoveredComponent);
+
+                // Setting the current state to moving_selection allows for
+                // instant movement when selecting a component.
+                currentState = EditorState_MovingSelection;
+            }
+        }
+        // Pressing LMB + LSHIFT
+        else if(IsMouseButtonPressed(MOUSE_LEFT_BUTTON) && IsKeyDown(KEY_LEFT_SHIFT)) {
+            // Hoving a component should toggle its selection state.
+            // If selected -> deselect & vice versa.
+            if(hoveredComponent != NULL) {
+                sim.ToggleComponentSelected(hoveredComponent);
+            }
+            // If we aren't hovering anything, clear current selection.
+            else {
+                sim.ClearSelection();
+            }
+        }
+    }
+
+
+#pragma endregion
 
     // Set previous mouse pos to old current
     previousMousePosWindow = currentMousePosWindow;
@@ -104,6 +144,8 @@ void Editor::SubmitUI() {
             sim.SelectComponent(newComponent);
             currentState = EditorState_MovingSelection;
         }
+
+        ImGui::Text("Current state: %d", currentState);
     }
     ImGui::End();
 

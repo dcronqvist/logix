@@ -17,6 +17,10 @@ void Simulator::Draw() {
     for (int i = 0; i < allComponents.size(); i++) {
         allComponents.at(i)->Draw();
     }
+
+    for (int i = 0; i < selectedComponents.size(); i++) {
+        selectedComponents.at(i)->DrawSelected();
+    }
 }
 
 

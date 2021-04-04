@@ -6,9 +6,9 @@
 #include "imgui/imgui_impl_raylib.h"
 
 enum EditorState {
-    EditorState_None,
-    EditorState_MovingCamera,
-    EditorState_MovingSelection
+    EditorState_None = 0,
+    EditorState_MovingCamera = 1,
+    EditorState_MovingSelection = 2
 };
 
 class Editor {
