@@ -2,6 +2,7 @@
 
 #include "drawables/drawable_component.hpp"
 #include "drawables/drawable_wire.hpp"
+#include "raylib-cpp/raylib-cpp.hpp"
 #include <vector>
 #include <algorithm>
 
@@ -55,6 +56,8 @@ public:
     void ClearSelection() {
         selectedComponents = {};
     }
+
+    void SelectAllComponentsInRectangle(Rectangle rec);
 
     void RemoveComponent(DrawableComponent* component) {
         std::vector<DrawableComponent*> comps;

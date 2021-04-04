@@ -41,3 +41,12 @@ DrawableComponent* Simulator::GetComponentFromPosition(Vector2 position) {
     return NULL;
 }
 
+void Simulator::SelectAllComponentsInRectangle(Rectangle rec) {
+    this->ClearSelection();
+    for (int i = 0; i < allComponents.size(); i++) {
+        if(CheckCollisionRecs(rec, allComponents.at(i)->box)) {
+            this->SelectComponent(allComponents.at(i));
+        }
+    }
+}
+

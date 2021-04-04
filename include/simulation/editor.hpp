@@ -8,23 +8,31 @@
 enum EditorState {
     EditorState_None = 0,
     EditorState_MovingCamera = 1,
-    EditorState_MovingSelection = 2
+    EditorState_MovingSelection = 2,
+    EditorState_RectangleSelecting = 3
 };
 
 class Editor {
 public:
+    // View and simulation variables
     LogiXWindow* logixWindow;
     Camera2D cam;
     Simulator sim;
 
 private:
+    // Mouse variables
     Vector2 currentMousePosWindow;
     Vector2 previousMousePosWindow;
     Vector2 mouseDelta;
 
 private:
+    // Editor FSM variables
     EditorState currentState;
     DrawableComponent* newComponent;
+
+    // Rectangle selection starting point
+    Vector2 rectangleSelectionStart;
+    Rectangle* selectionRectangle;
 
 public:
     Editor(LogiXWindow* lgx) {
@@ -33,6 +41,7 @@ public:
         cam = { Vector2{lgx->handle->GetWidth() / 2.0F, lgx->handle->GetHeight() / 2.0F}, Vector2{0.0F, 0.0F}, 0.0F, 1.0F };
         sim = {};
         newComponent = NULL;
+        selectionRectangle = NULL;
     }
     void Update();
     void SubmitUI();

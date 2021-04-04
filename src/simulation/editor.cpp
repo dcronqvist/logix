@@ -47,24 +47,29 @@ void Editor::Update() {
         // Start moving selection
         if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON) && currentState == EditorState_None) {
             if (hoveredComponent != NULL) {
-                if(sim.IsSelected(hoveredComponent)) {
+                if (sim.IsSelected(hoveredComponent) && !IsKeyDown(KEY_LEFT_SHIFT)) {
                     currentState = EditorState_MovingSelection;
                 }
             }
             else {
-                // Want to do rectangle selection here
+                if (!sim.IsSelected(hoveredComponent)) {
+                    this->rectangleSelectionStart = GetMousePositionInWorld();
+                    currentState = EditorState_RectangleSelecting;
+                } 
             }
         }
 
         // Stop moving selection
-        if (IsMouseButtonReleased(MOUSE_LEFT_BUTTON) && currentState == EditorState_MovingSelection) {
+        if (IsMouseButtonReleased(MOUSE_LEFT_BUTTON) && (currentState == EditorState_MovingSelection || currentState == EditorState_RectangleSelecting)) {
             currentState = EditorState_None;
-
             newComponent = NULL;
+            delete this->selectionRectangle;
+            this->selectionRectangle = NULL;
         }
     }
 
 #pragma endregion
+
 
 #pragma region PERFORM EDITOR STATE
 
@@ -74,6 +79,28 @@ void Editor::Update() {
 
     if (currentState == EditorState_MovingSelection) {
         sim.MoveAllSelectedComponents(mouseDelta);
+    }
+
+    if (currentState == EditorState_RectangleSelecting) {
+        Vector2 currPos = GetMousePositionInWorld();
+        Vector2 start = (this->rectangleSelectionStart);
+
+        if(this->selectionRectangle != NULL) {
+            delete this->selectionRectangle;
+            this->selectionRectangle = NULL;
+        }
+
+        if (currPos.y < start.y && currPos.x > start.x) {
+            this->selectionRectangle = new Rectangle{start.x, currPos.y, currPos.x - start.x, start.y - currPos.y};
+        } else if (currPos.y < start.y && currPos.x < start.x) {
+            this->selectionRectangle = new Rectangle{currPos.x, currPos.y, start.x - currPos.x, start.y - currPos.y};
+        } else if (currPos.y > start.y && currPos.x < start.x) {
+            this->selectionRectangle = new Rectangle{currPos.x, start.y, start.x - currPos.x, currPos.y - start.y};
+        } else {
+            this->selectionRectangle = new Rectangle{start.x, start.y, currPos.x - start.x, currPos.y - start.y};
+        }
+
+        sim.SelectAllComponentsInRectangle(*(this->selectionRectangle));
     }
 
 #pragma endregion
@@ -92,8 +119,8 @@ void Editor::Update() {
     // (LMB or (LMB + LSHIFT)) + not hovering component -> clear current selection
 
     // Can only perform selection/deselection when doing nothing else.
+    // Pressing LMB (no LSHIFT)
     if(currentState == EditorState_None) {
-        // Pressing LMB (no LSHIFT)
         if(IsMouseButtonPressed(MOUSE_LEFT_BUTTON) && !IsKeyDown(KEY_LEFT_SHIFT)) {
             // Clear entire current selection no matter if we are hovering
             // a component at all.
@@ -107,20 +134,19 @@ void Editor::Update() {
                 currentState = EditorState_MovingSelection;
             }
         }
-        // Pressing LMB + LSHIFT
         else if(IsMouseButtonPressed(MOUSE_LEFT_BUTTON) && IsKeyDown(KEY_LEFT_SHIFT)) {
+            // Pressing LMB + LSHIFT
             // Hoving a component should toggle its selection state.
             // If selected -> deselect & vice versa.
             if(hoveredComponent != NULL) {
                 sim.ToggleComponentSelected(hoveredComponent);
             }
-            // If we aren't hovering anything, clear current selection.
             else {
+                // If we aren't hovering anything, clear current selection.
                 sim.ClearSelection();
             }
         }
     }
-
 
 #pragma endregion
 
@@ -186,6 +212,10 @@ void Editor::Draw() {
     DrawGrid();
 
     sim.Draw();
+
+    if (this->selectionRectangle != NULL) {
+        DrawRectangleRec(*(this->selectionRectangle), RED * 0.3F);
+    }
 
     EndMode2D();
 }
