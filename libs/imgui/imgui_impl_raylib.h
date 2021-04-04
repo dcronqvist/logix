@@ -25,7 +25,7 @@ static Texture2D* ImGui_ImplRaylib_InitFontTexture(const char* font, float font_
     int width = 0;
     int height = 0;
 
-    if (font != "") {
+    if (font != NULL) {
         if (FileExists(font)) {
             io->Fonts->AddFontFromFileTTF(font, font_size);
         }

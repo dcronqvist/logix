@@ -7,7 +7,7 @@ Rectangle uiSourceRectangle;
 Editor* editor;
 
 void LogiXWindow::Initialize() {
-    SetConfigFlags(FLAG_WINDOW_HIGHDPI);
+    SetConfigFlags(FLAG_WINDOW_HIGHDPI | FLAG_VSYNC_HINT);
 }
 
 void LogiXWindow::LoadContent() {
@@ -18,7 +18,7 @@ void LogiXWindow::LoadContent() {
 
     // Fix high dpi font
     SetTextureFilter(GetFontDefault().texture, FILTER_POINT);
-    SetTargetFPS(144);
+    //SetTargetFPS(144);
 
     // Init imgui
     ImGui_ImplRaylib_Init(windowWidth, windowHeight, { "../assets/opensans.ttf", "../assets/opensans-bold.ttf" }, 16.0F);
@@ -33,10 +33,12 @@ void LogiXWindow::LoadContent() {
 
 void LogiXWindow::Update() {
     if (this->FocusingWindow()) {
-        SetTargetFPS(144);
+        SetConfigFlags(FLAG_WINDOW_HIGHDPI | FLAG_VSYNC_HINT);
+        SetTargetFPS(-1);
     }
     if (this->UnfocusingWindow()) {
-        SetTargetFPS(15);
+        SetConfigFlags(FLAG_WINDOW_HIGHDPI);
+        SetTargetFPS(10);
     }
 
     editor->Update();
