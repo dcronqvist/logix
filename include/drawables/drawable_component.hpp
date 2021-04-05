@@ -38,33 +38,63 @@ public:
         return Vector2{ size.x + 10.0F + basePos.x, GetIOYPosition(this->outputs.size(), index) + basePos.y };
     }
 
-    void DrawInputs() {
+    int GetInputIndexFromPosition(Vector2 position) {
+        for (int i = 0; i < this->inputs.size(); i++) {
+            Vector2 inputPos = GetInputPosition(i);
+            Vector2 diff = inputPos - position;
+
+            if (Vector2Length(diff) < 7.0F) {
+                return i;
+            }
+        }
+        return -1;
+    }
+
+    int GetOutputIndexFromPosition(Vector2 position) {
+        for (int i = 0; i < this->outputs.size(); i++) {
+            Vector2 outputPos = GetOutputPosition(i);
+            Vector2 diff = outputPos - position;
+
+            if(Vector2Length(diff) < 7.0F) {
+                return i;
+            }
+        }
+        return -1;
+    }
+
+    void DrawInputs(Vector2 mousePosInWorld) {
         for (int i = 0; i < this->inputs.size(); i++) {
             CircuitInput* inp = this->inputs.at(i);
             Vector2 pos = GetInputPosition(i);
-
             Color col = inp->GetValue() == LogicValue_HIGH ? BLUE : WHITE;
+
+            if (Vector2Length(pos - mousePosInWorld) < 7.0F) {
+                col = ORANGE;
+            }
 
             DrawCircleV(pos, 7.0F, col);
         }
     }
 
-    void DrawOutputs() {
+    void DrawOutputs(Vector2 mousePosInWorld) {
         for (int i = 0; i < this->outputs.size(); i++) {
             CircuitOutput* out = this->outputs.at(i);
             Vector2 pos = GetOutputPosition(i);
-
             Color col = out->GetValue() == LogicValue_HIGH ? BLUE : WHITE;
+
+            if (Vector2Length(pos - mousePosInWorld) < 7.0F) {
+                col = ORANGE;
+            }
 
             DrawCircleV(pos, 7.0F, col);
         }
     }
 
-    void Draw() {
+    void Draw(Vector2 mousePosInWorld) {
         UpdateBox();
         DrawRectanglePro(box, Vector2{ 0.0F, 0.0F }, 0.0F, WHITE);
-        DrawInputs();
-        DrawOutputs();
+        DrawInputs(mousePosInWorld);
+        DrawOutputs(mousePosInWorld);
 
         float fontSize = 12.0F;
         Vector2 middleOfBox = Vector2{ box.width / 2.0F, box.height / 2.0F };

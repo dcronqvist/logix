@@ -9,13 +9,13 @@ void Simulator::Simulate() {
     }
 }
 
-void Simulator::Draw() {
+void Simulator::Draw(Vector2 mousePosInWorld) {
     for (int i = 0; i < allWires.size(); i++) {
         allWires.at(i)->Draw();
     }
 
     for (int i = 0; i < allComponents.size(); i++) {
-        allComponents.at(i)->Draw();
+        allComponents.at(i)->Draw(mousePosInWorld);
     }
 
     for (int i = 0; i < selectedComponents.size(); i++) {
@@ -48,5 +48,41 @@ void Simulator::SelectAllComponentsInRectangle(Rectangle rec) {
             this->SelectComponent(allComponents.at(i));
         }
     }
+}
+
+CircuitIODesc* Simulator::GetComponentInputIODescFromPos(Vector2 position) {
+    for (int i = 0; i < this->allComponents.size(); i++)
+    {
+        DrawableComponent* dc = allComponents.at(i);
+        int index = dc->GetInputIndexFromPosition(position);
+
+        if(index != -1) {
+            return new CircuitIODesc{true, dc, index};
+        }
+    }
+    return NULL;
+}
+
+CircuitIODesc* Simulator::GetComponentOutputIODescFromPos(Vector2 position) {
+    for (int i = 0; i < this->allComponents.size(); i++)
+    {
+        DrawableComponent* dc = allComponents.at(i);
+        int index = dc->GetOutputIndexFromPosition(position);
+
+        if(index != -1) {
+            return new CircuitIODesc{false, dc, index};
+        }
+    }
+    return NULL;
+}
+
+DrawableWire* Simulator::GetWireFromPosition(Vector2 pos) {
+    for (int i = 0; i < allWires.size(); i++)
+    {
+        if(allWires.at(i)->IsPositionOnLine(pos)) {
+            return allWires.at(i);
+        }
+    }
+    return NULL;
 }
 

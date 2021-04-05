@@ -4,12 +4,17 @@
 #include "display/logix_window.hpp"
 #include "imgui/imgui.h"
 #include "imgui/imgui_impl_raylib.h"
+#include "drawables/circuit_io_desc.hpp"
 
 enum EditorState {
     EditorState_None = 0,
     EditorState_MovingCamera = 1,
     EditorState_MovingSelection = 2,
-    EditorState_RectangleSelecting = 3
+    EditorState_RectangleSelecting = 3,
+    EditorState_HoveringInput = 4,
+    EditorState_HoveringOutput = 5,
+    EditorState_OutputToInput = 6,
+    EditorState_HoveringWire = 7
 };
 
 class Editor {
@@ -33,6 +38,9 @@ private:
     // Rectangle selection starting point
     Vector2 rectangleSelectionStart;
     Rectangle* selectionRectangle;
+
+    // Output to input connecting
+    CircuitIODesc* tempOutput;
 
 public:
     Editor(LogiXWindow* lgx) {
@@ -60,4 +68,5 @@ public:
         Vector2 viewSize = Vector2{ windowWidth / this->cam.zoom, windowHeight / this->cam.zoom };
         return viewSize;
     }
+    bool ConnectInputOutput(CircuitIODesc* input, CircuitIODesc* output);
 };

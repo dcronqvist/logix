@@ -2,6 +2,7 @@
 
 #include "drawables/drawable_component.hpp"
 #include "drawables/drawable_wire.hpp"
+#include "drawables/circuit_io_desc.hpp"
 #include "raylib-cpp/raylib-cpp.hpp"
 #include <vector>
 #include <algorithm>
@@ -71,8 +72,13 @@ public:
         delete component;
     }
 
+    CircuitIODesc* GetComponentInputIODescFromPos(Vector2 position);
+    CircuitIODesc* GetComponentOutputIODescFromPos(Vector2 position);
+
+    DrawableWire* GetWireFromPosition(Vector2 pos);
+
     void Simulate();
-    void Draw();
+    void Draw(Vector2 mousePosInWorld);
 
     void MoveAllSelectedComponents(Vector2 vec);
     DrawableComponent* GetComponentFromPosition(Vector2 position);

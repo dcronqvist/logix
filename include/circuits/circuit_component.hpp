@@ -30,6 +30,14 @@ class CircuitComponent {
         outputs.at(index)->AddOutputSignal(wire);
     }
 
+    CircuitInput* GetInputFromIndex(int index) {
+        return this->inputs.at(index);
+    }
+
+    CircuitOutput* GetOutputFromIndex(int index) {
+        return this->outputs.at(index);
+    }
+
     void UpdateInputs() {
         for (int i = 0; i < inputs.size(); i++) {
             CircuitInput* ci = inputs.at(i);

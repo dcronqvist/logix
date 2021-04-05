@@ -5,6 +5,7 @@
 #include "drawables/drawable_gate.hpp"
 #include "gate-logic/and_gate_logic.hpp"
 #include "raylib-cpp/raylib-cpp.hpp"
+#include "drawables/circuit_io_desc.hpp"
 
 void Editor::Update() {
     // Get current mouse pos
@@ -17,6 +18,9 @@ void Editor::Update() {
 
     // Get currently hovered component, no matter state.
     DrawableComponent* hoveredComponent = sim.GetComponentFromPosition(GetMousePositionInWorld());
+    CircuitIODesc* hoveredInput = sim.GetComponentInputIODescFromPos(GetMousePositionInWorld());
+    CircuitIODesc* hoveredOutput = sim.GetComponentOutputIODescFromPos(GetMousePositionInWorld());
+    DrawableWire* hoveredWire = sim.GetWireFromPosition(GetMousePositionInWorld());
 
 #pragma region MOUSE WHEEL CAMERA ZOOM
 
@@ -36,11 +40,11 @@ void Editor::Update() {
     if (!io->WantCaptureMouse || newComponent != NULL) {
 
         // Start moving camera
-        if (IsMouseButtonPressed(MOUSE_MIDDLE_BUTTON) && currentState == EditorState_None) {
+        if ((IsMouseButtonPressed(MOUSE_MIDDLE_BUTTON) || IsKeyPressed(KEY_SPACE)) && currentState == EditorState_None) {
             currentState = EditorState_MovingCamera;
         }
         // Stop moving camera
-        if (IsMouseButtonReleased(MOUSE_MIDDLE_BUTTON) && currentState == EditorState_MovingCamera) {
+        if ((IsMouseButtonReleased(MOUSE_MIDDLE_BUTTON) || IsKeyReleased(KEY_SPACE)) && currentState == EditorState_MovingCamera) {
             currentState = EditorState_None;
         }
 
@@ -66,10 +70,33 @@ void Editor::Update() {
             delete this->selectionRectangle;
             this->selectionRectangle = NULL;
         }
+
+        // Hovering inputs & outputs
+        if (currentState == EditorState_None) {
+            if (hoveredInput != NULL) {
+                currentState = EditorState_HoveringInput;
+            } else if (hoveredOutput != NULL) {
+                currentState = EditorState_HoveringOutput;
+            }
+        } else if (currentState == EditorState_HoveringInput || currentState == EditorState_HoveringOutput) { 
+            if (hoveredInput == NULL && hoveredOutput == NULL) {
+                currentState = EditorState_None;
+            }
+        }
+
+        // Hovering wires
+        if(currentState == EditorState_None) {
+            if (hoveredWire != NULL) {
+                currentState = EditorState_HoveringWire;
+            }
+        } else if (currentState == EditorState_HoveringWire) {
+            if (hoveredWire == NULL) {
+                currentState = EditorState_None;
+            }
+        }
     }
 
 #pragma endregion
-
 
 #pragma region PERFORM EDITOR STATE
 
@@ -101,6 +128,22 @@ void Editor::Update() {
         }
 
         sim.SelectAllComponentsInRectangle(*(this->selectionRectangle));
+    }
+
+    if (currentState == EditorState_HoveringOutput) {
+        if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) {
+            this->tempOutput = hoveredOutput;
+            currentState = EditorState_OutputToInput;
+        }
+    }
+
+    if (currentState == EditorState_OutputToInput) {
+        if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON) && hoveredInput != NULL) {
+            if (this->ConnectInputOutput(hoveredInput, tempOutput)) {
+                this->tempOutput = NULL;
+                currentState = EditorState_None;
+            }
+        }
     }
 
 #pragma endregion
@@ -211,10 +254,17 @@ void Editor::Draw() {
     ClearBackground(LIGHTGRAY);
     DrawGrid();
 
-    sim.Draw();
+    sim.Draw(GetMousePositionInWorld());
 
     if (this->selectionRectangle != NULL) {
         DrawRectangleRec(*(this->selectionRectangle), RED * 0.3F);
+    }
+
+    if (this->currentState == EditorState_OutputToInput) {
+        Vector2 start = tempOutput->component->GetOutputPosition(tempOutput->index);
+        Vector2 end = GetMousePositionInWorld();
+
+        DrawLineEx(start, end, 3.0F, WHITE);
     }
 
     EndMode2D();
@@ -222,4 +272,21 @@ void Editor::Draw() {
 
 void Editor::Unload() {
 
+}
+
+bool Editor::ConnectInputOutput(CircuitIODesc* input, CircuitIODesc* output) {
+    // If there is no wire to this input
+    // then assign a new wire between the tempOutput & this input
+    // if there is a wire to this input, do nothing
+
+    // Check no wire to input
+    if (!input->component->GetInputFromIndex(input->index)->HasSignal()) {
+        DrawableWire* newWire = new DrawableWire{output->component, output->index, input->component, input->index};
+        sim.AddWire(newWire);
+        input->component->SetInputWire(input->index, newWire);
+        output->component->AddOutputWire(output->index, newWire);
+        return true;
+    }
+
+    return false;
 }

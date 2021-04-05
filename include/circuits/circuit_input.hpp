@@ -19,4 +19,5 @@ public:
         }
     }
     void RemoveSignal() { signal = nullptr; }
+    bool HasSignal() { return signal != nullptr;}
 };
