@@ -90,7 +90,7 @@ public:
         }
     }
 
-    void Draw(Vector2 mousePosInWorld) {
+    virtual void Draw(Vector2 mousePosInWorld) {
         UpdateBox();
         DrawRectanglePro(box, Vector2{ 0.0F, 0.0F }, 0.0F, WHITE);
         DrawInputs(mousePosInWorld);
@@ -108,4 +108,6 @@ public:
         Rectangle outer = { position.x - offset, position.y - offset, box.width + 2 * offset, box.height + 2 * offset };
         DrawRectangleLinesEx(outer, thickness, BLUE * 0.5F);
     }
+
+    virtual void Update(Vector2 mousePosInWorld) {};
 };

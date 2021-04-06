@@ -78,6 +78,7 @@ public:
     DrawableWire* GetWireFromPosition(Vector2 pos);
 
     void Simulate();
+    void Update(Vector2 mousePosInWorld);
     void Draw(Vector2 mousePosInWorld);
 
     void MoveAllSelectedComponents(Vector2 vec);

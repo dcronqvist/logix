@@ -3,6 +3,8 @@
 #include "imgui/imgui_impl_raylib.h"
 #include "utils/utility.hpp"
 #include "drawables/drawable_gate.hpp"
+#include "drawables/drawable_switch.hpp"
+#include "drawables/drawable_button.hpp"
 #include "gate-logic/and_gate_logic.hpp"
 #include "raylib-cpp/raylib-cpp.hpp"
 #include "drawables/circuit_io_desc.hpp"
@@ -14,6 +16,7 @@ void Editor::Update() {
 
     // Perform logic simulation
     sim.Simulate();
+    sim.Update(GetMousePositionInWorld());
     ImGuiIO* io = &ImGui::GetIO();
 
     // Get currently hovered component, no matter state.
@@ -207,6 +210,26 @@ void Editor::SubmitUI() {
         ImGui::Button("AND");
         if (ImGui::IsItemClicked()) {
             DrawableComponent* dc = new DrawableGate(GetMousePositionInWorld(), new ANDGateLogic(), 2);
+            newComponent = dc;
+            sim.ClearSelection();
+            sim.AddComponent(newComponent);
+            sim.SelectComponent(newComponent);
+            currentState = EditorState_MovingSelection;
+        }
+
+        ImGui::Button("Switch");
+        if (ImGui::IsItemClicked()) {
+            DrawableComponent* dc = new DrawableSwitch(GetMousePositionInWorld());
+            newComponent = dc;
+            sim.ClearSelection();
+            sim.AddComponent(newComponent);
+            sim.SelectComponent(newComponent);
+            currentState = EditorState_MovingSelection;
+        }
+
+        ImGui::Button("Button");
+        if (ImGui::IsItemClicked()) {
+            DrawableComponent* dc = new DrawableButton(GetMousePositionInWorld());
             newComponent = dc;
             sim.ClearSelection();
             sim.AddComponent(newComponent);

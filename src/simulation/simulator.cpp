@@ -1,4 +1,5 @@
 #include "simulation/simulator.hpp"
+#include "raylib-cpp/raylib-cpp.hpp"
 
 void Simulator::Simulate() {
     for (int i = 0; i < allComponents.size(); i++) {
@@ -6,6 +7,13 @@ void Simulator::Simulate() {
     }
     for (int i = 0; i < allComponents.size(); i++) {
         allComponents.at(i)->UpdateOutputs();
+    }
+}
+
+void Simulator::Update(Vector2 mousePosInWorld) {
+    for (int i = 0; i < allComponents.size(); i++)
+    {
+        allComponents.at(i)->Update(mousePosInWorld);
     }
 }
 
