@@ -94,3 +94,55 @@ DrawableWire* Simulator::GetWireFromPosition(Vector2 pos) {
     return NULL;
 }
 
+void Simulator::DeleteSelectedComponents() {
+    if (selectedComponents.size() == allComponents.size()) {
+        selectedComponents = {};
+        allComponents = {};
+        allWires = {};
+    }
+
+    for (int i = 0; i < this->selectedComponents.size(); i++)
+    {
+        this->RemoveComponent(selectedComponents.at(i));
+    }
+    ClearSelection();
+}
+
+void Simulator::RemoveComponent(DrawableComponent* component) {
+    std::vector<DrawableComponent*> comps;
+
+    for (int i = 0; i < allComponents.size(); i++) {
+        if (allComponents.at(i) != component) {
+            comps.push_back(allComponents.at(i));
+            continue;
+        }
+
+        DrawableComponent* dc = allComponents.at(i);
+        // TODO: do everything that must be done when deleting a component.
+        for (int j = 0; j < dc->inputs.size(); j++)
+        {
+            CircuitInput* ci = dc->inputs.at(j);
+
+            if(ci->HasSignal()) {
+                DrawableWire* wire = (DrawableWire*)(ci->GetSignal());
+                wire->from->RemoveOutputWire(wire->fromIndex, wire);
+                this->RemoveWire(wire);
+            }
+        }
+
+        for (int j = 0; j < dc->outputs.size(); j++) {
+            CircuitOutput* co = dc->outputs.at(j);
+
+            if(co->HasAnySignal()) {
+                for (int k = 0; k < co->GetSignals().size(); k++)
+                {
+                    DrawableWire* wire = (DrawableWire*)(co->GetSignals().at(k));
+                    wire->to->RemoveInputWire(wire->toIndex);
+                    this->RemoveWire(wire);
+                }          
+            }
+        }    
+    }
+    allComponents = comps;
+}
+

@@ -7,7 +7,7 @@
 #include <vector>
 
 class CircuitComponent {
-    protected:
+    public:
     std::vector<CircuitInput*> inputs;
     std::vector<CircuitOutput*> outputs;
 
@@ -24,6 +24,22 @@ class CircuitComponent {
 
     void SetInputWire(int index, CircuitWire* wire) {
         inputs.at(index)->SetSignal(wire);
+    }
+
+    void RemoveOutputWire(int index, CircuitWire* wire) {
+        CircuitOutput* output = outputs.at(index);
+        for (int i = 0; i < output->GetSignals().size(); i++)
+        {
+            CircuitWire* ow = output->GetSignals().at(i);
+            if(ow == wire) {
+                output->RemoveOutputSignal(i);
+                break;
+            }
+        }
+    }
+
+    void RemoveInputWire(int index) {
+        this->inputs.at(index)->RemoveSignal();
     }
 
     void AddOutputWire(int index, CircuitWire* wire) {

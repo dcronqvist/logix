@@ -12,6 +12,8 @@ public:
     CircuitOutput(LogicValue initialValue) : CircuitIO(initialValue) { signals = {}; }
     void AddOutputSignal(CircuitWire* wire) { signals.push_back(wire); }
     void RemoveOutputSignal(int index) { signals.erase(signals.begin() + index); }
+    std::vector<CircuitWire*> GetSignals() {return this->signals;}
+    bool HasAnySignal() { return signals.size() != 0; }
     void SetSignals() {
         for (int i = 0; i < signals.size(); i++) {
             signals[i]->SetValue(this->GetValue());

@@ -5,6 +5,7 @@
 #include "drawables/drawable_gate.hpp"
 #include "drawables/drawable_switch.hpp"
 #include "drawables/drawable_button.hpp"
+#include "drawables/drawable_lamp.hpp"
 #include "gate-logic/and_gate_logic.hpp"
 #include "raylib-cpp/raylib-cpp.hpp"
 #include "drawables/circuit_io_desc.hpp"
@@ -140,12 +141,25 @@ void Editor::Update() {
         }
     }
 
+    if (currentState == EditorState_HoveringInput) {
+        if(IsMouseButtonPressed(MOUSE_RIGHT_BUTTON)) {
+            sim.RemoveWire((DrawableWire*)(hoveredInput->component->inputs.at(hoveredInput->index)->GetSignal()));
+            hoveredInput->component->RemoveInputWire(hoveredInput->index);
+        }
+    }
+
     if (currentState == EditorState_OutputToInput) {
         if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON) && hoveredInput != NULL) {
             if (this->ConnectInputOutput(hoveredInput, tempOutput)) {
                 this->tempOutput = NULL;
                 currentState = EditorState_None;
             }
+        }
+    }
+
+    if (currentState == EditorState_None) {
+        if (IsKeyPressed(KEY_DELETE)) {
+            sim.DeleteSelectedComponents();
         }
     }
 
@@ -230,6 +244,16 @@ void Editor::SubmitUI() {
         ImGui::Button("Button");
         if (ImGui::IsItemClicked()) {
             DrawableComponent* dc = new DrawableButton(GetMousePositionInWorld());
+            newComponent = dc;
+            sim.ClearSelection();
+            sim.AddComponent(newComponent);
+            sim.SelectComponent(newComponent);
+            currentState = EditorState_MovingSelection;
+        }
+
+        ImGui::Button("Lamp");
+        if (ImGui::IsItemClicked()) {
+            DrawableComponent* dc = new DrawableLamp(GetMousePositionInWorld());
             newComponent = dc;
             sim.ClearSelection();
             sim.AddComponent(newComponent);

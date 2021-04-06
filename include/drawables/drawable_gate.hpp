@@ -7,7 +7,7 @@ class DrawableGate : public DrawableComponent {
 public:
     GateLogic* logic;
 
-    DrawableGate(Vector2 pos, GateLogic* gl, int inps) : DrawableComponent(pos, Vector2{ 50, 40 }, gl->GetLogicName(), inps, 1) {
+    DrawableGate(Vector2 pos, GateLogic* gl, int inps) : DrawableComponent(pos, Vector2{ 40, 35 }, gl->GetLogicName(), inps, 1) {
         this->logic = gl;
     }
 

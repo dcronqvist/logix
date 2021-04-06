@@ -9,7 +9,7 @@ class DrawableSwitch : public DrawableComponent {
     public:
     LogicValue value;
 
-    DrawableSwitch(Vector2 pos) : DrawableComponent(pos, Vector2{25, 30}, "0", 0, 1) {
+    DrawableSwitch(Vector2 pos) : DrawableComponent(pos, Vector2{30, 30}, "0", 0, 1) {
         value = LogicValue_LOW;
     }
 

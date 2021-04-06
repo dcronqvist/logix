@@ -37,5 +37,6 @@ class DrawableWire : public CircuitWire {
         if (abs((k * (position.x - from->GetOutputPosition(fromIndex).x)) - (position.y - from->GetOutputPosition(fromIndex).y)) < 3.0F) {
             return true;
         }
+        return false;
     }
 };

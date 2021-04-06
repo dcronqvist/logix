@@ -21,6 +21,10 @@ public:
         allWires.push_back(wire);
     }
 
+    void RemoveWire(DrawableWire* wire) {
+        allWires.erase(std::find(allWires.begin(), allWires.end(), wire));
+    }
+
     void AddComponent(DrawableComponent* component) {
         allComponents.push_back(component);
     }
@@ -58,19 +62,11 @@ public:
         selectedComponents = {};
     }
 
+    void DeleteSelectedComponents();
+
     void SelectAllComponentsInRectangle(Rectangle rec);
 
-    void RemoveComponent(DrawableComponent* component) {
-        std::vector<DrawableComponent*> comps;
-
-        for (int i = 0; i < allComponents.size(); i++) {
-            if (allComponents.at(i) != component) {
-                comps.push_back(allComponents.at(i));
-            }
-        }
-        allComponents = comps;
-        delete component;
-    }
+    void RemoveComponent(DrawableComponent* component);
 
     CircuitIODesc* GetComponentInputIODescFromPos(Vector2 position);
     CircuitIODesc* GetComponentOutputIODescFromPos(Vector2 position);
