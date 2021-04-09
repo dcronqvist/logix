@@ -9,19 +9,19 @@ class DrawableLamp : public DrawableComponent {
     public:
     LogicValue value;
 
-    DrawableLamp(Vector2 pos) : DrawableComponent(pos, Vector2{30, 30}, "0", 1, 0) {
+    DrawableLamp(Vector2 pos) : DrawableComponent(pos, Vector2{ 30, 30 }, "0", new std::vector<int>{ 1 }, new std::vector<int>{}) {
         value = LogicValue_LOW;
     }
 
     void PerformLogic() {
-        this->value = this->inputs.at(0)->GetValue();
+        this->value = this->inputs.at(0)->GetValue(0);
         this->text = this->value == LogicValue_HIGH ? "1" : "0";
     }
 
     void Draw(Vector2 mousePosInWorld) {
         UpdateBox();
 
-        Vector2 middle = position + Vector2{box.width / 2.0F, box.height / 2.0F};
+        Vector2 middle = position + Vector2{ box.width / 2.0F, box.height / 2.0F };
         float radius = box.width / 2.0F;
 
         DrawCircleV(middle, radius, WHITE);

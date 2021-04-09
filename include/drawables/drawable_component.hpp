@@ -3,15 +3,16 @@
 #include "circuits/circuit_component.hpp"
 #include "raylib-cpp/raylib-cpp.hpp"
 #include "utils/utility.hpp"
+#include <vector>
 
 class DrawableComponent : public CircuitComponent {
-public:
+    public:
     Vector2 position;
     Vector2 size;
     Rectangle box;
     const char* text;
 
-    DrawableComponent(Vector2 pos, Vector2 siz, const char* txt, int inps, int outs) : CircuitComponent(inps, outs) {
+    DrawableComponent(Vector2 pos, Vector2 siz, const char* txt, std::vector<int>* inps, std::vector<int>* outs) : CircuitComponent(inps, outs) {
         this->position = pos;
         this->size = siz;
         this->text = txt;
@@ -55,7 +56,7 @@ public:
             Vector2 outputPos = GetOutputPosition(i);
             Vector2 diff = outputPos - position;
 
-            if(Vector2Length(diff) < 7.0F) {
+            if (Vector2Length(diff) < 7.0F) {
                 return i;
             }
         }
@@ -65,28 +66,34 @@ public:
     void DrawInputs(Vector2 mousePosInWorld) {
         for (int i = 0; i < this->inputs.size(); i++) {
             CircuitInput* inp = this->inputs.at(i);
-            Vector2 pos = GetInputPosition(i);
-            Color col = inp->GetValue() == LogicValue_HIGH ? BLUE : WHITE;
 
-            if (Vector2Length(pos - mousePosInWorld) < 7.0F) {
-                col = ORANGE;
+            if (inp->bits == 1) {
+                Vector2 pos = GetInputPosition(i);
+                Color col = (inp->GetValues().at(0)) == LogicValue_HIGH ? BLUE : WHITE;
+
+                if (Vector2Length(pos - mousePosInWorld) < 7.0F) {
+                    col = ORANGE;
+                }
+
+                DrawCircleV(pos, 7.0F, col);
             }
-
-            DrawCircleV(pos, 7.0F, col);
         }
     }
 
     void DrawOutputs(Vector2 mousePosInWorld) {
         for (int i = 0; i < this->outputs.size(); i++) {
             CircuitOutput* out = this->outputs.at(i);
-            Vector2 pos = GetOutputPosition(i);
-            Color col = out->GetValue() == LogicValue_HIGH ? BLUE : WHITE;
 
-            if (Vector2Length(pos - mousePosInWorld) < 7.0F) {
-                col = ORANGE;
+            if (out->bits == 1) {
+                Vector2 pos = GetOutputPosition(i);
+                Color col = out->GetValues().at(0) == LogicValue_HIGH ? BLUE : WHITE;
+
+                if (Vector2Length(pos - mousePosInWorld) < 7.0F) {
+                    col = ORANGE;
+                }
+
+                DrawCircleV(pos, 7.0F, col);
             }
-
-            DrawCircleV(pos, 7.0F, col);
         }
     }
 

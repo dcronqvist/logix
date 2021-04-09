@@ -14,7 +14,7 @@ class DrawableWire : public CircuitWire {
     int fromIndex;
     int toIndex;
 
-    DrawableWire(DrawableComponent* fr, int fi, DrawableComponent* t, int ti) : CircuitWire() {
+    DrawableWire(DrawableComponent* fr, int fi, DrawableComponent* t, int ti, int bits) : CircuitWire(bits) {
         this->from = fr;
         this->to = t;
         this->fromIndex = fi;
@@ -24,7 +24,7 @@ class DrawableWire : public CircuitWire {
     void Draw() {
         float thickness = 3.0F;
 
-        Color col = this->GetValue() == LogicValue_HIGH ? BLUE : WHITE;
+        Color col = this->GetValues().at(0) == LogicValue_HIGH ? BLUE : WHITE;
         //DrawLineBezier(from->GetOutputPosition(fromIndex), to->GetInputPosition(toIndex), thickness, col);
         DrawLineEx(from->GetOutputPosition(fromIndex), to->GetInputPosition(toIndex), thickness, col);
     }

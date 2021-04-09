@@ -1,23 +1,24 @@
 #pragma once
 #include "circuits/circuit_wire.hpp"
 #include "circuits/circuit_io.hpp"
+#include <vector>
 
 class CircuitInput : public CircuitIO {
-private:
+    private:
     CircuitWire* signal;
 
-public:
-    CircuitInput(LogicValue initialValue) : CircuitIO(initialValue) { signal = nullptr; }
+    public:
+    CircuitInput(int bits, LogicValue initialValue) : CircuitIO(bits, initialValue) { signal = nullptr; }
     void SetSignal(CircuitWire* wire) { signal = wire; }
     CircuitWire* GetSignal() { return signal; }
     void GetValueFromSignal() {
         if (signal != nullptr) {
-            this->SetValue(signal->GetValue());
+            this->SetValues(signal->GetValues());
         }
         else {
-            SetValue(LogicValue_LOW);
+            SetValues(LogicValue_LOW);
         }
     }
     void RemoveSignal() { signal = nullptr; }
-    bool HasSignal() { return signal != nullptr;}
+    bool HasSignal() { return signal != nullptr; }
 };

@@ -63,7 +63,7 @@ void Editor::Update() {
                 if (!sim.IsSelected(hoveredComponent)) {
                     this->rectangleSelectionStart = GetMousePositionInWorld();
                     currentState = EditorState_RectangleSelecting;
-                } 
+                }
             }
         }
 
@@ -79,21 +79,24 @@ void Editor::Update() {
         if (currentState == EditorState_None) {
             if (hoveredInput != NULL) {
                 currentState = EditorState_HoveringInput;
-            } else if (hoveredOutput != NULL) {
+            }
+            else if (hoveredOutput != NULL) {
                 currentState = EditorState_HoveringOutput;
             }
-        } else if (currentState == EditorState_HoveringInput || currentState == EditorState_HoveringOutput) { 
+        }
+        else if (currentState == EditorState_HoveringInput || currentState == EditorState_HoveringOutput) {
             if (hoveredInput == NULL && hoveredOutput == NULL) {
                 currentState = EditorState_None;
             }
         }
 
         // Hovering wires
-        if(currentState == EditorState_None) {
+        if (currentState == EditorState_None) {
             if (hoveredWire != NULL) {
                 currentState = EditorState_HoveringWire;
             }
-        } else if (currentState == EditorState_HoveringWire) {
+        }
+        else if (currentState == EditorState_HoveringWire) {
             if (hoveredWire == NULL) {
                 currentState = EditorState_None;
             }
@@ -116,19 +119,22 @@ void Editor::Update() {
         Vector2 currPos = GetMousePositionInWorld();
         Vector2 start = (this->rectangleSelectionStart);
 
-        if(this->selectionRectangle != NULL) {
+        if (this->selectionRectangle != NULL) {
             delete this->selectionRectangle;
             this->selectionRectangle = NULL;
         }
 
         if (currPos.y < start.y && currPos.x > start.x) {
-            this->selectionRectangle = new Rectangle{start.x, currPos.y, currPos.x - start.x, start.y - currPos.y};
-        } else if (currPos.y < start.y && currPos.x < start.x) {
-            this->selectionRectangle = new Rectangle{currPos.x, currPos.y, start.x - currPos.x, start.y - currPos.y};
-        } else if (currPos.y > start.y && currPos.x < start.x) {
-            this->selectionRectangle = new Rectangle{currPos.x, start.y, start.x - currPos.x, currPos.y - start.y};
-        } else {
-            this->selectionRectangle = new Rectangle{start.x, start.y, currPos.x - start.x, currPos.y - start.y};
+            this->selectionRectangle = new Rectangle{ start.x, currPos.y, currPos.x - start.x, start.y - currPos.y };
+        }
+        else if (currPos.y < start.y && currPos.x < start.x) {
+            this->selectionRectangle = new Rectangle{ currPos.x, currPos.y, start.x - currPos.x, start.y - currPos.y };
+        }
+        else if (currPos.y > start.y && currPos.x < start.x) {
+            this->selectionRectangle = new Rectangle{ currPos.x, start.y, start.x - currPos.x, currPos.y - start.y };
+        }
+        else {
+            this->selectionRectangle = new Rectangle{ start.x, start.y, currPos.x - start.x, currPos.y - start.y };
         }
 
         sim.SelectAllComponentsInRectangle(*(this->selectionRectangle));
@@ -142,7 +148,7 @@ void Editor::Update() {
     }
 
     if (currentState == EditorState_HoveringInput) {
-        if(IsMouseButtonPressed(MOUSE_RIGHT_BUTTON)) {
+        if (IsMouseButtonPressed(MOUSE_RIGHT_BUTTON)) {
             sim.RemoveWire((DrawableWire*)(hoveredInput->component->inputs.at(hoveredInput->index)->GetSignal()));
             hoveredInput->component->RemoveInputWire(hoveredInput->index);
         }
@@ -180,13 +186,13 @@ void Editor::Update() {
 
     // Can only perform selection/deselection when doing nothing else.
     // Pressing LMB (no LSHIFT)
-    if(currentState == EditorState_None) {
-        if(IsMouseButtonPressed(MOUSE_LEFT_BUTTON) && !IsKeyDown(KEY_LEFT_SHIFT)) {
+    if (currentState == EditorState_None) {
+        if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON) && !IsKeyDown(KEY_LEFT_SHIFT)) {
             // Clear entire current selection no matter if we are hovering
             // a component at all.
             sim.ClearSelection();
             // If we are hovering a component -> select it.
-            if(hoveredComponent != NULL) {
+            if (hoveredComponent != NULL) {
                 sim.SelectComponent(hoveredComponent);
 
                 // Setting the current state to moving_selection allows for
@@ -194,11 +200,11 @@ void Editor::Update() {
                 currentState = EditorState_MovingSelection;
             }
         }
-        else if(IsMouseButtonPressed(MOUSE_LEFT_BUTTON) && IsKeyDown(KEY_LEFT_SHIFT)) {
+        else if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON) && IsKeyDown(KEY_LEFT_SHIFT)) {
             // Pressing LMB + LSHIFT
             // Hoving a component should toggle its selection state.
             // If selected -> deselect & vice versa.
-            if(hoveredComponent != NULL) {
+            if (hoveredComponent != NULL) {
                 sim.ToggleComponentSelected(hoveredComponent);
             }
             else {
@@ -223,7 +229,7 @@ void Editor::SubmitUI() {
     if (ImGui::Begin("Components", NULL, ImGuiWindowFlags_AlwaysAutoResize)) {
         ImGui::Button("AND");
         if (ImGui::IsItemClicked()) {
-            DrawableComponent* dc = new DrawableGate(GetMousePositionInWorld(), new ANDGateLogic(), 2);
+            DrawableComponent* dc = new DrawableGate(GetMousePositionInWorld(), new ANDGateLogic(), new std::vector<int>{ 2, 1 });
             newComponent = dc;
             sim.ClearSelection();
             sim.AddComponent(newComponent);
@@ -328,7 +334,7 @@ bool Editor::ConnectInputOutput(CircuitIODesc* input, CircuitIODesc* output) {
 
     // Check no wire to input
     if (!input->component->GetInputFromIndex(input->index)->HasSignal()) {
-        DrawableWire* newWire = new DrawableWire{output->component, output->index, input->component, input->index};
+        DrawableWire* newWire = new DrawableWire{ output->component, output->index, input->component, input->index, 1 };
         sim.AddWire(newWire);
         input->component->SetInputWire(input->index, newWire);
         output->component->AddOutputWire(output->index, newWire);

@@ -9,14 +9,14 @@
 
 class LogicGate : public CircuitComponent {
     public:
-    LogicGate(int inputAmount) : CircuitComponent(inputAmount, 1) {}
+    LogicGate(std::vector<int> inps) : CircuitComponent(inps, std::vector<int>{ 1 }) {}
 
     protected:
     void SetLow() {
-        this->outputs.at(0)->SetValue(LogicValue_LOW);
+        this->outputs.at(0)->SetValues(LogicValue_LOW);
     }
 
     void SetHigh() {
-        this->outputs.at(0)->SetValue(LogicValue_HIGH);
+        this->outputs.at(0)->SetValues(LogicValue_HIGH);
     }
 };

@@ -4,7 +4,11 @@
 
 LogicValue ANDGateLogic::PerformGateLogic(std::vector<CircuitInput*> inputs) {
     for (int i = 0; i < inputs.size(); i++) {
-        if (inputs.at(i)->GetValue() == LogicValue_LOW) { return LogicValue_LOW; }
+        CircuitInput* inp = inputs.at(i);
+
+        for (int j = 0; j < inp->bits; j++) {
+            if (inp->GetValue(j) == LogicValue_LOW) { return LogicValue_LOW; }
+        }
     }
     return LogicValue_HIGH;
 }

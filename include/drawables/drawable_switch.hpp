@@ -9,12 +9,12 @@ class DrawableSwitch : public DrawableComponent {
     public:
     LogicValue value;
 
-    DrawableSwitch(Vector2 pos) : DrawableComponent(pos, Vector2{30, 30}, "0", 0, 1) {
+    DrawableSwitch(Vector2 pos) : DrawableComponent(pos, Vector2{ 30, 30 }, "0", new std::vector<int>{}, new std::vector<int>{ 1 }) {
         value = LogicValue_LOW;
     }
 
     void PerformLogic() {
-        this->outputs.at(0)->SetValue(this->value);
+        this->outputs.at(0)->SetValues(this->value);
     }
 
     void Draw(Vector2 mousePosInWorld) {
@@ -25,7 +25,7 @@ class DrawableSwitch : public DrawableComponent {
 
         Color col = this->value == LogicValue_HIGH ? BLUE : RAYWHITE;
         float offset = 1.0F;
-        Rectangle r = Rectangle{this->position.x + offset, this->position.y + offset, this->box.width - 2*offset, this->box.height - 2*offset};
+        Rectangle r = Rectangle{ this->position.x + offset, this->position.y + offset, this->box.width - 2 * offset, this->box.height - 2 * offset };
         DrawRectanglePro(r, Vector2{ 0.0F, 0.0F }, 0.0F, col);
 
         float fontSize = 12.0F;
@@ -35,7 +35,7 @@ class DrawableSwitch : public DrawableComponent {
     }
 
     void Update(Vector2 mousePosInWorld) {
-        if(IsMouseButtonPressed(MOUSE_RIGHT_BUTTON) && CheckCollisionPointRec(mousePosInWorld, this->box)) {
+        if (IsMouseButtonPressed(MOUSE_RIGHT_BUTTON) && CheckCollisionPointRec(mousePosInWorld, this->box)) {
             this->value = this->value == LogicValue_HIGH ? LogicValue_LOW : LogicValue_HIGH;
             this->text = this->text == "1" ? "0" : "1";
         }

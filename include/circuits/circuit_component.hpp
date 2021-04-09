@@ -12,13 +12,13 @@ class CircuitComponent {
     std::vector<CircuitOutput*> outputs;
 
     public:
-    CircuitComponent(int inputAmount, int outputAmount) {
-        for (int i = 0; i < inputAmount; i++) {
-            inputs.push_back(new CircuitInput(LogicValue_LOW));
+    CircuitComponent(std::vector<int>* inps, std::vector<int>* outs) {
+        for (int i = 0; i < inps->size(); i++) {
+            this->inputs.push_back(new CircuitInput(inps->at(i), LogicValue_LOW));
         }
 
-        for (int i = 0; i < outputAmount; i++) {
-            outputs.push_back(new CircuitOutput(LogicValue_LOW));
+        for (int i = 0; i < outs->size(); i++) {
+            this->outputs.push_back(new CircuitOutput(outs->at(i), LogicValue_LOW));
         }
     }
 
@@ -28,10 +28,9 @@ class CircuitComponent {
 
     void RemoveOutputWire(int index, CircuitWire* wire) {
         CircuitOutput* output = outputs.at(index);
-        for (int i = 0; i < output->GetSignals().size(); i++)
-        {
+        for (int i = 0; i < output->GetSignals().size(); i++) {
             CircuitWire* ow = output->GetSignals().at(i);
-            if(ow == wire) {
+            if (ow == wire) {
                 output->RemoveOutputSignal(i);
                 break;
             }
