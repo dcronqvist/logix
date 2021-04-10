@@ -233,143 +233,12 @@ void Editor::SubmitUI() {
 
     if (ImGui::Begin("Components", NULL, ImGuiWindowFlags_AlwaysAutoResize)) {
 
-        ImGui::Button("AND", ImVec2(65, 22));
-        if (ImGui::IsItemClicked()) {
-            this->AddNewComponent(new DrawableGate(GetMousePositionInWorld(), new ANDGateLogic(), new std::vector<int>{ 1, 1 }));
-        }
-        if (ImGui::BeginPopupContextItem("AND Context Menu")) {
-
-            ImGui::SetNextItemWidth(80);
-            ImGui::InputInt("Bits", &(this->gateBits), 1, 1);
-
-            if (ImGui::Button("Create")) {
-
-                if (this->groupBits) {
-                    this->AddNewComponent(new DrawableGate(GetMousePositionInWorld(), new ANDGateLogic(), new std::vector<int>{ this->gateBits }));
-                }
-                else {
-                    this->AddNewComponent(new DrawableGate(GetMousePositionInWorld(), new ANDGateLogic(), new std::vector<int>(this->gateBits, 1)));
-                }
-            }
-            ImGui::SameLine();
-            ImGui::Checkbox("Group bits", &this->groupBits);
-            ImGui::EndPopup();
-        }
-
-        ImGui::Button("NAND", ImVec2(65, 22));
-        if (ImGui::IsItemClicked()) {
-            this->AddNewComponent(new DrawableGate(GetMousePositionInWorld(), new NANDGateLogic(), new std::vector<int>{ 1, 1 }));
-        }
-        if (ImGui::BeginPopupContextItem("NAND Context Menu")) {
-
-            ImGui::SetNextItemWidth(80);
-            ImGui::InputInt("Bits", &(this->gateBits), 1, 1);
-
-            if (ImGui::Button("Create")) {
-
-                if (this->groupBits) {
-                    this->AddNewComponent(new DrawableGate(GetMousePositionInWorld(), new NANDGateLogic(), new std::vector<int>{ this->gateBits }));
-                }
-                else {
-                    this->AddNewComponent(new DrawableGate(GetMousePositionInWorld(), new NANDGateLogic(), new std::vector<int>(this->gateBits, 1)));
-                }
-            }
-            ImGui::SameLine();
-            ImGui::Checkbox("Group bits", &this->groupBits);
-            ImGui::EndPopup();
-        }
-
-        ImGui::Button("OR", ImVec2(65, 22));
-        if (ImGui::IsItemClicked()) {
-            this->AddNewComponent(new DrawableGate(GetMousePositionInWorld(), new ORGateLogic(), new std::vector<int>{ 1, 1 }));
-        }
-        if (ImGui::BeginPopupContextItem("OR Context Menu")) {
-
-            ImGui::SetNextItemWidth(80);
-            ImGui::InputInt("Bits", &(this->gateBits), 1, 1);
-
-            if (ImGui::Button("Create")) {
-
-                if (this->groupBits) {
-                    this->AddNewComponent(new DrawableGate(GetMousePositionInWorld(), new ORGateLogic(), new std::vector<int>{ this->gateBits }));
-                }
-                else {
-                    this->AddNewComponent(new DrawableGate(GetMousePositionInWorld(), new ORGateLogic(), new std::vector<int>(this->gateBits, 1)));
-                }
-            }
-            ImGui::SameLine();
-            ImGui::Checkbox("Group bits", &this->groupBits);
-            ImGui::EndPopup();
-        }
-
-        ImGui::Button("NOR", ImVec2(65, 22));
-        if (ImGui::IsItemClicked()) {
-            this->AddNewComponent(new DrawableGate(GetMousePositionInWorld(), new NORGateLogic(), new std::vector<int>{ 1, 1 }));
-        }
-        if (ImGui::BeginPopupContextItem("NOR Context Menu")) {
-
-            ImGui::SetNextItemWidth(80);
-            ImGui::InputInt("Bits", &(this->gateBits), 1, 1);
-
-            if (ImGui::Button("Create")) {
-
-                if (this->groupBits) {
-                    this->AddNewComponent(new DrawableGate(GetMousePositionInWorld(), new NORGateLogic(), new std::vector<int>{ this->gateBits }));
-                }
-                else {
-                    this->AddNewComponent(new DrawableGate(GetMousePositionInWorld(), new NORGateLogic(), new std::vector<int>(this->gateBits, 1)));
-                }
-            }
-            ImGui::SameLine();
-            ImGui::Checkbox("Group bits", &this->groupBits);
-            ImGui::EndPopup();
-        }
-
-        ImGui::Button("XOR", ImVec2(65, 22));
-        if (ImGui::IsItemClicked()) {
-            this->AddNewComponent(new DrawableGate(GetMousePositionInWorld(), new XORGateLogic(), new std::vector<int>{ 1, 1 }));
-        }
-        if (ImGui::BeginPopupContextItem("XOR Context Menu")) {
-
-            ImGui::SetNextItemWidth(80);
-            ImGui::InputInt("Bits", &(this->gateBits), 1, 1);
-
-            if (ImGui::Button("Create")) {
-
-                if (this->groupBits) {
-                    this->AddNewComponent(new DrawableGate(GetMousePositionInWorld(), new XORGateLogic(), new std::vector<int>{ this->gateBits }));
-                }
-                else {
-                    this->AddNewComponent(new DrawableGate(GetMousePositionInWorld(), new XORGateLogic(), new std::vector<int>(this->gateBits, 1)));
-                }
-            }
-            ImGui::SameLine();
-            ImGui::Checkbox("Group bits", &this->groupBits);
-            ImGui::EndPopup();
-        }
-
-        ImGui::Button("XNOR", ImVec2(65, 22));
-        if (ImGui::IsItemClicked()) {
-            this->AddNewComponent(new DrawableGate(GetMousePositionInWorld(), new XNORGateLogic(), new std::vector<int>{ 1, 1 }));
-        }
-        if (ImGui::BeginPopupContextItem("XNOR Context Menu")) {
-
-            ImGui::SetNextItemWidth(80);
-            ImGui::InputInt("Bits", &(this->gateBits), 1, 1);
-
-            if (ImGui::Button("Create")) {
-
-                if (this->groupBits) {
-                    this->AddNewComponent(new DrawableGate(GetMousePositionInWorld(), new XNORGateLogic(), new std::vector<int>{ this->gateBits }));
-                }
-                else {
-                    this->AddNewComponent(new DrawableGate(GetMousePositionInWorld(), new XNORGateLogic(), new std::vector<int>(this->gateBits, 1)));
-                }
-            }
-            ImGui::SameLine();
-            ImGui::Checkbox("Group bits", &this->groupBits);
-            ImGui::EndPopup();
-        }
+        AddNewGateButton("AND");
+        AddNewGateButton("NAND");
+        AddNewGateButton("OR");
+        AddNewGateButton("NOR");
+        AddNewGateButton("XOR");
+        AddNewGateButton("XNOR");
 
         ImGui::Button("Switch", ImVec2(65, 22));
         if (ImGui::IsItemClicked()) {
@@ -482,4 +351,29 @@ void Editor::AddNewComponent(DrawableComponent* comp) {
     sim.AddComponent(newComponent);
     sim.SelectComponent(newComponent);
     currentState = EditorState_MovingSelection;
+}
+
+void Editor::AddNewGateButton(const char* gate) {
+    ImGui::Button(gate, ImVec2(65, 22));
+    if (ImGui::IsItemClicked()) {
+        this->AddNewComponent(new DrawableGate(GetMousePositionInWorld(), GetGateLogic(gate), new std::vector<int>{ 1, 1 }));
+    }
+    if (ImGui::BeginPopupContextItem(gate)) {
+
+        ImGui::SetNextItemWidth(80);
+        ImGui::InputInt("Bits", &(this->gateBits), 1, 1);
+
+        if (ImGui::Button("Create")) {
+
+            if (this->groupBits) {
+                this->AddNewComponent(new DrawableGate(GetMousePositionInWorld(), GetGateLogic(gate), new std::vector<int>{ this->gateBits }));
+            }
+            else {
+                this->AddNewComponent(new DrawableGate(GetMousePositionInWorld(), GetGateLogic(gate), new std::vector<int>(this->gateBits, 1)));
+            }
+        }
+        ImGui::SameLine();
+        ImGui::Checkbox("Group bits", &this->groupBits);
+        ImGui::EndPopup();
+    }
 }

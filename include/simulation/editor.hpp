@@ -84,4 +84,5 @@ class Editor {
     }
     bool ConnectInputOutput(CircuitIODesc* input, CircuitIODesc* output);
     void AddNewComponent(DrawableComponent* comp);
+    void AddNewGateButton(const char* gate);
 };
