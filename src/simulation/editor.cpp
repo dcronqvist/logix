@@ -362,7 +362,8 @@ void Editor::AddNewGateButton(const char* gate) {
 
         ImGui::SetNextItemWidth(80);
         ImGui::InputInt("Bits", &(this->gateBits), 1, 1);
-
+        ImGui::Checkbox("Multibit Input", &this->groupBits);
+        ImGui::Separator();
         if (ImGui::Button("Create")) {
 
             if (this->groupBits) {
@@ -372,8 +373,6 @@ void Editor::AddNewGateButton(const char* gate) {
                 this->AddNewComponent(new DrawableGate(GetMousePositionInWorld(), GetGateLogic(gate), new std::vector<int>(this->gateBits, 1)));
             }
         }
-        ImGui::SameLine();
-        ImGui::Checkbox("Group bits", &this->groupBits);
         ImGui::EndPopup();
     }
 }
