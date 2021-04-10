@@ -18,19 +18,19 @@ enum EditorState {
 };
 
 class Editor {
-public:
+    public:
     // View and simulation variables
     LogiXWindow* logixWindow;
     Camera2D cam;
     Simulator sim;
 
-private:
+    private:
     // Mouse variables
     Vector2 currentMousePosWindow;
     Vector2 previousMousePosWindow;
     Vector2 mouseDelta;
 
-private:
+    private:
     // Editor FSM variables
     EditorState currentState;
     DrawableComponent* newComponent;
@@ -42,7 +42,7 @@ private:
     // Output to input connecting
     CircuitIODesc* tempOutput;
 
-public:
+    public:
     Editor(LogiXWindow* lgx) {
         currentState = EditorState_None;
         logixWindow = lgx;
@@ -69,4 +69,5 @@ public:
         return viewSize;
     }
     bool ConnectInputOutput(CircuitIODesc* input, CircuitIODesc* output);
+    void AddNewComponent(DrawableComponent* comp);
 };

@@ -24,8 +24,9 @@ class DrawableWire : public CircuitWire {
     void Draw() {
         float thickness = 3.0F;
 
-        Color col = this->GetValues().at(0) == LogicValue_HIGH ? BLUE : WHITE;
+        Color col = BLUE * this->from->GetOutputFromIndex(this->fromIndex)->GetHIGHFraction();
         //DrawLineBezier(from->GetOutputPosition(fromIndex), to->GetInputPosition(toIndex), thickness, col);
+        DrawLineEx(from->GetOutputPosition(fromIndex), to->GetInputPosition(toIndex), thickness, WHITE);
         DrawLineEx(from->GetOutputPosition(fromIndex), to->GetInputPosition(toIndex), thickness, col);
     }
 

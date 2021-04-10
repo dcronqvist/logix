@@ -229,42 +229,52 @@ void Editor::SubmitUI() {
     if (ImGui::Begin("Components", NULL, ImGuiWindowFlags_AlwaysAutoResize)) {
         ImGui::Button("AND");
         if (ImGui::IsItemClicked()) {
-            DrawableComponent* dc = new DrawableGate(GetMousePositionInWorld(), new ANDGateLogic(), new std::vector<int>{ 2, 1 });
-            newComponent = dc;
-            sim.ClearSelection();
-            sim.AddComponent(newComponent);
-            sim.SelectComponent(newComponent);
-            currentState = EditorState_MovingSelection;
+            this->AddNewComponent(new DrawableGate(GetMousePositionInWorld(), new ANDGateLogic(), new std::vector<int>{ 1, 1 }));
+        }
+
+        ImGui::Button("2AND1");
+        if (ImGui::IsItemClicked()) {
+            this->AddNewComponent(new DrawableGate(GetMousePositionInWorld(), new ANDGateLogic(), new std::vector<int>{ 2 }));
+        }
+
+        ImGui::Button("4AND1");
+        if (ImGui::IsItemClicked()) {
+            this->AddNewComponent(new DrawableGate(GetMousePositionInWorld(), new ANDGateLogic(), new std::vector<int>{ 4 }));
+        }
+
+        ImGui::Button("8AND1");
+        if (ImGui::IsItemClicked()) {
+            this->AddNewComponent(new DrawableGate(GetMousePositionInWorld(), new ANDGateLogic(), new std::vector<int>{ 8 }));
         }
 
         ImGui::Button("Switch");
         if (ImGui::IsItemClicked()) {
-            DrawableComponent* dc = new DrawableSwitch(GetMousePositionInWorld());
-            newComponent = dc;
-            sim.ClearSelection();
-            sim.AddComponent(newComponent);
-            sim.SelectComponent(newComponent);
-            currentState = EditorState_MovingSelection;
+            this->AddNewComponent(new DrawableSwitch(GetMousePositionInWorld(), 1));
+        }
+
+        ImGui::Button("Switch2");
+        if (ImGui::IsItemClicked()) {
+            this->AddNewComponent(new DrawableSwitch(GetMousePositionInWorld(), 2));
+        }
+
+        ImGui::Button("Switch4");
+        if (ImGui::IsItemClicked()) {
+            this->AddNewComponent(new DrawableSwitch(GetMousePositionInWorld(), 4));
+        }
+
+        ImGui::Button("Switch8");
+        if (ImGui::IsItemClicked()) {
+            this->AddNewComponent(new DrawableSwitch(GetMousePositionInWorld(), 8));
         }
 
         ImGui::Button("Button");
         if (ImGui::IsItemClicked()) {
-            DrawableComponent* dc = new DrawableButton(GetMousePositionInWorld());
-            newComponent = dc;
-            sim.ClearSelection();
-            sim.AddComponent(newComponent);
-            sim.SelectComponent(newComponent);
-            currentState = EditorState_MovingSelection;
+            this->AddNewComponent(new DrawableButton(GetMousePositionInWorld()));
         }
 
         ImGui::Button("Lamp");
         if (ImGui::IsItemClicked()) {
-            DrawableComponent* dc = new DrawableLamp(GetMousePositionInWorld());
-            newComponent = dc;
-            sim.ClearSelection();
-            sim.AddComponent(newComponent);
-            sim.SelectComponent(newComponent);
-            currentState = EditorState_MovingSelection;
+            this->AddNewComponent(new DrawableLamp(GetMousePositionInWorld()));
         }
 
         ImGui::Text("Current state: %d", currentState);
@@ -334,12 +344,22 @@ bool Editor::ConnectInputOutput(CircuitIODesc* input, CircuitIODesc* output) {
 
     // Check no wire to input
     if (!input->component->GetInputFromIndex(input->index)->HasSignal()) {
-        DrawableWire* newWire = new DrawableWire{ output->component, output->index, input->component, input->index, 1 };
-        sim.AddWire(newWire);
-        input->component->SetInputWire(input->index, newWire);
-        output->component->AddOutputWire(output->index, newWire);
-        return true;
+        if (input->bits == output->bits) {
+            DrawableWire* newWire = new DrawableWire{ output->component, output->index, input->component, input->index, input->bits };
+            sim.AddWire(newWire);
+            input->component->SetInputWire(input->index, newWire);
+            output->component->AddOutputWire(output->index, newWire);
+            return true;
+        }
     }
 
     return false;
+}
+
+void Editor::AddNewComponent(DrawableComponent* comp) {
+    newComponent = comp;
+    sim.ClearSelection();
+    sim.AddComponent(newComponent);
+    sim.SelectComponent(newComponent);
+    currentState = EditorState_MovingSelection;
 }

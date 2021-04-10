@@ -2,8 +2,9 @@
 #include "drawables/drawable_component.hpp"
 
 class CircuitIODesc {
-    public:
+public:
     bool isInput;
     DrawableComponent* component;
     int index;
+    int bits;
 };

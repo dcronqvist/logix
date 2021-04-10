@@ -7,14 +7,19 @@
 
 class DrawableSwitch : public DrawableComponent {
     public:
-    LogicValue value;
+    int bits;
+    std::vector<LogicValue> values;
 
-    DrawableSwitch(Vector2 pos) : DrawableComponent(pos, Vector2{ 30, 30 }, "0", new std::vector<int>{}, new std::vector<int>{ 1 }) {
-        value = LogicValue_LOW;
+    DrawableSwitch(Vector2 pos, int bits) : DrawableComponent(pos, Vector2{ bits * 30.0F, 30 }, "", new std::vector<int>{}, new std::vector<int>{ bits }) {
+        this->bits = bits;
+        this->values = {};
+        for (int i = 0; i < bits; i++) {
+            this->values.push_back(LogicValue_LOW);
+        }
     }
 
     void PerformLogic() {
-        this->outputs.at(0)->SetValues(this->value);
+        this->outputs.at(0)->SetValues(this->values);
     }
 
     void Draw(Vector2 mousePosInWorld) {
@@ -23,21 +28,29 @@ class DrawableSwitch : public DrawableComponent {
         DrawInputs(mousePosInWorld);
         DrawOutputs(mousePosInWorld);
 
-        Color col = this->value == LogicValue_HIGH ? BLUE : RAYWHITE;
-        float offset = 1.0F;
-        Rectangle r = Rectangle{ this->position.x + offset, this->position.y + offset, this->box.width - 2 * offset, this->box.height - 2 * offset };
-        DrawRectanglePro(r, Vector2{ 0.0F, 0.0F }, 0.0F, col);
-
-        float fontSize = 12.0F;
-        Vector2 middleOfBox = Vector2{ box.width / 2.0F, box.height / 2.0F };
-        Vector2 textSize = MeasureTextEx(GetFontDefault(), text, fontSize, 1.0F);
-        DrawTextEx(GetFontDefault(), this->text, this->position + middleOfBox - (textSize / 2.0F), fontSize, 1.0F, BLACK);
+        for (int i = 0; i < this->bits; i++) {
+            Color col = this->values.at(i) == LogicValue_HIGH ? BLUE : RAYWHITE;
+            float offset = 1.0F;
+            Rectangle r = Rectangle{ this->position.x + offset + 30 * i, this->position.y + offset, (this->box.width / this->bits) - 2 * offset, (this->box.height) - 2 * offset };
+            DrawRectanglePro(r, Vector2{ 0.0F, 0.0F }, 0.0F, col);
+        }
     }
 
     void Update(Vector2 mousePosInWorld) {
-        if (IsMouseButtonPressed(MOUSE_RIGHT_BUTTON) && CheckCollisionPointRec(mousePosInWorld, this->box)) {
-            this->value = this->value == LogicValue_HIGH ? LogicValue_LOW : LogicValue_HIGH;
-            this->text = this->text == "1" ? "0" : "1";
+
+        for (int i = 0; i < this->bits; i++) {
+            Color col = this->values.at(i) == LogicValue_HIGH ? BLUE : RAYWHITE;
+            float offset = 1.0F;
+            Rectangle r = Rectangle{ this->position.x + offset + 30 * i, this->position.y + offset, (this->box.width / this->bits) - 2 * offset, (this->box.height) - 2 * offset };
+
+            if (IsMouseButtonPressed(MOUSE_RIGHT_BUTTON) && CheckCollisionPointRec(mousePosInWorld, r)) {
+                LogicValue oldVal = this->values.at(i);
+
+                this->values.erase(this->values.begin() + i);
+
+                this->values.emplace(this->values.begin() + i, oldVal == LogicValue_HIGH ? LogicValue_LOW : LogicValue_HIGH);
+            }
         }
+
     }
 };

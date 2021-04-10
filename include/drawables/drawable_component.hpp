@@ -24,8 +24,9 @@ class DrawableComponent : public CircuitComponent {
     }
 
     float GetIOYPosition(int ios, int index) {
-        float start = size.y / 2 - ((ios - 1) * 15.0F) / 2;
-        float pos = start + index * 15.0F;
+        float dist = 20.0F;
+        float start = size.y / 2 - ((ios - 1) * dist) / 2;
+        float pos = start + index * dist;
         return pos;
     }
 
@@ -66,9 +67,10 @@ class DrawableComponent : public CircuitComponent {
     void DrawInputs(Vector2 mousePosInWorld) {
         for (int i = 0; i < this->inputs.size(); i++) {
             CircuitInput* inp = this->inputs.at(i);
+            Vector2 pos = GetInputPosition(i);
+            DrawLineEx(pos, pos + Vector2{ 10.0F, 0 }, 1.5F, WHITE);
 
             if (inp->bits == 1) {
-                Vector2 pos = GetInputPosition(i);
                 Color col = (inp->GetValues().at(0)) == LogicValue_HIGH ? BLUE : WHITE;
 
                 if (Vector2Length(pos - mousePosInWorld) < 7.0F) {
@@ -77,15 +79,34 @@ class DrawableComponent : public CircuitComponent {
 
                 DrawCircleV(pos, 7.0F, col);
             }
+            else {
+                Color col = BLUE * inp->GetHIGHFraction();
+
+                if (Vector2Length(pos - mousePosInWorld) < 7.0F) {
+                    col = ORANGE;
+                }
+
+                float squareSize = 14.0F;
+                Rectangle r = { pos.x - squareSize / 2.0F, pos.y - squareSize / 2.0F, squareSize, squareSize };
+                //DrawRectanglePro(r, Vector2Zero(), 0.0F, WHITE);
+                //DrawRectanglePro(r, Vector2Zero(), 0.0F, col);
+                DrawCircleV(pos, 7.0F, WHITE);
+                DrawCircleV(pos, 7.0F, col);
+
+                const char* bitText = std::to_string(inp->bits).c_str();
+                Vector2 textMeasure = MeasureTextEx(GetFontDefault(), bitText, 10.0F, 1.0F);
+                DrawTextEx(GetFontDefault(), bitText, pos - textMeasure / 2.0F, 10.0F, 1.0F, BLACK);
+            }
         }
     }
 
     void DrawOutputs(Vector2 mousePosInWorld) {
         for (int i = 0; i < this->outputs.size(); i++) {
             CircuitOutput* out = this->outputs.at(i);
+            Vector2 pos = GetOutputPosition(i);
+            DrawLineEx(pos, pos - Vector2{ 10.0F, 0 }, 1.5F, WHITE);
 
             if (out->bits == 1) {
-                Vector2 pos = GetOutputPosition(i);
                 Color col = out->GetValues().at(0) == LogicValue_HIGH ? BLUE : WHITE;
 
                 if (Vector2Length(pos - mousePosInWorld) < 7.0F) {
@@ -93,6 +114,24 @@ class DrawableComponent : public CircuitComponent {
                 }
 
                 DrawCircleV(pos, 7.0F, col);
+            }
+            else {
+                Color col = BLUE * out->GetHIGHFraction();
+
+                if (Vector2Length(pos - mousePosInWorld) < 7.0F) {
+                    col = ORANGE;
+                }
+
+                float squareSize = 14.0F;
+                Rectangle r = { pos.x - squareSize / 2.0F, pos.y - squareSize / 2.0F, squareSize, squareSize };
+                //DrawRectanglePro(r, Vector2Zero(), 0.0F, WHITE);
+                //DrawRectanglePro(r, Vector2Zero(), 0.0F, col);
+                DrawCircleV(pos, 7.0F, WHITE);
+                DrawCircleV(pos, 7.0F, col);
+
+                const char* bitText = std::to_string(out->bits).c_str();
+                Vector2 textMeasure = MeasureTextEx(GetFontDefault(), bitText, 10.0F, 1.0F);
+                DrawTextEx(GetFontDefault(), bitText, pos - textMeasure / 2.0F, 10.0F, 1.0F, BLACK);
             }
         }
     }
