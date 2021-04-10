@@ -42,6 +42,15 @@ class Editor {
     // Output to input connecting
     CircuitIODesc* tempOutput;
 
+    private:
+    // SwitchN bits
+    int switchNBits;
+
+    // Gate bits
+    int gateBits;
+    // Gate group bits into multibit
+    bool groupBits;
+
     public:
     Editor(LogiXWindow* lgx) {
         currentState = EditorState_None;
@@ -50,6 +59,11 @@ class Editor {
         sim = {};
         newComponent = NULL;
         selectionRectangle = NULL;
+
+        // ImGui inputs
+        switchNBits = 1;
+        groupBits = false;
+        gateBits = 2;
     }
     void Update();
     void SubmitUI();
