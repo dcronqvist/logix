@@ -7,6 +7,7 @@
 #include "drawables/drawable_button.hpp"
 #include "drawables/drawable_lamp.hpp"
 #include "gate-logic/and_gate_logic.hpp"
+#include "gate-logic/or_gate_logic.hpp"
 #include "raylib-cpp/raylib-cpp.hpp"
 #include "drawables/circuit_io_desc.hpp"
 
@@ -227,52 +228,73 @@ void Editor::SubmitUI() {
     ImGui::EndMainMenuBar();
 
     if (ImGui::Begin("Components", NULL, ImGuiWindowFlags_AlwaysAutoResize)) {
-        ImGui::Button("AND");
+
+        ImGui::Button("AND", ImVec2(65, 22));
         if (ImGui::IsItemClicked()) {
             this->AddNewComponent(new DrawableGate(GetMousePositionInWorld(), new ANDGateLogic(), new std::vector<int>{ 1, 1 }));
         }
 
-        ImGui::Button("2AND1");
+        ImGui::Button("2AND1", ImVec2(65, 22));
         if (ImGui::IsItemClicked()) {
             this->AddNewComponent(new DrawableGate(GetMousePositionInWorld(), new ANDGateLogic(), new std::vector<int>{ 2 }));
         }
 
-        ImGui::Button("4AND1");
+        ImGui::Button("4AND1", ImVec2(65, 22));
         if (ImGui::IsItemClicked()) {
             this->AddNewComponent(new DrawableGate(GetMousePositionInWorld(), new ANDGateLogic(), new std::vector<int>{ 4 }));
         }
 
-        ImGui::Button("8AND1");
+        ImGui::Button("8AND1", ImVec2(65, 22));
         if (ImGui::IsItemClicked()) {
             this->AddNewComponent(new DrawableGate(GetMousePositionInWorld(), new ANDGateLogic(), new std::vector<int>{ 8 }));
         }
 
-        ImGui::Button("Switch");
+        ImGui::Button("OR", ImVec2(65, 22));
+        if (ImGui::IsItemClicked()) {
+            this->AddNewComponent(new DrawableGate(GetMousePositionInWorld(), new ORGateLogic(), new std::vector<int>{ 1, 1 }));
+        }
+
+        ImGui::Button("2OR1", ImVec2(65, 22));
+        if (ImGui::IsItemClicked()) {
+            this->AddNewComponent(new DrawableGate(GetMousePositionInWorld(), new ORGateLogic(), new std::vector<int>{ 2 }));
+        }
+
+        ImGui::Button("4OR1", ImVec2(65, 22));
+        if (ImGui::IsItemClicked()) {
+            this->AddNewComponent(new DrawableGate(GetMousePositionInWorld(), new ORGateLogic(), new std::vector<int>{ 4 }));
+        }
+
+        ImGui::Button("8OR1", ImVec2(65, 22));
+        if (ImGui::IsItemClicked()) {
+            this->AddNewComponent(new DrawableGate(GetMousePositionInWorld(), new ORGateLogic(), new std::vector<int>{ 8 }));
+        }
+
+        ImGui::Button("Switch", ImVec2(65, 22));
         if (ImGui::IsItemClicked()) {
             this->AddNewComponent(new DrawableSwitch(GetMousePositionInWorld(), 1));
         }
 
-        ImGui::Button("Switch2");
+        ImGui::Button("Switch2", ImVec2(65, 22));
         if (ImGui::IsItemClicked()) {
             this->AddNewComponent(new DrawableSwitch(GetMousePositionInWorld(), 2));
         }
 
-        ImGui::Button("Switch4");
+        ImGui::Button("Switch4", ImVec2(65, 22));
         if (ImGui::IsItemClicked()) {
             this->AddNewComponent(new DrawableSwitch(GetMousePositionInWorld(), 4));
         }
 
-        ImGui::Button("Switch8");
+        ImGui::Button("Switch8", ImVec2(65, 22));
         if (ImGui::IsItemClicked()) {
             this->AddNewComponent(new DrawableSwitch(GetMousePositionInWorld(), 8));
         }
 
-        ImGui::Button("Button");
+        ImGui::Button("Button", ImVec2(65, 22));
         if (ImGui::IsItemClicked()) {
             this->AddNewComponent(new DrawableButton(GetMousePositionInWorld()));
         }
 
-        ImGui::Button("Lamp");
+        ImGui::Button("Lamp", ImVec2(65, 22));
         if (ImGui::IsItemClicked()) {
             this->AddNewComponent(new DrawableLamp(GetMousePositionInWorld()));
         }
