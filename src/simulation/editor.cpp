@@ -8,7 +8,9 @@
 #include "drawables/drawable_lamp.hpp"
 #include "gate-logic/and_gate_logic.hpp"
 #include "gate-logic/or_gate_logic.hpp"
+#include "gate-logic/nor_gate_logic.hpp"
 #include "gate-logic/xor_gate_logic.hpp"
+#include "gate-logic/xnor_gate_logic.hpp"
 #include "gate-logic/nand_gate_logic.hpp"
 #include "raylib-cpp/raylib-cpp.hpp"
 #include "drawables/circuit_io_desc.hpp"
@@ -254,6 +256,29 @@ void Editor::SubmitUI() {
             ImGui::EndPopup();
         }
 
+        ImGui::Button("NAND", ImVec2(65, 22));
+        if (ImGui::IsItemClicked()) {
+            this->AddNewComponent(new DrawableGate(GetMousePositionInWorld(), new NANDGateLogic(), new std::vector<int>{ 1, 1 }));
+        }
+        if (ImGui::BeginPopupContextItem("NAND Context Menu")) {
+
+            ImGui::SetNextItemWidth(80);
+            ImGui::InputInt("Bits", &(this->gateBits), 1, 1);
+
+            if (ImGui::Button("Create")) {
+
+                if (this->groupBits) {
+                    this->AddNewComponent(new DrawableGate(GetMousePositionInWorld(), new NANDGateLogic(), new std::vector<int>{ this->gateBits }));
+                }
+                else {
+                    this->AddNewComponent(new DrawableGate(GetMousePositionInWorld(), new NANDGateLogic(), new std::vector<int>(this->gateBits, 1)));
+                }
+            }
+            ImGui::SameLine();
+            ImGui::Checkbox("Group bits", &this->groupBits);
+            ImGui::EndPopup();
+        }
+
         ImGui::Button("OR", ImVec2(65, 22));
         if (ImGui::IsItemClicked()) {
             this->AddNewComponent(new DrawableGate(GetMousePositionInWorld(), new ORGateLogic(), new std::vector<int>{ 1, 1 }));
@@ -270,6 +295,29 @@ void Editor::SubmitUI() {
                 }
                 else {
                     this->AddNewComponent(new DrawableGate(GetMousePositionInWorld(), new ORGateLogic(), new std::vector<int>(this->gateBits, 1)));
+                }
+            }
+            ImGui::SameLine();
+            ImGui::Checkbox("Group bits", &this->groupBits);
+            ImGui::EndPopup();
+        }
+
+        ImGui::Button("NOR", ImVec2(65, 22));
+        if (ImGui::IsItemClicked()) {
+            this->AddNewComponent(new DrawableGate(GetMousePositionInWorld(), new NORGateLogic(), new std::vector<int>{ 1, 1 }));
+        }
+        if (ImGui::BeginPopupContextItem("NOR Context Menu")) {
+
+            ImGui::SetNextItemWidth(80);
+            ImGui::InputInt("Bits", &(this->gateBits), 1, 1);
+
+            if (ImGui::Button("Create")) {
+
+                if (this->groupBits) {
+                    this->AddNewComponent(new DrawableGate(GetMousePositionInWorld(), new NORGateLogic(), new std::vector<int>{ this->gateBits }));
+                }
+                else {
+                    this->AddNewComponent(new DrawableGate(GetMousePositionInWorld(), new NORGateLogic(), new std::vector<int>(this->gateBits, 1)));
                 }
             }
             ImGui::SameLine();
@@ -300,11 +348,11 @@ void Editor::SubmitUI() {
             ImGui::EndPopup();
         }
 
-        ImGui::Button("NAND", ImVec2(65, 22));
+        ImGui::Button("XNOR", ImVec2(65, 22));
         if (ImGui::IsItemClicked()) {
-            this->AddNewComponent(new DrawableGate(GetMousePositionInWorld(), new NANDGateLogic(), new std::vector<int>{ 1, 1 }));
+            this->AddNewComponent(new DrawableGate(GetMousePositionInWorld(), new XNORGateLogic(), new std::vector<int>{ 1, 1 }));
         }
-        if (ImGui::BeginPopupContextItem("NAND Context Menu")) {
+        if (ImGui::BeginPopupContextItem("XNOR Context Menu")) {
 
             ImGui::SetNextItemWidth(80);
             ImGui::InputInt("Bits", &(this->gateBits), 1, 1);
@@ -312,10 +360,10 @@ void Editor::SubmitUI() {
             if (ImGui::Button("Create")) {
 
                 if (this->groupBits) {
-                    this->AddNewComponent(new DrawableGate(GetMousePositionInWorld(), new NANDGateLogic(), new std::vector<int>{ this->gateBits }));
+                    this->AddNewComponent(new DrawableGate(GetMousePositionInWorld(), new XNORGateLogic(), new std::vector<int>{ this->gateBits }));
                 }
                 else {
-                    this->AddNewComponent(new DrawableGate(GetMousePositionInWorld(), new NANDGateLogic(), new std::vector<int>(this->gateBits, 1)));
+                    this->AddNewComponent(new DrawableGate(GetMousePositionInWorld(), new XNORGateLogic(), new std::vector<int>(this->gateBits, 1)));
                 }
             }
             ImGui::SameLine();
