@@ -5,8 +5,11 @@
 #include "utils/utility.hpp"
 #include <vector>
 
+const float RADIUS = 7.0F;
+const float Y_DIST = 20.0F;
+
 class DrawableComponent : public CircuitComponent {
-    public:
+public:
     Vector2 position;
     Vector2 size;
     Rectangle box;
@@ -19,15 +22,26 @@ class DrawableComponent : public CircuitComponent {
         this->UpdateBox();
     }
 
+    DrawableComponent(Vector2 pos, float width, const char* txt, std::vector<int>* inps, std::vector<int>* outs) : CircuitComponent(inps, outs) {
+        this->position = pos;
+        this->size = { width, CalculateMinHeight() };
+        this->text = txt;
+        this->UpdateBox();
+    }
+
     void UpdateBox() {
         this->box = { position.x, position.y, size.x, size.y };
     }
 
     float GetIOYPosition(int ios, int index) {
-        float dist = 20.0F;
+        float dist = Y_DIST;
         float start = size.y / 2 - ((ios - 1) * dist) / 2;
         float pos = start + index * dist;
         return pos;
+    }
+
+    float CalculateMinHeight() {
+        return Y_DIST * std::max(this->inputs.size(), this->outputs.size());
     }
 
     Vector2 GetInputPosition(int index) {
@@ -45,7 +59,7 @@ class DrawableComponent : public CircuitComponent {
             Vector2 inputPos = GetInputPosition(i);
             Vector2 diff = inputPos - position;
 
-            if (Vector2Length(diff) < 7.0F) {
+            if (Vector2Length(diff) < RADIUS) {
                 return i;
             }
         }
@@ -57,7 +71,7 @@ class DrawableComponent : public CircuitComponent {
             Vector2 outputPos = GetOutputPosition(i);
             Vector2 diff = outputPos - position;
 
-            if (Vector2Length(diff) < 7.0F) {
+            if (Vector2Length(diff) < RADIUS) {
                 return i;
             }
         }
@@ -73,25 +87,21 @@ class DrawableComponent : public CircuitComponent {
             if (inp->bits == 1) {
                 Color col = (inp->GetValues().at(0)) == LogicValue_HIGH ? BLUE : WHITE;
 
-                if (Vector2Length(pos - mousePosInWorld) < 7.0F) {
+                if (Vector2Length(pos - mousePosInWorld) < RADIUS) {
                     col = ORANGE;
                 }
 
-                DrawCircleV(pos, 7.0F, col);
+                DrawCircleV(pos, RADIUS, col);
             }
             else {
                 Color col = BLUE * inp->GetHIGHFraction();
 
-                if (Vector2Length(pos - mousePosInWorld) < 7.0F) {
+                if (Vector2Length(pos - mousePosInWorld) < RADIUS) {
                     col = ORANGE;
                 }
 
-                float squareSize = 14.0F;
-                Rectangle r = { pos.x - squareSize / 2.0F, pos.y - squareSize / 2.0F, squareSize, squareSize };
-                //DrawRectanglePro(r, Vector2Zero(), 0.0F, WHITE);
-                //DrawRectanglePro(r, Vector2Zero(), 0.0F, col);
-                DrawCircleV(pos, 7.0F, WHITE);
-                DrawCircleV(pos, 7.0F, col);
+                DrawCircleV(pos, RADIUS, WHITE);
+                DrawCircleV(pos, RADIUS, col);
 
                 const char* bitText = std::to_string(inp->bits).c_str();
                 Vector2 textMeasure = MeasureTextEx(GetFontDefault(), bitText, 10.0F, 1.0F);
@@ -109,25 +119,21 @@ class DrawableComponent : public CircuitComponent {
             if (out->bits == 1) {
                 Color col = out->GetValues().at(0) == LogicValue_HIGH ? BLUE : WHITE;
 
-                if (Vector2Length(pos - mousePosInWorld) < 7.0F) {
+                if (Vector2Length(pos - mousePosInWorld) < RADIUS) {
                     col = ORANGE;
                 }
 
-                DrawCircleV(pos, 7.0F, col);
+                DrawCircleV(pos, RADIUS, col);
             }
             else {
                 Color col = BLUE * out->GetHIGHFraction();
 
-                if (Vector2Length(pos - mousePosInWorld) < 7.0F) {
+                if (Vector2Length(pos - mousePosInWorld) < RADIUS) {
                     col = ORANGE;
                 }
 
-                float squareSize = 14.0F;
-                Rectangle r = { pos.x - squareSize / 2.0F, pos.y - squareSize / 2.0F, squareSize, squareSize };
-                //DrawRectanglePro(r, Vector2Zero(), 0.0F, WHITE);
-                //DrawRectanglePro(r, Vector2Zero(), 0.0F, col);
-                DrawCircleV(pos, 7.0F, WHITE);
-                DrawCircleV(pos, 7.0F, col);
+                DrawCircleV(pos, RADIUS, WHITE);
+                DrawCircleV(pos, RADIUS, col);
 
                 const char* bitText = std::to_string(out->bits).c_str();
                 Vector2 textMeasure = MeasureTextEx(GetFontDefault(), bitText, 10.0F, 1.0F);

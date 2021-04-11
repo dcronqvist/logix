@@ -5,10 +5,10 @@
 #include <vector>
 
 class DrawableGate : public DrawableComponent {
-    public:
+public:
     GateLogic* logic;
 
-    DrawableGate(Vector2 pos, GateLogic* gl, std::vector<int>* inps) : DrawableComponent(pos, Vector2{ 40, 35 }, gl->GetLogicName(), inps, new std::vector<int>{ 1 }) {
+    DrawableGate(Vector2 pos, GateLogic* gl, std::vector<int>* inps) : DrawableComponent(pos, 40.0F, gl->GetLogicName(), inps, new std::vector<int>{ 1 }) {
         this->logic = gl;
     }
 
