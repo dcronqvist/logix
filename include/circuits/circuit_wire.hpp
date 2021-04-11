@@ -25,4 +25,5 @@ public:
             this->values.push_back(val);
         }
     }
+    virtual ~CircuitWire() = default;
 };

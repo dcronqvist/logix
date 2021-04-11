@@ -14,6 +14,7 @@
 #include "gate-logic/nand_gate_logic.hpp"
 #include "raylib-cpp/raylib-cpp.hpp"
 #include "drawables/circuit_io_desc.hpp"
+#include "integrated/ic_desc.hpp"
 
 void Editor::Update() {
     // Get current mouse pos
@@ -220,6 +221,12 @@ void Editor::Update() {
     }
 
 #pragma endregion
+
+    // TESTING TESTING
+
+    if (IsKeyPressed(KEY_ENTER)) {
+        ICDesc icd = { sim.selectedComponents };
+    }
 
     // Set previous mouse pos to old current
     previousMousePosWindow = currentMousePosWindow;
