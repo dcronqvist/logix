@@ -15,6 +15,7 @@
 #include "raylib-cpp/raylib-cpp.hpp"
 #include "drawables/circuit_io_desc.hpp"
 #include "integrated/ic_desc.hpp"
+#include <iostream>
 
 void Editor::Update() {
     // Get current mouse pos
@@ -226,6 +227,9 @@ void Editor::Update() {
 
     if (IsKeyPressed(KEY_ENTER)) {
         ICDesc icd = { sim.selectedComponents };
+        json j = icd;
+        std::cout << j.dump(4) << std::endl;
+        int x = 2;
     }
 
     // Set previous mouse pos to old current

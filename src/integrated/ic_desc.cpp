@@ -5,6 +5,12 @@
 #include "drawables/drawable_switch.hpp"
 #include <vector>
 
+ICDesc::ICDesc(std::vector<DrawableComponent*> components) {
+    this->descriptions = GenerateDescriptions(components);
+    this->inputs = CountComponentsOfType<DrawableSwitch>(components);
+    this->outputs = CountComponentsOfType<DrawableLamp>(components);
+}
+
 int GetIndexOfComponent(std::vector<DrawableComponent*> comps, DrawableComponent* comp) {
     // Should return index of comp in comps,
     // if not found, return -1
@@ -62,4 +68,24 @@ std::vector<ICComponentDesc>* ICDesc::GenerateDescriptions(std::vector<DrawableC
         vicc->push_back(iccc);
     }
     return vicc;
+}
+
+template<typename T>
+int ICDesc::CountComponentsOfType(std::vector<DrawableComponent*> comps) {
+    int count = 0;
+    for (int i = 0; i < comps.size(); i++) {
+        if (dynamic_cast<T*>(comps.at(i)) != NULL) {
+            count = count + 1;
+        }
+    }
+    return count;
+}
+
+void to_json(json& j, const ICDesc& p) {
+    j = json{ {"input", p.inputs}, {"outputs", p.outputs}, {"descriptions", *p.descriptions} };
+}
+
+void from_json(const json& j, ICDesc& p) {
+    j.at("inputs").get_to(p.inputs);
+    j.at("outputs").get_to(p.outputs);
 }
