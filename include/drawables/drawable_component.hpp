@@ -9,7 +9,7 @@ const float RADIUS = 7.0F;
 const float Y_DIST = 20.0F;
 
 class DrawableComponent : public CircuitComponent {
-public:
+    public:
     Vector2 position;
     Vector2 size;
     Rectangle box;
@@ -78,7 +78,7 @@ public:
         return -1;
     }
 
-    void DrawInputs(Vector2 mousePosInWorld) {
+    virtual void DrawInputs(Vector2 mousePosInWorld) {
         for (int i = 0; i < this->inputs.size(); i++) {
             CircuitInput* inp = this->inputs.at(i);
             Vector2 pos = GetInputPosition(i);
@@ -110,7 +110,7 @@ public:
         }
     }
 
-    void DrawOutputs(Vector2 mousePosInWorld) {
+    virtual void DrawOutputs(Vector2 mousePosInWorld) {
         for (int i = 0; i < this->outputs.size(); i++) {
             CircuitOutput* out = this->outputs.at(i);
             Vector2 pos = GetOutputPosition(i);

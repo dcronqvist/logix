@@ -22,6 +22,16 @@ class CircuitComponent {
         }
     }
 
+    std::vector<int>* GetInputVector() {
+        std::vector<int>* iv = new std::vector<int>();
+
+        for (int i = 0; i < this->inputs.size(); i++) {
+            CircuitInput* ci = this->inputs.at(i);
+            iv->push_back(ci->bits);
+        }
+        return iv;
+    }
+
     void SetInputWire(int index, CircuitWire* wire) {
         inputs.at(index)->SetSignal(wire);
     }

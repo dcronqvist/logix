@@ -6,6 +6,7 @@
 #include "drawables/drawable_switch.hpp"
 #include "drawables/drawable_button.hpp"
 #include "drawables/drawable_lamp.hpp"
+#include "drawables/drawable_ic.hpp"
 #include "gate-logic/and_gate_logic.hpp"
 #include "gate-logic/or_gate_logic.hpp"
 #include "gate-logic/nor_gate_logic.hpp"
@@ -16,6 +17,9 @@
 #include "drawables/circuit_io_desc.hpp"
 #include "integrated/ic_desc.hpp"
 #include <iostream>
+#include <fstream>
+
+char buf[64];
 
 void Editor::Update() {
     // Get current mouse pos
@@ -193,7 +197,7 @@ void Editor::Update() {
 
     // Can only perform selection/deselection when doing nothing else.
     // Pressing LMB (no LSHIFT)
-    if (currentState == EditorState_None) {
+    if (currentState == EditorState_None && !io->WantCaptureMouse) {
         if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON) && !IsKeyDown(KEY_LEFT_SHIFT)) {
             // Clear entire current selection no matter if we are hovering
             // a component at all.
@@ -207,7 +211,7 @@ void Editor::Update() {
                 currentState = EditorState_MovingSelection;
             }
         }
-        else if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON) && IsKeyDown(KEY_LEFT_SHIFT)) {
+        else if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON) && IsKeyDown(KEY_LEFT_SHIFT) && !io->WantCaptureMouse) {
             // Pressing LMB + LSHIFT
             // Hoving a component should toggle its selection state.
             // If selected -> deselect & vice versa.
@@ -226,10 +230,19 @@ void Editor::Update() {
     // TESTING TESTING
 
     if (IsKeyPressed(KEY_ENTER)) {
-        ICDesc icd = { sim.selectedComponents };
-        json j = icd;
-        std::cout << j.dump(4) << std::endl;
-        int x = 2;
+        ICDesc ic = ICDesc{ sim.selectedComponents };
+        json a = ic;
+
+        //std::ofstream o("hello.ic");
+
+        //o << a << std::endl;
+
+        //o.close();
+
+        std::vector<CircuitComponent*> c = ic.GenerateComponents();
+
+        DrawableIC* dic = new DrawableIC(GetMousePositionInWorld(), ic);
+        AddNewComponent(dic);
     }
 
     // Set previous mouse pos to old current
@@ -281,6 +294,9 @@ void Editor::SubmitUI() {
     }
     ImGui::End();
 
+    if (this->sim.selectedComponents.size() == 1) {
+
+    }
 
     ImGui::ShowDemoWindow();
 }

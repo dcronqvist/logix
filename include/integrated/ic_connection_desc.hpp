@@ -4,8 +4,9 @@
 using json = nlohmann::json;
 
 class ICConnectionDesc {
-public:
+    public:
     int to;
+    int bits;
     int outIndex;
     int inIndex;
 };

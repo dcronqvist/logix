@@ -9,16 +9,18 @@
 using json = nlohmann::json;
 
 class ICDesc {
-public:
+    public:
     std::vector<ICComponentDesc>* descriptions;
-    int inputs;
-    int outputs;
+    std::vector<int>* inputs;
+    std::vector<int>* outputs;
 
+    ICDesc();
     ICDesc(std::vector<DrawableComponent*> components);
     std::vector<ICComponentDesc>* GenerateDescriptions(std::vector<DrawableComponent*> comps);
+    std::vector<CircuitComponent*> GenerateComponents();
 
-    template<typename T>
-    int CountComponentsOfType(std::vector<DrawableComponent*> comps);
+    std::vector<int>* GetInputVector(std::vector<DrawableComponent*> components);
+    std::vector<int>* GetOutputVector(std::vector<DrawableComponent*> components);
 };
 
 void to_json(json& j, const ICDesc& p);

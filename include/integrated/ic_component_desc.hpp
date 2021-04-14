@@ -7,10 +7,25 @@
 using json = nlohmann::json;
 
 class ICComponentDesc {
-public:
+    public:
     std::string type;
     std::string id;
     std::vector<ICConnectionDesc> to;
+    std::vector<int>* inputs;
+
+    ICComponentDesc(std::string type, std::string id, std::vector<ICConnectionDesc> to, std::vector<int>* inps) {
+        this->type = type;
+        this->id = id;
+        this->to = to;
+        this->inputs = inps;
+    }
+
+    ICComponentDesc() {
+        this->type = "";
+        this->id = "";
+        this->to = {};
+        this->inputs = new std::vector<int>();
+    }
 };
 
 void to_json(json& j, const ICComponentDesc& p);

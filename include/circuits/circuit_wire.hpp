@@ -3,11 +3,11 @@
 #include <vector>
 
 class CircuitWire {
-private:
-    int bits;
+    private:
     std::vector<LogicValue> values;
 
-public:
+    public:
+    int bits;
     CircuitWire(int bits) {
         this->bits = bits;
         this->values = {};
