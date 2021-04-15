@@ -1,6 +1,8 @@
 #include "simulation/editor.hpp"
+#include "simulation/simulator.hpp"
 #include "imgui/imgui.h"
 #include "imgui/imgui_impl_raylib.h"
+#include "imgui/imgui_stdlib.h"
 #include "utils/utility.hpp"
 #include "drawables/drawable_gate.hpp"
 #include "drawables/drawable_switch.hpp"
@@ -227,34 +229,40 @@ void Editor::Update() {
 
 #pragma endregion
 
-    // TESTING TESTING
-
-    if (IsKeyPressed(KEY_ENTER)) {
-        ICDesc ic = ICDesc{ sim.selectedComponents };
-        json a = ic;
-
-        //std::ofstream o("hello.ic");
-
-        //o << a << std::endl;
-
-        //o.close();
-
-        std::vector<CircuitComponent*> c = ic.GenerateComponents();
-
-        DrawableIC* dic = new DrawableIC(GetMousePositionInWorld(), ic);
-        AddNewComponent(dic);
-    }
-
     // Set previous mouse pos to old current
     previousMousePosWindow = currentMousePosWindow;
 }
 
 void Editor::SubmitUI() {
     // Main Menu
+
+#pragma region MAIN MENU BAR
     ImGui::BeginMainMenuBar();
 
-    ImGui::EndMainMenuBar();
+    if (ImGui::BeginMenu("File")) {
+        ImGui::EndMenu();
+    }
 
+    if (ImGui::BeginMenu("Edit")) {
+        ImGui::EndMenu();
+    }
+
+    if (ImGui::BeginMenu("Simulation")) {
+        ImGui::EndMenu();
+    }
+
+    if (ImGui::BeginMenu("Integrated Circuits")) {
+        if (ImGui::MenuItem("New...")) {
+            this->currentState = EditorState_MakingIC;
+        }
+
+        ImGui::EndMenu();
+    }
+
+    ImGui::EndMainMenuBar();
+#pragma endregion
+
+#pragma region COMPONENTS WINDOW
     if (ImGui::Begin("Components", NULL, ImGuiWindowFlags_AlwaysAutoResize)) {
 
         AddNewGateButton("AND");
@@ -293,10 +301,127 @@ void Editor::SubmitUI() {
         ImGui::Text("Current state: %d", currentState);
     }
     ImGui::End();
+#pragma endregion
 
-    if (this->sim.selectedComponents.size() == 1) {
+#pragma region CREATE NEW IC WINDOW
 
+    if (currentState == EditorState_MakingIC) {
+        ImGui::OpenPopup("Create Integrated Circuit");
+
+        //TODO: Gather all inputs and outputs and save these for use in the UI.
+        if (this->icInputs.size() == 0) {
+            this->icInputs = this->sim.GetAllSelectedOfType<DrawableSwitch>();
+            this->icOutputs = this->sim.GetAllSelectedOfType<DrawableLamp>();
+            this->icNonIOs = this->sim.GetAllSelectedNonIOs();
+        }
     }
+
+    ImVec2 middleOfWindow = ImVec2{ (float)(this->logixWindow->windowWidth) / 2.0F, (float)(this->logixWindow->windowHeight) / 2.0F };
+    ImGui::SetNextWindowPos(middleOfWindow, ImGuiCond_Always, ImVec2{ 0.5F, 0.5F });
+    if (ImGui::BeginPopupModal("Create Integrated Circuit", NULL, ImGuiWindowFlags_AlwaysAutoResize)) {
+        ImGui::Columns(2);
+        ImGui::Text("Inputs");
+        ImGui::SameLine();
+        HelperMarker("Here you can name your IC, reorder your inputs and outputs, and group certain IOs together if you want.");
+        ImGui::NextColumn();
+        ImGui::Text("Outputs");
+        ImGui::Columns(1);
+        ImGui::Columns(2, "IOs");
+        ImGui::Separator();
+
+        for (int i = 0; i < this->icInputs.size(); i++) {
+            DrawableSwitch* ds = this->icInputs.at(i);
+            ImGui::Selectable(ds->id->c_str());
+
+            if (ImGui::IsItemActive() && !ImGui::IsItemHovered()) {
+                int nNext = i + (ImGui::GetMouseDragDelta(ImGuiMouseButton_Left).y < 0 ? -1 : 1);
+                if (nNext >= 0 && nNext < this->icInputs.size()) {
+                    std::swap(this->icInputs.at(i), this->icInputs.at(nNext));
+                    ImGui::ResetMouseDragDelta();
+                }
+            }
+        }
+
+        ImGui::NextColumn();
+
+        for (int i = 0; i < this->icOutputs.size(); i++) {
+            DrawableLamp* dl = this->icOutputs.at(i);
+            ImGui::Selectable(dl->id->c_str());
+
+            if (ImGui::IsItemActive() && !ImGui::IsItemHovered()) {
+                int nNext = i + (ImGui::GetMouseDragDelta(ImGuiMouseButton_Left).y < 0 ? -1 : 1);
+                if (nNext >= 0 && nNext < this->icOutputs.size()) {
+                    std::swap(this->icOutputs.at(i), this->icOutputs.at(nNext));
+                    ImGui::ResetMouseDragDelta();
+                }
+            }
+        }
+
+        ImGui::NextColumn();
+        ImGui::Columns(1);
+        ImGui::Separator();
+
+
+        if (ImGui::Button("Close")) {
+            currentState = EditorState_None;
+            this->icInputs = {};
+            this->icOutputs = {};
+            ImGui::CloseCurrentPopup();
+        }
+
+        ImGui::SameLine();
+
+        if (ImGui::Button("Create")) {
+            std::vector<DrawableComponent*> comps = {};
+            for (int i = 0; i < this->icInputs.size(); i++) {
+                comps.push_back(this->icInputs.at(i));
+            }
+            for (int i = 0; i < this->icOutputs.size(); i++) {
+                comps.push_back(this->icOutputs.at(i));
+            }
+            for (int i = 0; i < this->icNonIOs.size(); i++) {
+                comps.push_back(this->icNonIOs.at(i));
+            }
+            ICDesc icdesc = ICDesc{ comps };
+            json j = icdesc;
+            std::cout << j << std::endl;
+
+
+            currentState = EditorState_None;
+            this->icInputs = {};
+            this->icOutputs = {};
+            ImGui::CloseCurrentPopup();
+            AddNewComponent(new DrawableIC(GetMousePositionInWorld(), icdesc));
+        }
+
+        ImGui::EndPopup();
+    }
+
+#pragma endregion
+
+#pragma region EDIT SELECTED IO
+
+    if (sim.selectedComponents.size() == 1) {
+        DrawableComponent* dc = sim.selectedComponents.at(0);
+
+        DrawableSwitch* ds = dynamic_cast<DrawableSwitch*>(dc);
+        DrawableLamp* dl = dynamic_cast<DrawableLamp*>(dc);
+
+        if (ds != NULL) {
+            if (ImGui::Begin("Setting IO ID", NULL, ImGuiWindowFlags_AlwaysAutoResize)) {
+                ImGui::InputText("ID", ds->id, ImGuiInputTextFlags_AlwaysOverwrite);
+            }
+            ImGui::End();
+        }
+        else if (dl != NULL) {
+            if (ImGui::Begin("Setting IO ID", NULL, ImGuiWindowFlags_AlwaysAutoResize)) {
+                ImGui::InputText("ID", dl->id, ImGuiInputTextFlags_AlwaysOverwrite);
+            }
+            ImGui::End();
+        }
+    }
+
+#pragma endregion
 
     ImGui::ShowDemoWindow();
 }

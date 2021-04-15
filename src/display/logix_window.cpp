@@ -32,6 +32,12 @@ void LogiXWindow::LoadContent() {
 }
 
 void LogiXWindow::Update() {
+    ImGui_ImplRaylib_NewFrame();
+    ImGui_ImplRaylib_ProcessEvent();
+    ImGui::NewFrame();
+    editor->SubmitUI();
+
+
     if (this->FocusingWindow()) {
         SetConfigFlags(FLAG_WINDOW_HIGHDPI | FLAG_VSYNC_HINT);
         SetTargetFPS(-1);
@@ -49,12 +55,6 @@ void LogiXWindow::Render() {
     // Draw UI to a RenderTexture2D
     BeginTextureMode(renTexUI); {
         ClearBackground(BLANK);
-        ImGui_ImplRaylib_NewFrame();
-        ImGui_ImplRaylib_ProcessEvent();
-        ImGui::NewFrame();
-
-        editor->SubmitUI();
-
         ImGui::Render();
         ImDrawData* draw_data = ImGui::GetDrawData();
         raylib_render_imgui(draw_data);

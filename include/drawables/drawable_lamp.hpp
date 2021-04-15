@@ -6,11 +6,13 @@
 #include "drawables/drawable_component.hpp"
 
 class DrawableLamp : public DrawableComponent {
-    public:
+public:
     LogicValue value;
+    std::string* id;
 
     DrawableLamp(Vector2 pos) : DrawableComponent(pos, Vector2{ 30, 30 }, "0", new std::vector<int>{ 1 }, new std::vector<int>{}) {
         value = LogicValue_LOW;
+        this->id = new std::string{ "" };
     }
 
     void PerformLogic() {
@@ -35,5 +37,7 @@ class DrawableLamp : public DrawableComponent {
         Vector2 middleOfBox = Vector2{ box.width / 2.0F, box.height / 2.0F };
         Vector2 textSize = MeasureTextEx(GetFontDefault(), text, fontSize, 1.0F);
         DrawTextEx(GetFontDefault(), this->text, this->position + middleOfBox - (textSize / 2.0F), fontSize, 1.0F, BLACK);
+
+        DrawText(this->id->c_str(), box.x, box.y, 10.0F, BLACK);
     }
 };

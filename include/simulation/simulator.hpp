@@ -3,6 +3,8 @@
 #include "drawables/drawable_component.hpp"
 #include "drawables/drawable_wire.hpp"
 #include "drawables/circuit_io_desc.hpp"
+#include "drawables/drawable_lamp.hpp"
+#include "drawables/drawable_switch.hpp"
 #include "raylib-cpp/raylib-cpp.hpp"
 #include <vector>
 #include <algorithm>
@@ -36,9 +38,8 @@ public:
     void DeselectComponent(DrawableComponent* component) {
         std::vector<DrawableComponent*> newSelection;
 
-        for (int i = 0; i < selectedComponents.size(); i++)
-        {
-            if(selectedComponents.at(i) != component) {
+        for (int i = 0; i < selectedComponents.size(); i++) {
+            if (selectedComponents.at(i) != component) {
                 newSelection.push_back(selectedComponents.at(i));
             }
         }
@@ -50,7 +51,7 @@ public:
     }
 
     void ToggleComponentSelected(DrawableComponent* component) {
-        if(IsSelected(component)) {
+        if (IsSelected(component)) {
             DeselectComponent(component);
         }
         else {
@@ -79,4 +80,30 @@ public:
 
     void MoveAllSelectedComponents(Vector2 vec);
     DrawableComponent* GetComponentFromPosition(Vector2 position);
+
+    template<class T>
+    std::vector<T*> GetAllSelectedOfType() {
+        std::vector<T*> found = {};
+
+        for (int i = 0; i < this->selectedComponents.size(); i++) {
+            T* t = dynamic_cast<T*>(this->selectedComponents.at(i));
+            if (t != NULL) {
+                found.push_back(t);
+            }
+        }
+        return found;
+    }
+
+    std::vector<DrawableComponent*> GetAllSelectedNonIOs() {
+        std::vector<DrawableComponent*> found = {};
+
+        for (int i = 0; i < this->selectedComponents.size(); i++) {
+            DrawableSwitch* ds = dynamic_cast<DrawableSwitch*>(this->selectedComponents.at(i));
+            DrawableLamp* dl = dynamic_cast<DrawableLamp*>(this->selectedComponents.at(i));
+            if (ds == NULL && dl == NULL) {
+                found.push_back(this->selectedComponents.at(i));
+            }
+        }
+        return found;
+    }
 };

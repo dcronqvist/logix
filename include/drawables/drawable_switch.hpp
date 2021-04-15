@@ -6,9 +6,10 @@
 #include "drawables/drawable_component.hpp"
 
 class DrawableSwitch : public DrawableComponent {
-    public:
+public:
     int bits;
     std::vector<LogicValue> values;
+    std::string* id;
 
     DrawableSwitch(Vector2 pos, int bits) : DrawableComponent(pos, Vector2{ bits * 30.0F, 30 }, "", new std::vector<int>{}, new std::vector<int>{ bits }) {
         this->bits = bits;
@@ -16,6 +17,7 @@ class DrawableSwitch : public DrawableComponent {
         for (int i = 0; i < bits; i++) {
             this->values.push_back(LogicValue_LOW);
         }
+        this->id = new std::string{ "" };
     }
 
     void PerformLogic() {
@@ -34,6 +36,8 @@ class DrawableSwitch : public DrawableComponent {
             Rectangle r = Rectangle{ this->position.x + offset + 30 * i, this->position.y + offset, (this->box.width / this->bits) - 2 * offset, (this->box.height) - 2 * offset };
             DrawRectanglePro(r, Vector2{ 0.0F, 0.0F }, 0.0F, col);
         }
+
+        DrawText(this->id->c_str(), box.x, box.y, 10.0F, BLACK);
     }
 
     void Update(Vector2 mousePosInWorld) {

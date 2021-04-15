@@ -11,7 +11,7 @@ void Simulator::Simulate() {
 }
 
 void Simulator::Update(Vector2 mousePosInWorld) {
-    for (int i = 0; i < allComponents.size(); i++)     {
+    for (int i = 0; i < allComponents.size(); i++) {
         allComponents.at(i)->Update(mousePosInWorld);
     }
 }
@@ -58,7 +58,7 @@ void Simulator::SelectAllComponentsInRectangle(Rectangle rec) {
 }
 
 CircuitIODesc* Simulator::GetComponentInputIODescFromPos(Vector2 position) {
-    for (int i = 0; i < this->allComponents.size(); i++)     {
+    for (int i = 0; i < this->allComponents.size(); i++) {
         DrawableComponent* dc = allComponents.at(i);
         int index = dc->GetInputIndexFromPosition(position);
 
@@ -70,7 +70,7 @@ CircuitIODesc* Simulator::GetComponentInputIODescFromPos(Vector2 position) {
 }
 
 CircuitIODesc* Simulator::GetComponentOutputIODescFromPos(Vector2 position) {
-    for (int i = 0; i < this->allComponents.size(); i++)     {
+    for (int i = 0; i < this->allComponents.size(); i++) {
         DrawableComponent* dc = allComponents.at(i);
         int index = dc->GetOutputIndexFromPosition(position);
 
@@ -82,7 +82,7 @@ CircuitIODesc* Simulator::GetComponentOutputIODescFromPos(Vector2 position) {
 }
 
 DrawableWire* Simulator::GetWireFromPosition(Vector2 pos) {
-    for (int i = 0; i < allWires.size(); i++)     {
+    for (int i = 0; i < allWires.size(); i++) {
         if (allWires.at(i)->IsPositionOnLine(pos)) {
             return allWires.at(i);
         }
@@ -97,7 +97,7 @@ void Simulator::DeleteSelectedComponents() {
         allWires = {};
     }
 
-    for (int i = 0; i < this->selectedComponents.size(); i++)     {
+    for (int i = 0; i < this->selectedComponents.size(); i++) {
         this->RemoveComponent(selectedComponents.at(i));
     }
     ClearSelection();
@@ -114,7 +114,7 @@ void Simulator::RemoveComponent(DrawableComponent* component) {
 
         DrawableComponent* dc = allComponents.at(i);
         // TODO: do everything that must be done when deleting a component.
-        for (int j = 0; j < dc->inputs.size(); j++)         {
+        for (int j = 0; j < dc->inputs.size(); j++) {
             CircuitInput* ci = dc->inputs.at(j);
 
             if (ci->HasSignal()) {
@@ -128,7 +128,7 @@ void Simulator::RemoveComponent(DrawableComponent* component) {
             CircuitOutput* co = dc->outputs.at(j);
 
             if (co->HasAnySignal()) {
-                for (int k = 0; k < co->GetSignals().size(); k++)                 {
+                for (int k = 0; k < co->GetSignals().size(); k++) {
                     DrawableWire* wire = (DrawableWire*)(co->GetSignals().at(k));
                     wire->to->RemoveInputWire(wire->toIndex);
                     this->RemoveWire(wire);
@@ -138,4 +138,3 @@ void Simulator::RemoveComponent(DrawableComponent* component) {
     }
     allComponents = comps;
 }
-

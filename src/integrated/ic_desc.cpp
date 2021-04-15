@@ -46,11 +46,11 @@ std::vector<ICComponentDesc>* ICDesc::GenerateDescriptions(std::vector<DrawableC
         }
         if (dynamic_cast<DrawableSwitch*>(dc) != NULL) {
             type = "Switch";
-            id = std::to_string(i).c_str();
+            id = dynamic_cast<DrawableSwitch*>(dc)->id->c_str();
         }
         if (dynamic_cast<DrawableLamp*>(dc) != NULL) {
             type = "Lamp";
-            id = std::to_string(i).c_str();
+            id = dynamic_cast<DrawableLamp*>(dc)->id->c_str();
         }
 
         // TODO: Add all other drawable component types

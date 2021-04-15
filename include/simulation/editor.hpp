@@ -5,6 +5,8 @@
 #include "imgui/imgui.h"
 #include "imgui/imgui_impl_raylib.h"
 #include "drawables/circuit_io_desc.hpp"
+#include "drawables/drawable_switch.hpp"
+#include "drawables/drawable_lamp.hpp"
 
 enum EditorState {
     EditorState_None = 0,
@@ -14,23 +16,24 @@ enum EditorState {
     EditorState_HoveringInput = 4,
     EditorState_HoveringOutput = 5,
     EditorState_OutputToInput = 6,
-    EditorState_HoveringWire = 7
+    EditorState_HoveringWire = 7,
+    EditorState_MakingIC = 8,
 };
 
 class Editor {
-    public:
+public:
     // View and simulation variables
     LogiXWindow* logixWindow;
     Camera2D cam;
     Simulator sim;
 
-    private:
+private:
     // Mouse variables
     Vector2 currentMousePosWindow;
     Vector2 previousMousePosWindow;
     Vector2 mouseDelta;
 
-    private:
+private:
     // Editor FSM variables
     EditorState currentState;
     DrawableComponent* newComponent;
@@ -42,7 +45,8 @@ class Editor {
     // Output to input connecting
     CircuitIODesc* tempOutput;
 
-    private:
+private:
+    // Editor UI variables
     // SwitchN bits
     int switchNBits;
 
@@ -51,7 +55,15 @@ class Editor {
     // Gate group bits into multibit
     bool groupBits;
 
-    public:
+    // All inputs in current selected comps.
+    std::vector<DrawableSwitch*> icInputs;
+    // All outputs in current selected comps;
+    std::vector<DrawableLamp*> icOutputs;
+    // All components in current select. that aren't IOs.
+    std::vector<DrawableComponent*> icNonIOs;
+
+
+public:
     Editor(LogiXWindow* lgx) {
         currentState = EditorState_None;
         logixWindow = lgx;
