@@ -8,6 +8,7 @@
 #include "drawables/drawable_switch.hpp"
 #include "drawables/drawable_lamp.hpp"
 #include "integrated/ic_desc.hpp"
+#include "projects/project.hpp"
 
 enum EditorState {
     EditorState_None = 0,
@@ -27,6 +28,7 @@ public:
     LogiXWindow* logixWindow;
     Camera2D cam;
     Simulator sim;
+    Project* currentProject;
 
 private:
     // Mouse variables
@@ -71,8 +73,10 @@ private:
     std::vector<std::string> icOutputIds;
     // Stores the output group number currently for the IC being created.
     std::vector<int> icOutputGroupNumbers;
-    // List of ICs that can be places
+    // List of ICs that can be placed
     std::vector<ICDesc> icDescriptions;
+    // should the IC be saved to file?
+    bool icSaveToFile;
 
 
 
@@ -82,6 +86,7 @@ public:
         logixWindow = lgx;
         cam = { Vector2{lgx->handle->GetWidth() / 2.0F, lgx->handle->GetHeight() / 2.0F}, Vector2{0.0F, 0.0F}, 0.0F, 1.0F };
         sim = {};
+        currentProject = Project::LoadFromFile("");
         newComponent = NULL;
         selectionRectangle = NULL;
 
@@ -112,4 +117,5 @@ public:
     void AddNewGateButton(const char* gate);
     std::vector<std::vector<std::string>> GetICInputVector();
     std::vector<std::vector<std::string>> GetICOutputVector();
+    bool IsKeyCombinationPressed(KeyboardKey modifier, KeyboardKey key);
 };

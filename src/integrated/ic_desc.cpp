@@ -44,8 +44,8 @@ std::vector<ICComponentDesc>* ICDesc::GenerateDescriptions(std::vector<DrawableC
         DrawableComponent* dc = comps.at(i);
         ICDesc* icdesc = NULL;
 
-        const char* type;
-        const char* id;
+        const char* type = "";
+        const char* id = "";
 
         if (dynamic_cast<DrawableGate*>(dc) != NULL) { // It is a drawablegate
             DrawableGate* gate = dynamic_cast<DrawableGate*>(dc);

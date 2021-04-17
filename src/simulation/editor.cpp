@@ -104,6 +104,7 @@ void Editor::Update() {
         }
 
         // Hovering wires
+        /*
         if (currentState == EditorState_None) {
             if (hoveredWire != NULL) {
                 currentState = EditorState_HoveringWire;
@@ -113,7 +114,7 @@ void Editor::Update() {
             if (hoveredWire == NULL) {
                 currentState = EditorState_None;
             }
-        }
+        }*/
     }
 
 #pragma endregion
@@ -251,8 +252,9 @@ void Editor::SubmitUI() {
         ImGui::EndMenu();
     }
 
+    if (this->IsKeyCombinationPressed(KEY_LEFT_CONTROL, KEY_I)) { this->currentState = EditorState_MakingIC; }
     if (ImGui::BeginMenu("Integrated Circuits")) {
-        if (ImGui::MenuItem("New...")) {
+        if (ImGui::MenuItem("New...", "CTRL + I")) {
             this->currentState = EditorState_MakingIC;
         }
 
@@ -308,18 +310,22 @@ void Editor::SubmitUI() {
     if (currentState == EditorState_MakingIC) {
         ImGui::OpenPopup("Create Integrated Circuit");
 
-        //TODO: Gather all inputs and outputs and save these for use in the UI.
+        // This resets all states that are required for creating an IC
         if (this->icInputs.size() == 0) {
             this->icInputs = this->sim.GetAllSelectedOfType<DrawableSwitch>();
             this->icOutputs = this->sim.GetAllSelectedOfType<DrawableLamp>();
             this->icNonIOs = this->sim.GetAllSelectedNonIOs();
+            this->icName = "";
+            this->icSaveToFile = true;
 
+            // Gather all selected input id's and create their starting group numbers
             this->icInputIds = {};
             this->icInputGroupNumbers = {};
             for (int i = 0; i < this->icInputs.size(); i++) {
                 this->icInputIds.push_back(*(this->icInputs.at(i)->id));
                 this->icInputGroupNumbers.push_back(i);
             }
+            // Gather all selected ouiput id's and create their starting group numbers
             this->icOutputIds = {};
             this->icOutputGroupNumbers = {};
             for (int i = 0; i < this->icOutputs.size(); i++) {
@@ -384,7 +390,7 @@ void Editor::SubmitUI() {
         ImGui::Columns(1);
         ImGui::Separator();
 
-        if (ImGui::Button("Close")) {
+        if (ImGui::Button("Cancel") || IsKeyPressed(KEY_ESCAPE)) {
             currentState = EditorState_None;
             this->icInputs = {};
             this->icOutputs = {};
@@ -393,7 +399,7 @@ void Editor::SubmitUI() {
 
         ImGui::SameLine();
 
-        if (ImGui::Button("Create")) {
+        if (ImGui::Button("Create") || IsKeyPressed(KEY_ENTER)) {
             std::vector<DrawableComponent*> comps = {};
             for (int i = 0; i < this->icInputs.size(); i++) {
                 comps.push_back(this->icInputs.at(i));
@@ -416,7 +422,18 @@ void Editor::SubmitUI() {
             ImGui::CloseCurrentPopup();
             DrawableIC* dic = new DrawableIC(GetMousePositionInWorld(), icdesc);
             AddNewComponent(dic);
+
+            // If the user has chosen to save the new IC to a file
+            if (this->icSaveToFile) {
+                std::ofstream o("ic/" + icName + ".ic");
+                o << j << std::endl;
+                o.close();
+            }
         }
+
+        ImGui::SameLine();
+
+        ImGui::Checkbox("Save to file", &(this->icSaveToFile));
 
         ImGui::EndPopup();
     }
@@ -611,4 +628,8 @@ std::vector<std::vector<std::string>> Editor::GetICOutputVector() {
     }
 
     return fi;
+}
+
+bool Editor::IsKeyCombinationPressed(KeyboardKey modifier, KeyboardKey key) {
+    return IsKeyDown(modifier) && IsKeyPressed(key);
 }
