@@ -1,11 +1,18 @@
 #include "drawables/drawable_ic.hpp"
+#include "raylib-cpp/raylib-cpp.hpp"
 
 void DrawableIC::PerformLogic() {
-    for (int i = 0; i < this->inputIds.size(); i++) {
-        std::string id = this->inputIds.at(i);
-        MinimalSwitch* ms = this->inputMap.at(id);
 
-        ms->SetValues(this->inputs.at(i)->GetValues());
+    if (IsKeyDown(KEY_H)) {
+        int x = 2;
+    }
+
+    for (int i = 0; i < this->inputs.size(); i++) {
+        ICInput* ici = dynamic_cast<ICInput*>(this->inputs.at(i));
+
+        for (int j = 0; j < ici->switchMap.size(); j++) {
+            ici->switchMap.at(j)->SetValues(ici->GetValue(j));
+        }
     }
 
     for (int i = 0; i < this->components.size(); i++) {
@@ -16,10 +23,23 @@ void DrawableIC::PerformLogic() {
         this->components.at(i)->UpdateOutputs();
     }
 
+    for (int i = 0; i < this->outputs.size(); i++) {
+        std::vector<LogicValue> values = {};
+        ICOutput* ico = dynamic_cast<ICOutput*>(this->outputs.at(i));
+
+        for (int j = 0; j < ico->lampMap.size(); j++) {
+            values.push_back(ico->lampMap.at(j)->value);
+        }
+
+        ico->SetValues(values);
+    }
+
+
+    /*
     for (int i = 0; i < this->outputIds.size(); i++) {
         std::string id = this->outputIds.at(i);
         MinimalLamp* ms = this->outputMap.at(id);
 
         this->outputs.at(i)->SetValues(ms->value);
-    }
+    }*/
 }

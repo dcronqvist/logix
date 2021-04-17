@@ -6,21 +6,23 @@
 #include "drawables/drawable_switch.hpp"
 #include "drawables/drawable_lamp.hpp"
 #include "utils/json.hpp"
+#include <string>
 using json = nlohmann::json;
 
 class ICDesc {
     public:
     std::vector<ICComponentDesc>* descriptions;
-    std::vector<int>* inputs;
-    std::vector<int>* outputs;
+    std::vector<std::vector<std::string>> inputs;
+    std::vector<std::vector<std::string>> outputs;
+    std::string name;
 
-    ICDesc();
-    ICDesc(std::vector<DrawableComponent*> components);
+    ICDesc() {};
+    ICDesc(std::string name);
+    ICDesc(std::string name, std::vector<DrawableComponent*> components, std::vector<std::vector<std::string>> inps, std::vector<std::vector<std::string>> outs);
     std::vector<ICComponentDesc>* GenerateDescriptions(std::vector<DrawableComponent*> comps);
     std::vector<CircuitComponent*> GenerateComponents();
-
-    std::vector<int>* GetInputVector(std::vector<DrawableComponent*> components);
-    std::vector<int>* GetOutputVector(std::vector<DrawableComponent*> components);
+    std::vector<CircuitInput*> GenerateICInputs(std::vector<CircuitComponent*> comps);
+    std::vector<CircuitOutput*> GenerateICOutputs(std::vector<CircuitComponent*> comps);
 };
 
 void to_json(json& j, const ICDesc& p);

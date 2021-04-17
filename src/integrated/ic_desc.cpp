@@ -7,19 +7,23 @@
 #include "minimals/minimal_switch.hpp"
 #include "minimals/minimal_lamp.hpp"
 #include "gate-logic/and_gate_logic.hpp"
+#include "integrated/ic_input.hpp"
+#include "integrated/ic_output.hpp"
 #include <vector>
 #include <string>
 
-ICDesc::ICDesc() {
+ICDesc::ICDesc(std::string name) {
     this->descriptions = new std::vector<ICComponentDesc>();
-    this->inputs = new std::vector<int>();
-    this->outputs = new std::vector<int>();
+    this->inputs = {};
+    this->outputs = {};
+    this->name = name;
 }
 
-ICDesc::ICDesc(std::vector<DrawableComponent*> components) {
+ICDesc::ICDesc(std::string name, std::vector<DrawableComponent*> components, std::vector<std::vector<std::string>> inps, std::vector<std::vector<std::string>> outs) {
     this->descriptions = GenerateDescriptions(components);
-    this->inputs = GetInputVector(components);
-    this->outputs = GetOutputVector(components);
+    this->inputs = inps;
+    this->outputs = outs;
+    this->name = name;
 }
 
 int GetIndexOfComponent(std::vector<DrawableComponent*> comps, DrawableComponent* comp) {
@@ -84,6 +88,21 @@ std::vector<ICComponentDesc>* ICDesc::GenerateDescriptions(std::vector<DrawableC
     return vicc;
 }
 
+CircuitComponent* FindIOByID(std::vector<CircuitComponent*> comps, std::string id) {
+    for (int i = 0; i < comps.size(); i++) {
+        MinimalSwitch* ms = dynamic_cast<MinimalSwitch*>(comps.at(i));
+        if (ms != NULL) {
+            if (ms->id == id) { return comps.at(i); }
+        }
+
+        MinimalLamp* ml = dynamic_cast<MinimalLamp*>(comps.at(i));
+        if (ml != NULL) {
+            if (ml->id == id) { return comps.at(i); }
+        }
+    }
+    return NULL;
+}
+
 std::vector<CircuitComponent*> ICDesc::GenerateComponents() {
     std::vector<CircuitComponent*> comps = {};
 
@@ -121,38 +140,62 @@ std::vector<CircuitComponent*> ICDesc::GenerateComponents() {
     return comps;
 }
 
-std::vector<int>* ICDesc::GetInputVector(std::vector<DrawableComponent*> components) {
-    std::vector<int>* iv = new std::vector<int>();
+std::vector<CircuitInput*> ICDesc::GenerateICInputs(std::vector<CircuitComponent*> comps) {
+    std::vector<CircuitInput*> icinputs = {};
 
-    for (int i = 0; i < components.size(); i++) {
-        DrawableSwitch* ms = dynamic_cast<DrawableSwitch*>(components.at(i));
-        if (ms != NULL) {
-            iv->push_back(ms->bits);
+    for (int inp = 0; inp < this->inputs.size(); inp++) {
+        std::vector<MinimalSwitch*> switchMap = {};
+
+        for (int swit = 0; swit < this->inputs.at(inp).size(); swit++) {
+            switchMap.push_back(dynamic_cast<MinimalSwitch*>(FindIOByID(comps, this->inputs.at(inp).at(swit))));
         }
+        ICInput* ici;
+        int bits = (int)(this->inputs.at(inp).size());
+        if (bits > 1) {
+            ici = new ICInput{ bits, switchMap, dynamic_cast<MinimalSwitch*>(FindIOByID(comps, this->inputs.at(inp).front()))->id + "-" + dynamic_cast<MinimalSwitch*>(FindIOByID(comps, this->inputs.at(inp).back()))->id };
+        }
+        else {
+            ici = new ICInput{ bits, switchMap, dynamic_cast<MinimalSwitch*>(FindIOByID(comps, this->inputs.at(inp).front()))->id };
+        }
+
+        icinputs.push_back(ici);
     }
-    return iv;
+
+    return icinputs;
 }
 
-std::vector<int>* ICDesc::GetOutputVector(std::vector<DrawableComponent*> components) {
-    std::vector<int>* iv = new std::vector<int>();
+std::vector<CircuitOutput*> ICDesc::GenerateICOutputs(std::vector<CircuitComponent*> comps) {
+    std::vector<CircuitOutput*> icinputs = {};
 
-    for (int i = 0; i < components.size(); i++) {
-        DrawableLamp* ms = dynamic_cast<DrawableLamp*>(components.at(i));
-        if (ms != NULL) {
-            // For now this is set to 1
-            // TODO: ALLOW FOR MULTIBIT OUTPUTS SOMEHOW
-            iv->push_back(1);
+    for (int inp = 0; inp < this->outputs.size(); inp++) {
+        std::vector<MinimalLamp*> switchMap = {};
+
+        for (int swit = 0; swit < this->outputs.at(inp).size(); swit++) {
+            switchMap.push_back(dynamic_cast<MinimalLamp*>(FindIOByID(comps, this->outputs.at(inp).at(swit))));
         }
+        ICOutput* ici;
+        int bits = (int)(this->outputs.at(inp).size());
+        if (bits > 1) {
+            ici = new ICOutput{ bits, switchMap, dynamic_cast<MinimalLamp*>(FindIOByID(comps, this->outputs.at(inp).front()))->id + "-" + dynamic_cast<MinimalLamp*>(FindIOByID(comps, this->outputs.at(inp).back()))->id };
+        }
+        else {
+            ici = new ICOutput{ bits, switchMap, dynamic_cast<MinimalLamp*>(FindIOByID(comps, this->outputs.at(inp).front()))->id };
+        }
+
+        icinputs.push_back(ici);
     }
-    return iv;
+
+    return icinputs;
 }
+
 
 void to_json(json& j, const ICDesc& p) {
-    j = json{ {"inputs", *(p.inputs)}, {"outputs", *(p.outputs)}, {"descriptions", *p.descriptions} };
+    j = json{ {"name", p.name}, {"inputs", p.inputs}, {"outputs", p.outputs}, {"descriptions", *p.descriptions} };
 }
 
 void from_json(const json& j, ICDesc& p) {
-    j.at("inputs").get_to(*(p.inputs));
-    j.at("outputs").get_to(*(p.outputs));
+    j.at("inputs").get_to(p.inputs);
+    j.at("name").get_to(p.name);
+    j.at("outputs").get_to(p.outputs);
     j.at("descriptions").get_to(*(p.descriptions));
 }

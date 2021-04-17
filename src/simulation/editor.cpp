@@ -313,54 +313,56 @@ void Editor::SubmitUI() {
             this->icInputs = this->sim.GetAllSelectedOfType<DrawableSwitch>();
             this->icOutputs = this->sim.GetAllSelectedOfType<DrawableLamp>();
             this->icNonIOs = this->sim.GetAllSelectedNonIOs();
+
+            this->icInputIds = {};
+            this->icInputGroupNumbers = {};
+            for (int i = 0; i < this->icInputs.size(); i++) {
+                this->icInputIds.push_back(*(this->icInputs.at(i)->id));
+                this->icInputGroupNumbers.push_back(i);
+            }
+            this->icOutputIds = {};
+            this->icOutputGroupNumbers = {};
+            for (int i = 0; i < this->icOutputs.size(); i++) {
+                this->icOutputIds.push_back(*(this->icOutputs.at(i)->id));
+                this->icOutputGroupNumbers.push_back(i);
+            }
         }
     }
 
     ImVec2 middleOfWindow = ImVec2{ (float)(this->logixWindow->windowWidth) / 2.0F, (float)(this->logixWindow->windowHeight) / 2.0F };
     ImGui::SetNextWindowPos(middleOfWindow, ImGuiCond_Always, ImVec2{ 0.5F, 0.5F });
     if (ImGui::BeginPopupModal("Create Integrated Circuit", NULL, ImGuiWindowFlags_AlwaysAutoResize)) {
+        ImGui::InputText("Name", &(this->icName));
+
         ImGui::Columns(2);
         ImGui::Text("Inputs");
-        ImGui::SameLine();
-        HelperMarker("Here you can name your IC, reorder your inputs and outputs, and group certain IOs together if you want.");
         ImGui::NextColumn();
         ImGui::Text("Outputs");
-        ImGui::Columns(1);
-        ImGui::Columns(2, "IOs");
         ImGui::Separator();
+        ImGui::NextColumn();
 
-        for (int i = 0; i < this->icInputs.size(); i++) {
-            DrawableSwitch* ds = this->icInputs.at(i);
-            ImGui::Selectable(ds->id->c_str());
-
-            if (ImGui::IsItemActive() && !ImGui::IsItemHovered()) {
-                int nNext = i + (ImGui::GetMouseDragDelta(ImGuiMouseButton_Left).y < 0 ? -1 : 1);
-                if (nNext >= 0 && nNext < this->icInputs.size()) {
-                    std::swap(this->icInputs.at(i), this->icInputs.at(nNext));
-                    ImGui::ResetMouseDragDelta();
-                }
-            }
+        for (int i = 0; i < this->icInputIds.size(); i++) {
+            ImGui::PushID(this->icInputIds.at(i).c_str());
+            ImGui::SetNextItemWidth(80.0F);
+            ImGui::InputInt("", &(this->icInputGroupNumbers.at(i)), 1, 100);
+            ImGui::SameLine();
+            ImGui::Text(this->icInputIds.at(i).c_str());
+            ImGui::PopID();
         }
 
         ImGui::NextColumn();
 
-        for (int i = 0; i < this->icOutputs.size(); i++) {
-            DrawableLamp* dl = this->icOutputs.at(i);
-            ImGui::Selectable(dl->id->c_str());
-
-            if (ImGui::IsItemActive() && !ImGui::IsItemHovered()) {
-                int nNext = i + (ImGui::GetMouseDragDelta(ImGuiMouseButton_Left).y < 0 ? -1 : 1);
-                if (nNext >= 0 && nNext < this->icOutputs.size()) {
-                    std::swap(this->icOutputs.at(i), this->icOutputs.at(nNext));
-                    ImGui::ResetMouseDragDelta();
-                }
-            }
+        for (int i = 0; i < this->icOutputIds.size(); i++) {
+            ImGui::PushID(this->icOutputIds.at(i).c_str());
+            ImGui::SetNextItemWidth(80.0F);
+            ImGui::InputInt("", &(this->icOutputGroupNumbers.at(i)), 1, 100);
+            ImGui::SameLine();
+            ImGui::Text(this->icOutputIds.at(i).c_str());
+            ImGui::PopID();
         }
 
-        ImGui::NextColumn();
         ImGui::Columns(1);
         ImGui::Separator();
-
 
         if (ImGui::Button("Close")) {
             currentState = EditorState_None;
@@ -382,16 +384,17 @@ void Editor::SubmitUI() {
             for (int i = 0; i < this->icNonIOs.size(); i++) {
                 comps.push_back(this->icNonIOs.at(i));
             }
-            ICDesc icdesc = ICDesc{ comps };
+
+            ICDesc icdesc = ICDesc{ this->icName, comps, this->GetICInputVector(), this->GetICOutputVector() };
             json j = icdesc;
             std::cout << j << std::endl;
-
 
             currentState = EditorState_None;
             this->icInputs = {};
             this->icOutputs = {};
             ImGui::CloseCurrentPopup();
-            AddNewComponent(new DrawableIC(GetMousePositionInWorld(), icdesc));
+            DrawableIC* dic = new DrawableIC(GetMousePositionInWorld(), icdesc);
+            AddNewComponent(dic);
         }
 
         ImGui::EndPopup();
@@ -527,4 +530,50 @@ void Editor::AddNewGateButton(const char* gate) {
         }
         ImGui::EndPopup();
     }
+}
+
+std::vector<std::vector<std::string>> Editor::GetICInputVector() {
+    std::vector<std::vector<std::string>> v = {};
+
+    for (int i = 0; i < this->icInputIds.size(); i++) {
+        v.push_back(std::vector<std::string>{});
+
+        int groupNumber = this->icInputGroupNumbers.at(i);
+        std::string id = this->icInputIds.at(i);
+
+        v.at(groupNumber).push_back(id);
+    }
+
+    std::vector<std::vector<std::string>> fi = {};
+
+    for (int i = 0; i < v.size(); i++) {
+        if (v.at(i).size() != 0) {
+            fi.push_back(v.at(i));
+        }
+    }
+
+    return fi;
+}
+
+std::vector<std::vector<std::string>> Editor::GetICOutputVector() {
+    std::vector<std::vector<std::string>> v = {};
+
+    for (int i = 0; i < this->icOutputIds.size(); i++) {
+        v.push_back(std::vector<std::string>{});
+
+        int groupNumber = this->icOutputGroupNumbers.at(i);
+        std::string id = this->icOutputIds.at(i);
+
+        v.at(groupNumber).push_back(id);
+    }
+
+    std::vector<std::vector<std::string>> fi = {};
+
+    for (int i = 0; i < v.size(); i++) {
+        if (v.at(i).size() != 0) {
+            fi.push_back(v.at(i));
+        }
+    }
+
+    return fi;
 }

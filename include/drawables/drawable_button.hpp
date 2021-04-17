@@ -7,7 +7,7 @@
 #include <vector>
 
 class DrawableButton : public DrawableComponent {
-    public:
+public:
     LogicValue value;
 
     DrawableButton(Vector2 pos) : DrawableComponent(pos, Vector2{ 30, 30 }, "0", new std::vector<int>{ 0 }, new std::vector<int>{ 1 }) {
@@ -31,8 +31,8 @@ class DrawableButton : public DrawableComponent {
 
         float fontSize = 12.0F;
         Vector2 middleOfBox = Vector2{ box.width / 2.0F, box.height / 2.0F };
-        Vector2 textSize = MeasureTextEx(GetFontDefault(), text, fontSize, 1.0F);
-        DrawTextEx(GetFontDefault(), this->text, this->position + middleOfBox - (textSize / 2.0F), fontSize, 1.0F, BLACK);
+        Vector2 textSize = MeasureTextEx(GetFontDefault(), text.c_str(), fontSize, 1.0F);
+        DrawTextEx(GetFontDefault(), this->text.c_str(), this->position + middleOfBox - (textSize / 2.0F), fontSize, 1.0F, BLACK);
     }
 
     void Update(Vector2 mousePosInWorld) {

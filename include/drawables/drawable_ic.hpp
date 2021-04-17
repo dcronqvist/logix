@@ -4,6 +4,8 @@
 #include "integrated/ic_desc.hpp"
 #include "minimals/minimal_switch.hpp"
 #include "minimals/minimal_lamp.hpp"
+#include "integrated/ic_input.hpp"
+#include "integrated/ic_output.hpp"
 #include <vector>
 #include <string>
 
@@ -11,70 +13,47 @@ class DrawableIC : public DrawableComponent {
     public:
     ICDesc description;
     std::vector<CircuitComponent*> components;
-    std::map<std::string, MinimalSwitch*> inputMap;
-    std::vector<std::string> inputIds;
-    std::map<std::string, MinimalLamp*> outputMap;
-    std::vector<std::string> outputIds;
 
-    DrawableIC(Vector2 pos, ICDesc desc) : DrawableComponent(pos, 60.0F, "", desc.inputs, desc.outputs) {
+    DrawableIC(Vector2 pos, ICDesc desc) : DrawableComponent(pos, 0.0F, desc.name.c_str(), std::vector<CircuitInput*>{}, std::vector<CircuitOutput*>{}) {
         this->description = desc;
         this->components = desc.GenerateComponents();
-        this->inputMap = GetInputMap(this->components);
-        this->inputIds = GetInputIDs(this->components);
-        this->outputMap = GetOutputMap(this->components);
-        this->outputIds = GetOutputIDs(this->components);
+        this->inputs = desc.GenerateICInputs(this->components);
+        this->outputs = desc.GenerateICOutputs(this->components);
+        this->size = Vector2{ CalculateWidth(desc), CalculateMinHeight() };
+        this->UpdateBox();
     }
 
-    std::map<std::string, MinimalSwitch*> GetInputMap(std::vector<CircuitComponent*> comps) {
-        std::map<std::string, MinimalSwitch*> im = {};
-
-        for (int i = 0; i < comps.size(); i++) {
-            MinimalSwitch* ms = dynamic_cast<MinimalSwitch*>(comps.at(i));
-            if (ms != NULL) {
-                im.insert(std::pair<std::string, MinimalSwitch*>(ms->id, ms));
-            }
+    std::vector<std::string> GetInputIDs() {
+        std::vector<std::string> ids = {};
+        for (int i = 0; i < this->inputs.size(); i++) {
+            ids.push_back(dynamic_cast<ICInput*>(this->inputs.at(i))->id);
         }
-
-        return im;
+        return ids;
     }
 
-    std::vector<std::string> GetInputIDs(std::vector<CircuitComponent*> comps) {
-        std::vector<std::string> im = {};
-
-        for (int i = 0; i < comps.size(); i++) {
-            MinimalSwitch* ms = dynamic_cast<MinimalSwitch*>(comps.at(i));
-            if (ms != NULL) {
-                im.push_back(ms->id);
-            }
+    std::vector<std::string> GetOutputIDs() {
+        std::vector<std::string> ids = {};
+        for (int i = 0; i < this->outputs.size(); i++) {
+            ids.push_back(dynamic_cast<ICOutput*>(this->outputs.at(i))->id);
         }
-
-        return im;
+        return ids;
     }
 
-    std::map<std::string, MinimalLamp*> GetOutputMap(std::vector<CircuitComponent*> comps) {
-        std::map<std::string, MinimalLamp*> im = {};
+    float CalculateWidth(ICDesc desc) {
+        float distBetweenIOAndText = 50.0F;
+        std::vector<std::string> inps = GetInputIDs();
+        std::vector<std::string> outs = GetOutputIDs();
 
-        for (int i = 0; i < comps.size(); i++) {
-            MinimalLamp* ms = dynamic_cast<MinimalLamp*>(comps.at(i));
-            if (ms != NULL) {
-                im.insert(std::pair<std::string, MinimalLamp*>(ms->id, ms));
-            }
+        Vector2 textMeasure = MeasureTextEx(GetFontDefault(), desc.name.c_str(), 10.0F, 1.0F);
+        float maxIOWidth = 0.0F;
+        for (int i = 0; i < inps.size(); i++) {
+            if (MeasureText(inps.at(i).c_str(), 10.0F) > maxIOWidth) { maxIOWidth = (float)MeasureText(inps.at(i).c_str(), 10.0F); }
+        }
+        for (int i = 0; i < outs.size(); i++) {
+            if (MeasureText(outs.at(i).c_str(), 10.0F) > maxIOWidth) { maxIOWidth = (float)MeasureText(outs.at(i).c_str(), 10.0F); }
         }
 
-        return im;
-    }
-
-    std::vector<std::string> GetOutputIDs(std::vector<CircuitComponent*> comps) {
-        std::vector<std::string> im = {};
-
-        for (int i = 0; i < comps.size(); i++) {
-            MinimalLamp* ms = dynamic_cast<MinimalLamp*>(comps.at(i));
-            if (ms != NULL) {
-                im.push_back(ms->id);
-            }
-        }
-
-        return im;
+        return maxIOWidth * 2.0F + distBetweenIOAndText + textMeasure.x;
     }
 
     void PerformLogic();
@@ -109,9 +88,9 @@ class DrawableIC : public DrawableComponent {
                 DrawTextEx(GetFontDefault(), bitText, pos - textMeasure / 2.0F, 10.0F, 1.0F, BLACK);
             }
 
-            const char* inputId = this->inputIds.at(i).c_str();
+            const char* inputId = dynamic_cast<ICInput*>(this->inputs.at(i))->id.c_str();
             Vector2 inputIdTextMeasure = MeasureTextEx(GetFontDefault(), inputId, 10.0F, 1.0F);
-            DrawTextEx(GetFontDefault(), inputId, pos + Vector2{ 15.0F, 0 } - inputIdTextMeasure / 2.0F, 10.0F, 1.0F, BLACK);
+            DrawTextEx(GetFontDefault(), inputId, pos + Vector2{ 15.0F, -inputIdTextMeasure.y / 2.0F }, 10.0F, 1.0F, BLACK);
         }
     }
 
@@ -145,21 +124,21 @@ class DrawableIC : public DrawableComponent {
                 DrawTextEx(GetFontDefault(), bitText, pos - textMeasure / 2.0F, 10.0F, 1.0F, BLACK);
             }
 
-            const char* outputId = this->outputIds.at(i).c_str();
+            const char* outputId = dynamic_cast<ICOutput*>(this->outputs.at(i))->id.c_str();
             Vector2 outputIdMeasure = MeasureTextEx(GetFontDefault(), outputId, 10.0F, 1.0F);
             DrawTextEx(GetFontDefault(), outputId, pos - Vector2{ 15.0F + outputIdMeasure.x, outputIdMeasure.y / 2.0F }, 10.0F, 1.0F, BLACK);
         }
     }
-
+    /*
     void Draw(Vector2 mousePosInWorld) {
         UpdateBox();
         DrawRectanglePro(box, Vector2{ 0.0F, 0.0F }, 0.0F, WHITE);
         DrawInputs(mousePosInWorld);
         DrawOutputs(mousePosInWorld);
 
-        //float fontSize = 12.0F;
-        //Vector2 middleOfBox = Vector2{ box.width / 2.0F, box.height / 2.0F };
-        //Vector2 textSize = MeasureTextEx(GetFontDefault(), text, fontSize, 1.0F);
-        //DrawTextEx(GetFontDefault(), this->text, this->position + middleOfBox - (textSize / 2.0F), fontSize, 1.0F, BLACK);
-    }
+        float fontSize = 12.0F;
+        Vector2 middleOfBox = Vector2{ box.width / 2.0F, box.height / 2.0F };
+        Vector2 textSize = MeasureTextEx(GetFontDefault(), text, fontSize, 1.0F);
+        DrawTextEx(GetFontDefault(), this->text, this->position + middleOfBox - (textSize / 2.0F), fontSize, 1.0F, BLACK);
+    }*/
 };

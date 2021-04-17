@@ -13,9 +13,16 @@ class DrawableComponent : public CircuitComponent {
     Vector2 position;
     Vector2 size;
     Rectangle box;
-    const char* text;
+    std::string text;
 
-    DrawableComponent(Vector2 pos, Vector2 siz, const char* txt, std::vector<int>* inps, std::vector<int>* outs) : CircuitComponent(inps, outs) {
+    DrawableComponent(Vector2 pos, float width, std::string txt, std::vector<CircuitInput*> inpss, std::vector<CircuitOutput*> outss) : CircuitComponent(inpss, outss) {
+        this->position = pos;
+        this->size = { width, CalculateMinHeight() };
+        this->text = txt;
+        this->UpdateBox();
+    }
+
+    DrawableComponent(Vector2 pos, Vector2 siz, std::string txt, std::vector<int>* inps, std::vector<int>* outs) : CircuitComponent(inps, outs) {
         this->position = pos;
         this->size = siz;
         this->text = txt;
@@ -150,8 +157,8 @@ class DrawableComponent : public CircuitComponent {
 
         float fontSize = 12.0F;
         Vector2 middleOfBox = Vector2{ box.width / 2.0F, box.height / 2.0F };
-        Vector2 textSize = MeasureTextEx(GetFontDefault(), text, fontSize, 1.0F);
-        DrawTextEx(GetFontDefault(), this->text, this->position + middleOfBox - (textSize / 2.0F), fontSize, 1.0F, BLACK);
+        Vector2 textSize = MeasureTextEx(GetFontDefault(), text.c_str(), fontSize, 1.0F);
+        DrawTextEx(GetFontDefault(), this->text.c_str(), this->position + middleOfBox - (textSize / 2.0F), fontSize, 1.0F, BLACK);
     }
 
     void DrawSelected() {

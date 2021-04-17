@@ -19,4 +19,5 @@ class CircuitOutput : public CircuitIO {
             signals[i]->SetValues(this->GetValues());
         }
     }
+    virtual ~CircuitOutput() = default;
 };

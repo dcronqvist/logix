@@ -21,4 +21,6 @@ class CircuitInput : public CircuitIO {
     }
     void RemoveSignal() { signal = nullptr; }
     bool HasSignal() { return signal != nullptr; }
+
+    virtual ~CircuitInput() = default;
 };

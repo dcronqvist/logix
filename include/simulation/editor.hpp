@@ -21,19 +21,19 @@ enum EditorState {
 };
 
 class Editor {
-public:
+    public:
     // View and simulation variables
     LogiXWindow* logixWindow;
     Camera2D cam;
     Simulator sim;
 
-private:
+    private:
     // Mouse variables
     Vector2 currentMousePosWindow;
     Vector2 previousMousePosWindow;
     Vector2 mouseDelta;
 
-private:
+    private:
     // Editor FSM variables
     EditorState currentState;
     DrawableComponent* newComponent;
@@ -45,11 +45,10 @@ private:
     // Output to input connecting
     CircuitIODesc* tempOutput;
 
-private:
+    private:
     // Editor UI variables
     // SwitchN bits
     int switchNBits;
-
     // Gate bits
     int gateBits;
     // Gate group bits into multibit
@@ -61,9 +60,20 @@ private:
     std::vector<DrawableLamp*> icOutputs;
     // All components in current select. that aren't IOs.
     std::vector<DrawableComponent*> icNonIOs;
+    // IC name
+    std::string icName;
+    // Used for IC input ids
+    std::vector<std::string> icInputIds;
+    // Stores the input group number currently for the IC being created.
+    std::vector<int> icInputGroupNumbers;
+    // Used for IC output ids
+    std::vector<std::string> icOutputIds;
+    // Stores the output group number currently for the IC being created.
+    std::vector<int> icOutputGroupNumbers;
 
 
-public:
+
+    public:
     Editor(LogiXWindow* lgx) {
         currentState = EditorState_None;
         logixWindow = lgx;
@@ -97,4 +107,6 @@ public:
     bool ConnectInputOutput(CircuitIODesc* input, CircuitIODesc* output);
     void AddNewComponent(DrawableComponent* comp);
     void AddNewGateButton(const char* gate);
+    std::vector<std::vector<std::string>> GetICInputVector();
+    std::vector<std::vector<std::string>> GetICOutputVector();
 };

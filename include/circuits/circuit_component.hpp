@@ -12,6 +12,11 @@ class CircuitComponent {
     std::vector<CircuitOutput*> outputs;
 
     public:
+    CircuitComponent(std::vector<CircuitInput*> cinps, std::vector<CircuitOutput*> couts) {
+        this->inputs = cinps;
+        this->outputs = couts;
+    }
+
     CircuitComponent(std::vector<int>* inps, std::vector<int>* outs) {
         for (int i = 0; i < inps->size(); i++) {
             this->inputs.push_back(new CircuitInput(inps->at(i), LogicValue_LOW));
