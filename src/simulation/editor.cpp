@@ -346,7 +346,17 @@ void Editor::SubmitUI() {
             ImGui::SetNextItemWidth(80.0F);
             ImGui::InputInt("", &(this->icInputGroupNumbers.at(i)), 1, 100);
             ImGui::SameLine();
-            ImGui::Text(this->icInputIds.at(i).c_str());
+            ImGui::Selectable(this->icInputIds.at(i).c_str());
+
+            if (ImGui::IsItemActive() && !ImGui::IsItemHovered()) {
+                int iNext = i + (ImGui::GetMouseDragDelta(0).y < 0.f ? -1 : 1);
+                if (iNext >= 0 && iNext < this->icInputIds.size()) {
+                    std::swap(this->icInputIds.at(i), this->icInputIds.at(iNext));
+                    std::swap(this->icInputGroupNumbers.at(i), this->icInputGroupNumbers.at(iNext));
+                    ImGui::ResetMouseDragDelta();
+                }
+            }
+
             ImGui::PopID();
         }
 
@@ -357,7 +367,17 @@ void Editor::SubmitUI() {
             ImGui::SetNextItemWidth(80.0F);
             ImGui::InputInt("", &(this->icOutputGroupNumbers.at(i)), 1, 100);
             ImGui::SameLine();
-            ImGui::Text(this->icOutputIds.at(i).c_str());
+            ImGui::Selectable(this->icOutputIds.at(i).c_str());
+
+            if (ImGui::IsItemActive() && !ImGui::IsItemHovered()) {
+                int iNext = i + (ImGui::GetMouseDragDelta(0).y < 0.f ? -1 : 1);
+                if (iNext >= 0 && iNext < this->icOutputIds.size()) {
+                    std::swap(this->icOutputIds.at(i), this->icOutputIds.at(iNext));
+                    std::swap(this->icOutputGroupNumbers.at(i), this->icOutputGroupNumbers.at(iNext));
+                    ImGui::ResetMouseDragDelta();
+                }
+            }
+
             ImGui::PopID();
         }
 
@@ -386,6 +406,7 @@ void Editor::SubmitUI() {
             }
 
             ICDesc icdesc = ICDesc{ this->icName, comps, this->GetICInputVector(), this->GetICOutputVector() };
+            this->icDescriptions.push_back(icdesc);
             json j = icdesc;
             std::cout << j << std::endl;
 
@@ -425,6 +446,20 @@ void Editor::SubmitUI() {
     }
 
 #pragma endregion
+
+    // TESTING TESTING
+
+    if (ImGui::Begin("TESTO")) {
+        for (int i = 0; i < this->icDescriptions.size(); i++) {
+            ICDesc desc = this->icDescriptions.at(i);
+            ImGui::Button(desc.name.c_str());
+            if (ImGui::IsItemClicked()) {
+                AddNewComponent(new DrawableIC(GetMousePositionInWorld(), desc));
+            }
+        }
+
+    }
+    ImGui::End();
 
     ImGui::ShowDemoWindow();
 }

@@ -7,6 +7,7 @@
 #include "drawables/circuit_io_desc.hpp"
 #include "drawables/drawable_switch.hpp"
 #include "drawables/drawable_lamp.hpp"
+#include "integrated/ic_desc.hpp"
 
 enum EditorState {
     EditorState_None = 0,
@@ -21,19 +22,19 @@ enum EditorState {
 };
 
 class Editor {
-    public:
+public:
     // View and simulation variables
     LogiXWindow* logixWindow;
     Camera2D cam;
     Simulator sim;
 
-    private:
+private:
     // Mouse variables
     Vector2 currentMousePosWindow;
     Vector2 previousMousePosWindow;
     Vector2 mouseDelta;
 
-    private:
+private:
     // Editor FSM variables
     EditorState currentState;
     DrawableComponent* newComponent;
@@ -45,7 +46,7 @@ class Editor {
     // Output to input connecting
     CircuitIODesc* tempOutput;
 
-    private:
+private:
     // Editor UI variables
     // SwitchN bits
     int switchNBits;
@@ -70,10 +71,12 @@ class Editor {
     std::vector<std::string> icOutputIds;
     // Stores the output group number currently for the IC being created.
     std::vector<int> icOutputGroupNumbers;
+    // List of ICs that can be places
+    std::vector<ICDesc> icDescriptions;
 
 
 
-    public:
+public:
     Editor(LogiXWindow* lgx) {
         currentState = EditorState_None;
         logixWindow = lgx;

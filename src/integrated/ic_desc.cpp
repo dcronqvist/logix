@@ -9,6 +9,8 @@
 #include "gate-logic/and_gate_logic.hpp"
 #include "integrated/ic_input.hpp"
 #include "integrated/ic_output.hpp"
+#include "drawables/drawable_ic.hpp"
+#include "minimals/minimal_ic.hpp"
 #include <vector>
 #include <string>
 
@@ -40,6 +42,7 @@ std::vector<ICComponentDesc>* ICDesc::GenerateDescriptions(std::vector<DrawableC
 
     for (int i = 0; i < comps.size(); i++) {
         DrawableComponent* dc = comps.at(i);
+        ICDesc* icdesc = NULL;
 
         const char* type;
         const char* id;
@@ -55,6 +58,10 @@ std::vector<ICComponentDesc>* ICDesc::GenerateDescriptions(std::vector<DrawableC
         if (dynamic_cast<DrawableLamp*>(dc) != NULL) {
             type = "Lamp";
             id = dynamic_cast<DrawableLamp*>(dc)->id->c_str();
+        }
+        if (dynamic_cast<DrawableIC*>(dc) != NULL) {
+            type = "IC";
+            icdesc = &(dynamic_cast<DrawableIC*>(dc)->description);
         }
 
         // TODO: Add all other drawable component types
@@ -83,6 +90,10 @@ std::vector<ICComponentDesc>* ICDesc::GenerateDescriptions(std::vector<DrawableC
 
         ICComponentDesc iccc = { type, id, to, dc->GetInputVector() };
 
+        if (icdesc != NULL) {
+            iccc.desc = icdesc;
+        }
+
         vicc->push_back(iccc);
     }
     return vicc;
@@ -110,7 +121,7 @@ std::vector<CircuitComponent*> ICDesc::GenerateComponents() {
         ICComponentDesc compDesc = this->descriptions->at(i);
         CircuitComponent* comp;
 
-        if (compDesc.type != "Switch" && compDesc.type != "Lamp") {
+        if (compDesc.type != "Switch" && compDesc.type != "Lamp" && compDesc.type != "IC") {
             comp = new MinimalGate(GetGateLogic(compDesc.type.c_str()), compDesc.inputs);
         }
         else if (compDesc.type == "Switch") {
@@ -120,6 +131,9 @@ std::vector<CircuitComponent*> ICDesc::GenerateComponents() {
         }
         else if (compDesc.type == "Lamp") {
             comp = new MinimalLamp(compDesc.id);
+        }
+        else if (compDesc.type == "IC") {
+            comp = new MinimalIC(*(compDesc.desc));
         }
 
         comps.push_back(comp);
