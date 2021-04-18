@@ -155,10 +155,9 @@ class DrawableComponent : public CircuitComponent {
         DrawInputs(mousePosInWorld);
         DrawOutputs(mousePosInWorld);
 
-        float fontSize = 12.0F;
         Vector2 middleOfBox = Vector2{ box.width / 2.0F, box.height / 2.0F };
-        Vector2 textSize = MeasureTextEx(GetFontDefault(), text.c_str(), fontSize, 1.0F);
-        DrawTextEx(GetFontDefault(), this->text.c_str(), this->position + middleOfBox - (textSize / 2.0F), fontSize, 1.0F, BLACK);
+        Vector2 textSize = MeasureTextEx(GetFontDefault(), text.c_str(), DRAWABLE_TEXT_FONT_SIZE, 1.0F);
+        DrawTextEx(GetFontDefault(), this->text.c_str(), this->position + middleOfBox - (textSize / 2.0F), DRAWABLE_TEXT_FONT_SIZE, 1.0F, BLACK);
     }
 
     void DrawSelected() {

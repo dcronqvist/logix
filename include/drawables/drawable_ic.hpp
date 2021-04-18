@@ -19,7 +19,7 @@ class DrawableIC : public DrawableComponent {
         this->components = desc.GenerateComponents();
         this->inputs = desc.GenerateICInputs(this->components);
         this->outputs = desc.GenerateICOutputs(this->components);
-        this->size = Vector2{ CalculateWidth(desc), CalculateMinHeight() };
+        this->size = Vector2{ CalculateWidth(desc), CalculateHeight(desc) };
         this->UpdateBox();
     }
 
@@ -39,12 +39,20 @@ class DrawableIC : public DrawableComponent {
         return ids;
     }
 
+    float CalculateHeight(ICDesc desc) {
+        float minHeight = CalculateMinHeight();
+        Vector2 addMeasure = MeasureTextEx(GetFontDefault(), this->description.additionalText.c_str(), 8.0F, 1.0F);
+        return addMeasure.y + minHeight + 30.0F;
+    }
+
     float CalculateWidth(ICDesc desc) {
         float distBetweenIOAndText = 50.0F;
         std::vector<std::string> inps = GetInputIDs();
         std::vector<std::string> outs = GetOutputIDs();
 
         Vector2 textMeasure = MeasureTextEx(GetFontDefault(), desc.name.c_str(), 10.0F, 1.0F);
+        Vector2 addMeasure = MeasureTextEx(GetFontDefault(), this->description.additionalText.c_str(), 8.0F, 1.0F);
+
         float maxIOWidth = 0.0F;
         for (int i = 0; i < inps.size(); i++) {
             if (MeasureText(inps.at(i).c_str(), 10.0F) > maxIOWidth) { maxIOWidth = (float)MeasureText(inps.at(i).c_str(), 10.0F); }
@@ -53,7 +61,7 @@ class DrawableIC : public DrawableComponent {
             if (MeasureText(outs.at(i).c_str(), 10.0F) > maxIOWidth) { maxIOWidth = (float)MeasureText(outs.at(i).c_str(), 10.0F); }
         }
 
-        return maxIOWidth * 2.0F + distBetweenIOAndText + textMeasure.x;
+        return maxIOWidth * 2.0F + distBetweenIOAndText + std::max(textMeasure.x, addMeasure.x);
     }
 
     void PerformLogic();
@@ -129,7 +137,7 @@ class DrawableIC : public DrawableComponent {
             DrawTextEx(GetFontDefault(), outputId, pos - Vector2{ 15.0F + outputIdMeasure.x, outputIdMeasure.y / 2.0F }, 10.0F, 1.0F, BLACK);
         }
     }
-    /*
+
     void Draw(Vector2 mousePosInWorld) {
         UpdateBox();
         DrawRectanglePro(box, Vector2{ 0.0F, 0.0F }, 0.0F, WHITE);
@@ -138,7 +146,9 @@ class DrawableIC : public DrawableComponent {
 
         float fontSize = 12.0F;
         Vector2 middleOfBox = Vector2{ box.width / 2.0F, box.height / 2.0F };
-        Vector2 textSize = MeasureTextEx(GetFontDefault(), text, fontSize, 1.0F);
-        DrawTextEx(GetFontDefault(), this->text, this->position + middleOfBox - (textSize / 2.0F), fontSize, 1.0F, BLACK);
-    }*/
+        Vector2 textSize = MeasureTextEx(GetFontDefault(), text.c_str(), DRAWABLE_TEXT_FONT_SIZE, 1.0F);
+        Vector2 addSize = MeasureTextEx(GetFontDefault(), this->description.additionalText.c_str(), DRAWABLE_ADDITIONAL_TEXT_FONT_SIZE, 1.0F);
+        DrawTextEx(GetFontDefault(), this->text.c_str(), this->position + middleOfBox - Vector2{ textSize.x / 2.0F, (textSize.y + addSize.y) / 2.0F }, DRAWABLE_TEXT_FONT_SIZE, 1.0F, BLACK);
+        DrawTextEx(GetFontDefault(), this->description.additionalText.c_str(), this->position + middleOfBox - Vector2{ addSize.x / 2.0F, ((textSize.y + addSize.y) / 2.0F) - textSize.y }, DRAWABLE_ADDITIONAL_TEXT_FONT_SIZE, 1.0F, BLACK);
+    }
 };

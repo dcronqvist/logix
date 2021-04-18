@@ -202,9 +202,12 @@ std::vector<CircuitOutput*> ICDesc::GenerateICOutputs(std::vector<CircuitCompone
     return icinputs;
 }
 
+void ICDesc::SetAdditionalText(std::string text) {
+    this->additionalText = text;
+}
 
 void to_json(json& j, const ICDesc& p) {
-    j = json{ {"name", p.name}, {"inputs", p.inputs}, {"outputs", p.outputs}, {"descriptions", *p.descriptions} };
+    j = json{ {"name", p.name}, {"inputs", p.inputs}, {"outputs", p.outputs}, {"descriptions", *p.descriptions}, { "additionalText", p.additionalText} };
 }
 
 void from_json(const json& j, ICDesc& p) {
@@ -212,4 +215,5 @@ void from_json(const json& j, ICDesc& p) {
     j.at("name").get_to(p.name);
     j.at("outputs").get_to(p.outputs);
     j.at("descriptions").get_to(*(p.descriptions));
+    j.at("additionalText").get_to(p.additionalText);
 }

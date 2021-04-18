@@ -65,6 +65,8 @@ private:
     std::vector<DrawableComponent*> icNonIOs;
     // IC name
     std::string icName;
+    // IC desc
+    std::string icAdditionalText;
     // Used for IC input ids
     std::vector<std::string> icInputIds;
     // Stores the input group number currently for the IC being created.

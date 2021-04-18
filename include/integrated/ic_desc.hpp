@@ -10,11 +10,12 @@
 using json = nlohmann::json;
 
 class ICDesc {
-    public:
+public:
     std::vector<ICComponentDesc>* descriptions;
     std::vector<std::vector<std::string>> inputs;
     std::vector<std::vector<std::string>> outputs;
     std::string name;
+    std::string additionalText;
 
     ICDesc() {};
     ICDesc(std::string name);
@@ -23,6 +24,7 @@ class ICDesc {
     std::vector<CircuitComponent*> GenerateComponents();
     std::vector<CircuitInput*> GenerateICInputs(std::vector<CircuitComponent*> comps);
     std::vector<CircuitOutput*> GenerateICOutputs(std::vector<CircuitComponent*> comps);
+    void SetAdditionalText(std::string text);
 };
 
 void to_json(json& j, const ICDesc& p);

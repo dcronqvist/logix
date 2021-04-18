@@ -252,6 +252,12 @@ void Editor::SubmitUI() {
         ImGui::EndMenu();
     }
 
+    if (ImGui::BeginMenu("View")) {
+        ImGui::SliderFloat("Camera Zoom", &cam.zoom, 0.1F, 15.0F, "%.2f", ImGuiSliderFlags_Logarithmic);
+
+        ImGui::EndMenu();
+    }
+
     if (this->IsKeyCombinationPressed(KEY_LEFT_CONTROL, KEY_I)) { this->currentState = EditorState_MakingIC; }
     if (ImGui::BeginMenu("Integrated Circuits")) {
         if (ImGui::MenuItem("New...", "CTRL + I")) {
@@ -316,6 +322,7 @@ void Editor::SubmitUI() {
             this->icOutputs = this->sim.GetAllSelectedOfType<DrawableLamp>();
             this->icNonIOs = this->sim.GetAllSelectedNonIOs();
             this->icName = "";
+            this->icAdditionalText = "";
             this->icSaveToFile = true;
 
             // Gather all selected input id's and create their starting group numbers
@@ -325,7 +332,7 @@ void Editor::SubmitUI() {
                 this->icInputIds.push_back(*(this->icInputs.at(i)->id));
                 this->icInputGroupNumbers.push_back(i);
             }
-            // Gather all selected ouiput id's and create their starting group numbers
+            // Gather all selected output id's and create their starting group numbers
             this->icOutputIds = {};
             this->icOutputGroupNumbers = {};
             for (int i = 0; i < this->icOutputs.size(); i++) {
@@ -338,7 +345,9 @@ void Editor::SubmitUI() {
     ImVec2 middleOfWindow = ImVec2{ (float)(this->logixWindow->windowWidth) / 2.0F, (float)(this->logixWindow->windowHeight) / 2.0F };
     ImGui::SetNextWindowPos(middleOfWindow, ImGuiCond_Always, ImVec2{ 0.5F, 0.5F });
     if (ImGui::BeginPopupModal("Create Integrated Circuit", NULL, ImGuiWindowFlags_AlwaysAutoResize)) {
+        if (!ImGui::IsAnyItemActive()) { ImGui::SetKeyboardFocusHere(0); }
         ImGui::InputText("Name", &(this->icName));
+        ImGui::InputTextMultiline("", &(this->icAdditionalText));
 
         ImGui::Columns(2);
         ImGui::Text("Inputs");
@@ -390,7 +399,7 @@ void Editor::SubmitUI() {
         ImGui::Columns(1);
         ImGui::Separator();
 
-        if (ImGui::Button("Cancel") || IsKeyPressed(KEY_ESCAPE)) {
+        if (ImGui::Button("Cancel")) {
             currentState = EditorState_None;
             this->icInputs = {};
             this->icOutputs = {};
@@ -399,7 +408,7 @@ void Editor::SubmitUI() {
 
         ImGui::SameLine();
 
-        if (ImGui::Button("Create") || IsKeyPressed(KEY_ENTER)) {
+        if (ImGui::Button("Create")) {
             std::vector<DrawableComponent*> comps = {};
             for (int i = 0; i < this->icInputs.size(); i++) {
                 comps.push_back(this->icInputs.at(i));
@@ -412,6 +421,7 @@ void Editor::SubmitUI() {
             }
 
             ICDesc icdesc = ICDesc{ this->icName, comps, this->GetICInputVector(), this->GetICOutputVector() };
+            icdesc.SetAdditionalText(this->icAdditionalText);
             this->icDescriptions.push_back(icdesc);
             json j = icdesc;
             std::cout << j << std::endl;
@@ -450,12 +460,14 @@ void Editor::SubmitUI() {
 
         if (ds != NULL) {
             if (ImGui::Begin("Setting IO ID", NULL, ImGuiWindowFlags_AlwaysAutoResize)) {
+                if (!ImGui::IsAnyItemActive() && !ImGui::IsAnyItemHovered()) { ImGui::SetKeyboardFocusHere(0); }
                 ImGui::InputText("ID", ds->id, ImGuiInputTextFlags_AlwaysOverwrite);
             }
             ImGui::End();
         }
         else if (dl != NULL) {
             if (ImGui::Begin("Setting IO ID", NULL, ImGuiWindowFlags_AlwaysAutoResize)) {
+                if (!ImGui::IsAnyItemActive() && !ImGui::IsAnyItemHovered()) { ImGui::SetKeyboardFocusHere(0); }
                 ImGui::InputText("ID", dl->id, ImGuiInputTextFlags_AlwaysOverwrite);
             }
             ImGui::End();
@@ -463,20 +475,6 @@ void Editor::SubmitUI() {
     }
 
 #pragma endregion
-
-    // TESTING TESTING
-
-    if (ImGui::Begin("TESTO")) {
-        for (int i = 0; i < this->icDescriptions.size(); i++) {
-            ICDesc desc = this->icDescriptions.at(i);
-            ImGui::Button(desc.name.c_str());
-            if (ImGui::IsItemClicked()) {
-                AddNewComponent(new DrawableIC(GetMousePositionInWorld(), desc));
-            }
-        }
-
-    }
-    ImGui::End();
 
     ImGui::ShowDemoWindow();
 }
