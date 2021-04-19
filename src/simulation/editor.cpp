@@ -268,6 +268,9 @@ void Editor::SubmitUI() {
         ImGui::EndMenu();
     }
 
+    ImGui::Separator();
+    ImGui::Text("Current state: %d", currentState);
+
     ImGui::EndMainMenuBar();
 #pragma endregion
 
@@ -328,8 +331,6 @@ void Editor::SubmitUI() {
 
             ImGui::EndPopup();
         }
-
-        ImGui::Text("Current state: %d", currentState);
     }
     ImGui::End();
 #pragma endregion
