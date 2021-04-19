@@ -35,6 +35,10 @@ public:
         }
     }
 
+    void SetValue(int bit, LogicValue val) {
+        this->values.at(bit) = val;
+    }
+
     float GetHIGHFraction() {
         float count = 0;
         for (int i = 0; i < this->values.size(); i++) {

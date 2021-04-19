@@ -6,7 +6,7 @@
 #include "circuits/circuit_component.hpp"
 
 class MinimalSwitch : public CircuitComponent {
-    public:
+public:
     int bits;
     std::vector<LogicValue> values;
     std::string id;
@@ -32,6 +32,10 @@ class MinimalSwitch : public CircuitComponent {
         for (int i = 0; i < bits; i++) {
             this->values.push_back(val);
         }
+    }
+
+    void SetValue(int bit, LogicValue val) {
+        this->values.at(bit) = val;
     }
 
     void PerformLogic() {

@@ -164,9 +164,14 @@ std::vector<CircuitInput*> ICDesc::GenerateICInputs(std::vector<CircuitComponent
             switchMap.push_back(dynamic_cast<MinimalSwitch*>(FindIOByID(comps, this->inputs.at(inp).at(swit))));
         }
         ICInput* ici;
-        int bits = (int)(this->inputs.at(inp).size());
+        int bits = std::max(switchMap.at(0)->bits, (int)(this->inputs.at(inp).size()));
         if (bits > 1) {
-            ici = new ICInput{ bits, switchMap, dynamic_cast<MinimalSwitch*>(FindIOByID(comps, this->inputs.at(inp).front()))->id + "-" + dynamic_cast<MinimalSwitch*>(FindIOByID(comps, this->inputs.at(inp).back()))->id };
+            if (this->inputs.at(inp).size() > 1) {
+                ici = new ICInput{ bits, switchMap, dynamic_cast<MinimalSwitch*>(FindIOByID(comps, this->inputs.at(inp).front()))->id + "-" + dynamic_cast<MinimalSwitch*>(FindIOByID(comps, this->inputs.at(inp).back()))->id };
+            }
+            else {
+                ici = new ICInput{ bits, switchMap, dynamic_cast<MinimalSwitch*>(FindIOByID(comps, this->inputs.at(inp).front()))->id };
+            }
         }
         else {
             ici = new ICInput{ bits, switchMap, dynamic_cast<MinimalSwitch*>(FindIOByID(comps, this->inputs.at(inp).front()))->id };

@@ -10,8 +10,15 @@ void DrawableIC::PerformLogic() {
     for (int i = 0; i < this->inputs.size(); i++) {
         ICInput* ici = dynamic_cast<ICInput*>(this->inputs.at(i));
 
-        for (int j = 0; j < ici->switchMap.size(); j++) {
-            ici->switchMap.at(j)->SetValues(ici->GetValue(j));
+        if (ici->bits == ici->switchMap.size()) {
+            for (int j = 0; j < ici->switchMap.size(); j++) {
+                ici->switchMap.at(j)->SetValues(ici->GetValue(j));
+            }
+        }
+        else if (ici->bits > ici->switchMap.size()) {
+            for (int j = 0; j < ici->switchMap.size(); j++) {
+                ici->switchMap.at(j)->SetValues(ici->GetValues());
+            }
         }
     }
 
