@@ -9,6 +9,7 @@
 #include "drawables/drawable_button.hpp"
 #include "drawables/drawable_lamp.hpp"
 #include "drawables/drawable_ic.hpp"
+#include "drawables/drawable_hex_viewer.hpp"
 #include "gate-logic/and_gate_logic.hpp"
 #include "gate-logic/or_gate_logic.hpp"
 #include "gate-logic/nor_gate_logic.hpp"
@@ -304,6 +305,28 @@ void Editor::SubmitUI() {
         ImGui::Button("Lamp", ImVec2(65, 22));
         if (ImGui::IsItemClicked()) {
             this->AddNewComponent(new DrawableLamp(GetMousePositionInWorld()));
+        }
+
+        ImGui::Button("Hex Viewer", ImVec2(65, 22));
+        if (ImGui::IsItemClicked()) {
+            this->AddNewComponent(new DrawableHexViewer(4, GetMousePositionInWorld(), new std::vector<int>{ 1, 1, 1, 1 }));
+        }
+        if (ImGui::BeginPopupContextItem("HexN Context Menu")) {
+
+            ImGui::SetNextItemWidth(80);
+            ImGui::InputInt("Bits", &(this->switchNBits), 1, 1);
+            ImGui::Checkbox("Multibit Input", &this->groupBits);
+            ImGui::Separator();
+            if (ImGui::Button("Create")) {
+                if (this->groupBits) {
+                    this->AddNewComponent(new DrawableHexViewer(this->switchNBits, GetMousePositionInWorld(), new std::vector<int>{ this->switchNBits }));
+                }
+                else {
+                    this->AddNewComponent(new DrawableHexViewer(this->switchNBits, GetMousePositionInWorld(), new std::vector<int>(this->switchNBits, 1)));
+                }
+            }
+
+            ImGui::EndPopup();
         }
 
         ImGui::Text("Current state: %d", currentState);
