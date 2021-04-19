@@ -34,7 +34,7 @@ public:
         }
         else {
             for (int i = 0; i < this->inputs.size(); i++) {
-                value += this->inputs.at(i)->GetValue(0) == LogicValue_HIGH ? (0b1 << i) : 0;
+                value += this->inputs.at(i)->GetValue(0) == LogicValue_HIGH ? (0b1 << (this->inputs.size() - i - 1)) : 0;
             }
         }
 

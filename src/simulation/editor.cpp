@@ -277,13 +277,15 @@ void Editor::SubmitUI() {
 #pragma region COMPONENTS WINDOW
     if (ImGui::Begin("Components", NULL, ImGuiWindowFlags_AlwaysAutoResize)) {
 
+        ImGui::Text("Gates");
         AddNewGateButton("AND");
         AddNewGateButton("NAND");
         AddNewGateButton("OR");
         AddNewGateButton("NOR");
         AddNewGateButton("XOR");
         AddNewGateButton("XNOR");
-
+        ImGui::Separator();
+        ImGui::Text("Inputs");
         ImGui::Button("Switch", ImVec2(65, 22));
         if (ImGui::IsItemClicked()) {
             this->AddNewComponent(new DrawableSwitch(GetMousePositionInWorld(), 1));
@@ -305,6 +307,8 @@ void Editor::SubmitUI() {
             this->AddNewComponent(new DrawableButton(GetMousePositionInWorld()));
         }
 
+        ImGui::Separator();
+        ImGui::Text("Outputs");
         ImGui::Button("Lamp", ImVec2(65, 22));
         if (ImGui::IsItemClicked()) {
             this->AddNewComponent(new DrawableLamp(GetMousePositionInWorld()));
