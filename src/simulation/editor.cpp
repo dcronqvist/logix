@@ -476,6 +476,19 @@ void Editor::SubmitUI() {
 
 #pragma endregion
 
+    // Testing stuff
+
+    if (ImGui::Begin("ICs", NULL, ImGuiWindowFlags_AlwaysAutoResize)) {
+        for (int i = 0; i < this->icDescriptions.size(); i++) {
+            ImGui::Button(this->icDescriptions.at(i).name.c_str(), ImVec2(65, 22));
+            if (ImGui::IsItemClicked()) {
+                this->AddNewComponent(new DrawableIC(GetMousePositionInWorld(), this->icDescriptions.at(i)));
+            }
+        }
+
+    }
+    ImGui::End();
+
     ImGui::ShowDemoWindow();
 }
 

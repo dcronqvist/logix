@@ -42,7 +42,8 @@ public:
             ICInput* ici = dynamic_cast<ICInput*>(this->inputs.at(i));
 
             for (int j = 0; j < ici->switchMap.size(); j++) {
-                ici->switchMap.at(j)->SetValues(ici->GetValue(j));
+                BitPointer bp = ici->switchMap.at(j);
+                bp.sw->SetValue(bp.toBit, ici->GetValue(bp.fromBit));
             }
         }
 

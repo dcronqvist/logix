@@ -158,12 +158,22 @@ std::vector<CircuitInput*> ICDesc::GenerateICInputs(std::vector<CircuitComponent
     std::vector<CircuitInput*> icinputs = {};
 
     for (int inp = 0; inp < this->inputs.size(); inp++) {
-        std::vector<MinimalSwitch*> switchMap = {};
+        std::vector<BitPointer> switchMap = {};
 
-        for (int swit = 0; swit < this->inputs.at(inp).size(); swit++) {
-            switchMap.push_back(dynamic_cast<MinimalSwitch*>(FindIOByID(comps, this->inputs.at(inp).at(swit))));
+        int accumulatedBits = 0;
+        for (int subInp = 0; subInp < this->inputs.at(inp).size(); subInp++) {
+            MinimalSwitch* swtch = dynamic_cast<MinimalSwitch*>(FindIOByID(comps, this->inputs.at(inp).at(subInp)));
+
+            for (int switchBit = 0; switchBit < swtch->bits; switchBit++) {
+                BitPointer bp = { swtch, switchBit, accumulatedBits };
+                switchMap.push_back(bp);
+                accumulatedBits++;
+            }
         }
         ICInput* ici;
+        int bits = switchMap.size();
+        ici = new ICInput{ bits, switchMap, dynamic_cast<MinimalSwitch*>(FindIOByID(comps, this->inputs.at(inp).front()))->id + "-" + dynamic_cast<MinimalSwitch*>(FindIOByID(comps, this->inputs.at(inp).back()))->id };
+        /*
         int bits = std::max(switchMap.at(0)->bits, (int)(this->inputs.at(inp).size()));
         if (bits > 1) {
             if (this->inputs.at(inp).size() > 1) {
@@ -175,7 +185,7 @@ std::vector<CircuitInput*> ICDesc::GenerateICInputs(std::vector<CircuitComponent
         }
         else {
             ici = new ICInput{ bits, switchMap, dynamic_cast<MinimalSwitch*>(FindIOByID(comps, this->inputs.at(inp).front()))->id };
-        }
+        }*/
 
         icinputs.push_back(ici);
     }

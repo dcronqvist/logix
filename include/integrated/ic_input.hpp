@@ -7,12 +7,18 @@
 #include "minimals/minimal_switch.hpp"
 #include "circuits/circuit_io.hpp"
 
+struct BitPointer {
+    MinimalSwitch* sw;
+    int toBit;
+    int fromBit;
+};
+
 class ICInput : public CircuitInput {
-    public:
-    std::vector<MinimalSwitch*> switchMap;
+public:
+    std::vector<BitPointer> switchMap;
     std::string id;
 
-    ICInput(int bits, std::vector<MinimalSwitch*> switchMap, std::string id) : CircuitInput(bits, LogicValue_LOW) {
+    ICInput(int bits, std::vector<BitPointer> switchMap, std::string id) : CircuitInput(bits, LogicValue_LOW) {
         this->switchMap = switchMap;
         this->id = id;
     }
