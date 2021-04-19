@@ -53,6 +53,7 @@ static bool ImGui_ImplRaylib_Init(int w, int h, std::vector<const char*> fonts =
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();
     ImGuiIO* io = &ImGui::GetIO(); (void)io;
+    io->ConfigFlags |= ImGuiConfigFlags_DockingEnable;
     ImGui::StyleColorsDark();
 
     io->BackendPlatformName = "imgui_impl_raylib";
