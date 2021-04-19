@@ -51,17 +51,20 @@ std::vector<ICComponentDesc>* ICDesc::GenerateDescriptions(std::vector<DrawableC
             DrawableGate* gate = dynamic_cast<DrawableGate*>(dc);
             type = gate->logic->GetLogicName();
         }
-        if (dynamic_cast<DrawableSwitch*>(dc) != NULL) {
+        else if (dynamic_cast<DrawableSwitch*>(dc) != NULL) {
             type = "Switch";
             id = dynamic_cast<DrawableSwitch*>(dc)->id->c_str();
         }
-        if (dynamic_cast<DrawableLamp*>(dc) != NULL) {
+        else if (dynamic_cast<DrawableLamp*>(dc) != NULL) {
             type = "Lamp";
             id = dynamic_cast<DrawableLamp*>(dc)->id->c_str();
         }
-        if (dynamic_cast<DrawableIC*>(dc) != NULL) {
+        else if (dynamic_cast<DrawableIC*>(dc) != NULL) {
             type = "IC";
             icdesc = &(dynamic_cast<DrawableIC*>(dc)->description);
+        }
+        else {
+            continue;
         }
 
         // TODO: Add all other drawable component types
