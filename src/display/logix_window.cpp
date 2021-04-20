@@ -72,7 +72,7 @@ void LogiXWindow::Render() {
     // actually takes place upside down when rendering to texture.
     DrawTextureRec(renTexUI.texture, uiSourceRectangle, { 0, 0 }, WHITE);
 
-    DrawFPS(10, 10);
+    DrawFPS(this->windowWidth - 120, this->windowHeight - 30);
 
     EndDrawing();
 }

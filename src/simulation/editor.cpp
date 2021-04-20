@@ -237,6 +237,11 @@ void Editor::Update() {
 
 void Editor::SubmitUI() {
     // Main Menu
+    ImGui::SetNextWindowPos(ImVec2{ 0, 20 }, ImGuiCond_Always);
+    ImGui::SetNextWindowSize(ImVec2{ 120, this->logixWindow->windowHeight - 20 }, ImGuiCond_Always);
+    ImGui::Begin("Sidebar", NULL, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize);
+    ImGui::DockSpace(120);
+    ImGui::End();
 
 #pragma region MAIN MENU BAR
     ImGui::BeginMainMenuBar();
@@ -275,7 +280,9 @@ void Editor::SubmitUI() {
 #pragma endregion
 
 #pragma region COMPONENTS WINDOW
-    if (ImGui::Begin("Components", NULL, ImGuiWindowFlags_AlwaysAutoResize)) {
+
+
+    if (ImGui::Begin("Components", NULL)) {
 
         ImGui::Text("Gates");
         AddNewGateButton("AND");
@@ -451,9 +458,6 @@ void Editor::SubmitUI() {
             ICDesc icdesc = ICDesc{ this->icName, comps, this->GetICInputVector(), this->GetICOutputVector() };
             icdesc.SetAdditionalText(this->icAdditionalText);
             this->icDescriptions.push_back(icdesc);
-            json j = icdesc;
-            std::cout << j << std::endl;
-
             currentState = EditorState_None;
             this->icInputs = {};
             this->icOutputs = {};
@@ -464,6 +468,7 @@ void Editor::SubmitUI() {
             // If the user has chosen to save the new IC to a file
             if (this->icSaveToFile) {
                 std::ofstream o("ic/" + icName + ".ic");
+                json j = icdesc;
                 o << j << std::endl;
                 o.close();
             }
@@ -516,8 +521,6 @@ void Editor::SubmitUI() {
 
     }
     ImGui::End();
-
-    ImGui::ShowDemoWindow();
 }
 
 void Editor::DrawGrid() {
