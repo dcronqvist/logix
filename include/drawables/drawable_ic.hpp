@@ -10,7 +10,7 @@
 #include <string>
 
 class DrawableIC : public DrawableComponent {
-    public:
+public:
     ICDesc description;
     std::vector<CircuitComponent*> components;
 
@@ -42,7 +42,7 @@ class DrawableIC : public DrawableComponent {
     float CalculateHeight(ICDesc desc) {
         float minHeight = CalculateMinHeight();
         Vector2 addMeasure = MeasureTextEx(GetFontDefault(), this->description.additionalText.c_str(), 8.0F, 1.0F);
-        return addMeasure.y + minHeight + 30.0F;
+        return addMeasure.y + minHeight;
     }
 
     float CalculateWidth(ICDesc desc) {

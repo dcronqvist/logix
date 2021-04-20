@@ -157,6 +157,14 @@ std::vector<CircuitComponent*> ICDesc::GenerateComponents() {
     return comps;
 }
 
+bool AllPointingToSameSwitch(std::vector<BitPointer> switchMap) {
+    MinimalSwitch* sw = switchMap.at(0).sw;
+    for (int i = 1; i < switchMap.size(); i++) {
+        if (switchMap.at(i).sw != sw) { return false; }
+    }
+    return true;
+}
+
 std::vector<CircuitInput*> ICDesc::GenerateICInputs(std::vector<CircuitComponent*> comps) {
     std::vector<CircuitInput*> icinputs = {};
 
@@ -175,20 +183,17 @@ std::vector<CircuitInput*> ICDesc::GenerateICInputs(std::vector<CircuitComponent
         }
         ICInput* ici;
         int bits = switchMap.size();
-        ici = new ICInput{ bits, switchMap, dynamic_cast<MinimalSwitch*>(FindIOByID(comps, this->inputs.at(inp).front()))->id + "-" + dynamic_cast<MinimalSwitch*>(FindIOByID(comps, this->inputs.at(inp).back()))->id };
-        /*
-        int bits = std::max(switchMap.at(0)->bits, (int)(this->inputs.at(inp).size()));
         if (bits > 1) {
-            if (this->inputs.at(inp).size() > 1) {
-                ici = new ICInput{ bits, switchMap, dynamic_cast<MinimalSwitch*>(FindIOByID(comps, this->inputs.at(inp).front()))->id + "-" + dynamic_cast<MinimalSwitch*>(FindIOByID(comps, this->inputs.at(inp).back()))->id };
+            if (AllPointingToSameSwitch(switchMap)) {
+                ici = new ICInput{ bits, switchMap, dynamic_cast<MinimalSwitch*>(FindIOByID(comps, this->inputs.at(inp).front()))->id };
             }
             else {
-                ici = new ICInput{ bits, switchMap, dynamic_cast<MinimalSwitch*>(FindIOByID(comps, this->inputs.at(inp).front()))->id };
+                ici = new ICInput{ bits, switchMap, dynamic_cast<MinimalSwitch*>(FindIOByID(comps, this->inputs.at(inp).front()))->id + "-" + dynamic_cast<MinimalSwitch*>(FindIOByID(comps, this->inputs.at(inp).back()))->id };
             }
         }
         else {
             ici = new ICInput{ bits, switchMap, dynamic_cast<MinimalSwitch*>(FindIOByID(comps, this->inputs.at(inp).front()))->id };
-        }*/
+        }
 
         icinputs.push_back(ici);
     }
