@@ -1,5 +1,14 @@
 #include "projects/project.hpp"
 
+void to_json(json& j, const Project& p) {
+    j = json{ {"name", p.name}, {"includedICs", p.includedICs} };
+}
+
+void from_json(const json& j, Project& p) {
+    j.at("name").get_to(p.name);
+    j.at("includedICs").get_to(p.includedICs);
+}
+
 Project::Project(std::string name) {
     this->name = name;
     this->includedICs = {};
@@ -19,7 +28,10 @@ std::vector<ICDesc> Project::GetAllIncludedICs() {
 }
 
 void Project::SaveProjectToFile() {
-
+    json j = *this;
+    std::ofstream o("projects/" + this->name + ".lgxproj");
+    o << j << std::endl;
+    o.close();
 }
 
 Project* Project::LoadFromFile(std::string path) {

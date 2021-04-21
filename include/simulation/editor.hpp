@@ -88,7 +88,7 @@ public:
         logixWindow = lgx;
         cam = { Vector2{lgx->handle->GetWidth() / 2.0F, lgx->handle->GetHeight() / 2.0F}, Vector2{0.0F, 0.0F}, 0.0F, 1.0F };
         sim = {};
-        currentProject = Project::LoadFromFile("");
+        currentProject = new Project{ "new project" };
         newComponent = NULL;
         selectionRectangle = NULL;
 
@@ -120,4 +120,5 @@ public:
     std::vector<std::vector<std::string>> GetICInputVector();
     std::vector<std::vector<std::string>> GetICOutputVector();
     bool IsKeyCombinationPressed(KeyboardKey modifier, KeyboardKey key);
+    void LoadProjectFromFile(std::string path);
 };

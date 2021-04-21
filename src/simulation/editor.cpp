@@ -19,10 +19,10 @@
 #include "raylib-cpp/raylib-cpp.hpp"
 #include "drawables/circuit_io_desc.hpp"
 #include "integrated/ic_desc.hpp"
+#include "projects/workspace_desc.hpp"
 #include <iostream>
 #include <fstream>
-
-char buf[64];
+#include <tuple>
 
 void Editor::Update() {
     // Get current mouse pos
@@ -247,6 +247,18 @@ void Editor::SubmitUI() {
     ImGui::BeginMainMenuBar();
 
     if (ImGui::BeginMenu("File")) {
+
+        if (ImGui::Button("Save Workspace")) {
+            WorkspaceDesc wd = { sim.allComponents };
+
+            std::tuple<std::vector<DrawableComponent*>, std::vector<DrawableWire*>> tup = wd.GenerateDrawables();
+            sim.allComponents = std::get<0>(tup);
+            sim.allWires = std::get<1>(tup);
+
+            int x = 2;
+        }
+
+
         ImGui::EndMenu();
     }
 
@@ -687,4 +699,8 @@ std::vector<std::vector<std::string>> Editor::GetICOutputVector() {
 
 bool Editor::IsKeyCombinationPressed(KeyboardKey modifier, KeyboardKey key) {
     return IsKeyDown(modifier) && IsKeyPressed(key);
+}
+
+void Editor::LoadProjectFromFile(std::string path) {
+    this->currentProject = Project::LoadFromFile(path);
 }
