@@ -117,6 +117,28 @@ CircuitComponent* FindIOByID(std::vector<CircuitComponent*> comps, std::string i
     return NULL;
 }
 
+int GetMinimalLampBitsByID(std::string id, ICDesc desc) {
+    int index = -1;
+    for (int i = 0; i < desc.descriptions->size(); i++) {
+        if (desc.descriptions->at(i).id == id && desc.descriptions->at(i).type == "Lamp") {
+            index = i;
+            break;
+        }
+    }
+
+    for (int i = 0; i < desc.descriptions->size(); i++) {
+        ICComponentDesc iccd = desc.descriptions->at(i);
+
+        for (int j = 0; j < iccd.to.size(); j++) {
+            ICConnectionDesc iconnd = iccd.to.at(j);
+            if (iconnd.to == index) {
+                return iconnd.bits;
+            }
+        }
+    }
+    return -1;
+}
+
 std::vector<CircuitComponent*> ICDesc::GenerateComponents() {
     std::vector<CircuitComponent*> comps = {};
 
@@ -133,7 +155,7 @@ std::vector<CircuitComponent*> ICDesc::GenerateComponents() {
             comp = new MinimalSwitch(compDesc.to.at(0).bits, compDesc.id);
         }
         else if (compDesc.type == "Lamp") {
-            comp = new MinimalLamp(compDesc.id);
+            comp = new MinimalLamp(compDesc.id, GetMinimalLampBitsByID(compDesc.id, *this));
         }
         else if (compDesc.type == "IC") {
             comp = new MinimalIC(*(compDesc.desc));
@@ -161,6 +183,14 @@ bool AllPointingToSameSwitch(std::vector<BitPointer> switchMap) {
     MinimalSwitch* sw = switchMap.at(0).sw;
     for (int i = 1; i < switchMap.size(); i++) {
         if (switchMap.at(i).sw != sw) { return false; }
+    }
+    return true;
+}
+
+bool AllPointingToSameLamp(std::vector<LampPointer> lampMap) {
+    MinimalLamp* sw = lampMap.at(0).from;
+    for (int i = 1; i < lampMap.size(); i++) {
+        if (lampMap.at(i).from != sw) { return false; }
     }
     return true;
 }
@@ -205,15 +235,26 @@ std::vector<CircuitOutput*> ICDesc::GenerateICOutputs(std::vector<CircuitCompone
     std::vector<CircuitOutput*> icinputs = {};
 
     for (int inp = 0; inp < this->outputs.size(); inp++) {
-        std::vector<MinimalLamp*> switchMap = {};
+        std::vector<LampPointer> switchMap = {};
+        int accumulatedBits = 0;
+        for (int subOut = 0; subOut < this->outputs.at(inp).size(); subOut++) {
+            MinimalLamp* lamp = dynamic_cast<MinimalLamp*>(FindIOByID(comps, this->outputs.at(inp).at(subOut)));
 
-        for (int swit = 0; swit < this->outputs.at(inp).size(); swit++) {
-            switchMap.push_back(dynamic_cast<MinimalLamp*>(FindIOByID(comps, this->outputs.at(inp).at(swit))));
+            for (int lampBit = 0; lampBit < lamp->bits; lampBit++) {
+                LampPointer lp = { lamp, accumulatedBits, lampBit };
+                switchMap.push_back(lp);
+                accumulatedBits++;
+            }
         }
         ICOutput* ici;
-        int bits = (int)(this->outputs.at(inp).size());
+        int bits = switchMap.size();
         if (bits > 1) {
-            ici = new ICOutput{ bits, switchMap, dynamic_cast<MinimalLamp*>(FindIOByID(comps, this->outputs.at(inp).front()))->id + "-" + dynamic_cast<MinimalLamp*>(FindIOByID(comps, this->outputs.at(inp).back()))->id };
+            if (AllPointingToSameLamp(switchMap)) {
+                ici = new ICOutput{ bits, switchMap, dynamic_cast<MinimalLamp*>(FindIOByID(comps, this->outputs.at(inp).front()))->id };
+            }
+            else {
+                ici = new ICOutput{ bits, switchMap, dynamic_cast<MinimalLamp*>(FindIOByID(comps, this->outputs.at(inp).front()))->id + "-" + dynamic_cast<MinimalLamp*>(FindIOByID(comps, this->outputs.at(inp).back()))->id };
+            }
         }
         else {
             ici = new ICOutput{ bits, switchMap, dynamic_cast<MinimalLamp*>(FindIOByID(comps, this->outputs.at(inp).front()))->id };

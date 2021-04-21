@@ -6,15 +6,28 @@
 
 class MinimalLamp : public CircuitComponent {
     public:
-    LogicValue value;
+    int bits;
+    std::vector<LogicValue> values;
     std::string id;
 
-    MinimalLamp(std::string id) : CircuitComponent(new std::vector<int>{ 1 }, new std::vector<int>{}) {
-        value = LogicValue_LOW;
+    MinimalLamp(std::string id, int bits) : CircuitComponent(new std::vector<int>{ bits }, new std::vector<int>{}) {
+        this->values = {};
+        for (int i = 0; i < bits; i++) {
+            this->values.push_back(LogicValue_LOW);
+        }
         this->id = id;
+        this->bits = bits;
+    }
+
+    std::vector<LogicValue>& GetValues() {
+        return this->values;
+    }
+
+    LogicValue GetValue(int bit) {
+        return this->values.at(bit);
     }
 
     void PerformLogic() {
-        this->value = this->inputs.at(0)->GetValue(0);
+        this->values = this->inputs.at(0)->GetValues();
     }
 };

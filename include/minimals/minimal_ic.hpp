@@ -10,7 +10,7 @@
 #include <string>
 
 class MinimalIC : public CircuitComponent {
-public:
+    public:
     ICDesc description;
     std::vector<CircuitComponent*> components;
 
@@ -56,14 +56,13 @@ public:
         }
 
         for (int i = 0; i < this->outputs.size(); i++) {
-            std::vector<LogicValue> values = {};
             ICOutput* ico = dynamic_cast<ICOutput*>(this->outputs.at(i));
 
             for (int j = 0; j < ico->lampMap.size(); j++) {
-                values.push_back(ico->lampMap.at(j)->value);
+                LampPointer lp = ico->lampMap.at(j);
+                LogicValue val = lp.from->GetValue(lp.fromBit);
+                ico->SetValue(lp.toBit, val);
             }
-
-            ico->SetValues(values);
         }
     }
 };

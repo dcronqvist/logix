@@ -29,7 +29,9 @@ void DrawableIC::PerformLogic() {
         ICOutput* ico = dynamic_cast<ICOutput*>(this->outputs.at(i));
 
         for (int j = 0; j < ico->lampMap.size(); j++) {
-            values.push_back(ico->lampMap.at(j)->value);
+            LampPointer lp = ico->lampMap.at(j);
+            LogicValue val = lp.from->GetValue(lp.fromBit);
+            values.push_back(val);
         }
 
         ico->SetValues(values);

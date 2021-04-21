@@ -318,7 +318,18 @@ void Editor::SubmitUI() {
         ImGui::Text("Outputs");
         ImGui::Button("Lamp", ImVec2(65, 22));
         if (ImGui::IsItemClicked()) {
-            this->AddNewComponent(new DrawableLamp(GetMousePositionInWorld()));
+            this->AddNewComponent(new DrawableLamp(GetMousePositionInWorld(), 1));
+        }
+        if (ImGui::BeginPopupContextItem("LampN Context Menu")) {
+
+            ImGui::SetNextItemWidth(80);
+            ImGui::InputInt("Bits", &(this->switchNBits), 1, 1);
+            ImGui::Button("Create");
+            if (ImGui::IsItemClicked()) {
+                this->AddNewComponent(new DrawableLamp(GetMousePositionInWorld(), this->switchNBits));
+            }
+
+            ImGui::EndPopup();
         }
 
         ImGui::Button("Hex Viewer", ImVec2(65, 22));

@@ -7,37 +7,38 @@
 
 class DrawableLamp : public DrawableComponent {
 public:
-    LogicValue value;
+    int bits;
+    std::vector<LogicValue> values;
     std::string* id;
 
-    DrawableLamp(Vector2 pos) : DrawableComponent(pos, Vector2{ 30, 30 }, "0", new std::vector<int>{ 1 }, new std::vector<int>{}) {
-        value = LogicValue_LOW;
+    DrawableLamp(Vector2 pos, int bits) : DrawableComponent(pos, Vector2{ 30.0F * (float)bits, 30 }, "", new std::vector<int>{ bits }, new std::vector<int>{}) {
+        this->values = {};
+        for (int i = 0; i < bits; i++) {
+            this->values.push_back(LogicValue_LOW);
+        }
         this->id = new std::string{ "" };
+        this->bits = bits;
     }
 
     void PerformLogic() {
-        this->value = this->inputs.at(0)->GetValue(0);
-        this->text = this->value == LogicValue_HIGH ? "1" : "0";
+        this->values = this->inputs.at(0)->GetValues();
+        //this->text = this->value == LogicValue_HIGH ? "1" : "0";
     }
 
     void Draw(Vector2 mousePosInWorld) {
         UpdateBox();
-
-        Vector2 middle = position + Vector2{ box.width / 2.0F, box.height / 2.0F };
-        float radius = box.width / 2.0F;
-
-        DrawCircleV(middle, radius, WHITE);
         DrawInputs(mousePosInWorld);
+        Vector2 middle = position + Vector2{ (box.width / (float)bits) / 2.0F, box.height / 2.0F };
+        float radius = (box.width / (float)bits) / 2.0F;
 
-        Color col = this->value == LogicValue_HIGH ? BLUE : RAYWHITE;
-        float offset = 1.0F;
-        DrawCircleV(middle, radius - offset, col);
+        for (int i = 0; i < this->bits; i++) {
 
-        float fontSize = 12.0F;
-        Vector2 middleOfBox = Vector2{ box.width / 2.0F, box.height / 2.0F };
-        Vector2 textSize = MeasureTextEx(GetFontDefault(), text.c_str(), fontSize, 1.0F);
-        DrawTextEx(GetFontDefault(), this->text.c_str(), this->position + middleOfBox - (textSize / 2.0F), fontSize, 1.0F, BLACK);
+            DrawCircleV(middle + Vector2{ 2 * radius * i }, radius, WHITE);
 
+            Color col = this->values.at(i) == LogicValue_HIGH ? BLUE : RAYWHITE;
+            float offset = 1.0F;
+            DrawCircleV(middle + Vector2{ 2 * radius * i }, radius - offset, col);
+        }
         DrawText(this->id->c_str(), box.x, box.y, 10.0F, BLACK);
     }
 };
