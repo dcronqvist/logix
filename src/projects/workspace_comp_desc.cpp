@@ -7,7 +7,8 @@ void to_json(json& j, const WorkspaceCompDesc& p) {
         {"connectedTo", p.connectedTo},
         { "id", p.id},
         {"ioBits", p.ioBits},
-        {"inps", p.inps}
+        {"inps", p.inps},
+        { "desc", p.desc}
     };
 }
 
@@ -18,7 +19,7 @@ void from_json(const json& j, WorkspaceCompDesc& p) {
     j.at("id").get_to(p.id);
     j.at("ioBits").get_to(p.ioBits);
     j.at("inps").get_to(p.inps);
-
+    j.at("desc").get_to(p.desc);
 }
 
 void to_json(json& j, const Vector2& p) {

@@ -26,6 +26,7 @@ std::vector<WorkspaceCompDesc> WorkspaceDesc::GenerateComponentDescriptions(std:
         std::string type = "";
         std::string id = "";
         int ioBits = 0;
+        ICDesc desc = { "" };
 
         if (dynamic_cast<DrawableGate*>(dc) != NULL) { // It is a drawablegate
             DrawableGate* gate = dynamic_cast<DrawableGate*>(dc);
@@ -51,6 +52,11 @@ std::vector<WorkspaceCompDesc> WorkspaceDesc::GenerateComponentDescriptions(std:
         else if (dynamic_cast<DrawableButton*>(dc) != NULL) {
             type = "Button";
         }
+        else if (dynamic_cast<DrawableIC*>(dc) != NULL) {
+            type = "IC";
+            DrawableIC* dic = dynamic_cast<DrawableIC*>(dc);
+            desc = dic->description;
+        }
         else {
             continue;
         }
@@ -70,7 +76,7 @@ std::vector<WorkspaceCompDesc> WorkspaceDesc::GenerateComponentDescriptions(std:
             }
         }
 
-        WorkspaceCompDesc compDesc = { type, dc->position, connections, id, ioBits, *(dc->GetInputVector()) };
+        WorkspaceCompDesc compDesc = { type, dc->position, connections, id, ioBits, *(dc->GetInputVector()), desc };
         workspaceComps.push_back(compDesc);
     }
 
@@ -87,16 +93,23 @@ std::tuple<std::vector<DrawableComponent*>, std::vector<DrawableWire*>> Workspac
         DrawableComponent* dc;
 
         if (wcd.type == "Switch") {
-            dc = new DrawableSwitch(wcd.position, wcd.ioBits);
+            DrawableSwitch* ds = new DrawableSwitch(wcd.position, wcd.ioBits);
+            *(ds->id) = wcd.id;
+            dc = ds;
         }
         else if (wcd.type == "Lamp") {
-            dc = new DrawableLamp(wcd.position, wcd.ioBits);
+            DrawableLamp* ds = new DrawableLamp(wcd.position, wcd.ioBits);
+            *(ds->id) = wcd.id;
+            dc = ds;
         }
         else if (wcd.type == "HexViewer") {
             dc = new DrawableHexViewer(wcd.ioBits, wcd.position, &wcd.inps);
         }
         else if (wcd.type == "Button") {
             dc = new DrawableButton(wcd.position);
+        }
+        else if (wcd.type == "IC") {
+            dc = new DrawableIC(wcd.position, wcd.desc);
         }
         else {
             dc = new DrawableGate(wcd.position, GetGateLogic(wcd.type.c_str()), &wcd.inps);

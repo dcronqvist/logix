@@ -3,6 +3,7 @@
 #include <vector>
 #include "projects/workspace_conn_desc.hpp"
 #include "raylib-cpp/raylib-cpp.hpp"
+#include "integrated/ic_desc.hpp"
 #include <string>
 #include "utils/json.hpp"
 using json = nlohmann::json;
@@ -16,6 +17,7 @@ public:
     std::string id;
     int ioBits;
     std::vector<int> inps;
+    ICDesc desc;
 };
 
 void to_json(json& j, const WorkspaceCompDesc& p);
