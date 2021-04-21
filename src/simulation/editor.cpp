@@ -301,8 +301,8 @@ void Editor::SubmitUI() {
 
             ImGui::SetNextItemWidth(80);
             ImGui::InputInt("Bits", &(this->switchNBits), 1, 1);
-
-            if (ImGui::Button("Create")) {
+            ImGui::Button("Create");
+            if (ImGui::IsItemClicked()) {
                 this->AddNewComponent(new DrawableSwitch(GetMousePositionInWorld(), this->switchNBits));
             }
 
@@ -331,7 +331,8 @@ void Editor::SubmitUI() {
             ImGui::InputInt("Bits", &(this->switchNBits), 1, 1);
             ImGui::Checkbox("Multibit Input", &this->groupBits);
             ImGui::Separator();
-            if (ImGui::Button("Create")) {
+            ImGui::Button("Create");
+            if (ImGui::IsItemClicked()) {
                 if (this->groupBits) {
                     this->AddNewComponent(new DrawableHexViewer(this->switchNBits, GetMousePositionInWorld(), new std::vector<int>{ this->switchNBits }));
                 }
@@ -613,7 +614,8 @@ void Editor::AddNewGateButton(const char* gate) {
         ImGui::InputInt("Bits", &(this->gateBits), 1, 1);
         ImGui::Checkbox("Multibit Input", &this->groupBits);
         ImGui::Separator();
-        if (ImGui::Button("Create")) {
+        ImGui::Button("Create");
+        if (ImGui::IsItemClicked()) {
 
             if (this->groupBits) {
                 this->AddNewComponent(new DrawableGate(GetMousePositionInWorld(), GetGateLogic(gate), new std::vector<int>{ this->gateBits }));
