@@ -238,7 +238,7 @@ void Editor::Update() {
 void Editor::SubmitUI() {
     // Main Menu
     ImGui::SetNextWindowPos(ImVec2{ 0, 20 }, ImGuiCond_Always);
-    ImGui::SetNextWindowSize(ImVec2{ 120, this->logixWindow->windowHeight - 20 }, ImGuiCond_Always);
+    ImGui::SetNextWindowSize(ImVec2{ 120.0F, (float)(this->logixWindow->windowHeight - 20) }, ImGuiCond_Always);
     ImGui::Begin("Sidebar", NULL, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize);
     ImGui::DockSpace(120);
     ImGui::End();
