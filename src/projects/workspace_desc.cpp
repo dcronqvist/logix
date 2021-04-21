@@ -48,6 +48,9 @@ std::vector<WorkspaceCompDesc> WorkspaceDesc::GenerateComponentDescriptions(std:
             DrawableHexViewer* dhw = dynamic_cast<DrawableHexViewer*>(dc);
             ioBits = dhw->bits;
         }
+        else if (dynamic_cast<DrawableButton*>(dc) != NULL) {
+            type = "Button";
+        }
         else {
             continue;
         }
@@ -91,6 +94,9 @@ std::tuple<std::vector<DrawableComponent*>, std::vector<DrawableWire*>> Workspac
         }
         else if (wcd.type == "HexViewer") {
             dc = new DrawableHexViewer(wcd.ioBits, wcd.position, &wcd.inps);
+        }
+        else if (wcd.type == "Button") {
+            dc = new DrawableButton(wcd.position);
         }
         else {
             dc = new DrawableGate(wcd.position, GetGateLogic(wcd.type.c_str()), &wcd.inps);
