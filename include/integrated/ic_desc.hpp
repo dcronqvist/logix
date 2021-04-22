@@ -17,7 +17,7 @@ public:
     std::string name;
     std::string additionalText;
 
-    ICDesc() {};
+    ICDesc();
     ICDesc(std::string name);
     ICDesc(std::string name, std::vector<DrawableComponent*> components, std::vector<std::vector<std::string>> inps, std::vector<std::vector<std::string>> outs);
     std::vector<ICComponentDesc>* GenerateDescriptions(std::vector<DrawableComponent*> comps);

@@ -1,12 +1,13 @@
 #include "projects/project.hpp"
 
 void to_json(json& j, const Project& p) {
-    j = json{ {"name", p.name}, {"includedICs", p.includedICs} };
+    j = json{ {"name", p.name}, {"includedICs", p.includedICs}, {"workspace", p.workspace} };
 }
 
 void from_json(const json& j, Project& p) {
     j.at("name").get_to(p.name);
     j.at("includedICs").get_to(p.includedICs);
+    j.at("workspace").get_to(p.workspace);
 }
 
 Project::Project(std::string name) {
@@ -34,8 +35,8 @@ void Project::SaveProjectToFile() {
     o.close();
 }
 
-Project* Project::LoadFromFile(std::string path) {
-    return new Project{ "default project" };
+void Project::SaveWorkspace(std::vector<DrawableComponent*> allComponents) {
+    this->workspace = WorkspaceDesc{ allComponents };
 }
 
 void Project::IncludeIC(std::string path) {

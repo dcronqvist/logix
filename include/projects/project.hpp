@@ -15,12 +15,16 @@ public:
     std::string name;
     WorkspaceDesc workspace;
 
+    Project() {
+        this->includedICs = {};
+        this->name = "";
+        this->workspace = {};
+    }
     Project(std::string name);
 
     std::vector<ICDesc> GetAllIncludedICs();
     void SaveWorkspace(std::vector<DrawableComponent*> allComponents);
     void SaveProjectToFile();
-    static Project* LoadFromFile(std::string path);
     void IncludeIC(std::string path);
     void IncludeIC(ICDesc icdesc);
 };

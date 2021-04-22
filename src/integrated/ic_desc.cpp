@@ -14,11 +14,20 @@
 #include <vector>
 #include <string>
 
+ICDesc::ICDesc() {
+    this->descriptions = new std::vector<ICComponentDesc>();
+    this->inputs = {};
+    this->outputs = {};
+    this->name = "";
+    this->additionalText = "";
+}
+
 ICDesc::ICDesc(std::string name) {
     this->descriptions = new std::vector<ICComponentDesc>();
     this->inputs = {};
     this->outputs = {};
     this->name = name;
+    this->additionalText = "";
 }
 
 ICDesc::ICDesc(std::string name, std::vector<DrawableComponent*> components, std::vector<std::vector<std::string>> inps, std::vector<std::vector<std::string>> outs) {
@@ -26,6 +35,7 @@ ICDesc::ICDesc(std::string name, std::vector<DrawableComponent*> components, std
     this->inputs = inps;
     this->outputs = outs;
     this->name = name;
+    this->additionalText = "";
 }
 
 int GetIndexOfComponent(std::vector<DrawableComponent*> comps, DrawableComponent* comp) {

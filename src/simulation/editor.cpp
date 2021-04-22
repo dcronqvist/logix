@@ -248,16 +248,13 @@ void Editor::SubmitUI() {
 
     if (ImGui::BeginMenu("File")) {
 
-        if (ImGui::Button("Save Workspace")) {
-            WorkspaceDesc wd = { sim.allComponents };
-
-            std::tuple<std::vector<DrawableComponent*>, std::vector<DrawableWire*>> tup = wd.GenerateDrawables();
-            sim.allComponents = std::get<0>(tup);
-            sim.allWires = std::get<1>(tup);
-
-            int x = 2;
+        if (ImGui::MenuItem("Save Workspace...")) {
+            this->SaveCurrentProjectToFile();
         }
 
+        if (ImGui::InputText("Open Project", &(this->openProjPath), ImGuiInputTextFlags_EnterReturnsTrue)) {
+            this->LoadProjectFromFile(this->openProjPath);
+        }
 
         ImGui::EndMenu();
     }
@@ -481,7 +478,8 @@ void Editor::SubmitUI() {
 
             ICDesc icdesc = ICDesc{ this->icName, comps, this->GetICInputVector(), this->GetICOutputVector() };
             icdesc.SetAdditionalText(this->icAdditionalText);
-            this->icDescriptions.push_back(icdesc);
+            this->currentProject->IncludeIC(icdesc);
+            this->icDescriptions = this->currentProject->GetAllIncludedICs();
             currentState = EditorState_None;
             this->icInputs = {};
             this->icOutputs = {};
@@ -701,6 +699,16 @@ bool Editor::IsKeyCombinationPressed(KeyboardKey modifier, KeyboardKey key) {
     return IsKeyDown(modifier) && IsKeyPressed(key);
 }
 
-void Editor::LoadProjectFromFile(std::string path) {
-    this->currentProject = Project::LoadFromFile(path);
+void Editor::SaveCurrentProjectToFile() {
+    this->currentProject->SaveWorkspace(sim.allComponents);
+    this->currentProject->SaveProjectToFile();
 }
+
+void Editor::LoadProject(Project proj) {
+    // Get all ICs
+    this->icDescriptions = proj.GetAllIncludedICs();
+    std::tuple<std::vector<DrawableComponent*>, std::vector<DrawableWire*>> tup = proj.workspace.GenerateDrawables();
+    this->sim.allComponents = std::get<0>(tup);
+    this->sim.allWires = std::get<1>(tup);
+}
+

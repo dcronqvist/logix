@@ -26,7 +26,7 @@ std::vector<WorkspaceCompDesc> WorkspaceDesc::GenerateComponentDescriptions(std:
         std::string type = "";
         std::string id = "";
         int ioBits = 0;
-        ICDesc desc = { "" };
+        ICDesc* desc = NULL;
 
         if (dynamic_cast<DrawableGate*>(dc) != NULL) { // It is a drawablegate
             DrawableGate* gate = dynamic_cast<DrawableGate*>(dc);
@@ -55,7 +55,7 @@ std::vector<WorkspaceCompDesc> WorkspaceDesc::GenerateComponentDescriptions(std:
         else if (dynamic_cast<DrawableIC*>(dc) != NULL) {
             type = "IC";
             DrawableIC* dic = dynamic_cast<DrawableIC*>(dc);
-            desc = dic->description;
+            desc = &(dic->description);
         }
         else {
             continue;
@@ -109,7 +109,7 @@ std::tuple<std::vector<DrawableComponent*>, std::vector<DrawableWire*>> Workspac
             dc = new DrawableButton(wcd.position);
         }
         else if (wcd.type == "IC") {
-            dc = new DrawableIC(wcd.position, wcd.desc);
+            dc = new DrawableIC(wcd.position, *wcd.desc);
         }
         else {
             dc = new DrawableGate(wcd.position, GetGateLogic(wcd.type.c_str()), &wcd.inps);

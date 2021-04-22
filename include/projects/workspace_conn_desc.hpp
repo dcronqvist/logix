@@ -4,7 +4,7 @@
 #include "utils/json.hpp"
 using json = nlohmann::json;
 
-class WorkspaceConnDesc {
+struct WorkspaceConnDesc {
 public:
     int to;
     int fromOutputIndex;

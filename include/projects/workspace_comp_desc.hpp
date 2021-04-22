@@ -17,7 +17,10 @@ public:
     std::string id;
     int ioBits;
     std::vector<int> inps;
-    ICDesc desc;
+    ICDesc* desc;
+
+    WorkspaceCompDesc();
+    WorkspaceCompDesc(std::string type, Vector2 pos, std::vector<WorkspaceConnDesc> conn, std::string id, int ioBits, std::vector<int> inps, ICDesc* desc);
 };
 
 void to_json(json& j, const WorkspaceCompDesc& p);
