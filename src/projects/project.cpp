@@ -28,9 +28,9 @@ std::vector<ICDesc> Project::GetAllIncludedICs() {
     return descs;
 }
 
-void Project::SaveProjectToFile() {
+void Project::SaveProjectToFile(std::string filePath) {
     json j = *this;
-    std::ofstream o("projects/" + this->name + ".lgxproj");
+    std::ofstream o(filePath);
     o << j << std::endl;
     o.close();
 }

@@ -80,8 +80,10 @@ private:
     std::vector<ICDesc> icDescriptions;
     // should the IC be saved to file?
     bool icSaveToFile;
-
-    std::string openProjPath;
+    // Something has changed since saving last time
+    bool projHasChanged;
+    // Currently open project
+    std::string projCurrentlyOpen;
 
 
 
@@ -94,6 +96,8 @@ public:
         currentProject = new Project{ "new-project" };
         newComponent = NULL;
         selectionRectangle = NULL;
+        projHasChanged = false;
+        projCurrentlyOpen = "";
 
         // ImGui inputs
         switchNBits = 1;
@@ -128,8 +132,12 @@ public:
         json j;
         i >> j;
         std::cout << j << std::endl;
+        this->projCurrentlyOpen = path;
         LoadProject(j.get<Project>());
     }
     void LoadProject(Project proj);
-    void SaveCurrentProjectToFile();
+    void SaveCurrentProjectToFile(std::string path);
+
+    // ALL UI BUTTON FUNCTIONS WHICH HAVE SHORTCUTS
+    void UIQuickSave();
 };

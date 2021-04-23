@@ -3,6 +3,7 @@
 #include "imgui/imgui.h"
 #include "imgui/imgui_impl_raylib.h"
 #include "imgui/imgui_stdlib.h"
+#include "imgui/ImGuiFileDialog.h"
 #include "utils/utility.hpp"
 #include "drawables/drawable_gate.hpp"
 #include "drawables/drawable_switch.hpp"
@@ -71,6 +72,7 @@ void Editor::Update() {
             if (hoveredComponent != NULL) {
                 if (sim.IsSelected(hoveredComponent) && !IsKeyDown(KEY_LEFT_SHIFT)) {
                     currentState = EditorState_MovingSelection;
+                    this->projHasChanged = true;
                 }
             }
             else {
@@ -101,6 +103,7 @@ void Editor::Update() {
         else if (currentState == EditorState_HoveringInput || currentState == EditorState_HoveringOutput) {
             if (hoveredInput == NULL && hoveredOutput == NULL) {
                 currentState = EditorState_None;
+                this->projHasChanged = true;
             }
         }
 
@@ -213,6 +216,7 @@ void Editor::Update() {
                 // Setting the current state to moving_selection allows for
                 // instant movement when selecting a component.
                 currentState = EditorState_MovingSelection;
+                this->projHasChanged = true;
             }
         }
         else if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON) && IsKeyDown(KEY_LEFT_SHIFT) && !io->WantCaptureMouse) {
@@ -237,23 +241,34 @@ void Editor::Update() {
 
 void Editor::SubmitUI() {
     // Main Menu
-    ImGui::SetNextWindowPos(ImVec2{ 0, 20 }, ImGuiCond_Always);
-    ImGui::SetNextWindowSize(ImVec2{ 120.0F, (float)(this->logixWindow->windowHeight - 20) }, ImGuiCond_Always);
+    ImGui::SetNextWindowPos(ImVec2{ 0, 21 }, ImGuiCond_Always);
+    ImGui::SetNextWindowSize(ImVec2{ 120.0F, (float)(this->logixWindow->windowHeight - 21) }, ImGuiCond_Always);
     ImGui::Begin("Sidebar", NULL, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize);
     ImGui::DockSpace(120);
     ImGui::End();
+
+#pragma region STANDALONE SHORTCUTS
+
+    if (IsKeyCombinationPressed(KEY_LEFT_CONTROL, KEY_S)) { this->UIQuickSave(); }
+    if (this->IsKeyCombinationPressed(KEY_LEFT_CONTROL, KEY_I)) { this->currentState = EditorState_MakingIC; }
+
+
+#pragma endregion
 
 #pragma region MAIN MENU BAR
     ImGui::BeginMainMenuBar();
 
     if (ImGui::BeginMenu("File")) {
-
-        if (ImGui::MenuItem("Save Workspace...")) {
-            this->SaveCurrentProjectToFile();
+        if (ImGui::MenuItem("Quick-Save Project", "CTRL + S")) {
+            this->UIQuickSave();
         }
 
-        if (ImGui::InputText("Open Project", &(this->openProjPath), ImGuiInputTextFlags_EnterReturnsTrue)) {
-            this->LoadProjectFromFile(this->openProjPath);
+        if (ImGui::MenuItem("Save Project As...")) {
+            ImGuiFileDialog::Instance()->OpenModal("Save Project", "Save Project", ".lgxproj", this->currentProject->name);
+        }
+
+        if (ImGui::MenuItem("Open Project...")) {
+            ImGuiFileDialog::Instance()->OpenModal("Open Project", "Open Project", ".lgxproj", this->currentProject->name, 1);
         }
 
         ImGui::EndMenu();
@@ -273,7 +288,6 @@ void Editor::SubmitUI() {
         ImGui::EndMenu();
     }
 
-    if (this->IsKeyCombinationPressed(KEY_LEFT_CONTROL, KEY_I)) { this->currentState = EditorState_MakingIC; }
     if (ImGui::BeginMenu("Integrated Circuits")) {
         if (ImGui::MenuItem("New...", "CTRL + I")) {
             this->currentState = EditorState_MakingIC;
@@ -284,6 +298,9 @@ void Editor::SubmitUI() {
 
     ImGui::Separator();
     ImGui::Text("Current state: %d", currentState);
+    ImGui::Separator();
+    std::string projText = (this->currentProject->name + (this->projHasChanged ? "*" : ""));
+    ImGui::TextDisabled(projText.c_str());
 
     ImGui::EndMainMenuBar();
 #pragma endregion
@@ -531,7 +548,7 @@ void Editor::SubmitUI() {
 
 #pragma endregion
 
-    // Testing stuff
+#pragma region AVAILABLE ICS WINDOW
 
     if (ImGui::Begin("ICs", NULL, ImGuiWindowFlags_AlwaysAutoResize)) {
         for (int i = 0; i < this->icDescriptions.size(); i++) {
@@ -543,6 +560,26 @@ void Editor::SubmitUI() {
 
     }
     ImGui::End();
+
+#pragma endregion
+
+    if (ImGuiFileDialog::Instance()->Display("Save Project")) {
+        if (ImGuiFileDialog::Instance()->IsOk()) {
+            std::string filePath = ImGuiFileDialog::Instance()->GetFilePathName();
+            this->SaveCurrentProjectToFile(filePath);
+        }
+
+        ImGuiFileDialog::Instance()->Close();
+    }
+
+    if (ImGuiFileDialog::Instance()->Display("Open Project")) {
+        if (ImGuiFileDialog::Instance()->IsOk()) {
+            std::string filePath = ImGuiFileDialog::Instance()->GetFilePathName();
+            this->LoadProjectFromFile(filePath);
+        }
+
+        ImGuiFileDialog::Instance()->Close();
+    }
 }
 
 void Editor::DrawGrid() {
@@ -622,6 +659,7 @@ void Editor::AddNewComponent(DrawableComponent* comp) {
     sim.AddComponent(newComponent);
     sim.SelectComponent(newComponent);
     currentState = EditorState_MovingSelection;
+    this->projHasChanged = true;
 }
 
 void Editor::AddNewGateButton(const char* gate) {
@@ -699,9 +737,12 @@ bool Editor::IsKeyCombinationPressed(KeyboardKey modifier, KeyboardKey key) {
     return IsKeyDown(modifier) && IsKeyPressed(key);
 }
 
-void Editor::SaveCurrentProjectToFile() {
+void Editor::SaveCurrentProjectToFile(std::string filePath) {
     this->currentProject->SaveWorkspace(sim.allComponents);
-    this->currentProject->SaveProjectToFile();
+    this->currentProject->SaveProjectToFile(filePath);
+    this->currentProject->name = std::string{ GetFileNameWithoutExt(filePath.c_str()) };
+    this->projHasChanged = false;
+    this->projCurrentlyOpen = filePath;
 }
 
 void Editor::LoadProject(Project proj) {
@@ -712,3 +753,6 @@ void Editor::LoadProject(Project proj) {
     this->sim.allWires = std::get<1>(tup);
 }
 
+void Editor::UIQuickSave() {
+    this->SaveCurrentProjectToFile(this->projCurrentlyOpen);
+}
