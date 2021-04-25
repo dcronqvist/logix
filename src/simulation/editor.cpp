@@ -563,6 +563,8 @@ void Editor::SubmitUI() {
 
 #pragma endregion
 
+#pragma region FILE DIALOGS
+
     if (ImGuiFileDialog::Instance()->Display("Save Project")) {
         if (ImGuiFileDialog::Instance()->IsOk()) {
             std::string filePath = ImGuiFileDialog::Instance()->GetFilePathName();
@@ -580,6 +582,9 @@ void Editor::SubmitUI() {
 
         ImGuiFileDialog::Instance()->Close();
     }
+
+#pragma endregion
+
 }
 
 void Editor::DrawGrid() {
@@ -745,14 +750,27 @@ void Editor::SaveCurrentProjectToFile(std::string filePath) {
     this->projCurrentlyOpen = filePath;
 }
 
-void Editor::LoadProject(Project proj) {
+void Editor::LoadProject(Project* proj) {
     // Get all ICs
-    this->icDescriptions = proj.GetAllIncludedICs();
-    std::tuple<std::vector<DrawableComponent*>, std::vector<DrawableWire*>> tup = proj.workspace.GenerateDrawables();
+    this->icDescriptions = proj->GetAllIncludedICs();
+    this->currentProject = proj;
+    SetWindowTitle(("LogiX - " + proj->name).c_str());
+
+    std::tuple<std::vector<DrawableComponent*>, std::vector<DrawableWire*>> tup = proj->workspace.GenerateDrawables();
     this->sim.allComponents = std::get<0>(tup);
     this->sim.allWires = std::get<1>(tup);
 }
 
 void Editor::UIQuickSave() {
+
     this->SaveCurrentProjectToFile(this->projCurrentlyOpen);
+}
+
+bool Editor::AttemptExit() {
+    return !this->projHasChanged;
+}
+
+bool Editor::OnFailedClose() {
+    this->SaveCurrentProjectToFile(this->projCurrentlyOpen);
+    return true;
 }

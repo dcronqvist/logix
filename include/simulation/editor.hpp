@@ -24,20 +24,20 @@ enum EditorState {
 };
 
 class Editor {
-public:
+    public:
     // View and simulation variables
     LogiXWindow* logixWindow;
     Camera2D cam;
     Simulator sim;
     Project* currentProject;
 
-private:
+    private:
     // Mouse variables
     Vector2 currentMousePosWindow;
     Vector2 previousMousePosWindow;
     Vector2 mouseDelta;
 
-private:
+    private:
     // Editor FSM variables
     EditorState currentState;
     DrawableComponent* newComponent;
@@ -49,7 +49,7 @@ private:
     // Output to input connecting
     CircuitIODesc* tempOutput;
 
-private:
+    private:
     // Editor UI variables
     // SwitchN bits
     int switchNBits;
@@ -87,7 +87,7 @@ private:
 
 
 
-public:
+    public:
     Editor(LogiXWindow* lgx) {
         currentState = EditorState_None;
         logixWindow = lgx;
@@ -108,6 +108,8 @@ public:
     void SubmitUI();
     void Draw();
     void Unload();
+    bool AttemptExit();
+    bool OnFailedClose();
 
     void DrawGrid();
     Vector2 GetMousePositionInWorld() {
@@ -133,9 +135,11 @@ public:
         i >> j;
         std::cout << j << std::endl;
         this->projCurrentlyOpen = path;
-        LoadProject(j.get<Project>());
+        Project* proj = new Project();
+        *proj = j;
+        LoadProject(proj);
     }
-    void LoadProject(Project proj);
+    void LoadProject(Project* proj);
     void SaveCurrentProjectToFile(std::string path);
 
     // ALL UI BUTTON FUNCTIONS WHICH HAVE SHORTCUTS

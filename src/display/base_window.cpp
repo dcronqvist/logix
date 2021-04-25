@@ -6,10 +6,7 @@ BaseWindow::BaseWindow(int windowWidth, int windowHeight, std::string tit) {
     this->windowWidth = windowWidth;
     this->windowHeight = windowHeight;
     this->title = tit;
-}
-
-void BaseWindow::CloseWindowSafely() {
-    this->closeSafely = true;
+    this->shouldClose = false;
 }
 
 bool BaseWindow::FocusingWindow() {
@@ -38,7 +35,15 @@ int BaseWindow::Run() {
 
     this->LoadContent();
 
-    while (!WindowShouldClose() && !closeSafely) {
+    while (!shouldClose) {
+
+        if (WindowShouldClose()) {
+            shouldClose = AttemptExit();
+            if (!shouldClose) {
+                shouldClose = OnFailedClose();
+            }
+        }
+
         this->Update();
         this->Render();
     }

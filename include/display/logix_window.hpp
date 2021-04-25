@@ -14,4 +14,6 @@ class LogiXWindow : public BaseWindow {
     void Update();
     void Render();
     void Unload();
+    bool AttemptExit();
+    bool OnFailedClose();
 };

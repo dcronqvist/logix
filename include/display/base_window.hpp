@@ -11,12 +11,11 @@ class BaseWindow {
     raylib::Window* handle;
 
     private:
-    bool closeSafely;
+    bool shouldClose;
     bool isFocused;
 
     public:
     BaseWindow(int windowWidth, int windowHeight, std::string tit);
-    void CloseWindowSafely();
     int Run();
     bool UnfocusingWindow();
     bool FocusingWindow();
@@ -28,4 +27,6 @@ class BaseWindow {
     virtual void Update() = 0;
     virtual void Render() = 0;
     virtual void Unload() = 0;
+    virtual bool AttemptExit() = 0;
+    virtual bool OnFailedClose() = 0;
 };

@@ -80,3 +80,11 @@ void LogiXWindow::Render() {
 void LogiXWindow::Unload() {
     editor->Unload();
 }
+
+bool LogiXWindow::AttemptExit() {
+    return editor->AttemptExit();
+}
+
+bool LogiXWindow::OnFailedClose() {
+    return editor->OnFailedClose();
+}
