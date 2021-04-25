@@ -271,6 +271,12 @@ void Editor::SubmitUI() {
             ImGuiFileDialog::Instance()->OpenModal("Open Project", "Open Project", ".lgxproj", this->currentProject->name, 1);
         }
 
+        ImGui::Separator();
+
+        if (ImGui::MenuItem("Settings")) {
+            this->editingSettings = true;
+        }
+
         ImGui::EndMenu();
     }
 
@@ -585,6 +591,33 @@ void Editor::SubmitUI() {
 
 #pragma endregion
 
+#pragma region SETTINGS WINDOW
+
+    if (this->editingSettings) {
+
+        ImVec2 windowSize = { this->logixWindow->windowWidth / 2.0F, this->logixWindow->windowHeight / 2.0F };
+        ImGui::SetNextWindowPos(windowSize, ImGuiCond_Appearing, ImVec2{ 0.5F, 0.5F });
+        if (ImGui::Begin("Settings", NULL, ImGuiWindowFlags_AlwaysAutoResize)) {
+
+            ImGui::Checkbox("Auto-save on exit", &(this->settingAutoSaveOnExit));
+
+            ImGui::Separator();
+            if (ImGui::Button("Cancel")) {
+                this->editingSettings = false;
+            }
+            ImGui::SameLine();
+            if (ImGui::Button("Save Settings")) {
+                this->SaveSettings();
+                this->editingSettings = false;
+            }
+        }
+
+        ImGui::End();
+
+    }
+
+#pragma endregion
+
 }
 
 void Editor::DrawGrid() {
@@ -771,6 +804,27 @@ bool Editor::AttemptExit() {
 }
 
 bool Editor::OnFailedClose() {
-    this->SaveCurrentProjectToFile(this->projCurrentlyOpen);
+    if (this->settings.GetSetting("AutoSaveOnExit") == "1") {
+        this->SaveCurrentProjectToFile(this->projCurrentlyOpen);
+    }
     return true;
 }
+
+Settings Editor::LoadSettings() {
+    std::ifstream i("settings.json");
+    json j;
+    i >> j;
+    Settings s = j;
+    i.close();
+    return s;
+}
+
+void Editor::SaveSettings() {
+    this->settings.SetSetting("AutoSaveOnExit", this->settingAutoSaveOnExit == true ? "1" : "0");
+
+    std::ofstream o("settings.json");
+    json j = this->settings;
+    o << std::setw(4) << j << std::endl;
+    o.close();
+}
+

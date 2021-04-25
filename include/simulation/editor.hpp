@@ -9,6 +9,7 @@
 #include "drawables/drawable_lamp.hpp"
 #include "integrated/ic_desc.hpp"
 #include "projects/project.hpp"
+#include "projects/settings.hpp"
 #include <iostream>
 
 enum EditorState {
@@ -49,6 +50,9 @@ class Editor {
     // Output to input connecting
     CircuitIODesc* tempOutput;
 
+    // Settings
+    Settings settings;
+
     private:
     // Editor UI variables
     // SwitchN bits
@@ -84,6 +88,13 @@ class Editor {
     bool projHasChanged;
     // Currently open project
     std::string projCurrentlyOpen;
+    // If editing settings
+    bool editingSettings;
+
+    // SETTINGS
+
+    // auto-save on exit
+    bool settingAutoSaveOnExit;
 
 
 
@@ -98,12 +109,19 @@ class Editor {
         selectionRectangle = NULL;
         projHasChanged = false;
         projCurrentlyOpen = "";
+        editingSettings = false;
 
         // ImGui inputs
         switchNBits = 1;
         groupBits = false;
         gateBits = 2;
+        settings = LoadSettings();
+
+        // SETTINGS
+        settingAutoSaveOnExit = settings.GetSetting("AutoSaveOnExit") == "1" ? true : false;
     }
+    Settings LoadSettings();
+    void SaveSettings();
     void Update();
     void SubmitUI();
     void Draw();
