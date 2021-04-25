@@ -5,6 +5,9 @@
 
 *.ini
 .vscode
+*.a
+build/
+.DS_Store
 
 # User-specific files
 *.rsuser
