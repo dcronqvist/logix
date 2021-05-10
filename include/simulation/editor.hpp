@@ -25,20 +25,20 @@ enum EditorState {
 };
 
 class Editor {
-    public:
+public:
     // View and simulation variables
     LogiXWindow* logixWindow;
     Camera2D cam;
     Simulator sim;
     Project* currentProject;
 
-    private:
+private:
     // Mouse variables
     Vector2 currentMousePosWindow;
     Vector2 previousMousePosWindow;
     Vector2 mouseDelta;
 
-    private:
+private:
     // Editor FSM variables
     EditorState currentState;
     DrawableComponent* newComponent;
@@ -53,7 +53,7 @@ class Editor {
     // Settings
     Settings settings;
 
-    private:
+private:
     // Editor UI variables
     // SwitchN bits
     int switchNBits;
@@ -98,7 +98,7 @@ class Editor {
 
 
 
-    public:
+public:
     Editor(LogiXWindow* lgx) {
         currentState = EditorState_None;
         logixWindow = lgx;
@@ -151,7 +151,6 @@ class Editor {
         std::ifstream i(path);
         json j;
         i >> j;
-        std::cout << j << std::endl;
         this->projCurrentlyOpen = path;
         Project* proj = new Project();
         *proj = j;

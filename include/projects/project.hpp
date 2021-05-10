@@ -11,7 +11,7 @@ using json = nlohmann::json;
 
 class Project {
 public:
-    std::vector<std::string> includedICs;
+    std::vector<ICDesc> includedICs;
     std::string name;
     WorkspaceDesc workspace;
 
@@ -25,7 +25,6 @@ public:
     std::vector<ICDesc> GetAllIncludedICs();
     void SaveWorkspace(std::vector<DrawableComponent*> allComponents);
     void SaveProjectToFile(std::string path);
-    void IncludeIC(std::string path);
     void IncludeIC(ICDesc icdesc);
 };
 

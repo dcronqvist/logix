@@ -514,9 +514,9 @@ void Editor::SubmitUI() {
             if (this->icSaveToFile) {
                 std::ofstream o("ic/" + icName + ".ic");
                 json j = icdesc;
-                o << j << std::endl;
                 o.close();
             }
+            this->UIQuickSave();
         }
 
         ImGui::SameLine();
@@ -795,7 +795,6 @@ void Editor::LoadProject(Project* proj) {
 }
 
 void Editor::UIQuickSave() {
-
     this->SaveCurrentProjectToFile(this->projCurrentlyOpen);
 }
 

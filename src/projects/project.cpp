@@ -16,16 +16,7 @@ Project::Project(std::string name) {
 }
 
 std::vector<ICDesc> Project::GetAllIncludedICs() {
-    std::vector<ICDesc> descs = {};
-    for (int i = 0; i < this->includedICs.size(); i++) {
-        std::string path = this->includedICs.at(i);
-        std::ifstream fil(path);
-        json j;
-        fil >> j;
-        descs.push_back(j.get<ICDesc>());
-        fil.close();
-    }
-    return descs;
+    return this->includedICs;
 }
 
 void Project::SaveProjectToFile(std::string filePath) {
@@ -39,14 +30,16 @@ void Project::SaveWorkspace(std::vector<DrawableComponent*> allComponents) {
     this->workspace = WorkspaceDesc{ allComponents };
 }
 
-void Project::IncludeIC(std::string path) {
-    this->includedICs.push_back(path);
+void Project::IncludeIC(ICDesc icdesc) {
+    this->includedICs.push_back(icdesc);
 }
 
-void Project::IncludeIC(ICDesc icdesc) {
-    std::ofstream o("ic/" + icdesc.name + ".ic");
-    json j = icdesc;
-    o << j << std::endl;
-    o.close();
-    this->IncludeIC("ic/" + icdesc.name + ".ic");
+void Project::RemoveIC(std::string name) {
+    std::vector<ICDesc> withoutOld = {};
+    for (int i = 0; i < this->includedICs.size(); i++) {
+        if (this->includedICs.at(i).name != name) {
+            withoutOld.push_back(this->includedICs.at(i));
+        }
+    }
+    this->includedICs = withoutOld;
 }

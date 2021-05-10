@@ -32,6 +32,7 @@ void from_json(const json& j, ICComponentDesc& p) {
     j.at("to").get_to(p.to);
 
     if (!(j.at("ic").is_null())) {
+        p.desc = new ICDesc();
         j.at("ic").get_to(*(p.desc));
     }
 }
