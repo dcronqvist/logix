@@ -8,22 +8,31 @@ public abstract class Component
 
     // Visual stuff, position etc.
     public Vector2 Position { get; set; }
-    public Vector2 Size
+    public virtual Vector2 Size
     {
         get
         {
             float maxIOs = Math.Max(this.Inputs.Count, this.Outputs.Count);
 
-            return new Vector2(100, maxIOs * 25f);
+            return new Vector2(Raylib.MeasureTextEx(Raylib.GetFontDefault(), this.Text, 12, 1).X + 30f, maxIOs * 25f);
         }
     }
     public Rectangle Box
     {
         get
         {
-            return new Rectangle(this.Position.X, this.Position.Y, this.Size.X, this.Size.Y);
+            return new Rectangle(this.Position.X - this.Size.X / 2f, this.Position.Y - this.Size.Y / 2f, this.Size.X, this.Size.Y);
         }
     }
+    public virtual Color BodyColor
+    {
+        get
+        {
+            return Color.WHITE;
+        }
+    }
+    public virtual string Text => "Component";
+    public virtual bool TextVisible => true;
 
     public Component(IEnumerable<int> bitsPerInput, IEnumerable<int> bitsPerOutput, Vector2 position)
     {
@@ -33,7 +42,7 @@ public abstract class Component
         this.Inputs = new List<ComponentInput>();
         for (int i = 0; i < bitsPerInput.Count(); i++)
         {
-            ComponentInput ci = new ComponentInput(bitsPerInput.ElementAt(i), $"{i}");
+            ComponentInput ci = new ComponentInput(bitsPerInput.ElementAt(i), $"{i}", this, i);
             this.Inputs.Add(ci);
         }
 
@@ -41,7 +50,7 @@ public abstract class Component
         this.Outputs = new List<ComponentOutput>();
         for (int i = 0; i < bitsPerOutput.Count(); i++)
         {
-            ComponentOutput ci = new ComponentOutput(bitsPerOutput.ElementAt(i), $"{i}");
+            ComponentOutput ci = new ComponentOutput(bitsPerOutput.ElementAt(i), $"{i}", this, i);
             this.Outputs.Add(ci);
         }
     }
@@ -100,7 +109,7 @@ public abstract class Component
         }
     }
 
-    public void Update()
+    public virtual void Update(Vector2 mousePosInWorld)
     {
         this.UpdateInputs();
         this.PerformLogic();
@@ -119,21 +128,51 @@ public abstract class Component
         return pos;
     }
 
+    public bool TryGetIOFromPosition(Vector2 position, List<ComponentIO> cios, Func<int, Tuple<Vector2, Vector2>> getIOLinePositions, out ComponentIO? cio)
+    {
+        for (int i = 0; i < cios.Count; i++)
+        {
+            Tuple<Vector2, Vector2> positions = getIOLinePositions(i);
+            if (Raylib.CheckCollisionPointCircle(position, positions.Item1, 7f))
+            {
+                cio = cios[i];
+                return true;
+            }
+        }
+
+        cio = null;
+        return false;
+    }
+
+    public bool TryGetInputFromPosition(Vector2 position, out ComponentInput? input)
+    {
+        bool res = TryGetIOFromPosition(position, this.Inputs.Cast<ComponentIO>().ToList(), GetInputLinePositions, out ComponentIO? cio);
+        input = cio != null ? (ComponentInput)cio : null;
+        return res;
+    }
+
+    public bool TryGetOutputFromPosition(Vector2 position, out ComponentOutput? output)
+    {
+        bool res = TryGetIOFromPosition(position, this.Outputs.Cast<ComponentIO>().ToList(), GetOutputLinePositions, out ComponentIO? cio);
+        output = cio != null ? (ComponentOutput)cio : null;
+        return res;
+    }
+
     public Tuple<Vector2, Vector2> GetInputLinePositions(int index)
     {
-        Vector2 startPos = new Vector2(-10f + this.Position.X, GetIOYPosition(this.Inputs.Count, index) + this.Position.Y);
+        Vector2 startPos = new Vector2(-10f + this.Box.x, GetIOYPosition(this.Inputs.Count, index) + this.Box.y);
         Vector2 endPos = startPos + new Vector2(10f, 0);
         return Tuple.Create<Vector2, Vector2>(startPos, endPos);
     }
 
     public Tuple<Vector2, Vector2> GetOutputLinePositions(int index)
     {
-        Vector2 startPos = new Vector2(this.Position.X + this.Size.X + 10f, GetIOYPosition(this.Outputs.Count, index) + this.Position.Y);
+        Vector2 startPos = new Vector2(this.Box.x + this.Box.width + 10f, GetIOYPosition(this.Outputs.Count, index) + this.Box.y);
         Vector2 endPos = startPos + new Vector2(-10f, 0);
         return Tuple.Create<Vector2, Vector2>(startPos, endPos);
     }
 
-    public void RenderIO(Func<int, Tuple<Vector2, Vector2>> getIOLinePositions, List<ComponentIO> ios)
+    public void RenderIO(Func<int, Tuple<Vector2, Vector2>> getIOLinePositions, List<ComponentIO> ios, Vector2 mousePosInWorld)
     {
         for (int i = 0; i < ios.Count; i++)
         {
@@ -145,22 +184,44 @@ public abstract class Component
             {
                 // Render as single bit io
                 Raylib.DrawCircleV(linePositions.Item1, 7f, cio.Values[0] == LogicValue.HIGH ? Color.BLUE : Color.WHITE);
+                Raylib.DrawRing(linePositions.Item1, 7f, 8f, 0, 360, 30, Color.BLACK);
+                //Raylib.DrawCircleLines((int)linePositions.Item1.X, (int)linePositions.Item1.Y, 7f, Color.BLACK);
             }
             else
             {
                 // Render as multibit io
                 Color col = Util.InterpolateColors(Color.WHITE, Color.BLUE, cio.GetHighFraction());
                 Raylib.DrawCircleV(linePositions.Item1, 7f, col);
+                Raylib.DrawRing(linePositions.Item1, 7f, 8f, 0, 360, 30, Color.BLACK);
+            }
+
+            if (Raylib.CheckCollisionPointCircle(mousePosInWorld, linePositions.Item1, 7f))
+            {
+                Raylib.DrawCircleV(linePositions.Item1, 7f, Color.ORANGE);
             }
         }
     }
 
-    public void Render()
+    public virtual void Render(Vector2 mousePosInWorld)
     {
-        Raylib.DrawRectanglePro(this.Box, Vector2.Zero, 0f, Color.WHITE);
-        Raylib.DrawRectangleLinesEx(this.Box, 2, Color.BLACK);
+        Raylib.DrawRectanglePro(this.Box, Vector2.Zero, 0f, this.BodyColor);
+        Raylib.DrawRectangleLinesEx(this.Box, 1, Color.BLACK);
 
-        this.RenderIO(GetInputLinePositions, this.Inputs.Cast<ComponentIO>().ToList());
-        this.RenderIO(GetOutputLinePositions, this.Outputs.Cast<ComponentIO>().ToList());
+        this.RenderIO(GetInputLinePositions, this.Inputs.Cast<ComponentIO>().ToList(), mousePosInWorld);
+        this.RenderIO(GetOutputLinePositions, this.Outputs.Cast<ComponentIO>().ToList(), mousePosInWorld);
+
+        if (this.TextVisible)
+        {
+            Vector2 middleOfBox = new Vector2(this.Box.x, this.Box.y) + new Vector2(this.Box.width / 2f, this.Box.height / 2f);
+            Vector2 textSize = Raylib.MeasureTextEx(Raylib.GetFontDefault(), this.Text, 12, 1);
+
+            Raylib.DrawTextEx(Raylib.GetFontDefault(), this.Text, middleOfBox - textSize / 2f, 12, 1, Color.BLACK);
+        }
+    }
+
+    public virtual void RenderSelected()
+    {
+        int offset = 4;
+        Raylib.DrawRectangleLinesEx(new Rectangle(this.Box.x - offset, this.Box.y - offset, this.Size.X + offset * 2, this.Size.Y + offset * 2), 4, Color.ORANGE);
     }
 }

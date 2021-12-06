@@ -3,6 +3,7 @@ namespace LogiX.Components;
 public class LogicGate : Component
 {
     private IGateLogic Logic { get; set; }
+    public override string Text => this.Logic.GetLogicText();
 
     public LogicGate(int inputBits, bool multibit, IGateLogic gateLogic, Vector2 position) : base(multibit ? Util.Listify(inputBits) : Util.NValues(1, inputBits), Util.Listify(1), position)
     {

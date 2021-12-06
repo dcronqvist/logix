@@ -14,11 +14,16 @@ public static class Util
         return args.ToList();
     }
 
+    public static List<T> EmptyList<T>()
+    {
+        return new List<T>();
+    }
+
     public static Color InterpolateColors(Color src, Color target, float val)
     {
-        return new Color(src.r + (byte)((target.r - src.r) * val),
-                        src.g + (byte)((target.g - src.g) * val),
-                        src.b + (byte)((target.b - src.b) * val),
-                        src.a + (byte)((target.a - src.a) * val));
+        return new Color(src.r + (int)((target.r - src.r) * val),
+                        src.g + (int)((target.g - src.g) * val),
+                        src.b + (int)((target.b - src.b) * val),
+                        src.a + (int)((target.a - src.a) * val));
     }
 }

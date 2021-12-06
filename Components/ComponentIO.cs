@@ -5,15 +5,12 @@ public class ComponentIO
     public int Bits { get; private set; }
     public List<LogicValue> Values { get; private set; }
     public string Identifier { get; set; }
+    public Component OnComponent { get; private set; }
+    public int OnComponentIndex { get; private set; }
 
-    public ComponentIO(int bits, string identifier)
-    {
-        this.Values = Util.NValues(LogicValue.LOW, bits);
-        this.Bits = bits;
-        this.Identifier = identifier;
-    }
+    public ComponentIO(int bits, string identifier, Component component, int index) : this(bits, identifier, component, index, Util.NValues(LogicValue.LOW, bits)) { }
 
-    public ComponentIO(int bits, string identifier, IEnumerable<LogicValue> values)
+    public ComponentIO(int bits, string identifier, Component component, int index, IEnumerable<LogicValue> values)
     {
         if (bits != values.Count())
         {
@@ -23,6 +20,8 @@ public class ComponentIO
         this.Values = new List<LogicValue>(values);
         this.Bits = bits;
         this.Identifier = identifier;
+        this.OnComponent = component;
+        this.OnComponentIndex = index;
     }
 
     public void SetValues(List<LogicValue> values)

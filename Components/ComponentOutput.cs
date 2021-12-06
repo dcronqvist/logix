@@ -4,11 +4,15 @@ public class ComponentOutput : ComponentIO
 {
     public List<Wire> Signals { get; private set; }
 
-    public ComponentOutput(int bits, string identifier) : base(bits, identifier) { this.Signals = new List<Wire>(); }
-    public ComponentOutput(int bits, string identifier, IEnumerable<LogicValue> values) : base(bits, identifier, values) { this.Signals = new List<Wire>(); }
+    public ComponentOutput(int bits, string identifier, Component component, int index) : base(bits, identifier, component, index) { this.Signals = new List<Wire>(); }
+    public ComponentOutput(int bits, string identifier, Component component, int index, IEnumerable<LogicValue> values) : base(bits, identifier, component, index, values) { this.Signals = new List<Wire>(); }
 
     public void AddOutputWire(Wire wire)
     {
+        if (this.Bits != wire.Bits)
+        {
+            throw new ArgumentException($"Cannot connect a {wire.Bits} bit wire to a {this.Bits} bit IO.");
+        }
         this.Signals.Add(wire);
     }
 
