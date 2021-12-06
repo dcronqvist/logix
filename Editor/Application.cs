@@ -1,5 +1,3 @@
-using LogiX.RayImGui;
-
 namespace LogiX.Editor;
 
 public abstract class Application
@@ -9,6 +7,10 @@ public abstract class Application
     public abstract void Update();
     public abstract void Render();
     public abstract void SubmitUI();
+
+    public delegate void WindowResizeCallback(int x, int y);
+
+    public event WindowResizeCallback OnWindowResized;
 
     public void Run(int windowWidth, int windowHeight, string windowTitle, int initialTargetFPS)
     {
@@ -39,8 +41,10 @@ public abstract class Application
                 int x = Raylib.GetScreenWidth();
                 int y = Raylib.GetScreenHeight();
                 igc.Resize(x, y);
+                OnWindowResized?.Invoke(x, y);
             }
 
+            UserInput.Begin();
             Update();
 
             SubmitUI();
@@ -52,6 +56,7 @@ public abstract class Application
             igc.Draw();
 
             Raylib.EndDrawing();
+            UserInput.End();
         }
 
         igc.Dispose();

@@ -3,7 +3,7 @@ using System.Numerics;
 using Raylib_cs;
 using ImGuiNET;
 
-namespace LogiX.RayImGui;
+namespace LogiX.Editor;
 
 /// <summary>
 /// ImGui controller using Raylib-cs

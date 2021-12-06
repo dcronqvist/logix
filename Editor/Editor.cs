@@ -1,62 +1,185 @@
+using LogiX.Components;
+
 namespace LogiX.Editor;
 
 public class Editor : Application
 {
-    float x;
-    float speed;
-    bool isSaga;
+    Camera2D editorCamera;
+    EditorState editorState;
+
+    public Vector2 GetViewSize()
+    {
+        int windowWidth = Raylib.GetScreenWidth();
+        int windowHeight = Raylib.GetScreenHeight();
+        Vector2 viewSize = new Vector2(windowWidth / this.editorCamera.zoom, windowHeight / this.editorCamera.zoom);
+        return viewSize;
+    }
 
     public override void Initialize()
     {
-        speed = 20f;
+        this.OnWindowResized += (width, height) =>
+        {
+            Vector2 windowSize = new Vector2(width, height);
+            this.editorCamera = new Camera2D(windowSize / 2.0f, Vector2.Zero, 0f, 1f);
+        };
     }
 
     public override void LoadContent()
     {
+        Vector2 windowSize = new Vector2(Raylib.GetScreenWidth(), Raylib.GetScreenHeight());
+        this.editorCamera = new Camera2D(windowSize / 2.0f, Vector2.Zero, 0f, 1f);
 
+        this.editorState = EditorState.None;
+
+        Component gate = new LogicGate(new ANDLogic());
+
+        Wire a = new Wire(1);
+        Wire b = new Wire(1);
+
+        Wire c = new Wire(1);
+
+        gate.SetInputWire(0, a);
+        gate.SetInputWire(1, b);
+
+        gate.AddOutputWire(0, c);
+
+        //a.SetAllValues(LogicValue.HIGH);
+        b.SetAllValues(LogicValue.HIGH);
+
+        gate.Update();
     }
 
     public override void SubmitUI()
     {
+        // MAIN MENU BAR
         ImGui.BeginMainMenuBar();
+
+        // FILE
         if (ImGui.BeginMenu("File"))
         {
-            ImGui.Text("Hejsan");
-            ImGui.Separator();
-            ImGui.Text("Svejsan");
             ImGui.EndMenu();
         }
+
+        // EDIT
+        if (ImGui.BeginMenu("Edit"))
+        {
+            ImGui.EndMenu();
+        }
+
         ImGui.EndMainMenuBar();
 
-        ImGui.SetNextWindowPos(new Vector2(0, 21), ImGuiCond.Always);
-        ImGui.SetNextWindowSize(new Vector2(120f, 720f - 21f), ImGuiCond.Always);
-        ImGui.Begin("Sidebar", ImGuiWindowFlags.AlwaysAutoResize);
-        ImGui.End();
+        // SIDEBAR
 
-
-        ImGui.Begin("Hej", ImGuiWindowFlags.NoResize | ImGuiWindowFlags.AlwaysAutoResize);
-        ImGui.Text("Hej");
+        ImGui.SetNextWindowPos(new Vector2(0, 19), ImGuiCond.Always);
+        ImGui.SetNextWindowSize(new Vector2(120, Raylib.GetScreenHeight() - 19), ImGuiCond.Always);
+        ImGui.PushStyleVar(ImGuiStyleVar.WindowRounding, 0f);
+        ImGui.PushStyleColor(ImGuiCol.WindowBg, new Vector4(0.3f, 0.3f, 0.3f, 0.8f));
+        ImGui.Begin("Sidebar", ImGuiWindowFlags.NoCollapse | ImGuiWindowFlags.NoDecoration);
         ImGui.End();
+        ImGui.PopStyleColor();
+        ImGui.PopStyleVar();
 
-        ImGui.Begin("Hej2", ImGuiWindowFlags.NoResize | ImGuiWindowFlags.AlwaysAutoResize);
-        ImGui.Text("Hej2");
+        // TESTING WINDOW
+
+        ImGui.Begin("Components", ImGuiWindowFlags.NoResize | ImGuiWindowFlags.AlwaysVerticalScrollbar);
+        Vector2 buttonSize = new Vector2(94, 22);
+        ImGui.Text("Gates");
+        ImGui.Button("AND", buttonSize);
+        ImGui.Button("OR", buttonSize);
+        ImGui.Button("XOR", buttonSize);
+        ImGui.Button("NAND", buttonSize);
+        ImGui.Button("NOR", buttonSize);
+        ImGui.Button("XNOR", buttonSize);
+        ImGui.Separator();
+        ImGui.Text("Inputs");
+        ImGui.Button("Switch", buttonSize);
+        ImGui.Button("Button", buttonSize);
         ImGui.End();
+    }
+
+    public void DrawGrid()
+    {
+        // Get camera's position and the size of the current view
+        // This depends on the zoom of the camera. Dividing by the
+        // zoom gives a correct representation of the actual visible view.
+        Vector2 camPos = this.editorCamera.target;
+        Vector2 viewSize = GetViewSize();
+
+        int pixelsInBetweenLines = 250;
+
+        // Draw vertical lines
+        for (int i = (int)((camPos.X - viewSize.X / 2.0F) / pixelsInBetweenLines); i < ((camPos.X + viewSize.X / 2.0F) / pixelsInBetweenLines); i++)
+        {
+            int lineX = i * pixelsInBetweenLines;
+            int lineYstart = (int)(camPos.Y - viewSize.Y / 2.0F);
+            int lineYend = (int)(camPos.Y + viewSize.Y / 2.0F);
+
+            Raylib.DrawLine(lineX, lineYstart, lineX, lineYend, Color.DARKGRAY);
+        }
+
+        // Draw horizontal lines
+        for (int i = (int)((camPos.Y - viewSize.Y / 2.0F) / pixelsInBetweenLines); i < ((camPos.Y + viewSize.Y / 2.0F) / pixelsInBetweenLines); i++)
+        {
+            int lineY = i * pixelsInBetweenLines;
+            int lineXstart = (int)(camPos.X - viewSize.X / 2.0F);
+            int lineXend = (int)(camPos.X + viewSize.X / 2.0F);
+            Raylib.DrawLine(lineXstart, lineY, lineXend, lineY, Color.DARKGRAY);
+        }
+    }
+
+    public void FindEditorState()
+    {
+        if (!ImGui.GetIO().WantCaptureMouse)
+        {
+            if (Raylib.IsMouseButtonPressed(MouseButton.MOUSE_MIDDLE_BUTTON) && this.editorState == EditorState.None)
+            {
+                this.editorState = EditorState.MovingCamera; // Pressing Middle mouse button and doing nothing -> move camera
+            }
+            if (Raylib.IsMouseButtonReleased(MouseButton.MOUSE_MIDDLE_BUTTON) && this.editorState == EditorState.MovingCamera)
+            {
+                this.editorState = EditorState.None; // Releasing Middle mouse button and moving camera -> doing nothing
+            }
+        }
+    }
+
+    public void PerformEditorState()
+    {
+        Vector2 mouseDelta = UserInput.GetMouseDelta(this.editorCamera);
+
+        // ALLOW USER TO ZOOM IN AND OUT
+        // TODO: Should probably fix some cap on
+        // how far in/out u can zoom.
+        if (!ImGui.GetIO().WantCaptureMouse)
+        {
+            if (Raylib.GetMouseWheelMove() > 0)
+            {
+                this.editorCamera.zoom *= 1.05F;
+            }
+            if (Raylib.GetMouseWheelMove() < 0)
+            {
+                this.editorCamera.zoom *= 1.0F / 1.05F;
+            }
+        }
+
+        // CHECKS TO SEE WHICH EDITOR STATE TO PERFORM
+        if (this.editorState == EditorState.MovingCamera)
+        {
+            this.editorCamera.target = this.editorCamera.target - mouseDelta;
+        }
     }
 
     public override void Update()
     {
-        x += Raylib.GetFrameTime() * speed;
-
-        if (x > 1280 || x < 0)
-        {
-            speed *= -1f;
-        }
+        FindEditorState();
+        PerformEditorState();
     }
 
     public override void Render()
     {
-        Raylib.ClearBackground(Color.BLUE);
+        Raylib.BeginMode2D(this.editorCamera);
+        Raylib.ClearBackground(Color.LIGHTGRAY);
+        DrawGrid();
 
-        Raylib.DrawText(isSaga ? "Is Saga" : "Is Daniel", (int)x, 10, 100, Color.RED);
+        Raylib.EndMode2D();
     }
 }
