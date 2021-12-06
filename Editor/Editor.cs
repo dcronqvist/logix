@@ -30,23 +30,6 @@ public class Editor : Application
         this.editorCamera = new Camera2D(windowSize / 2.0f, Vector2.Zero, 0f, 1f);
 
         this.editorState = EditorState.None;
-
-        Component gate = new LogicGate(new ANDLogic());
-
-        Wire a = new Wire(1);
-        Wire b = new Wire(1);
-
-        Wire c = new Wire(1);
-
-        gate.SetInputWire(0, a);
-        gate.SetInputWire(1, b);
-
-        gate.AddOutputWire(0, c);
-
-        //a.SetAllValues(LogicValue.HIGH);
-        b.SetAllValues(LogicValue.HIGH);
-
-        gate.Update();
     }
 
     public override void SubmitUI()
@@ -179,6 +162,27 @@ public class Editor : Application
         Raylib.BeginMode2D(this.editorCamera);
         Raylib.ClearBackground(Color.LIGHTGRAY);
         DrawGrid();
+
+        Wire a = new Wire(1);
+        Wire b = new Wire(1);
+
+        Component c = new LogicGate(2, false, new ANDLogic(), Vector2.Zero);
+
+        c.SetInputWire(0, a);
+        c.SetInputWire(1, b);
+
+        if (Raylib.IsKeyDown(KeyboardKey.KEY_A))
+        {
+            a.SetAllValues(LogicValue.HIGH);
+        }
+        if (Raylib.IsKeyDown(KeyboardKey.KEY_B))
+        {
+            b.SetAllValues(LogicValue.HIGH);
+        }
+
+        c.Update();
+
+        c.Render();
 
         Raylib.EndMode2D();
     }

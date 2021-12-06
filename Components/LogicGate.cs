@@ -4,12 +4,7 @@ public class LogicGate : Component
 {
     private IGateLogic Logic { get; set; }
 
-    public LogicGate(IGateLogic gateLogic) : base(Util.Listify(1, 1), Util.Listify(1))
-    {
-        this.Logic = gateLogic;
-    }
-
-    public LogicGate(int inputBits, IGateLogic gateLogic) : base(Util.Listify(inputBits), Util.Listify(1))
+    public LogicGate(int inputBits, bool multibit, IGateLogic gateLogic, Vector2 position) : base(multibit ? Util.Listify(inputBits) : Util.NValues(1, inputBits), Util.Listify(1), position)
     {
         if (inputBits < 2)
         {
