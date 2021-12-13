@@ -1,6 +1,6 @@
 namespace LogiX.Components;
 
-public class ANDLogic : IGateLogic
+public class NANDLogic : IGateLogic
 {
     public LogicValue PerformLogic(List<ComponentInput> inputs)
     {
@@ -12,15 +12,15 @@ public class ANDLogic : IGateLogic
             {
                 if (ci.Values[j] == LogicValue.LOW)
                 {
-                    return LogicValue.LOW;
+                    return LogicValue.HIGH;
                 }
             }
         }
 
-        return LogicValue.HIGH;
+        return LogicValue.LOW;
     }
 
-    public string GetLogicText() => "AND";
+    public string GetLogicText() => "NAND";
     public int DefaultBits() => 2;
     public int MinBits() => 2;
     public int MaxBits() => int.MaxValue;

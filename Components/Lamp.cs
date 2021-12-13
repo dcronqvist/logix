@@ -1,16 +1,15 @@
-using LogiX.Editor;
 using LogiX.SaveSystem;
 
 namespace LogiX.Components;
 
-public class Switch : Component
+public class Lamp : Component
 {
     public List<LogicValue> Values { get; private set; }
-    public override Vector2 Size => new Vector2(this.Outputs[0].Bits * (30 + 2) + 2, 34);
+    public override Vector2 Size => new Vector2(this.Inputs[0].Bits * (30 + 2) + 2, 34);
     public override bool TextVisible => false;
     public string ID { get; set; }
 
-    public Switch(int bits, Vector2 position, string id = "") : base(Util.EmptyList<int>(), Util.Listify(bits), position)
+    public Lamp(int bits, Vector2 position, string id = "") : base(Util.Listify(bits), Util.EmptyList<int>(), position)
     {
         this.Values = Util.NValues(LogicValue.LOW, bits);
         this.ID = id;
@@ -18,28 +17,7 @@ public class Switch : Component
 
     public override void PerformLogic()
     {
-        this.Outputs[0].SetValues(this.Values);
-    }
-
-    public override void Update(Vector2 mousePosInWorld)
-    {
-        if (Raylib.IsMouseButtonPressed(MouseButton.MOUSE_RIGHT_BUTTON))
-        {
-            for (int i = 0; i < this.Values.Count; i++)
-            {
-                Vector2 pos = new Vector2(this.Box.x, this.Box.y) + new Vector2(2 + 32 * i, 2);
-                Rectangle rec = new Rectangle(pos.X, pos.Y, 30f, 30f);
-                if (Raylib.CheckCollisionPointRec(mousePosInWorld, rec))
-                {
-                    // TOGGLE VALUE
-                    this.ToggleValue(i);
-                }
-            }
-
-
-        }
-
-        base.Update(mousePosInWorld);
+        this.Values = this.Inputs[0].Values;
     }
 
     public override void Render(Vector2 mousePosInWorld)
@@ -54,25 +32,20 @@ public class Switch : Component
             Raylib.DrawRectangleV(new Vector2(this.Box.x, this.Box.y) + offset, new Vector2(30f), this.Values[i] == LogicValue.LOW ? new Color(240, 240, 240, 255) : Color.BLUE);
         }
 
-        Vector2 leftMiddle = new Vector2(this.Box.x, this.Box.y + this.Box.height / 2f);
+        Vector2 rightMiddle = new Vector2(this.Box.x + this.Box.width, this.Box.y + this.Box.height / 2f);
 
         if (Raylib.CheckCollisionPointRec(mousePosInWorld, this.Box))
         {
             // Display label
             int fontSize = 20;
             Vector2 measure = Raylib.MeasureTextEx(Raylib.GetFontDefault(), this.ID, fontSize, 1);
-            Raylib.DrawTextEx(Raylib.GetFontDefault(), this.ID, leftMiddle + new Vector2(-10 - measure.X, measure.Y / -2f), fontSize, 1, Color.BLACK);
+            Raylib.DrawTextEx(Raylib.GetFontDefault(), this.ID, rightMiddle + new Vector2(10, measure.Y / -2f), fontSize, 1, Color.BLACK);
         }
-    }
-
-    public void ToggleValue(int index)
-    {
-        this.Values[index] = this.Values[index] == LogicValue.LOW ? LogicValue.HIGH : LogicValue.LOW;
     }
 
     public override ComponentDescription ToDescription()
     {
-        return new SLDescription(this.Position, Util.EmptyList<IODescription>(), Util.Listify(new IODescription(this.Outputs[0].Bits)), ComponentType.Switch, this.ID);
+        return new SLDescription(this.Position, Util.Listify(new IODescription(this.Inputs[0].Bits)), Util.EmptyList<IODescription>(), ComponentType.Lamp, this.ID);
     }
 
     public override void OnSingleSelectedSubmitUI()

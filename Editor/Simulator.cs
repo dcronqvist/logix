@@ -1,4 +1,5 @@
 using LogiX.Components;
+using Newtonsoft.Json;
 
 namespace LogiX.Editor;
 
@@ -21,6 +22,11 @@ public class Simulator
         {
             component.Update(mousePosInWorld);
         }
+
+        foreach (Wire wire in this.Wires)
+        {
+            wire.Update(mousePosInWorld);
+        }
     }
 
     public void Render(Vector2 mousePosInWorld)
@@ -41,14 +47,72 @@ public class Simulator
         }
     }
 
+    public void AddComponents(List<Component> components)
+    {
+        foreach (Component c in components)
+        {
+            this.AddComponent(c);
+        }
+    }
+
     public void AddComponent(Component c)
     {
         this.Components.Add(c);
     }
 
+    public void DeleteComponent(Component c)
+    {
+        // Delete all input wires
+        // Delete all output wires
+        // Delete component
+
+        List<Wire> toDelete = new List<Wire>();
+
+        foreach (ComponentInput ci in c.Inputs)
+        {
+            if (ci.Signal != null)
+            {
+                toDelete.Add(ci.Signal);
+            }
+        }
+
+        foreach (ComponentOutput co in c.Outputs)
+        {
+            if (co.Signals.Count > 0)
+            {
+                co.Signals.ForEach((wire) =>
+                {
+                    toDelete.Add(wire);
+                });
+            }
+        }
+
+        for (int i = 0; i < toDelete.Count; i++)
+        {
+            this.DeleteWire(toDelete[i]);
+        }
+        this.Components.Remove(c);
+    }
+
+    public void AddWires(List<Wire> wires)
+    {
+        foreach (Wire w in wires)
+        {
+            this.AddWire(w);
+        }
+    }
+
     public void AddWire(Wire wire)
     {
         this.Wires.Add(wire);
+    }
+
+    public void DeleteWire(Wire wire)
+    {
+        wire.From.RemoveOutputWire(wire.FromIndex, wire);
+        wire.To.RemoveInputWire(wire.ToIndex);
+
+        this.Wires.Remove(wire);
     }
 
     public Component? GetComponentFromWorldPos(Vector2 posInWorld)
@@ -58,6 +122,19 @@ public class Simulator
             if (Raylib.CheckCollisionPointRec(posInWorld, c.Box))
             {
                 return c;
+            }
+        }
+
+        return null;
+    }
+
+    public Wire? GetWireFromWorldPos(Vector2 posInWorld)
+    {
+        foreach (Wire wire in this.Wires)
+        {
+            if (wire.IsPositionOnWire(posInWorld))
+            {
+                return wire;
             }
         }
 
@@ -75,6 +152,17 @@ public class Simulator
     public void SelectComponent(Component c)
     {
         this.SelectedComponents.Add(c);
+    }
+
+    public void SelectComponentsInRectangle(Rectangle rec)
+    {
+        foreach (Component c in this.Components)
+        {
+            if (Raylib.CheckCollisionRecs(c.Box, rec))
+            {
+                this.SelectComponent(c);
+            }
+        }
     }
 
     public void DeselectComponent(Component c)
@@ -97,6 +185,15 @@ public class Simulator
     public bool IsComponentSelected(Component c)
     {
         return this.SelectedComponents.Contains(c);
+    }
+
+    public void DeleteSelection()
+    {
+        foreach (Component c in this.SelectedComponents)
+        {
+            this.DeleteComponent(c);
+        }
+        this.ClearSelection();
     }
 
     public void ClearSelection()
@@ -128,5 +225,10 @@ public class Simulator
         }
 
         return null;
+    }
+
+    public void Save()
+    {
+        Console.WriteLine(JsonConvert.SerializeObject(this));
     }
 }

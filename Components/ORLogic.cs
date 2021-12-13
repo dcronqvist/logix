@@ -21,4 +21,8 @@ public class ORLogic : IGateLogic
     }
 
     public string GetLogicText() => "OR";
+    public int DefaultBits() => 2;
+    public int MinBits() => 2;
+    public int MaxBits() => int.MaxValue;
+    public bool AllowMultibit() => true;
 }

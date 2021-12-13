@@ -1,3 +1,5 @@
+using LogiX.SaveSystem;
+
 namespace LogiX.Components;
 
 public abstract class Component
@@ -34,6 +36,8 @@ public abstract class Component
     public virtual string Text => "Component";
     public virtual bool TextVisible => true;
 
+    protected string uniqueID;
+
     public Component(IEnumerable<int> bitsPerInput, IEnumerable<int> bitsPerOutput, Vector2 position)
     {
         this.Position = position;
@@ -53,6 +57,8 @@ public abstract class Component
             ComponentOutput ci = new ComponentOutput(bitsPerOutput.ElementAt(i), $"{i}", this, i);
             this.Outputs.Add(ci);
         }
+
+        this.uniqueID = Guid.NewGuid().ToString();
     }
 
     public void SetInputWire(int index, Wire wire)
@@ -180,24 +186,29 @@ public abstract class Component
             Tuple<Vector2, Vector2> linePositions = getIOLinePositions(i);
             Raylib.DrawLineEx(linePositions.Item1, linePositions.Item2, 1.5f, Color.BLACK);
 
+            Color col = Util.InterpolateColors(Color.WHITE, Color.BLUE, cio.GetHighFraction());
+
+            if (Raylib.CheckCollisionPointCircle(mousePosInWorld, linePositions.Item1, 7f))
+            {
+                col = Color.ORANGE;
+            }
+
             if (cio.Bits == 1)
             {
                 // Render as single bit io
-                Raylib.DrawCircleV(linePositions.Item1, 7f, cio.Values[0] == LogicValue.HIGH ? Color.BLUE : Color.WHITE);
+                Raylib.DrawCircleV(linePositions.Item1, 7f, col);
                 Raylib.DrawRing(linePositions.Item1, 7f, 8f, 0, 360, 30, Color.BLACK);
                 //Raylib.DrawCircleLines((int)linePositions.Item1.X, (int)linePositions.Item1.Y, 7f, Color.BLACK);
             }
             else
             {
                 // Render as multibit io
-                Color col = Util.InterpolateColors(Color.WHITE, Color.BLUE, cio.GetHighFraction());
                 Raylib.DrawCircleV(linePositions.Item1, 7f, col);
                 Raylib.DrawRing(linePositions.Item1, 7f, 8f, 0, 360, 30, Color.BLACK);
-            }
 
-            if (Raylib.CheckCollisionPointCircle(mousePosInWorld, linePositions.Item1, 7f))
-            {
-                Raylib.DrawCircleV(linePositions.Item1, 7f, Color.ORANGE);
+                int bitNumberSize = 10;
+                Vector2 measure = Raylib.MeasureTextEx(Raylib.GetFontDefault(), cio.Bits.ToString(), bitNumberSize, 1);
+                Raylib.DrawTextEx(Raylib.GetFontDefault(), cio.Bits.ToString(), linePositions.Item1 - measure / 2f, bitNumberSize, 1, Color.BLACK);
             }
         }
     }
@@ -219,9 +230,16 @@ public abstract class Component
         }
     }
 
+    public virtual void OnSingleSelectedSubmitUI()
+    {
+
+    }
+
     public virtual void RenderSelected()
     {
         int offset = 4;
         Raylib.DrawRectangleLinesEx(new Rectangle(this.Box.x - offset, this.Box.y - offset, this.Size.X + offset * 2, this.Size.Y + offset * 2), 4, Color.ORANGE);
     }
+
+    public abstract ComponentDescription ToDescription();
 }

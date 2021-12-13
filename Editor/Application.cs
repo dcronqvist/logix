@@ -25,6 +25,7 @@ public abstract class Application
         Raylib.InitWindow(windowWidth, windowHeight, windowTitle);
         Raylib.SetTargetFPS(initialTargetFPS);
 
+        Raylib.SetExitKey(KeyboardKey.KEY_NULL);
         ImguiController igc = new ImguiController();
         igc.Load(windowWidth, windowHeight);
 

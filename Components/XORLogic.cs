@@ -1,26 +1,28 @@
 namespace LogiX.Components;
 
-public class ANDLogic : IGateLogic
+public class XORLogic : IGateLogic
 {
     public LogicValue PerformLogic(List<ComponentInput> inputs)
     {
+        int inputsHigh = 0;
+
         for (int i = 0; i < inputs.Count; i++)
         {
             ComponentInput ci = inputs[i];
 
             for (int j = 0; j < ci.Bits; j++)
             {
-                if (ci.Values[j] == LogicValue.LOW)
+                if (ci.Values[j] == LogicValue.HIGH)
                 {
-                    return LogicValue.LOW;
+                    inputsHigh += 1;
                 }
             }
         }
 
-        return LogicValue.HIGH;
+        return inputsHigh % 2 == 1 ? LogicValue.HIGH : LogicValue.LOW;
     }
 
-    public string GetLogicText() => "AND";
+    public string GetLogicText() => "XOR";
     public int DefaultBits() => 2;
     public int MinBits() => 2;
     public int MaxBits() => int.MaxValue;

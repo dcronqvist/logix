@@ -3,6 +3,7 @@ namespace LogiX.Components;
 public class ComponentOutput : ComponentIO
 {
     public List<Wire> Signals { get; private set; }
+    public override Vector2 Position => this.OnComponent.GetOutputLinePositions(this.OnComponentIndex).Item1;
 
     public ComponentOutput(int bits, string identifier, Component component, int index) : base(bits, identifier, component, index) { this.Signals = new List<Wire>(); }
     public ComponentOutput(int bits, string identifier, Component component, int index, IEnumerable<LogicValue> values) : base(bits, identifier, component, index, values) { this.Signals = new List<Wire>(); }

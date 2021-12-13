@@ -7,6 +7,7 @@ public class ComponentIO
     public string Identifier { get; set; }
     public Component OnComponent { get; private set; }
     public int OnComponentIndex { get; private set; }
+    public virtual Vector2 Position => Vector2.Zero;
 
     public ComponentIO(int bits, string identifier, Component component, int index) : this(bits, identifier, component, index, Util.NValues(LogicValue.LOW, bits)) { }
 

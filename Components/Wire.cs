@@ -1,3 +1,5 @@
+using LogiX.SaveSystem;
+
 namespace LogiX.Components;
 
 public class Wire
@@ -48,6 +50,31 @@ public class Wire
         }
 
         return (float)highCount / (float)this.Bits;
+    }
+
+    public bool IsPositionOnWire(Vector2 pos)
+    {
+        float width = 4f;
+        Vector2 fromPos = this.From.GetOutputLinePositions(this.FromIndex).Item1 - new Vector2(0, width / 2f);
+        Vector2 toPos = this.To.GetInputLinePositions(this.ToIndex).Item1 + new Vector2(0, width / 2f);
+
+        if (!Raylib.CheckCollisionPointRec(pos, Util.CreateRecFromTwoCorners(fromPos, toPos)))
+        {
+            return false;
+        }
+
+        Tuple<float, float, float> line = Util.LineFromTwoPoints(fromPos, toPos);
+
+        float px = (line.Item2 * (line.Item2 * pos.X - line.Item1 * pos.Y) - line.Item1 * line.Item3) / (MathF.Pow(line.Item1, 2) + MathF.Pow(line.Item2, 2));
+        float py = (line.Item1 * (-line.Item2 * pos.X + line.Item1 * pos.Y) - line.Item2 * line.Item3) / (MathF.Pow(line.Item1, 2) + MathF.Pow(line.Item2, 2));
+
+        Vector2 endPos = new Vector2(px, py);
+        return (pos - endPos).Length() < (width / 2f);
+    }
+
+    public void Update(Vector2 mousePosInWorld)
+    {
+
     }
 
     public void Render(Vector2 mousePosInWorld)
