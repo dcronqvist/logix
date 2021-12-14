@@ -32,7 +32,8 @@ public class ImguiController : IDisposable
     public void Load(int width, int height)
     {
         ImGuiIOPtr io = ImGui.GetIO();
-        io.Fonts.AddFontDefault();
+        //io.Fonts.AddFontDefault();
+        io.Fonts.AddFontFromFileTTF($"{Directory.GetCurrentDirectory()}/assets/opensans.ttf", 17);
 
         Resize(width, height);
         LoadFontTexture();

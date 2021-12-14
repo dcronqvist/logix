@@ -5,7 +5,7 @@ namespace LogiX.Components;
 
 public class Switch : Component
 {
-    public List<LogicValue> Values { get; private set; }
+    public List<LogicValue> Values { get; set; }
     public override Vector2 Size => new Vector2(this.Outputs[0].Bits * (30 + 2) + 2, 34);
     public override bool TextVisible => false;
     public string ID { get; set; }

@@ -20,6 +20,9 @@ public class Editor : Application
     ComponentOutput? connectFrom;
 
     CircuitDescription? copiedCircuit;
+    List<SLDescription> icSwitches;
+    List<SLDescription> icLamps;
+    string icName;
 
     // UI VARIABLES
     int newComponentBits;
@@ -50,6 +53,9 @@ public class Editor : Application
         this.editorState = EditorState.None;
 
         this.simulator = new Simulator();
+
+        Util.OpenSans = Raylib.LoadFontEx($"{Directory.GetCurrentDirectory()}/assets/opensans-bold.ttf", 100, Enumerable.Range(0, 1000).ToArray(), 1000);
+        Raylib.SetTextureFilter(Util.OpenSans.texture, TextureFilter.TEXTURE_FILTER_TRILINEAR);
     }
 
     public override void SubmitUI()
@@ -69,6 +75,9 @@ public class Editor : Application
             if (ImGui.MenuItem("Copy", "Ctrl+C"))
             {
                 copiedCircuit = new CircuitDescription(this.simulator.SelectedComponents);
+                icSwitches = copiedCircuit.GetSwitches();
+                icLamps = copiedCircuit.GetLamps();
+                icName = "";
             }
             if (ImGui.MenuItem("Paste", "Ctrl+V"))
             {
@@ -85,6 +94,10 @@ public class Editor : Application
                     }
                 }
             }
+            if (ImGui.MenuItem("Create IC From Clipboard", "Ctrl+I", false, copiedCircuit != null))
+            {
+                this.editorState = EditorState.MakingIC;
+            }
             ImGui.EndMenu();
         }
 
@@ -92,7 +105,7 @@ public class Editor : Application
 
         // SIDEBAR
 
-        ImGui.SetNextWindowPos(new Vector2(0, 19), ImGuiCond.Always);
+        ImGui.SetNextWindowPos(new Vector2(0, 22), ImGuiCond.Always);
         ImGui.SetNextWindowSize(new Vector2(120, Raylib.GetScreenHeight() - 19), ImGuiCond.Always);
         ImGui.PushStyleVar(ImGuiStyleVar.WindowRounding, 0f);
         ImGui.PushStyleColor(ImGuiCol.WindowBg, new Vector4(0.3f, 0.3f, 0.3f, 0.8f));
@@ -104,7 +117,6 @@ public class Editor : Application
         // TESTING WINDOW
 
         ImGui.Begin("Components", ImGuiWindowFlags.NoResize | ImGuiWindowFlags.AlwaysVerticalScrollbar | ImGuiWindowFlags.NoNavInputs);
-        Vector2 buttonSize = new Vector2(94, 22);
         ImGui.Text("Gates");
         for (int i = 0; i < this.availableGateLogics.Length; i++)
         {
@@ -123,6 +135,88 @@ public class Editor : Application
         }, 1, false);
 
         ImGui.End();
+
+        if (this.editorState == EditorState.MakingIC)
+        {
+            ImGui.OpenPopup("Create Integrated Circuit");
+        }
+
+        // MAKING IC WINDOW
+        Vector2 windowSize = new Vector2(Raylib.GetScreenWidth(), Raylib.GetScreenHeight());
+        ImGui.SetNextWindowPos(windowSize / 2, ImGuiCond.Always, new Vector2(0.5f, 0.5f));
+        ImGui.SetNextWindowSize(new Vector2(100) * 4f);
+        if (ImGui.BeginPopupModal("Create Integrated Circuit"))
+        {
+            ImGui.InputText("Circuit name", ref this.icName, 25);
+            ImGui.Separator();
+
+            ImGui.Columns(2);
+            ImGui.Text("Inputs");
+            ImGui.NextColumn();
+            ImGui.Text("Outputs");
+            ImGui.Separator();
+            ImGui.NextColumn();
+
+            for (int i = 0; i < icSwitches.Count; i++)
+            {
+                SLDescription sw = icSwitches[i];
+                ImGui.Selectable(sw.Name, false, ImGuiSelectableFlags.DontClosePopups);
+
+                if (ImGui.IsItemActive() && !ImGui.IsItemHovered())
+                {
+                    int nNext = i + (ImGui.GetMouseDragDelta(ImGuiMouseButton.Left).Y < 0f ? -1 : 1);
+                    if (nNext >= 0 && nNext < icSwitches.Count)
+                    {
+                        icSwitches[i] = icSwitches[nNext];
+                        icSwitches[nNext] = sw;
+                    }
+                }
+            }
+
+            ImGui.NextColumn();
+
+            for (int i = 0; i < icLamps.Count; i++)
+            {
+                SLDescription sw = icLamps[i];
+                ImGui.Selectable(sw.Name, false, ImGuiSelectableFlags.DontClosePopups);
+
+                if (ImGui.IsItemActive() && !ImGui.IsItemHovered())
+                {
+                    int nNext = i + (ImGui.GetMouseDragDelta(ImGuiMouseButton.Left).Y < 0f ? -1 : 1);
+                    if (nNext >= 0 && nNext < icLamps.Count)
+                    {
+                        icLamps[i] = icLamps[nNext];
+                        icLamps[nNext] = sw;
+                    }
+                }
+            }
+
+            ImGui.Columns(1);
+            ImGui.Separator();
+
+            if (ImGui.Button("Create"))
+            {
+                if (copiedCircuit != null)
+                {
+                    if (copiedCircuit.ValidForIC())
+                    {
+                        ICDescription icd = new ICDescription(this.icName, copiedCircuit, icSwitches.Select(sw => new List<string>() { sw.ID }).ToList(), icLamps.Select(l => new List<string>() { l.ID }).ToList());
+                        Console.WriteLine(JsonConvert.SerializeObject(icd, Formatting.Indented));
+
+                        ICComponent icc = new ICComponent(icd, Vector2.Zero);
+                        this.simulator.AddComponent(icc);
+                    }
+                    else
+                    {
+                        Console.WriteLine("circuit contains unnamed switches or lamps.");
+                    }
+                }
+
+                ImGui.CloseCurrentPopup();
+                this.editorState = EditorState.None;
+            }
+            ImGui.EndPopup();
+        }
 
         // DEBUG WINDOW
 
@@ -153,7 +247,7 @@ public class Editor : Application
 
     public void CreateNewComponentButton(string text, bool multibitPop, Func<int, bool, Vector2, Component> createComponent, int defaultBits, bool defaultMultibit)
     {
-        Vector2 buttonSize = new Vector2(94, 22);
+        Vector2 buttonSize = new Vector2(94, 25);
         ImGui.Button(text, buttonSize);
         if (ImGui.IsItemClicked())
         {
@@ -313,11 +407,11 @@ public class Editor : Application
         {
             if (Raylib.GetMouseWheelMove() > 0)
             {
-                this.editorCamera.zoom *= 1.05F;
+                this.editorCamera.zoom = 1.05F * this.editorCamera.zoom;
             }
             if (Raylib.GetMouseWheelMove() < 0)
             {
-                this.editorCamera.zoom *= 1.0F / 1.05F;
+                this.editorCamera.zoom = (1f / 1.05f) * this.editorCamera.zoom;
             }
 
             // SELECTING/DESELECTING

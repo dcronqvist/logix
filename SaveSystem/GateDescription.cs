@@ -26,6 +26,8 @@ public class GateDescription : ComponentDescription
                 return new NORLogic();
             case "XOR":
                 return new XORLogic();
+            case "NOT":
+                return new NOTLogic();
         }
 
         return null;

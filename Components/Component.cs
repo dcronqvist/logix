@@ -16,7 +16,10 @@ public abstract class Component
         {
             float maxIOs = Math.Max(this.Inputs.Count, this.Outputs.Count);
 
-            return new Vector2(Raylib.MeasureTextEx(Raylib.GetFontDefault(), this.Text, 12, 1).X + 30f, maxIOs * 25f);
+            float ioWidth = this.DrawIOIdentifiers ? GetMaxIOIDWidth() : 0;
+            float textWidth = Raylib.MeasureTextEx(Util.OpenSans, this.Text, 18, 1).X;
+
+            return new Vector2(ioWidth * 2f + textWidth + 20f, maxIOs * 25f);
         }
     }
     public Rectangle Box
@@ -35,6 +38,7 @@ public abstract class Component
     }
     public virtual string Text => "Component";
     public virtual bool TextVisible => true;
+    public virtual bool DrawIOIdentifiers => false;
 
     protected string uniqueID;
 
@@ -59,6 +63,19 @@ public abstract class Component
         }
 
         this.uniqueID = Guid.NewGuid().ToString();
+    }
+
+    public float GetMaxIOIDWidth()
+    {
+        float max = 0f;
+
+        foreach (ComponentInput ci in this.Inputs)
+        {
+            Vector2 measure = Raylib.MeasureTextEx(Util.OpenSans, ci.Identifier, 14, 1);
+            max = MathF.Max(max, measure.X);
+        }
+
+        return max;
     }
 
     public void SetInputWire(int index, Wire wire)
@@ -186,6 +203,23 @@ public abstract class Component
             Tuple<Vector2, Vector2> linePositions = getIOLinePositions(i);
             Raylib.DrawLineEx(linePositions.Item1, linePositions.Item2, 1.5f, Color.BLACK);
 
+            if (this.DrawIOIdentifiers)
+            {
+                string identifier = cio.Identifier;
+
+                Vector2 measure = Raylib.MeasureTextEx(Util.OpenSans, identifier, 14, 1);
+                if (linePositions.Item1.X > linePositions.Item2.X)
+                {
+                    // On right side of component
+                    Raylib.DrawTextEx(Util.OpenSans, identifier, linePositions.Item2 + new Vector2(-measure.X - 5, -measure.Y / 2f), 14, 1, Color.BLACK);
+                }
+                else
+                {
+                    // On left side of component
+                    Raylib.DrawTextEx(Util.OpenSans, identifier, linePositions.Item2 + new Vector2(5, -measure.Y / 2f), 14, 1, Color.BLACK);
+                }
+            }
+
             Color col = Util.InterpolateColors(Color.WHITE, Color.BLUE, cio.GetHighFraction());
 
             if (Raylib.CheckCollisionPointCircle(mousePosInWorld, linePositions.Item1, 7f))
@@ -207,8 +241,8 @@ public abstract class Component
                 Raylib.DrawRing(linePositions.Item1, 7f, 8f, 0, 360, 30, Color.BLACK);
 
                 int bitNumberSize = 10;
-                Vector2 measure = Raylib.MeasureTextEx(Raylib.GetFontDefault(), cio.Bits.ToString(), bitNumberSize, 1);
-                Raylib.DrawTextEx(Raylib.GetFontDefault(), cio.Bits.ToString(), linePositions.Item1 - measure / 2f, bitNumberSize, 1, Color.BLACK);
+                Vector2 measure = Raylib.MeasureTextEx(Util.OpenSans, cio.Bits.ToString(), bitNumberSize, 1);
+                Raylib.DrawTextEx(Util.OpenSans, cio.Bits.ToString(), linePositions.Item1 - measure / 2f, bitNumberSize, 1, Color.BLACK);
             }
         }
     }
@@ -223,10 +257,12 @@ public abstract class Component
 
         if (this.TextVisible)
         {
-            Vector2 middleOfBox = new Vector2(this.Box.x, this.Box.y) + new Vector2(this.Box.width / 2f, this.Box.height / 2f);
-            Vector2 textSize = Raylib.MeasureTextEx(Raylib.GetFontDefault(), this.Text, 12, 1);
+            int fontSize = 18;
 
-            Raylib.DrawTextEx(Raylib.GetFontDefault(), this.Text, middleOfBox - textSize / 2f, 12, 1, Color.BLACK);
+            Vector2 middleOfBox = new Vector2(this.Box.x, this.Box.y) + new Vector2(this.Box.width / 2f, this.Box.height / 2f);
+            Vector2 textSize = Raylib.MeasureTextEx(Util.OpenSans, this.Text, fontSize, 1);
+
+            Raylib.DrawTextEx(Util.OpenSans, this.Text, middleOfBox - textSize / 2f, fontSize, 1, Color.BLACK);
         }
     }
 

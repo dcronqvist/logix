@@ -4,6 +4,8 @@ namespace LogiX;
 
 public static class Util
 {
+    public static Font OpenSans { get; set; }
+
     public static List<T> NValues<T>(T value, int n)
     {
         return Enumerable.Repeat(value, n).ToList();

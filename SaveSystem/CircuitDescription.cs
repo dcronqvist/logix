@@ -103,6 +103,32 @@ public class CircuitDescription
         return new Tuple<List<Component>, List<Wire>>(components, wires);
     }
 
+    public SLDescription GetSwitchWithID(string id)
+    {
+        foreach (SLDescription sl in GetSwitches())
+        {
+            if (sl.ID == id)
+            {
+                return sl;
+            }
+        }
+
+        return null;
+    }
+
+    public SLDescription GetLampWithID(string id)
+    {
+        foreach (SLDescription sl in GetLamps())
+        {
+            if (sl.ID == id)
+            {
+                return sl;
+            }
+        }
+
+        return null;
+    }
+
     public List<SLDescription> GetSwitches()
     {
         return this.Components.Where(x => (x is SLDescription && ((SLDescription)x).Type == ComponentType.Switch)).Cast<SLDescription>().ToList();
@@ -125,5 +151,26 @@ public class CircuitDescription
         }
 
         return new Vector2(x, y) / this.Components.Count;
+    }
+
+    public bool ValidForIC()
+    {
+        foreach (SLDescription sw in GetSwitches())
+        {
+            if (sw.Name == "")
+            {
+                return false;
+            }
+        }
+
+        foreach (SLDescription l in GetLamps())
+        {
+            if (l.Name == "")
+            {
+                return false;
+            }
+        }
+
+        return true;
     }
 }
