@@ -56,12 +56,12 @@ public class Switch : Component
 
         Vector2 leftMiddle = new Vector2(this.Box.x, this.Box.y + this.Box.height / 2f);
 
-        if (Raylib.CheckCollisionPointRec(mousePosInWorld, this.Box))
+        if (this.ID != "")
         {
             // Display label
-            int fontSize = 20;
-            Vector2 measure = Raylib.MeasureTextEx(Raylib.GetFontDefault(), this.ID, fontSize, 1);
-            Raylib.DrawTextEx(Raylib.GetFontDefault(), this.ID, leftMiddle + new Vector2(-10 - measure.X, measure.Y / -2f), fontSize, 1, Color.BLACK);
+            int fontSize = 22;
+            Vector2 measure = Raylib.MeasureTextEx(Util.OpenSans, this.ID, fontSize, 1);
+            Raylib.DrawTextEx(Util.OpenSans, this.ID, leftMiddle + new Vector2(-10 - measure.X, measure.Y / -2f), fontSize, 1, Color.BLACK);
         }
     }
 
@@ -82,7 +82,7 @@ public class Switch : Component
         string id = this.ID;
         ImGui.SetNextItemWidth(100);
         ImGui.PushID(this.uniqueID);
-        ImGui.InputText("Name", ref id, 13);
+        ImGui.InputText("Name", ref id, 13, ImGuiInputTextFlags.AlwaysInsertMode);
         ImGui.PopID();
         this.ID = id;
 

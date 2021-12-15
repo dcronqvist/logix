@@ -30,11 +30,20 @@ public class ICComponent : Component
         this.Wires = ws;
     }
 
-    public Switch GetSwitchForInput(ComponentInput ci)
+    public Lamp GetLampWithID(string id)
     {
-        foreach (Switch sw in this.Components.Where(x => x is Switch))
+        string name = "";
+        foreach (SLDescription sl in this.Description.Circuit.GetLamps())
         {
-            if (sw.ID == ci.Identifier)
+            if (sl.ID == id)
+            {
+                name = sl.Name;
+            }
+        }
+
+        foreach (Lamp sw in this.Components.Where(x => x is Lamp))
+        {
+            if (sw.ID == name)
             {
                 return sw;
             }
@@ -43,13 +52,22 @@ public class ICComponent : Component
         return null;
     }
 
-    public Lamp GetLampForOutput(ComponentOutput co)
+    public Switch GetSwitchWithID(string id)
     {
-        foreach (Lamp lamp in this.Components.Where(x => x is Lamp))
+        string name = "";
+        foreach (SLDescription sl in this.Description.Circuit.GetSwitches())
         {
-            if (lamp.ID == co.Identifier)
+            if (sl.ID == id)
             {
-                return lamp;
+                name = sl.Name;
+            }
+        }
+
+        foreach (Switch sw in this.Components.Where(x => x is Switch))
+        {
+            if (sw.ID == name)
+            {
+                return sw;
             }
         }
 
@@ -58,10 +76,21 @@ public class ICComponent : Component
 
     public override void PerformLogic()
     {
-        for (int i = 0; i < this.Inputs.Count; i++)
+        for (int i = 0; i < this.Description.InputOrder.Count; i++)
         {
-            Switch sw = this.GetSwitchForInput(this.Inputs[i]);
-            sw.Values = this.Inputs[i].Values;
+            List<string> inputs = this.Description.InputOrder[i];
+
+            int cumBits = 0;
+            for (int j = 0; j < inputs.Count; j++)
+            {
+                Switch s = GetSwitchWithID(inputs[j]);
+
+                for (int k = 0; k < s.Outputs[0].Bits; k++)
+                {
+                    s.Values[k] = this.Inputs[i].Values[cumBits];
+                    cumBits += 1;
+                }
+            }
         }
 
         foreach (Component c in this.Components)
@@ -74,11 +103,28 @@ public class ICComponent : Component
             w.Update(Vector2.Zero);
         }
 
-        for (int i = 0; i < this.Outputs.Count; i++)
-        {
-            Lamp lamp = this.GetLampForOutput(this.Outputs[i]);
+        // for (int i = 0; i < this.Outputs.Count; i++)
+        // {
+        //     Lamp lamp = this.GetLampForOutput(this.Outputs[i]);
 
-            this.Outputs[i].SetValues(lamp.Values);
+        //     this.Outputs[i].SetValues(lamp.Values);
+        // }
+
+        for (int i = 0; i < this.Description.OutputOrder.Count; i++)
+        {
+            List<string> outputs = this.Description.OutputOrder[i];
+
+            int cumBits = 0;
+            for (int j = 0; j < outputs.Count; j++)
+            {
+                Lamp s = GetLampWithID(outputs[j]);
+
+                for (int k = 0; k < s.Inputs[0].Bits; k++)
+                {
+                    this.Outputs[i].Values[cumBits] = s.Values[k];
+                    cumBits += 1;
+                }
+            }
         }
 
         //throw new NotImplementedException();

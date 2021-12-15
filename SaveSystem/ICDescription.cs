@@ -1,6 +1,8 @@
+using LogiX.Components;
+
 namespace LogiX.SaveSystem;
 
-public class ICDescription
+public class ICDescription : ComponentDescription
 {
     [JsonProperty(PropertyName = "name")]
     public string Name { get; set; }
@@ -11,7 +13,7 @@ public class ICDescription
     [JsonProperty(PropertyName = "outputOrder")]
     public List<List<string>> OutputOrder { get; set; }
 
-    public ICDescription(string name, CircuitDescription cd, List<List<string>> inputOrder, List<List<string>> outputOrder)
+    public ICDescription(string name, CircuitDescription cd, List<List<string>> inputOrder, List<List<string>> outputOrder) : base(Vector2.Zero, inputOrder.Select(x => new IODescription(x.Count)).ToList(), outputOrder.Select(x => new IODescription(x.Count)).ToList(), ComponentType.Integrated)
     {
         this.Name = name;
         this.Circuit = cd;
@@ -70,7 +72,7 @@ public class ICDescription
         {
             SLDescription first = this.Circuit.GetSwitchWithID(inputs.First());
             SLDescription last = this.Circuit.GetSwitchWithID(inputs.Last());
-            return last.Name + "-" + first.Name;
+            return first.Name + "-" + last.Name;
         }
     }
 
@@ -87,7 +89,12 @@ public class ICDescription
         {
             SLDescription first = this.Circuit.GetLampWithID(outputs.First());
             SLDescription last = this.Circuit.GetLampWithID(outputs.Last());
-            return last.Name + "-" + first.Name;
+            return first.Name + "-" + last.Name;
         }
+    }
+
+    public override Component ToComponent()
+    {
+        return new ICComponent(this, Vector2.Zero);
     }
 }

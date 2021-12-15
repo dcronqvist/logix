@@ -39,6 +39,7 @@ public abstract class Component
     public virtual string Text => "Component";
     public virtual bool TextVisible => true;
     public virtual bool DrawIOIdentifiers => false;
+    public virtual bool DrawBoxNormal => true;
 
     protected string uniqueID;
 
@@ -72,6 +73,12 @@ public abstract class Component
         foreach (ComponentInput ci in this.Inputs)
         {
             Vector2 measure = Raylib.MeasureTextEx(Util.OpenSans, ci.Identifier, 14, 1);
+            max = MathF.Max(max, measure.X);
+        }
+
+        foreach (ComponentOutput co in this.Outputs)
+        {
+            Vector2 measure = Raylib.MeasureTextEx(Util.OpenSans, co.Identifier, 14, 1);
             max = MathF.Max(max, measure.X);
         }
 
@@ -249,8 +256,11 @@ public abstract class Component
 
     public virtual void Render(Vector2 mousePosInWorld)
     {
-        Raylib.DrawRectanglePro(this.Box, Vector2.Zero, 0f, this.BodyColor);
-        Raylib.DrawRectangleLinesEx(this.Box, 1, Color.BLACK);
+        if (this.DrawBoxNormal)
+        {
+            Raylib.DrawRectanglePro(this.Box, Vector2.Zero, 0f, this.BodyColor);
+            Raylib.DrawRectangleLinesEx(this.Box, 1, Color.BLACK);
+        }
 
         this.RenderIO(GetInputLinePositions, this.Inputs.Cast<ComponentIO>().ToList(), mousePosInWorld);
         this.RenderIO(GetOutputLinePositions, this.Outputs.Cast<ComponentIO>().ToList(), mousePosInWorld);

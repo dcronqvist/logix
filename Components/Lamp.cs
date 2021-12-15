@@ -34,12 +34,12 @@ public class Lamp : Component
 
         Vector2 rightMiddle = new Vector2(this.Box.x + this.Box.width, this.Box.y + this.Box.height / 2f);
 
-        if (Raylib.CheckCollisionPointRec(mousePosInWorld, this.Box))
+        if (this.ID != "")
         {
             // Display label
-            int fontSize = 20;
-            Vector2 measure = Raylib.MeasureTextEx(Raylib.GetFontDefault(), this.ID, fontSize, 1);
-            Raylib.DrawTextEx(Raylib.GetFontDefault(), this.ID, rightMiddle + new Vector2(10, measure.Y / -2f), fontSize, 1, Color.BLACK);
+            int fontSize = 22;
+            Vector2 measure = Raylib.MeasureTextEx(Util.OpenSans, this.ID, fontSize, 1);
+            Raylib.DrawTextEx(Util.OpenSans, this.ID, rightMiddle + new Vector2(10, measure.Y / -2f), fontSize, 1, Color.BLACK);
         }
     }
 
@@ -55,7 +55,7 @@ public class Lamp : Component
         string id = this.ID;
         ImGui.SetNextItemWidth(100);
         ImGui.PushID(this.uniqueID);
-        ImGui.InputText("Name", ref id, 13);
+        ImGui.InputText("Name", ref id, 13, ImGuiInputTextFlags.AlwaysInsertMode);
         ImGui.PopID();
         this.ID = id;
 

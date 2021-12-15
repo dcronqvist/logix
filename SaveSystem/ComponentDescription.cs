@@ -7,7 +7,9 @@ public enum ComponentType
     Gate,
     Integrated,
     Switch,
-    Lamp
+    Lamp,
+    Button,
+    HexViewer,
 }
 
 public class IODescription
