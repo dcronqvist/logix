@@ -6,6 +6,7 @@
 .vscode/
 imgui.ini
 .DS_Store
+assets/config.json
 
 # User-specific files
 *.rsuser
