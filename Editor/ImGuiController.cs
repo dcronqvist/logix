@@ -35,6 +35,9 @@ public class ImguiController : IDisposable
         //io.Fonts.AddFontDefault();
         io.Fonts.AddFontFromFileTTF($"{Directory.GetCurrentDirectory()}/assets/opensans.ttf", 17);
 
+        io.BackendFlags |= ImGuiBackendFlags.RendererHasVtxOffset;
+        io.ConfigFlags |= ImGuiConfigFlags.DpiEnableScaleViewports;
+        this.scaleFactor = Vector2.One * 0.25f;
         Resize(width, height);
         LoadFontTexture();
         SetupInput();
@@ -129,6 +132,7 @@ public class ImguiController : IDisposable
     {
         ImGuiIOPtr io = ImGui.GetIO();
         io.DisplaySize = new Vector2(width, height) / scaleFactor;
+        Console.WriteLine($"Imgui displaysize: {io.DisplaySize}");
     }
 
     void UpdateKeyboard()

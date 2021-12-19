@@ -5,6 +5,7 @@
 
 .vscode/
 imgui.ini
+.DS_Store
 
 # User-specific files
 *.rsuser

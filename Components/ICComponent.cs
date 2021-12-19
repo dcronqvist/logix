@@ -133,6 +133,7 @@ public class ICComponent : Component
     public override ComponentDescription ToDescription()
     {
         //throw new NotImplementedException();
-        return null;
+
+        return this.Description;
     }
 }

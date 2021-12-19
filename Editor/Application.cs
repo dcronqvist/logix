@@ -9,8 +9,8 @@ public abstract class Application
     public abstract void SubmitUI();
 
     public delegate void WindowResizeCallback(int x, int y);
-
     public event WindowResizeCallback OnWindowResized;
+    private RenderTexture2D uiTexture;
 
     public void Run(int windowWidth, int windowHeight, string windowTitle, int initialTargetFPS)
     {
@@ -23,6 +23,7 @@ public abstract class Application
         Initialize();
 
         Raylib.InitWindow(windowWidth, windowHeight, windowTitle);
+        this.uiTexture = Raylib.LoadRenderTexture(windowWidth, windowHeight);
         Raylib.SetTargetFPS(initialTargetFPS);
 
         Raylib.SetExitKey(KeyboardKey.KEY_NULL);
@@ -48,13 +49,19 @@ public abstract class Application
             UserInput.Begin();
             Update();
 
+            Raylib.BeginTextureMode(this.uiTexture);
+            Raylib.BeginBlendMode(BlendMode.BLEND_ALPHA);
+
+            Raylib.ClearBackground(Color.BLANK);
             SubmitUI();
+            igc.Draw();
+
+            Raylib.EndTextureMode();
 
             Raylib.BeginDrawing();
 
             Render();
-
-            igc.Draw();
+            Raylib.DrawTextureRec(this.uiTexture.texture, new Rectangle(0, 0, this.uiTexture.texture.width, -this.uiTexture.texture.height), Vector2.Zero, Color.WHITE);
 
             Raylib.EndDrawing();
             UserInput.End();

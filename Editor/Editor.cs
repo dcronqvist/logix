@@ -445,6 +445,15 @@ public class Editor : Application
     {
         if (!ImGui.GetIO().WantCaptureMouse)
         {
+            if (Raylib.IsKeyPressed(KeyboardKey.KEY_SPACE) && this.editorState == EditorState.None)
+            {
+                this.editorState = EditorState.MovingCamera;
+            }
+            if (Raylib.IsKeyReleased(KeyboardKey.KEY_SPACE) && this.editorState == EditorState.MovingCamera)
+            {
+                this.editorState = EditorState.None;
+            }
+
             if (Raylib.IsMouseButtonPressed(MouseButton.MOUSE_MIDDLE_BUTTON) && this.editorState == EditorState.None)
             {
                 this.editorState = EditorState.MovingCamera; // Pressing Middle mouse button and doing nothing -> move camera
