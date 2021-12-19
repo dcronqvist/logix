@@ -21,9 +21,9 @@ public class Editor : Application
 
     CircuitDescription? copiedCircuit;
     List<SLDescription> icSwitches;
+    Dictionary<SLDescription, int> icSwitchGroup;
+    Dictionary<SLDescription, int> icLampGroup;
     List<SLDescription> icLamps;
-    Dictionary<SLDescription, bool> icSwitchSelected;
-    List<List<string>> icInputOrder;
     string icName;
     string error;
     bool encounteredError;
@@ -88,14 +88,18 @@ public class Editor : Application
             if (ImGui.MenuItem("Copy", "Ctrl+C"))
             {
                 copiedCircuit = new CircuitDescription(this.simulator.SelectedComponents);
-                icSwitchSelected = new Dictionary<SLDescription, bool>();
+                icSwitchGroup = new Dictionary<SLDescription, int>();
                 icSwitches = copiedCircuit.GetSwitches();
-                icInputOrder = icSwitches.Select(x => Util.Listify(x.ID)).ToList();
                 for (int i = 0; i < icSwitches.Count; i++)
                 {
-                    this.icSwitchSelected.Add(icSwitches[i], false);
+                    icSwitchGroup.Add(icSwitches[i], i);
                 }
+                icLampGroup = new Dictionary<SLDescription, int>();
                 icLamps = copiedCircuit.GetLamps();
+                for (int i = 0; i < icLamps.Count; i++)
+                {
+                    icLampGroup.Add(icLamps[i], i);
+                }
                 icName = "";
             }
             if (ImGui.MenuItem("Paste", "Ctrl+V"))
@@ -204,10 +208,15 @@ public class Editor : Application
             for (int i = 0; i < icSwitches.Count; i++)
             {
                 SLDescription sw = icSwitches[i];
-                if (ImGui.Selectable(sw.Name, this.icSwitchSelected[sw], ImGuiSelectableFlags.DontClosePopups))
-                {
-                    this.icSwitchSelected[sw] = !this.icSwitchSelected[sw];
-                }
+                ImGui.PushID(sw.ID);
+                ImGui.SetNextItemWidth(80);
+                int gr = this.icSwitchGroup[sw];
+                ImGui.InputInt("", ref gr, 1, 1);
+                this.icSwitchGroup[sw] = gr;
+                ImGui.PopID();
+                ImGui.SameLine();
+                int group = this.icSwitchGroup[sw];
+                ImGui.Selectable(sw.Name, false, ImGuiSelectableFlags.DontClosePopups);
 
                 if (ImGui.IsItemActive() && !ImGui.IsItemHovered())
                 {
@@ -225,6 +234,14 @@ public class Editor : Application
             for (int i = 0; i < icLamps.Count; i++)
             {
                 SLDescription sw = icLamps[i];
+                ImGui.PushID(sw.ID);
+                ImGui.SetNextItemWidth(80);
+                int gr = this.icLampGroup[sw];
+                ImGui.InputInt("", ref gr, 1, 1);
+                this.icLampGroup[sw] = gr;
+                ImGui.PopID();
+                ImGui.SameLine();
+                int group = this.icLampGroup[sw];
                 ImGui.Selectable(sw.Name, false, ImGuiSelectableFlags.DontClosePopups);
 
                 if (ImGui.IsItemActive() && !ImGui.IsItemHovered())
@@ -241,18 +258,45 @@ public class Editor : Application
             ImGui.Columns(1);
             ImGui.Separator();
 
-            if (ImGui.Button("Combine Selected Inputs"))
-            {
-
-            }
-
             if (ImGui.Button("Create"))
             {
                 if (copiedCircuit != null)
                 {
                     if (copiedCircuit.ValidForIC())
                     {
-                        ICDescription icd = new ICDescription(this.icName, copiedCircuit, Util.Listify(Util.Listify(icSwitches[0].ID, icSwitches[1].ID)), icLamps.Select(l => new List<string>() { l.ID }).ToList());
+                        List<List<string>> inputOrder = new List<List<string>>();
+                        List<List<string>> outputOrder = new List<List<string>>();
+
+                        int max = 0;
+                        foreach (KeyValuePair<SLDescription, int> kvp in this.icSwitchGroup)
+                        {
+                            max = Math.Max(max, kvp.Value);
+                        }
+
+                        for (int i = 0; i <= max; i++)
+                        {
+                            if (this.icSwitchGroup.ContainsValue(i))
+                            {
+                                List<SLDescription> inGroup = this.icSwitchGroup.Where(x => x.Value == i).Select(x => x.Key).ToList();
+                                inputOrder.Add(inGroup.Select(x => x.ID).ToList());
+                            }
+                        }
+
+                        foreach (KeyValuePair<SLDescription, int> kvp in this.icLampGroup)
+                        {
+                            max = Math.Max(max, kvp.Value);
+                        }
+
+                        for (int i = 0; i <= max; i++)
+                        {
+                            if (this.icLampGroup.ContainsValue(i))
+                            {
+                                List<SLDescription> inGroup = this.icLampGroup.Where(x => x.Value == i).Select(x => x.Key).ToList();
+                                outputOrder.Add(inGroup.Select(x => x.ID).ToList());
+                            }
+                        }
+
+                        ICDescription icd = new ICDescription(this.icName, copiedCircuit, inputOrder, outputOrder);
                         Console.WriteLine(JsonConvert.SerializeObject(icd, Formatting.Indented));
 
                         this.simulator.AddComponent(icd.ToComponent());
