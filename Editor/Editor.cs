@@ -18,7 +18,7 @@ public class Editor : Application
     KeyboardKey primaryKeyMod;
 
     // MAIN MENU BAR ACTIONS
-    List<Tuple<string, List<Tuple<string, Func<bool>, KeyboardKey, KeyboardKey, Action>>>> mainMenuButtons;
+    List<Tuple<string, List<Tuple<string, Func<bool>, KeyboardKey?, KeyboardKey?, Action>>>> mainMenuButtons;
 
     // VARIABLES FOR TEMPORARY STUFF
     ComponentInput? hoveredInput;
@@ -45,7 +45,7 @@ public class Editor : Application
 
     public override void Initialize()
     {
-        mainMenuButtons = new List<Tuple<string, List<Tuple<string, Func<bool>, KeyboardKey, KeyboardKey, Action>>>>();
+        mainMenuButtons = new List<Tuple<string, List<Tuple<string, Func<bool>, KeyboardKey?, KeyboardKey?, Action>>>>();
 #if OSX
         this.primaryKeyMod = KeyboardKey.KEY_LEFT_SUPER;
 #else
@@ -91,19 +91,18 @@ public class Editor : Application
         AddNewMainMenuItem("Edit", "Copy", () => this.simulator.SelectedComponents.Count > 0, this.primaryKeyMod, KeyboardKey.KEY_C, EditCopy);
         AddNewMainMenuItem("Edit", "Paste", () => this.copiedCircuit != null, this.primaryKeyMod, KeyboardKey.KEY_V, EditPaste);
         AddNewMainMenuItem("Edit", "Create IC from Clipboard", () => this.copiedCircuit != null, this.primaryKeyMod, KeyboardKey.KEY_I, EditCreateIC);
-
     }
 
-    public void AddNewMainMenuItem(string mainButton, string actionButtonName, Func<bool> enabled, KeyboardKey hold, KeyboardKey press, Action action)
+    public void AddNewMainMenuItem(string mainButton, string actionButtonName, Func<bool> enabled, KeyboardKey? hold, KeyboardKey? press, Action action)
     {
         if (!this.mainMenuButtons.Exists(x => x.Item1 == mainButton))
         {
-            this.mainMenuButtons.Add(new Tuple<string, List<Tuple<string, Func<bool>, KeyboardKey, KeyboardKey, Action>>>(mainButton, new List<Tuple<string, Func<bool>, KeyboardKey, KeyboardKey, Action>>()));
+            this.mainMenuButtons.Add(new Tuple<string, List<Tuple<string, Func<bool>, KeyboardKey?, KeyboardKey?, Action>>>(mainButton, new List<Tuple<string, Func<bool>, KeyboardKey?, KeyboardKey?, Action>>()));
         }
 
-        Tuple<string, List<Tuple<string, Func<bool>, KeyboardKey, KeyboardKey, Action>>> mainMenuButton = this.mainMenuButtons.Find(x => x.Item1 == mainButton);
+        Tuple<string, List<Tuple<string, Func<bool>, KeyboardKey?, KeyboardKey?, Action>>> mainMenuButton = this.mainMenuButtons.Find(x => x.Item1 == mainButton);
 
-        mainMenuButton.Item2.Add(new Tuple<string, Func<bool>, KeyboardKey, KeyboardKey, Action>(actionButtonName, enabled, hold, press, action));
+        mainMenuButton.Item2.Add(new Tuple<string, Func<bool>, KeyboardKey?, KeyboardKey?, Action>(actionButtonName, enabled, hold, press, action));
     }
 
     public void EditCopy()
@@ -157,13 +156,13 @@ public class Editor : Application
         // MAIN MENU BAR
         ImGui.BeginMainMenuBar();
 
-        foreach (Tuple<string, List<Tuple<string, Func<bool>, KeyboardKey, KeyboardKey, Action>>> tup in this.mainMenuButtons)
+        foreach (Tuple<string, List<Tuple<string, Func<bool>, KeyboardKey?, KeyboardKey?, Action>>> tup in this.mainMenuButtons)
         {
             if (ImGui.BeginMenu(tup.Item1))
             {
-                foreach (Tuple<string, Func<bool>, KeyboardKey, KeyboardKey, Action> inner in tup.Item2)
+                foreach (Tuple<string, Func<bool>, KeyboardKey?, KeyboardKey?, Action> inner in tup.Item2)
                 {
-                    if (ImGui.MenuItem(inner.Item1, UserInput.KeyComboString(inner.Item3, inner.Item4), false, inner.Item2()))
+                    if (ImGui.MenuItem(inner.Item1, (inner.Item3 != null && inner.Item4 != null) ? UserInput.KeyComboString(inner.Item3.Value, inner.Item4.Value) : null, false, inner.Item2()))
                     {
                         if (inner.Item5 != null)
                         {
@@ -643,15 +642,18 @@ public class Editor : Application
                 this.simulator.DeleteSelection();
             }
 
-            foreach (Tuple<string, List<Tuple<string, Func<bool>, KeyboardKey, KeyboardKey, Action>>> tup in this.mainMenuButtons)
+            foreach (Tuple<string, List<Tuple<string, Func<bool>, KeyboardKey?, KeyboardKey?, Action>>> tup in this.mainMenuButtons)
             {
-                foreach (Tuple<string, Func<bool>, KeyboardKey, KeyboardKey, Action> inner in tup.Item2)
+                foreach (Tuple<string, Func<bool>, KeyboardKey?, KeyboardKey?, Action> inner in tup.Item2)
                 {
-                    if (UserInput.KeyComboPressed(inner.Item3, inner.Item4))
+                    if (inner.Item3.HasValue && inner.Item4.HasValue)
                     {
-                        if (inner.Item5 != null)
+                        if (UserInput.KeyComboPressed(inner.Item3.Value, inner.Item4.Value))
                         {
-                            inner.Item5();
+                            if (inner.Item5 != null)
+                            {
+                                inner.Item5();
+                            }
                         }
                     }
                 }
