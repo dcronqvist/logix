@@ -39,4 +39,14 @@ public static class UserInput
         Vector2 topLeft = new Vector2(cam.target.X - viewSize.X / 2.0F, cam.target.Y - viewSize.Y / 2.0F);
         return new Vector2(topLeft.X + currentMousePos.X / cam.zoom, topLeft.Y + currentMousePos.Y / cam.zoom);
     }
+
+    public static bool KeyComboPressed(KeyboardKey hold, KeyboardKey press)
+    {
+        return Raylib.IsKeyDown(hold) && Raylib.IsKeyPressed(press);
+    }
+
+    public static string KeyComboString(KeyboardKey hold, KeyboardKey press)
+    {
+        return hold.Pretty() + " + " + press.Pretty();
+    }
 }

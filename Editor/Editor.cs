@@ -6,10 +6,19 @@ namespace LogiX.Editor;
 
 public class Editor : Application
 {
+    // Editor states
     Camera2D editorCamera;
     EditorState editorState;
     Simulator simulator;
+
+    // GATES
     IGateLogic[] availableGateLogics;
+
+    // KEY COMBINATIONS
+    KeyboardKey primaryKeyMod;
+
+    // MAIN MENU BAR ACTIONS
+    List<Tuple<string, List<Tuple<string, Func<bool>, KeyboardKey, KeyboardKey, Action>>>> mainMenuButtons;
 
     // VARIABLES FOR TEMPORARY STUFF
     ComponentInput? hoveredInput;
@@ -36,6 +45,13 @@ public class Editor : Application
 
     public override void Initialize()
     {
+        mainMenuButtons = new List<Tuple<string, List<Tuple<string, Func<bool>, KeyboardKey, KeyboardKey, Action>>>>();
+#if OSX
+        this.primaryKeyMod = KeyboardKey.KEY_LEFT_SUPER;
+#else
+        this.primaryKeyMod = KeyboardKey.KEY_LEFT_CONTROL;
+#endif
+
         this.OnWindowResized += (width, height) =>
         {
             Vector2 windowSize = new Vector2(width, height);
@@ -69,6 +85,71 @@ public class Editor : Application
         Raylib.SetTextureFilter(Util.OpenSans.texture, TextureFilter.TEXTURE_FILTER_TRILINEAR);
 
         Settings.LoadSettings();
+
+        // ASSIGNING KEYCOMBO ACTIONS
+        AddNewMainMenuItem("File", "Save", () => true, this.primaryKeyMod, KeyboardKey.KEY_S, null);
+        AddNewMainMenuItem("Edit", "Copy", () => this.simulator.SelectedComponents.Count > 0, this.primaryKeyMod, KeyboardKey.KEY_C, EditCopy);
+        AddNewMainMenuItem("Edit", "Paste", () => this.copiedCircuit != null, this.primaryKeyMod, KeyboardKey.KEY_V, EditPaste);
+        AddNewMainMenuItem("Edit", "Create IC from Clipboard", () => this.copiedCircuit != null, this.primaryKeyMod, KeyboardKey.KEY_I, EditCreateIC);
+
+    }
+
+    public void AddNewMainMenuItem(string mainButton, string actionButtonName, Func<bool> enabled, KeyboardKey hold, KeyboardKey press, Action action)
+    {
+        if (!this.mainMenuButtons.Exists(x => x.Item1 == mainButton))
+        {
+            this.mainMenuButtons.Add(new Tuple<string, List<Tuple<string, Func<bool>, KeyboardKey, KeyboardKey, Action>>>(mainButton, new List<Tuple<string, Func<bool>, KeyboardKey, KeyboardKey, Action>>()));
+        }
+
+        Tuple<string, List<Tuple<string, Func<bool>, KeyboardKey, KeyboardKey, Action>>> mainMenuButton = this.mainMenuButtons.Find(x => x.Item1 == mainButton);
+
+        mainMenuButton.Item2.Add(new Tuple<string, Func<bool>, KeyboardKey, KeyboardKey, Action>(actionButtonName, enabled, hold, press, action));
+    }
+
+    public void EditCopy()
+    {
+        copiedCircuit = new CircuitDescription(this.simulator.SelectedComponents);
+        icSwitchGroup = new Dictionary<SLDescription, int>();
+        icSwitches = copiedCircuit.GetSwitches();
+        for (int i = 0; i < icSwitches.Count; i++)
+        {
+            icSwitchGroup.Add(icSwitches[i], i);
+        }
+        icLampGroup = new Dictionary<SLDescription, int>();
+        icLamps = copiedCircuit.GetLamps();
+        for (int i = 0; i < icLamps.Count; i++)
+        {
+            icLampGroup.Add(icLamps[i], i);
+        }
+        icName = "";
+    }
+
+    public void EditPaste()
+    {
+        if (copiedCircuit != null)
+        {
+            this.simulator.ClearSelection();
+            Tuple<List<Component>, List<Wire>> newStuff = copiedCircuit.CreateComponentsAndWires(this.editorCamera.target);
+            this.simulator.AddComponents(newStuff.Item1);
+            this.simulator.AddWires(newStuff.Item2);
+
+            foreach (Component c in newStuff.Item1)
+            {
+                this.simulator.SelectComponent(c);
+            }
+        }
+    }
+
+    public void EditCreateIC()
+    {
+        if (this.copiedCircuit.ValidForIC())
+        {
+            this.editorState = EditorState.MakingIC;
+        }
+        else
+        {
+            this.EditorError("Cannot create integrated circuit from selected components, \nsince some switches or lamps have no identifier.");
+        }
     }
 
     public override void SubmitUI()
@@ -76,63 +157,23 @@ public class Editor : Application
         // MAIN MENU BAR
         ImGui.BeginMainMenuBar();
 
-        // FILE
-        if (ImGui.BeginMenu("File"))
+        foreach (Tuple<string, List<Tuple<string, Func<bool>, KeyboardKey, KeyboardKey, Action>>> tup in this.mainMenuButtons)
         {
-            ImGui.EndMenu();
-        }
-
-        // EDIT
-        if (ImGui.BeginMenu("Edit"))
-        {
-            if (ImGui.MenuItem("Copy", "Ctrl+C"))
+            if (ImGui.BeginMenu(tup.Item1))
             {
-                copiedCircuit = new CircuitDescription(this.simulator.SelectedComponents);
-                icSwitchGroup = new Dictionary<SLDescription, int>();
-                icSwitches = copiedCircuit.GetSwitches();
-                for (int i = 0; i < icSwitches.Count; i++)
+                foreach (Tuple<string, Func<bool>, KeyboardKey, KeyboardKey, Action> inner in tup.Item2)
                 {
-                    icSwitchGroup.Add(icSwitches[i], i);
-                }
-                icLampGroup = new Dictionary<SLDescription, int>();
-                icLamps = copiedCircuit.GetLamps();
-                for (int i = 0; i < icLamps.Count; i++)
-                {
-                    icLampGroup.Add(icLamps[i], i);
-                }
-                icName = "";
-            }
-            if (ImGui.MenuItem("Paste", "Ctrl+V"))
-            {
-                if (copiedCircuit != null)
-                {
-                    this.simulator.ClearSelection();
-                    Tuple<List<Component>, List<Wire>> newStuff = copiedCircuit.CreateComponentsAndWires(this.editorCamera.target);
-                    this.simulator.AddComponents(newStuff.Item1);
-                    this.simulator.AddWires(newStuff.Item2);
-
-                    foreach (Component c in newStuff.Item1)
+                    if (ImGui.MenuItem(inner.Item1, UserInput.KeyComboString(inner.Item3, inner.Item4), false, inner.Item2()))
                     {
-                        this.simulator.SelectComponent(c);
+                        if (inner.Item5 != null)
+                        {
+                            inner.Item5();
+                        }
                     }
                 }
+
+                ImGui.EndMenu();
             }
-            if (ImGui.MenuItem("Create IC From Clipboard", "Ctrl+I", false, copiedCircuit != null))
-            {
-                if (this.copiedCircuit.ValidForIC())
-                {
-                    this.editorState = EditorState.MakingIC;
-                }
-                else
-                {
-                    this.EditorError("Cannot create integrated circuit from selected components, \nsince some switches or lamps have no identifier.");
-                }
-            }
-            if (ImGui.MenuItem("Demo"))
-            {
-                this.showDemo = true;
-            }
-            ImGui.EndMenu();
         }
 
         ImGui.EndMainMenuBar();
@@ -600,6 +641,20 @@ public class Editor : Application
             if (Raylib.IsKeyPressed(KeyboardKey.KEY_BACKSPACE))
             {
                 this.simulator.DeleteSelection();
+            }
+
+            foreach (Tuple<string, List<Tuple<string, Func<bool>, KeyboardKey, KeyboardKey, Action>>> tup in this.mainMenuButtons)
+            {
+                foreach (Tuple<string, Func<bool>, KeyboardKey, KeyboardKey, Action> inner in tup.Item2)
+                {
+                    if (UserInput.KeyComboPressed(inner.Item3, inner.Item4))
+                    {
+                        if (inner.Item5 != null)
+                        {
+                            inner.Item5();
+                        }
+                    }
+                }
             }
         }
     }

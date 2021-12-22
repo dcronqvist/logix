@@ -76,4 +76,12 @@ public static class Util
     {
         return new Color(c.r, c.g, c.b, (int)(c.a * opacity));
     }
+
+    public static string Pretty(this KeyboardKey key)
+    {
+        return new Dictionary<KeyboardKey, string>() {
+            { KeyboardKey.KEY_LEFT_CONTROL, "Ctrl" },
+            { KeyboardKey.KEY_LEFT_SUPER, "Cmd"}
+        }.GetValueOrDefault(key, key.ToString().Replace("KEY_", ""));
+    }
 }
