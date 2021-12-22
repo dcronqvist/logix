@@ -87,10 +87,16 @@ public class Editor : Application
         Settings.LoadSettings();
 
         // ASSIGNING KEYCOMBO ACTIONS
-        AddNewMainMenuItem("File", "Save", () => true, this.primaryKeyMod, KeyboardKey.KEY_S, null);
-        AddNewMainMenuItem("Edit", "Copy", () => this.simulator.SelectedComponents.Count > 0, this.primaryKeyMod, KeyboardKey.KEY_C, EditCopy);
-        AddNewMainMenuItem("Edit", "Paste", () => this.copiedCircuit != null, this.primaryKeyMod, KeyboardKey.KEY_V, EditPaste);
-        AddNewMainMenuItem("Edit", "Create IC from Clipboard", () => this.copiedCircuit != null, this.primaryKeyMod, KeyboardKey.KEY_I, EditCreateIC);
+        AddNewMainMenuItem("File", "Save", () => true, this.primaryKeyMod, KeyboardKey.KEY_S, () =>
+        {
+            Project p = new Project("bajs");
+            p.SaveComponentsInWorkspace(this.simulator.Components);
+            p.SaveToFile(Directory.GetCurrentDirectory());
+        });
+        AddNewMainMenuItem("Edit", "Copy", () => this.simulator.SelectedComponents.Count > 0, this.primaryKeyMod, KeyboardKey.KEY_C, MMCopy);
+        AddNewMainMenuItem("Edit", "Paste", () => this.copiedCircuit != null, this.primaryKeyMod, KeyboardKey.KEY_V, MMPaste);
+        AddNewMainMenuItem("Edit", "Select All", () => true, this.primaryKeyMod, KeyboardKey.KEY_A, this.simulator.SelectAllComponents);
+        AddNewMainMenuItem("Integrated Circuits", "Create IC from Selection", () => this.simulator.SelectedComponents.Count > 0, this.primaryKeyMod, KeyboardKey.KEY_I, MMCreateIC);
     }
 
     public void AddNewMainMenuItem(string mainButton, string actionButtonName, Func<bool> enabled, KeyboardKey? hold, KeyboardKey? press, Action action)
@@ -105,25 +111,12 @@ public class Editor : Application
         mainMenuButton.Item2.Add(new Tuple<string, Func<bool>, KeyboardKey?, KeyboardKey?, Action>(actionButtonName, enabled, hold, press, action));
     }
 
-    public void EditCopy()
+    public void MMCopy()
     {
         copiedCircuit = new CircuitDescription(this.simulator.SelectedComponents);
-        icSwitchGroup = new Dictionary<SLDescription, int>();
-        icSwitches = copiedCircuit.GetSwitches();
-        for (int i = 0; i < icSwitches.Count; i++)
-        {
-            icSwitchGroup.Add(icSwitches[i], i);
-        }
-        icLampGroup = new Dictionary<SLDescription, int>();
-        icLamps = copiedCircuit.GetLamps();
-        for (int i = 0; i < icLamps.Count; i++)
-        {
-            icLampGroup.Add(icLamps[i], i);
-        }
-        icName = "";
     }
 
-    public void EditPaste()
+    public void MMPaste()
     {
         if (copiedCircuit != null)
         {
@@ -139,11 +132,27 @@ public class Editor : Application
         }
     }
 
-    public void EditCreateIC()
+    public void MMCreateIC()
     {
-        if (this.copiedCircuit.ValidForIC())
+        CircuitDescription cd = new CircuitDescription(this.simulator.SelectedComponents);
+
+        if (cd.ValidForIC())
         {
             this.editorState = EditorState.MakingIC;
+            this.copiedCircuit = cd;
+            icSwitchGroup = new Dictionary<SLDescription, int>();
+            icSwitches = copiedCircuit.GetSwitches();
+            for (int i = 0; i < icSwitches.Count; i++)
+            {
+                icSwitchGroup.Add(icSwitches[i], i);
+            }
+            icLampGroup = new Dictionary<SLDescription, int>();
+            icLamps = copiedCircuit.GetLamps();
+            for (int i = 0; i < icLamps.Count; i++)
+            {
+                icLampGroup.Add(icLamps[i], i);
+            }
+            icName = "";
         }
         else
         {
@@ -648,7 +657,7 @@ public class Editor : Application
                 {
                     if (inner.Item3.HasValue && inner.Item4.HasValue)
                     {
-                        if (UserInput.KeyComboPressed(inner.Item3.Value, inner.Item4.Value))
+                        if (UserInput.KeyComboPressed(inner.Item3.Value, inner.Item4.Value) && inner.Item2())
                         {
                             if (inner.Item5 != null)
                             {

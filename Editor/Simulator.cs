@@ -165,6 +165,16 @@ public class Simulator
         }
     }
 
+    public void SelectAllComponents()
+    {
+        this.ClearSelection();
+
+        this.Components.ForEach(comp =>
+        {
+            this.SelectComponent(comp);
+        });
+    }
+
     public void DeselectComponent(Component c)
     {
         this.SelectedComponents.Remove(c);
