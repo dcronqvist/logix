@@ -11,8 +11,10 @@ public class EditorFSM : FSM<Editor>
         this.AddNewState(new StateHoveringInput());
         this.AddNewState(new StateHoveringOutput());
         this.AddNewState(new StateOutputToInput());
+        this.AddNewState(new StateMovingSelection());
+        this.AddNewState(new StateRectangleSelecting());
 
-        this.SetInitialState<StateNone>();
+        this.SetState<StateNone>();
     }
 }
 
@@ -37,6 +39,27 @@ public class StateNone : State<Editor>
             if (editor.hoveredOutput != null)
             {
                 this.GoToState<StateHoveringOutput>();
+            }
+        }
+
+        if (!ImGui.GetIO().WantCaptureMouse)
+        {
+            if (editor.hoveredComponent != null && editor.simulator.IsComponentSelected(editor.hoveredComponent) && Raylib.IsMouseButtonPressed(MouseButton.MOUSE_LEFT_BUTTON))
+            {
+                this.GoToState<StateMovingSelection>();
+            }
+            else if (editor.hoveredComponent != null && !editor.simulator.IsComponentSelected(editor.hoveredComponent) && Raylib.IsMouseButtonPressed(MouseButton.MOUSE_LEFT_BUTTON))
+            {
+                editor.simulator.ClearSelection();
+                editor.simulator.SelectComponent(editor.hoveredComponent);
+                this.GoToState<StateMovingSelection>();
+            }
+
+            if (editor.hoveredComponent == null && Raylib.IsMouseButtonPressed(MouseButton.MOUSE_LEFT_BUTTON))
+            {
+                editor.simulator.ClearSelection();
+                editor.recSelectFirstCorner = UserInput.GetMousePositionInWorld(editor.editorCamera);
+                this.GoToState<StateRectangleSelecting>();
             }
         }
     }
@@ -137,5 +160,41 @@ public class StateOutputToInput : State<Editor>
             Raylib.DrawLineBezier(connectFrom.Position, UserInput.GetMousePositionInWorld(editor.editorCamera), 4, Color.BLACK);
             Raylib.DrawLineBezier(connectFrom.Position, UserInput.GetMousePositionInWorld(editor.editorCamera), 2, Color.WHITE);
         }
+    }
+}
+
+public class StateMovingSelection : State<Editor>
+{
+    public override void Update(Editor editor)
+    {
+        editor.simulator.MoveSelection(editor.editorCamera);
+
+        if (Raylib.IsMouseButtonReleased(MouseButton.MOUSE_LEFT_BUTTON))
+        {
+            this.GoToState<StateNone>();
+            return;
+        }
+    }
+}
+
+public class StateRectangleSelecting : State<Editor>
+{
+    public override void Update(Editor editor)
+    {
+        Rectangle rec = Util.CreateRecFromTwoCorners(editor.recSelectFirstCorner, UserInput.GetMousePositionInWorld(editor.editorCamera));
+        editor.simulator.ClearSelection();
+        editor.simulator.SelectComponentsInRectangle(rec);
+
+        if (Raylib.IsMouseButtonReleased(MouseButton.MOUSE_LEFT_BUTTON))
+        {
+            this.GoToState<StateNone>();
+        }
+    }
+
+    public override void Render(Editor editor)
+    {
+        Vector2 mousePosInWorld = UserInput.GetMousePositionInWorld(editor.editorCamera);
+        Raylib.DrawRectangleLinesEx(Util.CreateRecFromTwoCorners(editor.recSelectFirstCorner, mousePosInWorld), 2, Color.BLUE.Opacity(0.3f));
+        Raylib.DrawRectangleRec(Util.CreateRecFromTwoCorners(editor.recSelectFirstCorner, mousePosInWorld), Color.BLUE.Opacity(0.3f));
     }
 }

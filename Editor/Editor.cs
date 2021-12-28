@@ -731,40 +731,18 @@ public class Editor : Application
         }
     }
 
-    public void FindEditorState()
+    public void NewComponent(Component comp)
     {
-        if (!ImGui.GetIO().WantCaptureMouse)
-        {
-            if (Raylib.IsMouseButtonPressed(MouseButton.MOUSE_LEFT_BUTTON) && this.editorState == EditorState.None)
-            {
-                if (this.hoveredComponent != null)
-                {
-                    if (this.simulator.IsComponentSelected(this.hoveredComponent))
-                    {
-                        this.editorState = EditorState.MovingSelection;
-                    }
-                }
-                else
-                {
-                    this.editorState = EditorState.RectangleSelecting;
-                    this.recSelectFirstCorner = UserInput.GetMousePositionInWorld(this.editorCamera);
-                }
-            }
-        }
-
-        if (Raylib.IsMouseButtonReleased(MouseButton.MOUSE_LEFT_BUTTON) && this.editorState == EditorState.MovingSelection)
-        {
-            this.editorState = EditorState.None;
-        }
+        this.simulator.AddComponent(comp);
+        this.simulator.ClearSelection();
+        this.simulator.SelectComponent(comp);
+        this.fsm.SetState<StateMovingSelection>();
     }
 
-    public void PerformEditorState()
+    public override void Update()
     {
-        Vector2 mouseDelta = UserInput.GetMouseDelta(this.editorCamera);
+        Vector2 mousePosInWorld = UserInput.GetMousePositionInWorld(this.editorCamera);
 
-        // ALLOW USER TO ZOOM IN AND OUT
-        // TODO: Should probably fix some cap on
-        // how far in/out u can zoom.
         if (!ImGui.GetIO().WantCaptureMouse)
         {
             if (Raylib.GetMouseWheelMove() > 0)
@@ -775,42 +753,13 @@ public class Editor : Application
             {
                 this.editorCamera.zoom = (1f / 1.05f) * this.editorCamera.zoom;
             }
-
-            // SELECTING/DESELECTING
-            if (this.editorState == EditorState.None)
-            {
-                if (Raylib.IsMouseButtonPressed(MouseButton.MOUSE_LEFT_BUTTON))
-                {
-                    if (hoveredComponent != null)
-                    {
-                        this.simulator.ClearSelection();
-                        this.simulator.SelectComponent(this.hoveredComponent);
-                        this.editorState = EditorState.MovingSelection;
-                    }
-                    else
-                    {
-                        this.simulator.ClearSelection();
-                    }
-                }
-            }
         }
 
-        if (this.editorState == EditorState.MovingSelection)
-        {
-            this.simulator.MoveSelection(this.editorCamera);
-        }
+        this.hoveredInput = this.simulator.GetInputFromWorldPos(mousePosInWorld);
+        this.hoveredOutput = this.simulator.GetOutputFromWorldPos(mousePosInWorld);
+        this.hoveredComponent = this.simulator.GetComponentFromWorldPos(mousePosInWorld);
 
-        if (this.editorState == EditorState.RectangleSelecting)
-        {
-            Rectangle rec = Util.CreateRecFromTwoCorners(this.recSelectFirstCorner, UserInput.GetMousePositionInWorld(this.editorCamera));
-            this.simulator.ClearSelection();
-            this.simulator.SelectComponentsInRectangle(rec);
-        }
-
-        if (this.editorState == EditorState.RectangleSelecting && Raylib.IsMouseButtonReleased(MouseButton.MOUSE_LEFT_BUTTON))
-        {
-            this.editorState = EditorState.None;
-        }
+        this.fsm.Update(this);
 
         if (!ImGui.GetIO().WantCaptureKeyboard)
         {
@@ -836,28 +785,7 @@ public class Editor : Application
                 }
             }
         }
-    }
 
-    public void NewComponent(Component comp)
-    {
-        this.simulator.AddComponent(comp);
-        this.simulator.ClearSelection();
-        this.simulator.SelectComponent(comp);
-        this.editorState = EditorState.MovingSelection;
-    }
-
-    public override void Update()
-    {
-        Vector2 mousePosInWorld = UserInput.GetMousePositionInWorld(this.editorCamera);
-
-        this.hoveredInput = this.simulator.GetInputFromWorldPos(mousePosInWorld);
-        this.hoveredOutput = this.simulator.GetOutputFromWorldPos(mousePosInWorld);
-        this.hoveredComponent = this.simulator.GetComponentFromWorldPos(mousePosInWorld);
-
-        this.fsm.Update(this);
-
-        FindEditorState();
-        PerformEditorState();
         this.simulator.Update(mousePosInWorld);
     }
 
@@ -871,12 +799,6 @@ public class Editor : Application
 
         this.simulator.Render(mousePosInWorld);
         this.fsm.Render(this);
-
-        if (this.editorState == EditorState.RectangleSelecting)
-        {
-            Raylib.DrawRectangleLinesEx(Util.CreateRecFromTwoCorners(this.recSelectFirstCorner, mousePosInWorld), 2, Color.BLUE.Opacity(0.3f));
-            Raylib.DrawRectangleRec(Util.CreateRecFromTwoCorners(this.recSelectFirstCorner, mousePosInWorld), Color.BLUE.Opacity(0.3f));
-        }
 
         Raylib.EndMode2D();
     }

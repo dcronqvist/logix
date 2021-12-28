@@ -44,7 +44,7 @@ public class FSM<TUpdate>
         this.States = new List<State<TUpdate>>();
     }
 
-    public void SetInitialState<TState>() where TState : State<TUpdate>
+    public void SetState<TState>() where TState : State<TUpdate>
     {
         this.CurrentState = this.GetState(typeof(TState));
     }
