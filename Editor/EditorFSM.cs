@@ -87,9 +87,7 @@ public class StateHoveringInput : State<Editor>
 {
     public override void Update(Editor editor)
     {
-        ComponentInput? hoveredInput = editor.hoveredInput;
-
-        if (!ImGui.GetIO().WantCaptureMouse && hoveredInput != null && Raylib.IsMouseButtonPressed(MouseButton.MOUSE_RIGHT_BUTTON))
+        if (!ImGui.GetIO().WantCaptureMouse && editor.hoveredInput != null && Raylib.IsMouseButtonPressed(MouseButton.MOUSE_RIGHT_BUTTON))
         {
             if (editor.hoveredInput.HasSignal())
             {
@@ -98,7 +96,7 @@ public class StateHoveringInput : State<Editor>
             }
         }
 
-        if (hoveredInput == null)
+        if (editor.hoveredInput == null)
         {
             // Go back to None
             this.GoToState<StateNone>();
@@ -131,7 +129,7 @@ public class StateOutputToInput : State<Editor>
 {
     public override void Update(Editor editor)
     {
-        if (!ImGui.GetIO().WantCaptureMouse && editor.hoveredInput != null && Raylib.IsMouseButtonPressed(MouseButton.MOUSE_LEFT_BUTTON))
+        if (!ImGui.GetIO().WantCaptureMouse && editor.connectFrom != null && editor.hoveredInput != null && Raylib.IsMouseButtonPressed(MouseButton.MOUSE_LEFT_BUTTON))
         {
             // Create wire.
             ComponentOutput? connectFrom = editor.connectFrom;

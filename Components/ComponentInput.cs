@@ -1,3 +1,5 @@
+using System.Diagnostics.CodeAnalysis;
+
 namespace LogiX.Components;
 
 public class ComponentInput : ComponentIO
@@ -34,6 +36,7 @@ public class ComponentInput : ComponentIO
         this.Signal = null;
     }
 
+    [MemberNotNullWhen(true, "Signal")]
     public bool HasSignal()
     {
         return this.Signal != null;
