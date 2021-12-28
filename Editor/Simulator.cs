@@ -39,6 +39,8 @@ public class Simulator
         foreach (Component component in this.Components)
         {
             component.Render(mousePosInWorld);
+            //if (Raylib.CheckCollisionPointRec(c))
+            // TODO: ADD context menu to component in world
         }
 
         foreach (Component component in this.SelectedComponents)

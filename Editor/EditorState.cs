@@ -11,4 +11,5 @@ public enum EditorState
     OutputToInput = 6,
     HoveringWire = 7,
     MakingIC = 8,
+    LoadingProject = 9,
 }

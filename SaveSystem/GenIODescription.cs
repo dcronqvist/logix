@@ -9,27 +9,33 @@ public class GenIODescription : ComponentDescription
 
     }
 
-    public override Component ToComponent()
+    public override Component ToComponent(bool preserveIDs)
     {
+        Component c = null;
         switch (this.Type)
         {
             case ComponentType.Button:
-                return new Button(this.Outputs[0].Bits, this.Position);
+                c = new Button(this.Outputs[0].Bits, this.Position);
+                break;
 
             case ComponentType.HexViewer:
-                bool singlebit = this.Inputs.Count == 1 && this.Inputs[0].Bits == 1;
+                bool multibit = this.Inputs.Count == 1;
 
-                if (singlebit)
+                if (multibit)
                 {
-                    return new HexViewer(1, false, this.Position);
+                    c = new HexViewer(this.Inputs[0].Bits, true, this.Position);
                 }
                 else
                 {
-                    return new HexViewer(this.Inputs.Count, true, this.Position);
+                    c = new HexViewer(this.Inputs.Count, false, this.Position);
                 }
+                break;
 
         }
 
-        return null;
+        if (preserveIDs)
+            c.SetUniqueID(this.ID);
+
+        return c;
     }
 }

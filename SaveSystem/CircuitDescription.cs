@@ -11,6 +11,13 @@ public class CircuitDescription
     [JsonProperty(PropertyName = "wires")]
     public List<WireDescription> Wires { get; set; }
 
+    [JsonConstructor]
+    public CircuitDescription()
+    {
+        this.Components = new List<ComponentDescription>();
+        this.Wires = new List<WireDescription>();
+    }
+
     public CircuitDescription(List<Component> components)
     {
         this.Components = components.Select((comp) =>
@@ -76,11 +83,11 @@ public class CircuitDescription
         return -1;
     }
 
-    public Tuple<List<Component>, List<Wire>> CreateComponentsAndWires(Vector2 basePosition)
+    public Tuple<List<Component>, List<Wire>> CreateComponentsAndWires(Vector2 basePosition, bool preservIds)
     {
         List<Component> components = this.Components.Select((cd) =>
         {
-            Component c = cd.ToComponent();
+            Component c = cd.ToComponent(preservIds);
             c.Position += basePosition;
             return c;
         }).ToList();

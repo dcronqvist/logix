@@ -4,7 +4,7 @@ namespace LogiX.Components;
 
 public class ICComponent : Component
 {
-    private ICDescription Description { get; set; }
+    public ICDescription Description { get; set; }
     public override string Text => Description.Name;
     public override bool DrawIOIdentifiers => true;
 
@@ -25,13 +25,14 @@ public class ICComponent : Component
             this.Outputs[i].Identifier = description.GetOutputIdentifier(i);
         }
 
-        (List<Component> comps, List<Wire> ws) = description.Circuit.CreateComponentsAndWires(Vector2.Zero);
+        (List<Component> comps, List<Wire> ws) = description.Circuit.CreateComponentsAndWires(Vector2.Zero, true);
         this.Components = comps;
         this.Wires = ws;
     }
 
     public Lamp GetLampWithID(string id)
     {
+        /*
         string name = "";
         foreach (SLDescription sl in this.Description.Circuit.GetLamps())
         {
@@ -39,11 +40,11 @@ public class ICComponent : Component
             {
                 name = sl.Name;
             }
-        }
+        }*/
 
         foreach (Lamp sw in this.Components.Where(x => x is Lamp))
         {
-            if (sw.ID == name)
+            if (sw.uniqueID == id)
             {
                 return sw;
             }
@@ -54,6 +55,7 @@ public class ICComponent : Component
 
     public Switch GetSwitchWithID(string id)
     {
+        /*
         string name = "";
         foreach (SLDescription sl in this.Description.Circuit.GetSwitches())
         {
@@ -61,11 +63,11 @@ public class ICComponent : Component
             {
                 name = sl.Name;
             }
-        }
+        }*/
 
         foreach (Switch sw in this.Components.Where(x => x is Switch))
         {
-            if (sw.ID == name)
+            if (sw.uniqueID == id)
             {
                 return sw;
             }
@@ -130,10 +132,24 @@ public class ICComponent : Component
         //throw new NotImplementedException();
     }
 
-    public override ComponentDescription ToDescription()
+    public override ICDescription ToDescription()
     {
-        //throw new NotImplementedException();
+        ICDescription icd = this.Description.Copy();
+        icd.Position = this.Position;
+        //icd.ID = this.uniqueID;
+        return icd;
+    }
 
-        return this.Description;
+    public override void SubmitContextPopup(Editor.Editor editor)
+    {
+        base.SubmitContextPopup(editor);
+
+        ImGui.Text($"ICDescription ID: {this.Description.ID}");
+
+        if (ImGui.Button("Paste inner circuit"))
+        {
+            CircuitDescription cd = this.Description.Circuit;
+            editor.PasteComponentsAndWires(cd, UserInput.GetMousePositionInWorld(editor.editorCamera), true);
+        }
     }
 }

@@ -12,17 +12,21 @@ public class SLDescription : ComponentDescription
         this.Name = name;
     }
 
-    public override Component ToComponent()
+    public override Component ToComponent(bool preserveIDs)
     {
+        Component c = null;
         switch (this.Type)
         {
             case ComponentType.Switch:
-                return new Switch(this.Outputs[0].Bits, this.Position, this.Name);
+                c = new Switch(this.Outputs[0].Bits, this.Position, this.Name);
+                break;
 
             case ComponentType.Lamp:
-                return new Lamp(this.Inputs[0].Bits, this.Position, this.Name);
+                c = new Lamp(this.Inputs[0].Bits, this.Position, this.Name);
+                break;
         }
-
-        return null;
+        if (preserveIDs)
+            c.SetUniqueID(this.ID);
+        return c;
     }
 }

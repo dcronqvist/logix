@@ -10,6 +10,7 @@ public enum ComponentType
     Lamp,
     Button,
     HexViewer,
+    ROM
 }
 
 public class IODescription
@@ -23,7 +24,7 @@ public class IODescription
     }
 }
 
-public abstract class ComponentDescription
+public class ComponentDescription
 {
     [JsonProperty(PropertyName = "position")]
     public Vector2 Position { get; set; }
@@ -45,5 +46,8 @@ public abstract class ComponentDescription
         this.Position = position;
     }
 
-    public abstract Component ToComponent();
+    public virtual Component ToComponent(bool preserveID)
+    {
+        throw new Exception($"Component of type {this.Type} has not yet been implemented to be deserialized.");
+    }
 }

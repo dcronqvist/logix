@@ -41,7 +41,7 @@ public abstract class Component
     public virtual bool DrawIOIdentifiers => false;
     public virtual bool DrawBoxNormal => true;
 
-    protected string uniqueID;
+    public string uniqueID;
 
     public Component(IEnumerable<int> bitsPerInput, IEnumerable<int> bitsPerOutput, Vector2 position)
     {
@@ -64,6 +64,11 @@ public abstract class Component
         }
 
         this.uniqueID = Guid.NewGuid().ToString();
+    }
+
+    public void SetUniqueID(string id)
+    {
+        this.uniqueID = id;
     }
 
     public float GetMaxIOIDWidth()
@@ -279,6 +284,11 @@ public abstract class Component
     public virtual void OnSingleSelectedSubmitUI()
     {
 
+    }
+
+    public virtual void SubmitContextPopup(LogiX.Editor.Editor editor)
+    {
+        ImGui.Text($"ID: {this.uniqueID}");
     }
 
     public virtual void RenderSelected()

@@ -7,9 +7,12 @@ namespace LogiX.Editor;
 public class Editor : Application
 {
     // Editor states
-    Camera2D editorCamera;
+    public Camera2D editorCamera;
     EditorState editorState;
-    Simulator simulator;
+    public Simulator simulator;
+    Project loadedProject;
+    Component contextMenuComponent;
+    EditorFSM fsm;
 
     // GATES
     IGateLogic[] availableGateLogics;
@@ -21,12 +24,12 @@ public class Editor : Application
     List<Tuple<string, List<Tuple<string, Func<bool>, KeyboardKey?, KeyboardKey?, Action>>>> mainMenuButtons;
 
     // VARIABLES FOR TEMPORARY STUFF
-    ComponentInput? hoveredInput;
-    ComponentOutput? hoveredOutput;
-    Component? hoveredComponent;
-    Vector2 recSelectFirstCorner;
+    public ComponentInput? hoveredInput;
+    public ComponentOutput? hoveredOutput;
+    public Component? hoveredComponent;
+    public Vector2 recSelectFirstCorner;
 
-    ComponentOutput? connectFrom;
+    public ComponentOutput? connectFrom;
 
     CircuitDescription? copiedCircuit;
     List<SLDescription> icSwitches;
@@ -34,14 +37,12 @@ public class Editor : Application
     Dictionary<SLDescription, int> icLampGroup;
     List<SLDescription> icLamps;
     string icName;
-    string error;
-    bool encounteredError;
-
-    bool showDemo;
 
     // UI VARIABLES
     int newComponentBits;
     bool newComponentMultibit;
+    int newRomOutputbits;
+    bool newRomOutputMultibit;
 
     public override void Initialize()
     {
@@ -69,8 +70,29 @@ public class Editor : Application
             new XORLogic(),
             new NOTLogic()
         };
-        encounteredError = false;
-        showDemo = false;
+    }
+
+    public void SetProject(Project proj)
+    {
+        if (this.loadedProject == null)
+        {
+            this.loadedProject = proj;
+            (List<Component> comps, List<Wire> wires) = proj.GetComponentsAndWires();
+            this.simulator.AddComponents(comps);
+            this.simulator.AddWires(wires);
+        }
+        else
+        {
+            // There is an already ongoing project, save it
+            //this.loadedProject.SaveToFile(Directory.GetCurrentDirectory());
+
+            this.loadedProject = proj;
+            (List<Component> comps, List<Wire> wires) = proj.GetComponentsAndWires();
+            this.simulator.Components.Clear();
+            this.simulator.Wires.Clear();
+            this.simulator.AddComponents(comps);
+            this.simulator.AddWires(wires);
+        }
     }
 
     public override void LoadContent()
@@ -86,17 +108,78 @@ public class Editor : Application
 
         Settings.LoadSettings();
 
+        this.fsm = new EditorFSM();
+
         // ASSIGNING KEYCOMBO ACTIONS
         AddNewMainMenuItem("File", "Save", () => true, this.primaryKeyMod, KeyboardKey.KEY_S, () =>
         {
-            Project p = new Project("bajs");
-            p.SaveComponentsInWorkspace(this.simulator.Components);
-            p.SaveToFile(Directory.GetCurrentDirectory());
+            this.loadedProject.SaveComponentsInWorkspace(this.simulator.Components);
+            this.loadedProject.SaveToFile(Directory.GetCurrentDirectory());
         });
+
+        AddNewMainMenuItem("File", "Open Project...", () => true, null, null, () =>
+        {
+            base.SelectFile(Directory.GetCurrentDirectory(), (file) =>
+            {
+                Project p = Project.LoadFromFile(file);
+                SetProject(p);
+            }, () =>
+            {
+
+            }, Project.EXTENSION);
+        });
+
+        AddNewMainMenuItem("File", "Include IC from file...", () => true, null, null, () =>
+        {
+            // TODO: Add file dialog to pick file and include
+            base.SelectFile(Directory.GetCurrentDirectory(), (file) =>
+            {
+                if (!this.loadedProject.IncludeICFile(file))
+                {
+                    base.ModalError("Could not include IC file.");
+                }
+            }, () =>
+            {
+
+            }, ICDescription.EXTENSION);
+        });
+
+        AddNewMainMenuItem("File", "Include IC Collection from file...", () => true, null, null, () =>
+        {
+            base.SelectFile(Directory.GetCurrentDirectory(), (file) =>
+            {
+                this.loadedProject.IncludeICCollectionFile(file);
+            }, () => { }, ICCollection.EXTENSION);
+        });
+
         AddNewMainMenuItem("Edit", "Copy", () => this.simulator.SelectedComponents.Count > 0, this.primaryKeyMod, KeyboardKey.KEY_C, MMCopy);
         AddNewMainMenuItem("Edit", "Paste", () => this.copiedCircuit != null, this.primaryKeyMod, KeyboardKey.KEY_V, MMPaste);
         AddNewMainMenuItem("Edit", "Select All", () => true, this.primaryKeyMod, KeyboardKey.KEY_A, this.simulator.SelectAllComponents);
         AddNewMainMenuItem("Integrated Circuits", "Create IC from Selection", () => this.simulator.SelectedComponents.Count > 0, this.primaryKeyMod, KeyboardKey.KEY_I, MMCreateIC);
+        AddNewMainMenuItem("Integrated Circuits", "Export IC Collection from Selection", () => this.simulator.SelectedComponents.All(x => x is ICComponent), null, null, () =>
+        {
+            List<ICComponent> components = this.simulator.SelectedComponents.Cast<ICComponent>().ToList();
+
+            List<ICDescription> descriptions = new List<ICDescription>();
+
+            foreach (ICComponent c in components)
+            {
+                ICDescription icd = c.Description;
+                descriptions.Add(icd);
+            }
+
+            ICCollection collection = new ICCollection("testing", descriptions);
+
+            base.SelectFolder(Directory.GetCurrentDirectory(), (folder) =>
+            {
+                collection.SaveToFile(folder);
+            }, () =>
+            {
+
+            });
+        });
+
+        SetProject(new Project("unnamed-project"));
     }
 
     public void AddNewMainMenuItem(string mainButton, string actionButtonName, Func<bool> enabled, KeyboardKey? hold, KeyboardKey? press, Action action)
@@ -120,15 +203,21 @@ public class Editor : Application
     {
         if (copiedCircuit != null)
         {
-            this.simulator.ClearSelection();
-            Tuple<List<Component>, List<Wire>> newStuff = copiedCircuit.CreateComponentsAndWires(this.editorCamera.target);
-            this.simulator.AddComponents(newStuff.Item1);
-            this.simulator.AddWires(newStuff.Item2);
+            this.PasteComponentsAndWires(copiedCircuit, UserInput.GetMousePositionInWorld(this.editorCamera), false);
+        }
+    }
 
-            foreach (Component c in newStuff.Item1)
-            {
-                this.simulator.SelectComponent(c);
-            }
+    public void PasteComponentsAndWires(CircuitDescription cd, Vector2 pos, bool preserveIDs)
+    {
+        (List<Component> comps, List<Wire> wires) = cd.CreateComponentsAndWires(pos, preserveIDs);
+        this.simulator.AddComponents(comps);
+        this.simulator.AddWires(wires);
+
+        this.simulator.ClearSelection();
+
+        foreach (Component c in comps)
+        {
+            this.simulator.SelectComponent(c);
         }
     }
 
@@ -142,12 +231,14 @@ public class Editor : Application
             this.copiedCircuit = cd;
             icSwitchGroup = new Dictionary<SLDescription, int>();
             icSwitches = copiedCircuit.GetSwitches();
+            icSwitches = icSwitches.OrderBy(x => x.Position.Y).ToList();
             for (int i = 0; i < icSwitches.Count; i++)
             {
                 icSwitchGroup.Add(icSwitches[i], i);
             }
             icLampGroup = new Dictionary<SLDescription, int>();
             icLamps = copiedCircuit.GetLamps();
+            icLamps = icLamps.OrderBy(x => x.Position.Y).ToList();
             for (int i = 0; i < icLamps.Count; i++)
             {
                 icLampGroup.Add(icLamps[i], i);
@@ -156,7 +247,7 @@ public class Editor : Application
         }
         else
         {
-            this.EditorError("Cannot create integrated circuit from selected components, \nsince some switches or lamps have no identifier.");
+            base.ModalError("Cannot create integrated circuit from selected components, \nsince some switches or lamps have no identifier.");
         }
     }
 
@@ -184,11 +275,19 @@ public class Editor : Application
             }
         }
 
+        ImGui.Separator();
+
+        if (ImGui.BeginMenu(this.loadedProject.Name))
+        {
+            if (ImGui.Button("Reload ICs"))
+            {
+                this.loadedProject.ReloadProjectICs();
+            }
+
+            ImGui.EndMenu();
+        }
+
         ImGui.EndMainMenuBar();
-
-        // DEMO WINDOW
-
-        ImGui.ShowDemoWindow(ref this.showDemo);
 
         // SIDEBAR
 
@@ -201,7 +300,7 @@ public class Editor : Application
         ImGui.PopStyleColor();
         ImGui.PopStyleVar();
 
-        // TESTING WINDOW
+        // COMPONENTS WINDOW
 
         ImGui.Begin("Components", ImGuiWindowFlags.NoResize | ImGuiWindowFlags.AlwaysVerticalScrollbar | ImGuiWindowFlags.NoNavInputs);
         ImGui.Text("Gates");
@@ -228,6 +327,42 @@ public class Editor : Application
         {
             return new HexViewer(bits, multibit, worldPos);
         }, 4, false);
+        CreateNewROMButton();
+
+        ImGui.Separator();
+        ImGui.Text("Project ICs");
+
+        foreach (ICDescription icd in this.loadedProject.ProjectCreatedICs.ToArray())
+        {
+            CreateNewICButton(icd, () =>
+            {
+                this.loadedProject.RemoveProjectCreatedIC(icd);
+            });
+        }
+
+        ImGui.Text("Included ICs");
+
+        foreach (ICDescription icd in this.loadedProject.ICsFromFile.ToArray())
+        {
+            CreateNewICButton(icd, () =>
+            {
+                this.loadedProject.ExcludeICFromFile(icd);
+            });
+        }
+
+        ImGui.Text("Collections");
+
+        foreach (KeyValuePair<string, ICCollection> kvp in this.loadedProject.ICCollections.ToArray())
+        {
+            ImGui.Text(kvp.Key);
+            foreach (ICDescription icd in kvp.Value.ICs)
+            {
+                CreateNewICButton(icd, () =>
+                {
+                    this.loadedProject.ExcludeICCollection(kvp.Value);
+                });
+            }
+        }
 
         ImGui.End();
 
@@ -239,7 +374,7 @@ public class Editor : Application
         // MAKING IC WINDOW
         Vector2 windowSize = new Vector2(Raylib.GetScreenWidth(), Raylib.GetScreenHeight());
         ImGui.SetNextWindowPos(windowSize / 2, ImGuiCond.Always, new Vector2(0.5f, 0.5f));
-        Vector2 popupSize = new Vector2(80) * 4f;
+        Vector2 popupSize = new Vector2(120) * 4f;
         ImGui.SetNextWindowSizeConstraints(popupSize, popupSize);
         ImGui.SetNextWindowSize(popupSize);
         if (ImGui.BeginPopupModal("Create Integrated Circuit"))
@@ -265,8 +400,32 @@ public class Editor : Application
                 ImGui.PopID();
                 ImGui.SameLine();
                 int group = this.icSwitchGroup[sw];
-                ImGui.Selectable(sw.Name, false, ImGuiSelectableFlags.DontClosePopups);
-
+                ImGui.Text(sw.Name);
+                ImGui.SameLine();
+                ImGui.PushID(sw.ID + "up");
+                if (ImGui.Button("^"))
+                {
+                    int nNext = i - 1;
+                    if (nNext >= 0)
+                    {
+                        icSwitches[i] = icSwitches[nNext];
+                        icSwitches[nNext] = sw;
+                    }
+                }
+                ImGui.PopID();
+                ImGui.PushID(sw.ID + "down");
+                ImGui.SameLine();
+                if (ImGui.Button("v"))
+                {
+                    int nNext = i + 1;
+                    if (nNext < icSwitches.Count)
+                    {
+                        icSwitches[i] = icSwitches[nNext];
+                        icSwitches[nNext] = sw;
+                    }
+                }
+                ImGui.PopID();
+                /*
                 if (ImGui.IsItemActive() && !ImGui.IsItemHovered())
                 {
                     int nNext = i + (ImGui.GetMouseDragDelta(ImGuiMouseButton.Left).Y < 0f ? -1 : 1);
@@ -275,7 +434,7 @@ public class Editor : Application
                         icSwitches[i] = icSwitches[nNext];
                         icSwitches[nNext] = sw;
                     }
-                }
+                }*/
             }
 
             ImGui.NextColumn();
@@ -291,17 +450,31 @@ public class Editor : Application
                 ImGui.PopID();
                 ImGui.SameLine();
                 int group = this.icLampGroup[sw];
-                ImGui.Selectable(sw.Name, false, ImGuiSelectableFlags.DontClosePopups);
-
-                if (ImGui.IsItemActive() && !ImGui.IsItemHovered())
+                ImGui.Text(sw.Name);
+                ImGui.SameLine();
+                ImGui.PushID(sw.ID + "up");
+                if (ImGui.Button("^"))
                 {
-                    int nNext = i + (ImGui.GetMouseDragDelta(ImGuiMouseButton.Left).Y < 0f ? -1 : 1);
-                    if (nNext >= 0 && nNext < icLamps.Count)
+                    int nNext = i - 1;
+                    if (nNext >= 0)
                     {
                         icLamps[i] = icLamps[nNext];
                         icLamps[nNext] = sw;
                     }
                 }
+                ImGui.PopID();
+                ImGui.PushID(sw.ID + "down");
+                ImGui.SameLine();
+                if (ImGui.Button("v"))
+                {
+                    int nNext = i + 1;
+                    if (nNext < icLamps.Count)
+                    {
+                        icLamps[i] = icLamps[nNext];
+                        icLamps[nNext] = sw;
+                    }
+                }
+                ImGui.PopID();
             }
 
             ImGui.Columns(1);
@@ -345,10 +518,10 @@ public class Editor : Application
                             }
                         }
 
-                        ICDescription icd = new ICDescription(this.icName, copiedCircuit, inputOrder, outputOrder);
-                        Console.WriteLine(JsonConvert.SerializeObject(icd, Formatting.Indented));
+                        ICDescription icd = new ICDescription(this.icName, Vector2.Zero, copiedCircuit, inputOrder, outputOrder);
 
-                        this.simulator.AddComponent(icd.ToComponent());
+                        //this.simulator.AddComponent(icd.ToComponent());
+                        this.loadedProject.AddProjectCreatedIC(icd);
                     }
                     else
                     {
@@ -364,7 +537,8 @@ public class Editor : Application
 
         // DEBUG WINDOW
 
-        ImGui.Begin("Debug stuff");
+        bool x = true;
+        ImGui.Begin("Debug stuff", ref x, ImGuiWindowFlags.NoNav);
         ImGui.Text("Mouse Position in Window:");
         ImGui.Text(UserInput.GetMousePositionInWindow().ToString());
         ImGui.Text("Camera Position:");
@@ -379,6 +553,7 @@ public class Editor : Application
         ImGui.Text(ImGui.GetIO().WantCaptureKeyboard.ToString());
         ImGui.Text("IO Want Mouse:");
         ImGui.Text(ImGui.GetIO().WantCaptureMouse.ToString());
+        ImGui.Text($"FSM Current State: {this.fsm.CurrentState?.GetType().Name}");
 
         ImGui.Separator();
         ImGui.Text("Settings");
@@ -398,21 +573,54 @@ public class Editor : Application
             c.OnSingleSelectedSubmitUI();
         }
 
-        if (this.encounteredError)
+        if (!ImGui.GetIO().WantCaptureMouse)
         {
-            ImGui.OpenPopup("Error");
+            // On right clicking component, open its context menu
+            foreach (Component c in this.simulator.Components)
+            {
+                if (ImGui.IsMouseDoubleClicked(ImGuiMouseButton.Left) && Raylib.CheckCollisionPointRec(UserInput.GetMousePositionInWorld(this.editorCamera), c.Box))
+                {
+                    this.contextMenuComponent = c;
+                    ImGui.OpenPopup($"###ContextMenuComp{this.contextMenuComponent.uniqueID}");
+                }
+            }
         }
 
-        // Error popup
-        ImGui.SetNextWindowPos(windowSize / 2, ImGuiCond.Always, new Vector2(0.5f, 0.5f));
-        if (ImGui.BeginPopupModal("Error", ref this.encounteredError, ImGuiWindowFlags.AlwaysAutoResize))
+        ImGui.SetNextWindowPos(UserInput.GetMousePositionInWindow() - new Vector2(5, 5), ImGuiCond.Appearing);
+        if (ImGui.BeginPopupContextWindow($"###ContextMenuComp{(this.contextMenuComponent != null ? this.contextMenuComponent.uniqueID : 5)}"))
         {
-            ImGui.Text(this.error);
+            this.contextMenuComponent.SubmitContextPopup(this);
+            ImGui.EndPopup();
+        }
+    }
 
-            if (ImGui.Button("OK"))
+    public void CreateNewICButton(ICDescription icd, Action onExclude)
+    {
+        Vector2 buttonSize = new Vector2(94, 25);
+        ImGui.Button(icd.Name, buttonSize);
+
+        if (ImGui.IsItemClicked())
+        {
+            Component comp = icd.ToComponent(false);
+            comp.Position = UserInput.GetMousePositionInWorld(this.editorCamera);
+            this.NewComponent(comp);
+        }
+
+        if (ImGui.BeginPopupContextItem(icd.Name))
+        {
+            if (ImGui.Button("Export to file"))
             {
-                this.encounteredError = false;
-                ImGui.CloseCurrentPopup();
+                base.SelectFolder(Directory.GetCurrentDirectory(), (folder) =>
+                {
+                    icd.SaveToFile(folder);
+                }, () =>
+                {
+
+                });
+            }
+            if (ImGui.Button("Exclude from project"))
+            {
+                onExclude();
             }
 
             ImGui.EndPopup();
@@ -449,6 +657,39 @@ public class Editor : Application
 
                 ImGui.EndPopup();
             }
+        }
+    }
+
+    public void CreateNewROMButton()
+    {
+        Vector2 buttonSize = new Vector2(94, 25);
+        ImGui.Button("ROM", buttonSize);
+        if (ImGui.IsItemClicked())
+        {
+            // Create new component
+            ROM r = new ROM(false, 4, false, 4, UserInput.GetMousePositionInWorld(this.editorCamera));
+            this.NewComponent(r);
+        }
+
+        if (ImGui.BeginPopupContextItem("ROM"))
+        {
+            ImGui.SetNextItemWidth(80);
+            ImGui.InputInt("Addressable Bits", ref newComponentBits);
+            ImGui.Checkbox("Address Multibit", ref newComponentMultibit);
+            ImGui.SetNextItemWidth(80);
+            ImGui.InputInt("Output Bits", ref newRomOutputbits);
+            ImGui.Checkbox("Output Multibit", ref newRomOutputMultibit);
+            ImGui.Separator();
+            ImGui.Button("Create");
+
+            if (ImGui.IsItemClicked())
+            {
+                // Create new component
+                ROM comp = new ROM(newComponentMultibit, newComponentBits, newRomOutputMultibit, newRomOutputbits, UserInput.GetMousePositionInWorld(this.editorCamera));
+                this.NewComponent(comp);
+            }
+
+            ImGui.EndPopup();
         }
     }
 
@@ -494,42 +735,6 @@ public class Editor : Application
     {
         if (!ImGui.GetIO().WantCaptureMouse)
         {
-            if (Raylib.IsKeyPressed(KeyboardKey.KEY_SPACE) && this.editorState == EditorState.None)
-            {
-                this.editorState = EditorState.MovingCamera;
-            }
-            if (Raylib.IsKeyReleased(KeyboardKey.KEY_SPACE) && this.editorState == EditorState.MovingCamera)
-            {
-                this.editorState = EditorState.None;
-            }
-
-            if (Raylib.IsMouseButtonPressed(MouseButton.MOUSE_MIDDLE_BUTTON) && this.editorState == EditorState.None)
-            {
-                this.editorState = EditorState.MovingCamera; // Pressing Middle mouse button and doing nothing -> move camera
-            }
-            if (Raylib.IsMouseButtonReleased(MouseButton.MOUSE_MIDDLE_BUTTON) && this.editorState == EditorState.MovingCamera)
-            {
-                this.editorState = EditorState.None; // Releasing Middle mouse button and moving camera -> doing nothing
-            }
-
-            if (this.hoveredOutput != null && this.editorState == EditorState.None)
-            {
-                this.editorState = EditorState.HoveringOutput;
-            }
-            else if (this.hoveredOutput == null && this.editorState == EditorState.HoveringOutput)
-            {
-                this.editorState = EditorState.None;
-            }
-
-            if (this.hoveredInput != null && this.editorState == EditorState.None)
-            {
-                this.editorState = EditorState.HoveringInput;
-            }
-            else if (this.hoveredInput == null && this.editorState == EditorState.HoveringInput)
-            {
-                this.editorState = EditorState.None;
-            }
-
             if (Raylib.IsMouseButtonPressed(MouseButton.MOUSE_LEFT_BUTTON) && this.editorState == EditorState.None)
             {
                 if (this.hoveredComponent != null)
@@ -550,32 +755,6 @@ public class Editor : Application
         if (Raylib.IsMouseButtonReleased(MouseButton.MOUSE_LEFT_BUTTON) && this.editorState == EditorState.MovingSelection)
         {
             this.editorState = EditorState.None;
-        }
-
-        if (Raylib.IsMouseButtonPressed(MouseButton.MOUSE_LEFT_BUTTON) && this.editorState == EditorState.HoveringOutput)
-        {
-            this.connectFrom = this.hoveredOutput;
-            this.editorState = EditorState.OutputToInput;
-        }
-
-        if (Raylib.IsMouseButtonPressed(MouseButton.MOUSE_LEFT_BUTTON) && this.editorState == EditorState.OutputToInput)
-        {
-            if (this.hoveredInput != null)
-            {
-                if (!this.hoveredInput.HasSignal())
-                {
-                    Wire wire = new Wire(this.connectFrom.Bits, this.hoveredInput.OnComponent, this.hoveredInput.OnComponentIndex, this.connectFrom!.OnComponent, this.connectFrom!.OnComponentIndex);
-                    this.hoveredInput.SetSignal(wire);
-                    this.connectFrom.AddOutputWire(wire);
-                    this.simulator.AddWire(wire);
-                    this.editorState = EditorState.None;
-                }
-            }
-        }
-        else if (Raylib.IsKeyPressed(KeyboardKey.KEY_ESCAPE) && this.editorState == EditorState.OutputToInput)
-        {
-            this.editorState = EditorState.None;
-            this.connectFrom = null;
         }
     }
 
@@ -616,20 +795,9 @@ public class Editor : Application
             }
         }
 
-        // CHECKS TO SEE WHICH EDITOR STATE TO PERFORM
-        if (this.editorState == EditorState.MovingCamera)
-        {
-            this.editorCamera.target = this.editorCamera.target - mouseDelta;
-        }
-
         if (this.editorState == EditorState.MovingSelection)
         {
             this.simulator.MoveSelection(this.editorCamera);
-        }
-
-        if (this.editorState == EditorState.HoveringInput && Raylib.IsMouseButtonPressed(MouseButton.MOUSE_RIGHT_BUTTON))
-        {
-            this.simulator.DeleteWire(this.hoveredInput.Signal);
         }
 
         if (this.editorState == EditorState.RectangleSelecting)
@@ -678,13 +846,6 @@ public class Editor : Application
         this.editorState = EditorState.MovingSelection;
     }
 
-    public void EditorError(string error)
-    {
-        this.encounteredError = true;
-        this.error = error;
-        ImGui.OpenPopup("Error");
-    }
-
     public override void Update()
     {
         Vector2 mousePosInWorld = UserInput.GetMousePositionInWorld(this.editorCamera);
@@ -692,6 +853,8 @@ public class Editor : Application
         this.hoveredInput = this.simulator.GetInputFromWorldPos(mousePosInWorld);
         this.hoveredOutput = this.simulator.GetOutputFromWorldPos(mousePosInWorld);
         this.hoveredComponent = this.simulator.GetComponentFromWorldPos(mousePosInWorld);
+
+        this.fsm.Update(this);
 
         FindEditorState();
         PerformEditorState();
@@ -707,12 +870,7 @@ public class Editor : Application
         Vector2 mousePosInWorld = UserInput.GetMousePositionInWorld(this.editorCamera);
 
         this.simulator.Render(mousePosInWorld);
-
-        if (this.editorState == EditorState.OutputToInput)
-        {
-            Raylib.DrawLineBezier(this.connectFrom.Position, mousePosInWorld, 4, Color.BLACK);
-            Raylib.DrawLineBezier(this.connectFrom.Position, mousePosInWorld, 2, Color.WHITE);
-        }
+        this.fsm.Render(this);
 
         if (this.editorState == EditorState.RectangleSelecting)
         {

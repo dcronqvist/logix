@@ -33,7 +33,7 @@ public class HexViewer : Component
 
             for (int i = 0; i < ci.Bits; i++)
             {
-                value += ci.Values[i] == LogicValue.HIGH ? (1 << (ci.Bits - i - 1)) : 0;
+                value += ci.Values[i] == LogicValue.HIGH ? (1 << (i)) : 0;
             }
 
             this.hexString = value.ToString("X" + (int)MathF.Ceiling(ci.Bits / 4f));
@@ -42,7 +42,7 @@ public class HexViewer : Component
         {
             for (int i = 0; i < this.Inputs.Count; i++)
             {
-                value += this.InputAt(i).Values[0] == LogicValue.HIGH ? (1 << (this.Inputs.Count - i - 1)) : 0;
+                value += this.InputAt(i).Values[0] == LogicValue.HIGH ? (1 << (i)) : 0;
             }
             this.hexString = value.ToString("X" + (int)MathF.Ceiling(this.Inputs.Count / 4f));
         }
@@ -72,9 +72,9 @@ public class HexViewer : Component
 
     public override ComponentDescription ToDescription()
     {
-        if (this.Inputs.Count == 1)
+        if (this.Inputs.Count != 1)
         {
-            return new GenIODescription(this.Position, Util.NValues(new IODescription(1), this.InputAt(0).Bits), Util.EmptyList<IODescription>(), ComponentType.HexViewer);
+            return new GenIODescription(this.Position, Util.NValues(new IODescription(1), this.Inputs.Count), Util.EmptyList<IODescription>(), ComponentType.HexViewer);
         }
         else
         {

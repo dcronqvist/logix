@@ -32,7 +32,7 @@ public class Switch : Component
                 if (Raylib.CheckCollisionPointRec(mousePosInWorld, rec))
                 {
                     // TOGGLE VALUE
-                    this.ToggleValue(i);
+                    this.ToggleValue(this.Values.Count - i - 1);
                 }
             }
 
@@ -51,7 +51,7 @@ public class Switch : Component
         {
             Vector2 offset = new Vector2(2 + 32 * i, 2);
             Rectangle rec = new Rectangle(offset.X, offset.Y, 30f, 30f);
-            Raylib.DrawRectangleV(new Vector2(this.Box.x, this.Box.y) + offset, new Vector2(30f), this.Values[i] == LogicValue.LOW ? new Color(240, 240, 240, 255) : Color.BLUE);
+            Raylib.DrawRectangleV(new Vector2(this.Box.x, this.Box.y) + offset, new Vector2(30f), this.Values[this.Values.Count - i - 1] == LogicValue.LOW ? new Color(240, 240, 240, 255) : Color.BLUE);
         }
 
         Vector2 leftMiddle = new Vector2(this.Box.x, this.Box.y + this.Box.height / 2f);

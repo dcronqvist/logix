@@ -1,3 +1,5 @@
+using LogiX.SaveSystem;
+
 namespace LogiX.Editor;
 
 public abstract class Application
@@ -11,6 +13,15 @@ public abstract class Application
     public delegate void WindowResizeCallback(int x, int y);
     public event WindowResizeCallback OnWindowResized;
     private RenderTexture2D uiTexture;
+
+    protected FileDialog filePicker;
+    private int fileDialogType;
+    private string filePickerSelectedFile;
+    private Action<string> onFilePickerSelect;
+    private Action onFilePickerCancel;
+
+    private bool encounteredError;
+    private string lastErrorMessage;
 
     public void Run(int windowWidth, int windowHeight, string windowTitle, int initialTargetFPS)
     {
@@ -54,6 +65,8 @@ public abstract class Application
 
             Raylib.ClearBackground(Color.BLANK);
             SubmitUI();
+            HandleFileDialog();
+            HandleErrorModal();
             igc.Draw();
 
             Raylib.EndTextureMode();
@@ -69,5 +82,96 @@ public abstract class Application
 
         igc.Dispose();
         Raylib.CloseWindow();
+    }
+
+    public void SelectFile(string startDirectory, Action<string> onSelect, Action onCancel, params string[] fileExtensions)
+    {
+        this.filePicker = new FileDialog(startDirectory, fileExtensions);
+        this.onFilePickerCancel = onCancel;
+        this.onFilePickerSelect = onSelect;
+        this.filePickerSelectedFile = "";
+        this.fileDialogType = 0;
+    }
+
+    public void SelectFolder(string startDirectory, Action<string> onSelect, Action onCancel)
+    {
+        this.filePicker = new FileDialog(startDirectory);
+        this.onFilePickerCancel = onCancel;
+        this.onFilePickerSelect = onSelect;
+        this.filePickerSelectedFile = "";
+        this.fileDialogType = 1;
+    }
+
+    protected void ModalError(string errorMessage)
+    {
+        this.encounteredError = true;
+        this.lastErrorMessage = errorMessage;
+    }
+
+    private void HandleErrorModal()
+    {
+        if (encounteredError)
+        {
+            ImGui.OpenPopup("###Error");
+
+            if (ImGui.BeginPopupModal("###Error", ref this.encounteredError, ImGuiWindowFlags.AlwaysAutoResize))
+            {
+                ImGui.Text(this.lastErrorMessage);
+
+                if (ImGui.Button("OK"))
+                {
+                    this.encounteredError = false;
+                    ImGui.CloseCurrentPopup();
+                }
+
+                ImGui.EndPopup();
+            }
+        }
+    }
+
+    private void HandleFileDialog()
+    {
+        if (this.filePicker != null)
+        {
+            filePicker.Open();
+
+            if (fileDialogType == 0)
+            {
+                if (filePicker.Pick(ref this.filePickerSelectedFile, out bool selected))
+                {
+                    if (selected)
+                    {
+                        // perform "select"
+                        this.onFilePickerSelect.Invoke(this.filePickerSelectedFile);
+                    }
+                    else
+                    {
+                        // perform "cancel"
+                        this.onFilePickerCancel.Invoke();
+                    }
+
+                    this.filePicker = null;
+                }
+            }
+            else if (fileDialogType == 1)
+            {
+                if (filePicker.SelectFolder(ref this.filePickerSelectedFile, out bool selected))
+                {
+                    if (selected)
+                    {
+                        // perform "select"
+                        this.onFilePickerSelect.Invoke(this.filePickerSelectedFile);
+                    }
+                    else
+                    {
+                        // perform "cancel"
+                        this.onFilePickerCancel.Invoke();
+                    }
+
+                    this.filePicker = null;
+                }
+            }
+
+        }
     }
 }

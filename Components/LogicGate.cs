@@ -7,6 +7,9 @@ public class LogicGate : Component
     private IGateLogic Logic { get; set; }
     public override string Text => this.Logic.GetLogicText();
 
+    private int newGateBits;
+    private bool newGateMultibit;
+
     public LogicGate(int inputBits, bool multibit, IGateLogic gateLogic, Vector2 position) : base(multibit ? Util.Listify(inputBits) : Util.NValues(1, inputBits), Util.Listify(1), position)
     {
         if (inputBits < gateLogic.MinBits() || inputBits > gateLogic.MaxBits())
@@ -34,5 +37,23 @@ public class LogicGate : Component
         }).ToList();
 
         return new GateDescription(this.Position, inputs, outputs, this.Logic);
+    }
+
+    private int currentlySelectedLogic = 0;
+    public override void SubmitContextPopup(Editor.Editor editor)
+    {
+        base.SubmitContextPopup(editor);
+        string[] items = new string[5] {
+            "AND",
+            "NAND",
+            "OR",
+            "NOR",
+            "XOR"
+        };
+
+        if (ImGui.Combo("Change Logic", ref this.currentlySelectedLogic, items, items.Length))
+        {
+            this.Logic = Util.GetGateLogicFromName(items[this.currentlySelectedLogic]);
+        }
     }
 }

@@ -17,6 +17,7 @@
     <Using Include="System.Numerics" />
     <Using Include="ImGuiNET" />
     <Using Include="Newtonsoft.Json" />
+    <Using Include="LogiX.Editor" />
   </ItemGroup>
 
   <ItemGroup>

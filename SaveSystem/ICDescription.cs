@@ -13,7 +13,10 @@ public class ICDescription : ComponentDescription
     [JsonProperty(PropertyName = "outputOrder")]
     public List<List<string>> OutputOrder { get; set; }
 
-    public ICDescription(string name, CircuitDescription cd, List<List<string>> inputOrder, List<List<string>> outputOrder) : base(Vector2.Zero, inputOrder.Select(x => new IODescription(x.Count)).ToList(), outputOrder.Select(x => new IODescription(x.Count)).ToList(), ComponentType.Integrated)
+    [JsonIgnore]
+    public const string EXTENSION = ".lgxic";
+
+    public ICDescription(string name, Vector2 position, CircuitDescription cd, List<List<string>> inputOrder, List<List<string>> outputOrder) : base(position, inputOrder.Select(x => new IODescription(x.Count)).ToList(), outputOrder.Select(x => new IODescription(x.Count)).ToList(), ComponentType.Integrated)
     {
         this.Name = name;
         this.Circuit = cd;
@@ -72,7 +75,7 @@ public class ICDescription : ComponentDescription
         {
             SLDescription first = this.Circuit.GetSwitchWithID(inputs.First());
             SLDescription last = this.Circuit.GetSwitchWithID(inputs.Last());
-            return first.Name + "-" + last.Name;
+            return last.Name + "-" + first.Name;
         }
     }
 
@@ -89,12 +92,30 @@ public class ICDescription : ComponentDescription
         {
             SLDescription first = this.Circuit.GetLampWithID(outputs.First());
             SLDescription last = this.Circuit.GetLampWithID(outputs.Last());
-            return first.Name + "-" + last.Name;
+            return last.Name + "-" + first.Name;
         }
     }
 
-    public override Component ToComponent()
+    public override Component ToComponent(bool preserveIDs)
     {
-        return new ICComponent(this, Vector2.Zero);
+        Component c = new ICComponent(this, this.Position);
+        if (preserveIDs)
+            c.SetUniqueID(this.ID);
+        return c;
+    }
+
+    public ICDescription Copy()
+    {
+        ICDescription icd = new ICDescription(this.Name, this.Position, this.Circuit, this.InputOrder, this.OutputOrder);
+        icd.ID = this.ID;
+        return icd;
+    }
+
+    public void SaveToFile(string directory)
+    {
+        using (StreamWriter sw = new StreamWriter($"{directory}/{this.Name.ToSuitableFileName()}{ICDescription.EXTENSION}"))
+        {
+            sw.Write(JsonConvert.SerializeObject(this, Formatting.Indented));
+        }
     }
 }

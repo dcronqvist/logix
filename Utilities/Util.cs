@@ -29,6 +29,11 @@ public static class Util
                         src.a + (int)((target.a - src.a) * val));
     }
 
+    public static Vector4 ToVector4(this Color c)
+    {
+        return new Vector4(c.r, c.g, c.b, c.a);
+    }
+
     public static Tuple<float, float, float> LineFromTwoPoints(Vector2 a, Vector2 b)
     {
         // y = kx + m
@@ -83,5 +88,72 @@ public static class Util
             { KeyboardKey.KEY_LEFT_CONTROL, "Ctrl" },
             { KeyboardKey.KEY_LEFT_SUPER, "Cmd"}
         }.GetValueOrDefault(key, key.ToString().Replace("KEY_", ""));
+    }
+
+    public static bool TryGetFileInfo(string filePath, out FileInfo info)
+    {
+        if (File.Exists(filePath))
+        {
+            info = new FileInfo(filePath);
+            return true;
+        }
+        info = null;
+        return false;
+    }
+
+    public static string BytesToString(long byteCount)
+    {
+        string[] suf = { "B", "KB", "MB", "GB", "TB", "PB", "EB" }; //Longs run out around EB
+        if (byteCount == 0)
+            return "0" + suf[0];
+        long bytes = Math.Abs(byteCount);
+        int place = Convert.ToInt32(Math.Floor(Math.Log(bytes, 1024)));
+        double num = Math.Round(bytes / Math.Pow(1024, place), 1);
+        return (Math.Sign(byteCount) * num).ToString() + " " + suf[place];
+    }
+
+    public static string ToSuitableFileName(this string s)
+    {
+        return s.Replace(" ", "-").ToLower();
+    }
+
+    public static IGateLogic GetGateLogicFromName(string name)
+    {
+        switch (name)
+        {
+            case "AND":
+                return new ANDLogic();
+            case "NAND":
+                return new NANDLogic();
+            case "OR":
+                return new ORLogic();
+            case "NOR":
+                return new NORLogic();
+            case "XOR":
+                return new XORLogic();
+            case "NOT":
+                return new NOTLogic();
+        }
+
+        return null;
+    }
+
+    public static List<LogicValue> BinaryStringToLogicValues(string s)
+    {
+        List<LogicValue> values = new List<LogicValue>();
+
+        for (int i = 0; i < s.Length; i++)
+        {
+            if (s[i] == '1')
+            {
+                values.Add(LogicValue.HIGH);
+            }
+            else if (s[i] == '0')
+            {
+                values.Add(LogicValue.LOW);
+            }
+        }
+        values.Reverse();
+        return values;
     }
 }
