@@ -126,7 +126,7 @@ public class ROM : Component
             editor.SelectFile(Directory.GetCurrentDirectory(), (file) =>
             {
                 this.ROMFile = file;
-            }, () => { }, ".txt");
+            }, ".txt");
         }
         if (ImGui.Button("Reload"))
         {

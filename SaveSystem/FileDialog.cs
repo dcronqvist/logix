@@ -6,24 +6,32 @@ using System.Numerics;
 
 namespace LogiX.SaveSystem;
 
-public class FileDialog
+public enum FileDialogType
+{
+    SelectFolder,
+    SelectFile
+}
+
+public class FileDialog : Modal
 {
     private static readonly Vector2 DefaultFilePickerSize = new Vector2(600, 400);
 
     public string CurrentFolder { get; set; }
+    public string currentSelectedFile;
     public string SelectedFile { get; set; }
     public string[] FilteredExtensions { get; set; }
 
-    public FileDialog(string startDirectory, params string[] filteredExtensions)
+    public FileDialogType Type { get; set; }
+    private Action<string> OnSelect { get; set; }
+
+    public FileDialog(string startDirectory, FileDialogType fdt, Action<string> onSelect, params string[] filteredExtensions)
     {
         this.CurrentFolder = startDirectory;
         this.SelectedFile = null;
         this.FilteredExtensions = filteredExtensions;
-    }
-
-    public void Open()
-    {
-        ImGui.OpenPopup("###FileDialog");
+        this.Type = fdt;
+        this.currentSelectedFile = "";
+        this.OnSelect = onSelect;
     }
 
     public string[] GetMax5Parents(string directory)
@@ -45,9 +53,17 @@ public class FileDialog
         return parents.ToArray();
     }
 
-    public bool Pick(ref string selectedFile, out bool selected)
+    public bool ValidateFile(string filePath, IEnumerable<string> validFileExtensions)
     {
-        if (ImGui.BeginPopupModal("###FileDialog"))
+        bool fileExists = File.Exists(filePath);
+        bool validExtension = validFileExtensions.Count() > 0 ? validFileExtensions.Contains(Path.GetExtension(filePath)) : true;
+
+        return fileExists && validExtension;
+    }
+
+    public override bool SubmitContent(Editor.Editor editor)
+    {
+        if (this.Type == FileDialogType.SelectFile)
         {
             string[] parents = GetMax5Parents(this.CurrentFolder);
 
@@ -94,9 +110,9 @@ public class FileDialog
 
                 string fileText = $"[file] {fi.Name}";
 
-                if (ImGui.Selectable(fileText, selectedFile == file))
+                if (ImGui.Selectable(fileText, this.currentSelectedFile == file))
                 {
-                    selectedFile = file;
+                    this.currentSelectedFile = file;
                 }
 
                 float fileTextLength = ImGui.CalcTextSize(fileText).X;
@@ -119,12 +135,10 @@ public class FileDialog
 
             ImGui.EndChild();
 
-            ImGui.InputText("Selected file", ref selectedFile, 100);
+            ImGui.InputText("Selected file", ref this.currentSelectedFile, 100);
 
             if (ImGui.Button("Cancel"))
             {
-                ImGui.CloseCurrentPopup();
-                selected = false;
                 return true;
             }
 
@@ -132,44 +146,20 @@ public class FileDialog
 
             if (ImGui.Button("Select"))
             {
-                if (!ValidateFile(selectedFile, this.FilteredExtensions))
+                if (!ValidateFile(this.currentSelectedFile, this.FilteredExtensions))
                 {
                     // Make some kind of error stuff
-                    selected = false;
                     return false;
                 }
                 else
                 {
                     // File is valid, return to editor
-                    ImGui.CloseCurrentPopup();
-                    selected = true;
+                    this.OnSelect(this.currentSelectedFile);
                     return true;
                 }
             }
-
-            ImGui.EndPopup();
         }
-
-        selected = false;
-        return false;
-    }
-
-    public bool ValidateFile(string filePath, IEnumerable<string> validFileExtensions)
-    {
-        bool fileExists = File.Exists(filePath);
-        bool validExtension = validFileExtensions.Count() > 0 ? validFileExtensions.Contains(Path.GetExtension(filePath)) : true;
-
-        return fileExists && validExtension;
-    }
-
-    public bool SelectFolder(ref string selectedFolder, out bool selected)
-    {
-        if (selectedFolder == "")
-        {
-            selectedFolder = this.CurrentFolder;
-        }
-
-        if (ImGui.BeginPopupModal("###FileDialog"))
+        else if (this.Type == FileDialogType.SelectFolder)
         {
             string[] parents = GetMax5Parents(this.CurrentFolder);
 
@@ -202,10 +192,9 @@ public class FileDialog
             foreach (string subDir in subDirs)
             {
                 DirectoryInfo di = new DirectoryInfo(subDir);
-                if (ImGui.Selectable($"[dir] {di.Name}", selectedFolder == subDir))
+                if (ImGui.Selectable($"[dir] {di.Name}"))
                 {
                     this.CurrentFolder = subDir;
-                    selectedFolder = subDir;
                 }
             }
             ImGui.PopStyleColor();
@@ -220,12 +209,8 @@ public class FileDialog
 
             ImGui.EndChild();
 
-            ImGui.InputText("Selected folder", ref selectedFolder, 100);
-
             if (ImGui.Button("Cancel"))
             {
-                ImGui.CloseCurrentPopup();
-                selected = false;
                 return true;
             }
 
@@ -233,26 +218,21 @@ public class FileDialog
 
             if (ImGui.Button("Select"))
             {
-                if (!Directory.Exists(selectedFolder))
+                if (!Directory.Exists(this.CurrentFolder))
                 {
                     // Make some kind of error stuff
-                    selected = false;
                     return false;
                 }
                 else
                 {
                     // File is valid, return to editor
-                    ImGui.CloseCurrentPopup();
-                    selected = true;
+                    this.OnSelect(this.CurrentFolder);
                     return true;
                 }
             }
-
-            ImGui.EndPopup();
         }
 
 
-        selected = false;
         return false;
     }
 }

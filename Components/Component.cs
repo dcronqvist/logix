@@ -66,6 +66,12 @@ public abstract class Component
         this.uniqueID = Guid.NewGuid().ToString();
     }
 
+    public Component SetPosition(Vector2 pos)
+    {
+        this.Position = pos;
+        return this;
+    }
+
     public void SetUniqueID(string id)
     {
         this.uniqueID = id;

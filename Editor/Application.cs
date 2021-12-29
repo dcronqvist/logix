@@ -14,11 +14,7 @@ public abstract class Application
     public event WindowResizeCallback OnWindowResized;
     private RenderTexture2D uiTexture;
 
-    protected FileDialog filePicker;
-    private int fileDialogType;
-    private string filePickerSelectedFile;
-    private Action<string> onFilePickerSelect;
-    private Action onFilePickerCancel;
+    protected Modal currentModal;
 
     private bool encounteredError;
     private string lastErrorMessage;
@@ -65,7 +61,7 @@ public abstract class Application
 
             Raylib.ClearBackground(Color.BLANK);
             SubmitUI();
-            HandleFileDialog();
+
             HandleErrorModal();
             igc.Draw();
 
@@ -84,25 +80,7 @@ public abstract class Application
         Raylib.CloseWindow();
     }
 
-    public void SelectFile(string startDirectory, Action<string> onSelect, Action onCancel, params string[] fileExtensions)
-    {
-        this.filePicker = new FileDialog(startDirectory, fileExtensions);
-        this.onFilePickerCancel = onCancel;
-        this.onFilePickerSelect = onSelect;
-        this.filePickerSelectedFile = "";
-        this.fileDialogType = 0;
-    }
-
-    public void SelectFolder(string startDirectory, Action<string> onSelect, Action onCancel)
-    {
-        this.filePicker = new FileDialog(startDirectory);
-        this.onFilePickerCancel = onCancel;
-        this.onFilePickerSelect = onSelect;
-        this.filePickerSelectedFile = "";
-        this.fileDialogType = 1;
-    }
-
-    protected void ModalError(string errorMessage)
+    public void ModalError(string errorMessage)
     {
         this.encounteredError = true;
         this.lastErrorMessage = errorMessage;
@@ -126,52 +104,6 @@ public abstract class Application
 
                 ImGui.EndPopup();
             }
-        }
-    }
-
-    private void HandleFileDialog()
-    {
-        if (this.filePicker != null)
-        {
-            filePicker.Open();
-
-            if (fileDialogType == 0)
-            {
-                if (filePicker.Pick(ref this.filePickerSelectedFile, out bool selected))
-                {
-                    if (selected)
-                    {
-                        // perform "select"
-                        this.onFilePickerSelect.Invoke(this.filePickerSelectedFile);
-                    }
-                    else
-                    {
-                        // perform "cancel"
-                        this.onFilePickerCancel.Invoke();
-                    }
-
-                    this.filePicker = null;
-                }
-            }
-            else if (fileDialogType == 1)
-            {
-                if (filePicker.SelectFolder(ref this.filePickerSelectedFile, out bool selected))
-                {
-                    if (selected)
-                    {
-                        // perform "select"
-                        this.onFilePickerSelect.Invoke(this.filePickerSelectedFile);
-                    }
-                    else
-                    {
-                        // perform "cancel"
-                        this.onFilePickerCancel.Invoke();
-                    }
-
-                    this.filePicker = null;
-                }
-            }
-
         }
     }
 }
