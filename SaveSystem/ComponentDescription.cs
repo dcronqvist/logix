@@ -11,7 +11,8 @@ public enum ComponentType
     Button,
     HexViewer,
     ROM,
-    TextLabel
+    TextLabel,
+    Memory
 }
 
 public class IODescription

@@ -234,6 +234,10 @@ public class Editor : Application
         {
             return new ROM(im, ib, om, ob, UserInput.GetMousePositionInWorld(editorCamera));
         }));
+        this.AddNewComponentCreationContext("I/O", "Memory", () => { return new MemoryComponent(4, false, 8, false, UserInput.GetMousePositionInWorld(editorCamera)); }, new CCPUSimple(true, true, true, true, (ib, im, ob, om) =>
+        {
+            return new MemoryComponent(ib, im, ob, om, UserInput.GetMousePositionInWorld(editorCamera));
+        }));
         this.AddNewComponentCreationContext("I/O", "Label", () => { return new TextComponent(UserInput.GetMousePositionInWorld(editorCamera)); }, null);
 
         // GATES

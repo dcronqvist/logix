@@ -33,6 +33,8 @@ class ComponentConverter : Newtonsoft.Json.Converters.CustomCreationConverter<Co
                 return jObject.ToObject<ROMDescription>();
             case ComponentType.TextLabel:
                 return jObject.ToObject<TextComponentDescription>();
+            case ComponentType.Memory:
+                return jObject.ToObject<MemoryDescription>();
         }
 
         throw new ApplicationException(String.Format("The component type {0} is not supported!", type));
