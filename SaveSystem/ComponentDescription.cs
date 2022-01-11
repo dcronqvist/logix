@@ -10,7 +10,8 @@ public enum ComponentType
     Lamp,
     Button,
     HexViewer,
-    ROM
+    ROM,
+    TextLabel
 }
 
 public class IODescription

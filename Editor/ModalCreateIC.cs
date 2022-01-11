@@ -152,7 +152,7 @@ public class ModalCreateIC : Modal
                     if (this.icSwitchGroup.ContainsValue(i))
                     {
                         List<SLDescription> inGroup = this.icSwitchGroup.Where(x => x.Value == i).Select(x => x.Key).ToList();
-                        inputOrder.Add(inGroup.Select(x => x.ID).ToList());
+                        inputOrder.Add(inGroup.OrderBy(x => icSwitches.IndexOf(x)).Select(x => x.ID).ToList());
                     }
                 }
 
@@ -166,7 +166,7 @@ public class ModalCreateIC : Modal
                     if (this.icLampGroup.ContainsValue(i))
                     {
                         List<SLDescription> inGroup = this.icLampGroup.Where(x => x.Value == i).Select(x => x.Key).ToList();
-                        outputOrder.Add(inGroup.Select(x => x.ID).ToList());
+                        outputOrder.Add(inGroup.OrderBy(x => icLamps.IndexOf(x)).Select(x => x.ID).ToList());
                     }
                 }
 

@@ -234,6 +234,7 @@ public class Editor : Application
         {
             return new ROM(im, ib, om, ob, UserInput.GetMousePositionInWorld(editorCamera));
         }));
+        this.AddNewComponentCreationContext("I/O", "Label", () => { return new TextComponent(UserInput.GetMousePositionInWorld(editorCamera)); }, null);
 
         // GATES
         foreach (IGateLogic logic in this.availableGateLogics)

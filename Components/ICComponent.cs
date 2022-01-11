@@ -136,7 +136,7 @@ public class ICComponent : Component
     {
         ICDescription icd = this.Description.Copy();
         icd.Position = this.Position;
-        //icd.ID = this.uniqueID;
+        icd.ID = this.uniqueID;
         return icd;
     }
 
