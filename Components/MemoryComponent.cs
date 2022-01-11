@@ -158,4 +158,23 @@ public class MemoryComponent : Component
         List<IODescription> outputs = this.Outputs.Select(i => new IODescription(i.Bits)).ToList();
         return new MemoryDescription(this.Position, this.Memory, inputs, outputs);
     }
+
+    public override void SubmitContextPopup(Editor.Editor editor)
+    {
+        base.SubmitContextPopup(editor);
+
+        if (ImGui.Button("Dump Memory to File..."))
+        {
+            editor.SelectFolder(Directory.GetCurrentDirectory(), folder =>
+            {
+                using (StreamWriter sw = new StreamWriter(folder + "/memory.txt"))
+                {
+                    for (int i = 0; i < this.Memory.Length; i++)
+                    {
+                        sw.WriteLine(Util.LogicValuesToBinaryString(this.Memory[i]));
+                    }
+                }
+            });
+        }
+    }
 }

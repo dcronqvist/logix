@@ -156,4 +156,21 @@ public static class Util
         values.Reverse();
         return values;
     }
+
+    public static string LogicValuesToBinaryString(List<LogicValue> values)
+    {
+        string s = "";
+        foreach (LogicValue v in values)
+        {
+            if (v == LogicValue.HIGH)
+            {
+                s = "1" + s;
+            }
+            else if (v == LogicValue.LOW)
+            {
+                s = "0" + s;
+            }
+        }
+        return s;
+    }
 }
