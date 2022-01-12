@@ -122,7 +122,7 @@ public class Editor : Application
         AddNewMainMenuItem("File", "Save", new EditorAction((editor) => true, (Editor editor, out string error) =>
         {
             this.loadedProject.SaveComponentsInWorkspace(this.simulator.Components);
-            this.loadedProject.SaveToFile(Directory.GetCurrentDirectory());
+            this.loadedProject.SaveToFile(this.loadedProject.LoadedFromDirectory);
             error = ""; return true;
         }, this.primaryKeyMod, KeyboardKey.KEY_S));
 

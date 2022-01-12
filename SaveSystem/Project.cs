@@ -20,6 +20,9 @@ public class Project
     public List<string> IncludedICCollectionFiles { get; set; }
 
     [JsonIgnore]
+    public string LoadedFromDirectory { get; set; }
+
+    [JsonIgnore]
     public List<ICDescription> ICsFromFile { get; set; }
 
     [JsonIgnore]
@@ -160,6 +163,7 @@ public class Project
                 ObjectCreationHandling = ObjectCreationHandling.Replace
             });
             p.ReloadProjectICs();
+            p.LoadedFromDirectory = Path.GetDirectoryName(file);
             return p;
         }
     }

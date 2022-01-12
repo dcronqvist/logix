@@ -9,5 +9,6 @@
         "bin": true,
         "obj": true,
         "imgui.ini": true,
-    }
+    },
+    "explorer.compactFolders": false
 }

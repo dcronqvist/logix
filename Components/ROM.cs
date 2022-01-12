@@ -38,7 +38,7 @@ public class ROM : Component
         {
             this.OutputAt(i).Identifier = $"M{i}";
         }
-
+        this.ReloadROM();
     }
 
     public void ReloadROM()
@@ -47,6 +47,7 @@ public class ROM : Component
         {
             if (!File.Exists(this.ROMFile))
             {
+                this.ROMFile = null;
                 return;
             }
 
