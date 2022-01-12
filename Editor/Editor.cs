@@ -244,6 +244,7 @@ public class Editor : Application
         {
             return new Splitter(ib, ob, im, om, UserInput.GetMousePositionInWorld(editorCamera));
         }));
+        this.AddNewComponentCreationContext("I/O", "Clock", () => { return new Clock(500, UserInput.GetMousePositionInWorld(editorCamera)); }, null);
 
         // GATES
         foreach (IGateLogic logic in this.availableGateLogics)
@@ -616,5 +617,10 @@ public class Editor : Application
     public void SelectFolder(string startDirectory, Action<string> onSelect)
     {
         this.currentModal = new FileDialog(startDirectory, FileDialogType.SelectFolder, onSelect);
+    }
+
+    public override void OnClose()
+    {
+
     }
 }

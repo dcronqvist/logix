@@ -14,7 +14,8 @@ public enum ComponentType
     TextLabel,
     Memory,
     Constant,
-    Splitter
+    Splitter,
+    Clock
 }
 
 public class IODescription

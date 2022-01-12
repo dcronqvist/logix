@@ -54,10 +54,11 @@ public class ROM : Component
             List<List<LogicValue>> values = new List<List<LogicValue>>();
             using (StreamReader sr = new StreamReader(this.ROMFile))
             {
-                while (sr.Peek() != -1)
+                sr.ReadLine();
+                sr.ReadLine();
+                string? line = "";
+                while ((line = sr.ReadLine()) != null)
                 {
-                    string line = sr.ReadLine();
-
                     List<LogicValue> lineValues = Util.BinaryStringToLogicValues(line);
                     values.Add(lineValues);
                 }
@@ -91,7 +92,7 @@ public class ROM : Component
             }
 
             List<LogicValue> valuesAtAddress;
-            if (address > this.ROMValues.Count)
+            if (address >= this.ROMValues.Count)
             {
                 valuesAtAddress = Util.NValues(LogicValue.LOW, this.ROMValues[0].Count);
             }

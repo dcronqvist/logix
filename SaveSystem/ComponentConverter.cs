@@ -39,6 +39,8 @@ class ComponentConverter : Newtonsoft.Json.Converters.CustomCreationConverter<Co
                 return jObject.ToObject<ConstantDescription>();
             case ComponentType.Splitter:
                 return jObject.ToObject<SplitterDescription>();
+            case ComponentType.Clock:
+                return jObject.ToObject<ClockDescription>();
         }
 
         throw new ApplicationException(String.Format("The component type {0} is not supported!", type));

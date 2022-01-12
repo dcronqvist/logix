@@ -9,6 +9,7 @@ public abstract class Application
     public abstract void Update();
     public abstract void Render();
     public abstract void SubmitUI();
+    public abstract void OnClose();
 
     public delegate void WindowResizeCallback(int x, int y);
     public event WindowResizeCallback OnWindowResized;
@@ -78,6 +79,7 @@ public abstract class Application
 
         igc.Dispose();
         Raylib.CloseWindow();
+        this.OnClose();
     }
 
     public void ModalError(string errorMessage)
