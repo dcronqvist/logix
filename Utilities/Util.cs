@@ -142,6 +142,8 @@ public static class Util
     {
         List<LogicValue> values = new List<LogicValue>();
 
+        s = s.Split(";;").First();
+
         for (int i = 0; i < s.Length; i++)
         {
             if (s[i] == '1')
