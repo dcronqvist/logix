@@ -12,7 +12,9 @@ public enum ComponentType
     HexViewer,
     ROM,
     TextLabel,
-    Memory
+    Memory,
+    Constant,
+    Splitter
 }
 
 public class IODescription

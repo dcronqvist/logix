@@ -239,6 +239,11 @@ public class Editor : Application
             return new MemoryComponent(ib, im, ob, om, UserInput.GetMousePositionInWorld(editorCamera));
         }));
         this.AddNewComponentCreationContext("I/O", "Label", () => { return new TextComponent(UserInput.GetMousePositionInWorld(editorCamera)); }, null);
+        this.AddNewComponentCreationContext("I/O", "Constant", () => { return new ConstantComponent(LogicValue.HIGH, UserInput.GetMousePositionInWorld(editorCamera)); }, null);
+        this.AddNewComponentCreationContext("I/O", "Splitter", () => { return new Splitter(2, 2, true, false, UserInput.GetMousePositionInWorld(editorCamera)); }, new CCPUSimple(true, true, true, true, (ib, im, ob, om) =>
+        {
+            return new Splitter(ib, ob, im, om, UserInput.GetMousePositionInWorld(editorCamera));
+        }));
 
         // GATES
         foreach (IGateLogic logic in this.availableGateLogics)

@@ -35,6 +35,10 @@ class ComponentConverter : Newtonsoft.Json.Converters.CustomCreationConverter<Co
                 return jObject.ToObject<TextComponentDescription>();
             case ComponentType.Memory:
                 return jObject.ToObject<MemoryDescription>();
+            case ComponentType.Constant:
+                return jObject.ToObject<ConstantDescription>();
+            case ComponentType.Splitter:
+                return jObject.ToObject<SplitterDescription>();
         }
 
         throw new ApplicationException(String.Format("The component type {0} is not supported!", type));
