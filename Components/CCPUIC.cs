@@ -26,9 +26,23 @@ public class CCPUIC : IUISubmitter<bool, Editor.Editor>
 
         if (ImGui.Button("Exclude"))
         {
-            this.exclude(this.desc);
+            arg.ModalError("Are you sure you want to exclude this IC?", ErrorModalType.YesNo, (result) =>
+            {
+                if (result == ErrorModalResult.Yes)
+                {
+                    exclude(desc);
+                }
+            });
             return true;
         }
+
+        string name = desc.Name;
+        if (ImGui.InputText("Name", ref name, 100, ImGuiInputTextFlags.EnterReturnsTrue))
+        {
+            desc.Name = name;
+            return true;
+        }
+        desc.Name = name;
 
         return false;
     }

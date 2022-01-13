@@ -43,6 +43,8 @@ public abstract class Component
 
     public string uniqueID;
 
+    public int Rotation { get; set; }
+
     public Component(IEnumerable<int> bitsPerInput, IEnumerable<int> bitsPerOutput, Vector2 position)
     {
         this.Position = position;
@@ -64,6 +66,7 @@ public abstract class Component
         }
 
         this.uniqueID = Guid.NewGuid().ToString();
+        this.Rotation = 0;
     }
 
     public Component SetPosition(Vector2 pos)

@@ -175,4 +175,16 @@ public static class Util
         }
         return s;
     }
+
+    public static Vector2 GetMiddleOfListOfVectors(List<Vector2> vectors)
+    {
+        float x = 0;
+        float y = 0;
+        foreach (Vector2 v in vectors)
+        {
+            x += v.X;
+            y += v.Y;
+        }
+        return new Vector2(x / vectors.Count, y / vectors.Count);
+    }
 }

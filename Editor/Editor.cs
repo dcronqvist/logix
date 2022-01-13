@@ -135,7 +135,7 @@ public class Editor : Application
                 this.SaveFile(Directory.GetCurrentDirectory(), (filePath) =>
                 {
                     this.loadedProject.SaveToFile(filePath);
-                    Settings.SetSetting<string>("latestProject", filePath);
+                    Settings.SetSetting<string>("latestProject", this.loadedProject.LoadedFromFile);
                     Settings.SaveSettings();
                 }, Project.EXTENSION);
                 error = "";
@@ -196,6 +196,17 @@ public class Editor : Application
         AddNewMainMenuItem("Edit", "Paste", new EditorAction((editor) => this.copiedCircuit != null, (editor) => false, (Editor editor, out string error) => { MMPaste(); error = ""; return true; }, this.primaryKeyMod, KeyboardKey.KEY_V));
         AddNewMainMenuItem("Edit", "Select All", new EditorAction((editor) => true, (editor) => false, (Editor editor, out string error) => { this.simulator.SelectAllComponents(); error = ""; return true; }, this.primaryKeyMod, KeyboardKey.KEY_A));
         AddNewMainMenuItem("Edit", "Delete Selection", new EditorAction((editor) => this.simulator.SelectedComponents.Count > 0, (editor) => false, (Editor editor, out string error) => { this.simulator.DeleteSelection(); error = ""; return true; }, KeyboardKey.KEY_BACKSPACE));
+        AddNewMainMenuItem("Edit", "Horizontally Align", new EditorAction((editor) => this.simulator.SelectedComponents.Count > 0, (editor) => false, (Editor editor, out string error) =>
+        {
+            List<Component> selected = this.simulator.SelectedComponents;
+            Vector2 middle = Util.GetMiddleOfListOfVectors(selected.Select(c => c.Position).ToList());
+            foreach (Component c in selected)
+            {
+                c.Position = new Vector2(middle.X, c.Position.Y);
+            }
+            error = "";
+            return true;
+        }, this.primaryKeyMod, KeyboardKey.KEY_H));
         AddNewMainMenuItem("Integrated Circuits", "Create IC from Selection", new EditorAction((editor) => this.simulator.SelectedComponents.Count > 0, (editor) => false, (Editor editor, out string error) =>
         {
             CircuitDescription cd = new CircuitDescription(this.simulator.SelectedComponents);
@@ -310,6 +321,7 @@ public class Editor : Application
             new CCPUIC(icd, (desc) =>
             {
                 this.loadedProject.RemoveProjectCreatedIC(icd);
+                this.LoadComponentButtons();
             }));
         }
         // Included single IC files
@@ -319,6 +331,7 @@ public class Editor : Application
             new CCPUIC(icd, (desc) =>
             {
                 this.loadedProject.ExcludeICFromFile(icd);
+                this.LoadComponentButtons();
             }));
         }
         // Included collections
@@ -330,6 +343,7 @@ public class Editor : Application
                 new CCPUIC(icd, (desc) =>
                 {
                     this.loadedProject.ExcludeICCollection(collection.Value);
+                    this.LoadComponentButtons();
                 }));
             }
         }
@@ -456,6 +470,7 @@ public class Editor : Application
             if (ImGui.Button("Reload ICs"))
             {
                 this.loadedProject.ReloadProjectICs();
+                this.LoadComponentButtons();
             }
 
             ImGui.Text("Project file: " + this.loadedProject.LoadedFromFile);
