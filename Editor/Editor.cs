@@ -46,6 +46,7 @@ public class Editor : Application
     bool newComponentMultibit;
     int newRomOutputbits;
     bool newRomOutputMultibit;
+    bool displayDebugWindow;
 
     public override void Initialize()
     {
@@ -76,6 +77,7 @@ public class Editor : Application
 
         this.componentCreationContexts = new Dictionary<string, Tuple<Func<Component>, IUISubmitter<bool, Editor>?>>();
         this.componentCategories = new Dictionary<string, List<string>>();
+        this.displayDebugWindow = false;
     }
 
     public void SetProject(Project proj)
@@ -100,6 +102,7 @@ public class Editor : Application
             this.simulator.AddWires(wires);
         }
 
+        Raylib.SetWindowTitle("LogiX - " + proj.GetFileName());
         this.LoadComponentButtons();
     }
 
@@ -119,24 +122,49 @@ public class Editor : Application
         this.fsm = new EditorFSM();
 
         // ASSIGNING KEYCOMBO ACTIONS
-        AddNewMainMenuItem("File", "Save", new EditorAction((editor) => true, (Editor editor, out string error) =>
+        AddNewMainMenuItem("File", "Save", new EditorAction((editor) => true, (editor) => false, (Editor editor, out string error) =>
         {
-            this.loadedProject.SaveComponentsInWorkspace(this.simulator.Components);
-            this.loadedProject.SaveToFile(this.loadedProject.LoadedFromDirectory);
-            error = ""; return true;
+            if (this.loadedProject.HasFile())
+            {
+                this.loadedProject.SaveComponentsInWorkspace(this.simulator.Components);
+                this.loadedProject.SaveToFile(this.loadedProject.LoadedFromFile);
+                error = ""; return true;
+            }
+            else
+            {
+                this.SaveFile(Directory.GetCurrentDirectory(), (filePath) =>
+                {
+                    this.loadedProject.SaveToFile(filePath);
+                    Settings.SetSetting<string>("latestProject", filePath);
+                    Settings.SaveSettings();
+                }, Project.EXTENSION);
+                error = "";
+                return true;
+            }
+
         }, this.primaryKeyMod, KeyboardKey.KEY_S));
 
-        AddNewMainMenuItem("File", "Open Project", new EditorAction((editor) => true, (Editor editor, out string error) =>
+        AddNewMainMenuItem("File", "New Project", new EditorAction((editor) => true, (editor) => false, (Editor editor, out string error) =>
+        {
+            // Should maybe save current project before?
+            SetProject(new Project());
+            error = "";
+            return true;
+        }));
+
+        AddNewMainMenuItem("File", "Open Project", new EditorAction((editor) => true, (editor) => false, (Editor editor, out string error) =>
         {
             this.SelectFile(Directory.GetCurrentDirectory(), (file) =>
             {
                 Project p = Project.LoadFromFile(file);
+                Settings.SetSetting<string>("latestProject", p.LoadedFromFile);
+                Settings.SaveSettings();
                 SetProject(p);
             }, Project.EXTENSION);
             error = ""; return true;
         }, this.primaryKeyMod, KeyboardKey.KEY_O));
 
-        AddNewMainMenuItem("File", "Include IC File", new EditorAction((editor) => true, (Editor editor, out string error) =>
+        AddNewMainMenuItem("File", "Include IC File", new EditorAction((editor) => true, (editor) => false, (Editor editor, out string error) =>
         {
             this.SelectFile(Directory.GetCurrentDirectory(), (file) =>
             {
@@ -154,7 +182,7 @@ public class Editor : Application
             error = ""; return true;
         }, this.primaryKeyMod, KeyboardKey.KEY_I, KeyboardKey.KEY_F));
 
-        AddNewMainMenuItem("File", "Include IC Collection", new EditorAction((editor) => true, (Editor editor, out string error) =>
+        AddNewMainMenuItem("File", "Include IC Collection", new EditorAction((editor) => true, (editor) => false, (Editor editor, out string error) =>
         {
             this.SelectFile(Directory.GetCurrentDirectory(), (file) =>
             {
@@ -164,11 +192,11 @@ public class Editor : Application
             error = ""; return true;
         }, this.primaryKeyMod, KeyboardKey.KEY_I, KeyboardKey.KEY_C));
 
-        AddNewMainMenuItem("Edit", "Copy", new EditorAction((editor) => this.simulator.SelectedComponents.Count > 0, (Editor editor, out string error) => { MMCopy(); error = ""; return true; }, this.primaryKeyMod, KeyboardKey.KEY_C));
-        AddNewMainMenuItem("Edit", "Paste", new EditorAction((editor) => this.copiedCircuit != null, (Editor editor, out string error) => { MMPaste(); error = ""; return true; }, this.primaryKeyMod, KeyboardKey.KEY_V));
-        AddNewMainMenuItem("Edit", "Select All", new EditorAction((editor) => true, (Editor editor, out string error) => { this.simulator.SelectAllComponents(); error = ""; return true; }, this.primaryKeyMod, KeyboardKey.KEY_A));
-        AddNewMainMenuItem("Edit", "Delete Selection", new EditorAction((editor) => this.simulator.SelectedComponents.Count > 0, (Editor editor, out string error) => { this.simulator.DeleteSelection(); error = ""; return true; }, KeyboardKey.KEY_BACKSPACE));
-        AddNewMainMenuItem("Integrated Circuits", "Create IC from Selection", new EditorAction((editor) => this.simulator.SelectedComponents.Count > 0, (Editor editor, out string error) =>
+        AddNewMainMenuItem("Edit", "Copy", new EditorAction((editor) => this.simulator.SelectedComponents.Count > 0, (editor) => false, (Editor editor, out string error) => { MMCopy(); error = ""; return true; }, this.primaryKeyMod, KeyboardKey.KEY_C));
+        AddNewMainMenuItem("Edit", "Paste", new EditorAction((editor) => this.copiedCircuit != null, (editor) => false, (Editor editor, out string error) => { MMPaste(); error = ""; return true; }, this.primaryKeyMod, KeyboardKey.KEY_V));
+        AddNewMainMenuItem("Edit", "Select All", new EditorAction((editor) => true, (editor) => false, (Editor editor, out string error) => { this.simulator.SelectAllComponents(); error = ""; return true; }, this.primaryKeyMod, KeyboardKey.KEY_A));
+        AddNewMainMenuItem("Edit", "Delete Selection", new EditorAction((editor) => this.simulator.SelectedComponents.Count > 0, (editor) => false, (Editor editor, out string error) => { this.simulator.DeleteSelection(); error = ""; return true; }, KeyboardKey.KEY_BACKSPACE));
+        AddNewMainMenuItem("Integrated Circuits", "Create IC from Selection", new EditorAction((editor) => this.simulator.SelectedComponents.Count > 0, (editor) => false, (Editor editor, out string error) =>
         {
             CircuitDescription cd = new CircuitDescription(this.simulator.SelectedComponents);
 
@@ -183,6 +211,12 @@ public class Editor : Application
                 error = "Could not create IC from selected components since there are switches or lamps without identifiers.";
                 return false;
             }
+        }, this.primaryKeyMod, KeyboardKey.KEY_I));
+
+        AddNewMainMenuItem("View", "Debug Window", new EditorAction((editor) => true, (editor) => editor.displayDebugWindow, (Editor editor, out string error) =>
+        {
+            this.displayDebugWindow = !this.displayDebugWindow;
+            error = ""; return true;
         }));
 
         /*AddNewMainMenuItem("Integrated Circuits", "Export IC Collection from Selection", () => this.simulator.SelectedComponents.All(x => x is ICComponent), null, null, () =>
@@ -208,7 +242,17 @@ public class Editor : Application
             });
         });*/
 
-        SetProject(new Project("unnamed-project"));
+        // Initial project based on setting latestProject
+        string latestProject = Settings.GetSetting("latestProject").GetValue<string>();
+        if (latestProject != null && latestProject != "")
+        {
+            Project p = Project.LoadFromFile(latestProject);
+            SetProject(p);
+        }
+        else
+        {
+            SetProject(new Project());
+        }
     }
 
     public void LoadComponentButtons()
@@ -217,34 +261,34 @@ public class Editor : Application
         this.componentCreationContexts = new Dictionary<string, Tuple<Func<Component>, IUISubmitter<bool, Editor>?>>();
 
         // I/O
-        this.AddNewComponentCreationContext("I/O", "Switch", () => { return new Switch(1, UserInput.GetMousePositionInWorld(editorCamera)); }, new CCPUSimple(false, false, true, false, (_, _, ob, _) =>
+        this.AddNewComponentCreationContext("Common", "Switch", () => { return new Switch(1, UserInput.GetMousePositionInWorld(editorCamera)); }, new CCPUSimple(false, false, true, false, (_, _, ob, _) =>
         {
             return new Switch(ob, UserInput.GetMousePositionInWorld(editorCamera));
         }));
-        this.AddNewComponentCreationContext("I/O", "Button", () => { return new Button(1, UserInput.GetMousePositionInWorld(editorCamera)); }, null);
-        this.AddNewComponentCreationContext("I/O", "Lamp", () => { return new Lamp(1, UserInput.GetMousePositionInWorld(editorCamera)); }, new CCPUSimple(true, true, false, false, (ib, _, _, _) =>
+        this.AddNewComponentCreationContext("Common", "Button", () => { return new Button(1, UserInput.GetMousePositionInWorld(editorCamera)); }, null);
+        this.AddNewComponentCreationContext("Common", "Lamp", () => { return new Lamp(1, UserInput.GetMousePositionInWorld(editorCamera)); }, new CCPUSimple(true, true, false, false, (ib, _, _, _) =>
         {
             return new Lamp(ib, UserInput.GetMousePositionInWorld(editorCamera));
         }));
-        this.AddNewComponentCreationContext("I/O", "Hex Viewer", () => { return new HexViewer(4, false, UserInput.GetMousePositionInWorld(editorCamera)); }, new CCPUSimple(true, true, false, false, (ib, im, _, _) =>
+        this.AddNewComponentCreationContext("Common", "Hex Viewer", () => { return new HexViewer(4, false, UserInput.GetMousePositionInWorld(editorCamera)); }, new CCPUSimple(true, true, false, false, (ib, im, _, _) =>
         {
             return new HexViewer(ib, im, UserInput.GetMousePositionInWorld(editorCamera));
         }));
-        this.AddNewComponentCreationContext("I/O", "ROM", () => { return new ROM(false, 4, false, 4, UserInput.GetMousePositionInWorld(editorCamera)); }, new CCPUSimple(true, true, true, true, (ib, im, ob, om) =>
+        this.AddNewComponentCreationContext("Common", "ROM", () => { return new ROM(false, 4, false, 4, UserInput.GetMousePositionInWorld(editorCamera)); }, new CCPUSimple(true, true, true, true, (ib, im, ob, om) =>
         {
             return new ROM(im, ib, om, ob, UserInput.GetMousePositionInWorld(editorCamera));
         }));
-        this.AddNewComponentCreationContext("I/O", "Memory", () => { return new MemoryComponent(4, false, 8, false, UserInput.GetMousePositionInWorld(editorCamera)); }, new CCPUSimple(true, true, true, true, (ib, im, ob, om) =>
+        this.AddNewComponentCreationContext("Common", "Memory", () => { return new MemoryComponent(4, false, 8, false, UserInput.GetMousePositionInWorld(editorCamera)); }, new CCPUSimple(true, true, true, true, (ib, im, ob, om) =>
         {
             return new MemoryComponent(ib, im, ob, om, UserInput.GetMousePositionInWorld(editorCamera));
         }));
-        this.AddNewComponentCreationContext("I/O", "Label", () => { return new TextComponent(UserInput.GetMousePositionInWorld(editorCamera)); }, null);
-        this.AddNewComponentCreationContext("I/O", "Constant", () => { return new ConstantComponent(LogicValue.HIGH, UserInput.GetMousePositionInWorld(editorCamera)); }, null);
-        this.AddNewComponentCreationContext("I/O", "Splitter", () => { return new Splitter(2, 2, true, false, UserInput.GetMousePositionInWorld(editorCamera)); }, new CCPUSimple(true, true, true, true, (ib, im, ob, om) =>
+        this.AddNewComponentCreationContext("Common", "Label", () => { return new TextComponent(UserInput.GetMousePositionInWorld(editorCamera)); }, null);
+        this.AddNewComponentCreationContext("Common", "Constant", () => { return new ConstantComponent(LogicValue.HIGH, UserInput.GetMousePositionInWorld(editorCamera)); }, null);
+        this.AddNewComponentCreationContext("Common", "Splitter", () => { return new Splitter(2, 2, true, false, UserInput.GetMousePositionInWorld(editorCamera)); }, new CCPUSimple(true, true, true, true, (ib, im, ob, om) =>
         {
             return new Splitter(ib, ob, im, om, UserInput.GetMousePositionInWorld(editorCamera));
         }));
-        this.AddNewComponentCreationContext("I/O", "Clock", () => { return new Clock(500, UserInput.GetMousePositionInWorld(editorCamera)); }, null);
+        this.AddNewComponentCreationContext("Common", "Clock", () => { return new Clock(500, UserInput.GetMousePositionInWorld(editorCamera)); }, null);
 
         // GATES
         foreach (IGateLogic logic in this.availableGateLogics)
@@ -310,31 +354,32 @@ public class Editor : Application
             List<string> compsInCategory = category.Value;
             string cat = category.Key;
 
-            ImGui.Text(cat);
-
-            foreach (string component in compsInCategory)
+            if (ImGui.TreeNodeEx(cat, ImGuiTreeNodeFlags.DefaultOpen | ImGuiTreeNodeFlags.NoTreePushOnOpen))
             {
-                Tuple<Func<Component>, IUISubmitter<bool, Editor>?> context = this.componentCreationContexts[component];
-
-                Vector2 buttonSize = new Vector2(94, 25);
-                ImGui.Button(component, buttonSize);
-                if (ImGui.IsItemClicked())
+                foreach (string component in compsInCategory)
                 {
-                    // Use default creator to create new component
-                    this.NewComponent(context.Item1());
-                }
+                    Tuple<Func<Component>, IUISubmitter<bool, Editor>?> context = this.componentCreationContexts[component];
 
-                // If a IUISubmitter was supplied, then we want to show
-                // it as a context menu
-                if (context.Item2 != null)
-                {
-                    if (ImGui.BeginPopupContextItem(component))
+                    Vector2 buttonSize = new Vector2(120, 25);
+                    ImGui.Button(component, buttonSize);
+                    if (ImGui.IsItemClicked())
                     {
-                        if (context.Item2.SubmitUI(this))
+                        // Use default creator to create new component
+                        this.NewComponent(context.Item1());
+                    }
+
+                    // If a IUISubmitter was supplied, then we want to show
+                    // it as a context menu
+                    if (context.Item2 != null)
+                    {
+                        if (ImGui.BeginPopupContextItem(component))
                         {
-                            ImGui.CloseCurrentPopup();
+                            if (context.Item2.SubmitUI(this))
+                            {
+                                ImGui.CloseCurrentPopup();
+                            }
+                            ImGui.EndPopup();
                         }
-                        ImGui.EndPopup();
                     }
                 }
             }
@@ -391,7 +436,7 @@ public class Editor : Application
             {
                 foreach (Tuple<string, EditorAction> inner in tup.Item2)
                 {
-                    if (ImGui.MenuItem(inner.Item1, (inner.Item2.HasKeys()) ? inner.Item2.GetShortcutString() : null, false, (inner.Item2.Condition(this))))
+                    if (ImGui.MenuItem(inner.Item1, (inner.Item2.HasKeys()) ? inner.Item2.GetShortcutString() : null, inner.Item2.Selected(this), (inner.Item2.Condition(this))))
                     {
                         if (!inner.Item2.Execute(this, out string error))
                         {
@@ -406,12 +451,14 @@ public class Editor : Application
 
         ImGui.Separator();
 
-        if (ImGui.BeginMenu(this.loadedProject.Name))
+        if (ImGui.BeginMenu("Project"))
         {
             if (ImGui.Button("Reload ICs"))
             {
                 this.loadedProject.ReloadProjectICs();
             }
+
+            ImGui.Text("Project file: " + this.loadedProject.LoadedFromFile);
 
             ImGui.EndMenu();
         }
@@ -421,7 +468,8 @@ public class Editor : Application
         // SIDEBAR
 
         ImGui.SetNextWindowPos(new Vector2(0, 22), ImGuiCond.Always);
-        ImGui.SetNextWindowSize(new Vector2(120, Raylib.GetScreenHeight() - 19), ImGuiCond.Always);
+        float sidebarWidth = 150;
+        ImGui.SetNextWindowSize(new Vector2(sidebarWidth, base.WindowSize.Y - 19), ImGuiCond.Always);
         ImGui.PushStyleVar(ImGuiStyleVar.WindowRounding, 0f);
         ImGui.PushStyleColor(ImGuiCol.WindowBg, new Vector4(0.3f, 0.3f, 0.3f, 0.8f));
         ImGui.Begin("Sidebar", ImGuiWindowFlags.NoCollapse | ImGuiWindowFlags.NoDecoration | ImGuiWindowFlags.NoNavInputs);
@@ -431,7 +479,9 @@ public class Editor : Application
 
         // COMPONENTS WINDOW
 
-        ImGui.Begin("Components", ImGuiWindowFlags.NoResize | ImGuiWindowFlags.AlwaysVerticalScrollbar | ImGuiWindowFlags.NoNavInputs);
+        ImGui.PushStyleVar(ImGuiStyleVar.WindowRounding, 0f);
+        ImGui.Begin("Components", ImGuiWindowFlags.NoResize | ImGuiWindowFlags.AlwaysVerticalScrollbar | ImGuiWindowFlags.NoNavInputs | ImGuiWindowFlags.NoCollapse | ImGuiWindowFlags.NoTitleBar);
+        ImGui.PopStyleVar();
         this.HandleComponentCreationContexts();
         ImGui.End();
 
@@ -454,35 +504,37 @@ public class Editor : Application
         }*/
 
         // DEBUG WINDOW
-
-        bool x = true;
-        ImGui.Begin("Debug stuff", ref x, ImGuiWindowFlags.NoNav);
-        ImGui.Text("Mouse Position in Window:");
-        ImGui.Text(UserInput.GetMousePositionInWindow().ToString());
-        ImGui.Text("Camera Position:");
-        ImGui.Text(this.editorCamera.target.ToString());
-        ImGui.Text("Mouse Position in World:");
-        ImGui.Text(UserInput.GetMousePositionInWorld(this.editorCamera).ToString());
-        ImGui.Text("Camera View Size:");
-        ImGui.Text(UserInput.GetViewSize(this.editorCamera).ToString());
-        ImGui.Text("Current editor state:");
-        ImGui.Text(this.editorState.ToString());
-        ImGui.Text("IO Want Keyboard:");
-        ImGui.Text(ImGui.GetIO().WantCaptureKeyboard.ToString());
-        ImGui.Text("IO Want Mouse:");
-        ImGui.Text(ImGui.GetIO().WantCaptureMouse.ToString());
-        ImGui.Text($"FSM Current State: {this.fsm.CurrentState?.GetType().Name}");
-
-        ImGui.Separator();
-        ImGui.Text("Settings");
-
-        Dictionary<string, Setting> settings = Settings.GetAllSettings();
-        foreach (KeyValuePair<string, Setting> setting in settings)
+        if (this.displayDebugWindow && ImGui.Begin("Debug stuff", ref this.displayDebugWindow))
         {
-            ImGui.Text(setting.Key + ": " + setting.Value.Value.ToString());
-        }
+            ImGui.Text("Mouse Position in Window:");
+            ImGui.Text(UserInput.GetMousePositionInWindow().ToString());
+            ImGui.Text("Camera Position:");
+            ImGui.Text(this.editorCamera.target.ToString());
+            ImGui.Text("Mouse Position in World:");
+            ImGui.Text(UserInput.GetMousePositionInWorld(this.editorCamera).ToString());
+            ImGui.Text("Camera View Size:");
+            ImGui.Text(UserInput.GetViewSize(this.editorCamera).ToString());
+            ImGui.Text("Current editor state:");
+            ImGui.Text(this.editorState.ToString());
+            ImGui.Text("IO Want Keyboard:");
+            ImGui.Text(ImGui.GetIO().WantCaptureKeyboard.ToString());
+            ImGui.Text("IO Any Item Active:");
+            ImGui.Text(ImGui.IsAnyItemActive().ToString());
+            ImGui.Text("IO Want Mouse:");
+            ImGui.Text(ImGui.GetIO().WantCaptureMouse.ToString());
+            ImGui.Text($"FSM Current State: {this.fsm.CurrentState?.GetType().Name}");
 
-        ImGui.End();
+            ImGui.Separator();
+            ImGui.Text("Settings");
+
+            Dictionary<string, Setting> settings = Settings.GetAllSettings();
+            foreach (KeyValuePair<string, Setting> setting in settings)
+            {
+                ImGui.Text(setting.Key + ": " + setting.Value.Value.ToString());
+            }
+
+            ImGui.End();
+        }
 
         // If single selecting a component
         if (this.simulator.SelectedComponents.Count == 1)
@@ -617,6 +669,11 @@ public class Editor : Application
     public void SelectFolder(string startDirectory, Action<string> onSelect)
     {
         this.currentModal = new FileDialog(startDirectory, FileDialogType.SelectFolder, onSelect);
+    }
+
+    public void SaveFile(string startDirectory, Action<string> onSelect, params string[] filteredExtensions)
+    {
+        this.currentModal = new FileDialog(startDirectory, FileDialogType.SaveFile, onSelect, filteredExtensions);
     }
 
     public override void OnClose()

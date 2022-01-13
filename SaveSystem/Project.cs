@@ -4,9 +4,6 @@ namespace LogiX.SaveSystem;
 
 public class Project
 {
-    [JsonProperty(PropertyName = "name")]
-    public string Name { get; set; }
-
     [JsonProperty(PropertyName = "currentWorkspace")]
     public CircuitDescription CurrentWorkspace { get; set; }
 
@@ -20,7 +17,7 @@ public class Project
     public List<string> IncludedICCollectionFiles { get; set; }
 
     [JsonIgnore]
-    public string LoadedFromDirectory { get; set; }
+    public string LoadedFromFile { get; set; }
 
     [JsonIgnore]
     public List<ICDescription> ICsFromFile { get; set; }
@@ -37,9 +34,8 @@ public class Project
     [JsonIgnore]
     public const string EXTENSION = ".lgxpr";
 
-    public Project(string name)
+    public Project()
     {
-        this.Name = name;
         this.CurrentWorkspace = new CircuitDescription();
         this.IncludedICFiles = new List<string>();
         this.ProjectCreatedICs = new List<ICDescription>();
@@ -53,7 +49,6 @@ public class Project
     [JsonConstructor]
     public Project(CircuitDescription workspace, string name)
     {
-        this.Name = name;
         this.CurrentWorkspace = workspace;
         this.IncludedICFiles = new List<string>();
         this.ProjectCreatedICs = new List<ICDescription>();
@@ -62,6 +57,16 @@ public class Project
         this.IncludedICCollectionFiles = new List<string>();
         this.ICCollections = new Dictionary<string, ICCollection>();
         this.ICCollectionToFilePath = new Dictionary<ICCollection, string>();
+    }
+
+    public string GetFileName()
+    {
+        if (this.LoadedFromFile == null || this.LoadedFromFile == "")
+        {
+            return "new project";
+        }
+
+        return Path.GetFileName(this.LoadedFromFile);
     }
 
     public bool IncludeICFile(string filePath)
@@ -163,7 +168,7 @@ public class Project
                 ObjectCreationHandling = ObjectCreationHandling.Replace
             });
             p.ReloadProjectICs();
-            p.LoadedFromDirectory = Path.GetDirectoryName(file);
+            p.LoadedFromFile = file;
             return p;
         }
     }
@@ -173,9 +178,16 @@ public class Project
         this.CurrentWorkspace = new CircuitDescription(components);
     }
 
-    public void SaveToFile(string directory)
+    public bool HasFile()
     {
-        using (StreamWriter sw = new StreamWriter($"{directory}/{this.Name.ToSuitableFileName()}{Project.EXTENSION}"))
+        return this.LoadedFromFile != null && File.Exists(this.LoadedFromFile);
+    }
+
+    public void SaveToFile(string path)
+    {
+        string finalPath = path.Contains(EXTENSION) ? path : path + EXTENSION;
+        this.LoadedFromFile = finalPath;
+        using (StreamWriter sw = new StreamWriter(finalPath))
         {
             string json = JsonConvert.SerializeObject(this, Formatting.Indented);
             sw.Write(json);

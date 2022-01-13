@@ -41,6 +41,7 @@ public static class Settings
         return new Dictionary<string, Setting>() {
             { "windowWidth", new Setting(1280, false) },
             { "windowHeight", new Setting(720, false) },
+            { "latestProject", new Setting("", false) }
         };
     }
 

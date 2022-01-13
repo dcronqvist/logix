@@ -9,7 +9,8 @@ namespace LogiX.SaveSystem;
 public enum FileDialogType
 {
     SelectFolder,
-    SelectFile
+    SelectFile,
+    SaveFile
 }
 
 public class FileDialog : Modal
@@ -199,6 +200,28 @@ public class FileDialog : Modal
             }
             ImGui.PopStyleColor();
 
+            string[] files = Directory.GetFiles(this.CurrentFolder);
+            foreach (string file in files.Where(file => this.FilteredExtensions.Contains(Path.GetExtension(file))))
+            {
+                FileInfo fi = new FileInfo(file);
+
+                string fileText = $"[file] {fi.Name}";
+
+                if (ImGui.Selectable(fileText, this.currentSelectedFile == file))
+                {
+                    this.currentSelectedFile = file;
+                }
+
+                float fileTextLength = ImGui.CalcTextSize(fileText).X;
+                float startDistNext = 200f;
+                float offset = startDistNext - fileTextLength;
+
+                ImGui.SameLine();
+                ImGui.Dummy(new Vector2(offset, 1));
+                ImGui.SameLine();
+                ImGui.Text(Util.BytesToString(fi.Length));
+            }
+
             ImGui.EndChild();
 
             ImGui.SameLine();
@@ -227,6 +250,82 @@ public class FileDialog : Modal
                 {
                     // File is valid, return to editor
                     this.OnSelect(this.CurrentFolder);
+                    return true;
+                }
+            }
+        }
+        else if (this.Type == FileDialogType.SaveFile)
+        {
+            string[] parents = GetMax5Parents(this.CurrentFolder);
+
+            foreach (string parent in parents.Reverse())
+            {
+                string dirName = parent.Split(Path.DirectorySeparatorChar).Last();
+                if (dirName == "")
+                {
+                    dirName = "/";
+                }
+
+                if (ImGui.Button(dirName))
+                {
+                    this.CurrentFolder = parent;
+                }
+                ImGui.SameLine();
+            }
+
+            ImGui.NewLine();
+
+            ImGui.BeginChild("hej", new Vector2((ImGui.GetWindowContentRegionWidth() / 4) * 3 - 5, ImGui.GetWindowHeight() * 0.7f), true);
+
+            if (ImGui.MenuItem(".."))
+            {
+                this.CurrentFolder = Directory.GetParent(this.CurrentFolder).FullName;
+            }
+
+            string[] subDirs = Directory.GetDirectories(this.CurrentFolder);
+            ImGui.PushStyleColor(ImGuiCol.Text, Color.YELLOW.ToVector4());
+            foreach (string subDir in subDirs)
+            {
+                DirectoryInfo di = new DirectoryInfo(subDir);
+                if (ImGui.Selectable($"[dir] {di.Name}"))
+                {
+                    this.CurrentFolder = subDir;
+                }
+            }
+            ImGui.PopStyleColor();
+
+            ImGui.EndChild();
+
+            ImGui.SameLine();
+
+            ImGui.BeginChild("hej2", new Vector2(ImGui.GetWindowContentRegionWidth() / 4 - 5, ImGui.GetWindowHeight() * 0.7f), true);
+
+            ImGui.Text("Group 2");
+
+            ImGui.EndChild();
+
+            ImGui.InputText("Filename", ref this.currentSelectedFile, 100);
+
+            if (ImGui.Button("Cancel"))
+            {
+                return true;
+            }
+
+            ImGui.SameLine();
+
+            string filePath = Path.Combine(this.CurrentFolder, this.currentSelectedFile);
+
+            if (ImGui.Button("Save"))
+            {
+                if (File.Exists(filePath))
+                {
+                    // Make some kind of error stuff
+                    return false;
+                }
+                else
+                {
+                    // File is valid, return to editor
+                    this.OnSelect(filePath);
                     return true;
                 }
             }

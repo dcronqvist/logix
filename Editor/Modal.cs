@@ -21,14 +21,8 @@ public abstract class Modal
     {
         ImGui.OpenPopup($"###Modal");
 
-        if (ImGui.BeginPopupModal($"###Modal", ref this.isOpen))
+        if (ImGui.BeginPopupModal($"###Modal", ref this.isOpen, ImGuiWindowFlags.NoNav))
         {
-            if (!this.isOpen)
-            {
-                ImGui.CloseCurrentPopup();
-                return true;
-            }
-
             if (this.SubmitContent(editor))
             {
                 // Content has indicated that it is done.
@@ -37,6 +31,11 @@ public abstract class Modal
             }
 
             ImGui.EndPopup();
+        }
+
+        if (!this.isOpen)
+        {
+            return true;
         }
 
         return false;

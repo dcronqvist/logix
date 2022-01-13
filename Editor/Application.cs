@@ -2,6 +2,21 @@ using LogiX.SaveSystem;
 
 namespace LogiX.Editor;
 
+public enum ErrorModalType
+{
+    OK,
+    OKCancel,
+    YesNo
+}
+
+public enum ErrorModalResult
+{
+    OK,
+    Cancel,
+    Yes,
+    No
+}
+
 public abstract class Application
 {
     public abstract void Initialize();
@@ -13,12 +28,15 @@ public abstract class Application
 
     public delegate void WindowResizeCallback(int x, int y);
     public event WindowResizeCallback OnWindowResized;
+    public Vector2 WindowSize { get; set; }
     private RenderTexture2D uiTexture;
 
     protected Modal currentModal;
 
     private bool encounteredError;
     private string lastErrorMessage;
+    private ErrorModalType lastErrorModalType;
+    private Action<ErrorModalResult>? lastErrorCallback;
 
     public void Run(int windowWidth, int windowHeight, string windowTitle, int initialTargetFPS)
     {
@@ -33,6 +51,7 @@ public abstract class Application
         Raylib.InitWindow(windowWidth, windowHeight, windowTitle);
         this.uiTexture = Raylib.LoadRenderTexture(windowWidth, windowHeight);
         Raylib.SetTargetFPS(initialTargetFPS);
+        WindowSize = new Vector2(windowWidth, windowHeight);
 
         Raylib.SetExitKey(KeyboardKey.KEY_NULL);
         ImguiController igc = new ImguiController();
@@ -51,6 +70,9 @@ public abstract class Application
                 int x = Raylib.GetScreenWidth();
                 int y = Raylib.GetScreenHeight();
                 igc.Resize(x, y);
+                WindowSize = new Vector2(x, y);
+                Raylib.UnloadTexture(this.uiTexture.texture);
+                this.uiTexture = Raylib.LoadRenderTexture(x, y);
                 OnWindowResized?.Invoke(x, y);
             }
 
@@ -82,10 +104,12 @@ public abstract class Application
         this.OnClose();
     }
 
-    public void ModalError(string errorMessage)
+    public void ModalError(string errorMessage, ErrorModalType type = ErrorModalType.OK, Action<ErrorModalResult> onResult = null)
     {
         this.encounteredError = true;
         this.lastErrorMessage = errorMessage;
+        this.lastErrorModalType = type;
+        this.lastErrorCallback = onResult;
     }
 
     private void HandleErrorModal()
@@ -98,10 +122,46 @@ public abstract class Application
             {
                 ImGui.Text(this.lastErrorMessage);
 
-                if (ImGui.Button("OK"))
+                if (this.lastErrorModalType == ErrorModalType.OK)
                 {
-                    this.encounteredError = false;
-                    ImGui.CloseCurrentPopup();
+                    if (ImGui.Button("OK"))
+                    {
+                        ImGui.CloseCurrentPopup();
+                        encounteredError = false;
+                        this.lastErrorCallback?.Invoke(ErrorModalResult.OK);
+                    }
+                }
+                else if (this.lastErrorModalType == ErrorModalType.OKCancel)
+                {
+                    if (ImGui.Button("OK"))
+                    {
+                        ImGui.CloseCurrentPopup();
+                        encounteredError = false;
+                        this.lastErrorCallback?.Invoke(ErrorModalResult.OK);
+                    }
+                    ImGui.SameLine();
+                    if (ImGui.Button("Cancel"))
+                    {
+                        ImGui.CloseCurrentPopup();
+                        encounteredError = false;
+                        this.lastErrorCallback?.Invoke(ErrorModalResult.Cancel);
+                    }
+                }
+                else if (this.lastErrorModalType == ErrorModalType.YesNo)
+                {
+                    if (ImGui.Button("Yes"))
+                    {
+                        ImGui.CloseCurrentPopup();
+                        encounteredError = false;
+                        this.lastErrorCallback?.Invoke(ErrorModalResult.Yes);
+                    }
+                    ImGui.SameLine();
+                    if (ImGui.Button("No"))
+                    {
+                        ImGui.CloseCurrentPopup();
+                        encounteredError = false;
+                        this.lastErrorCallback?.Invoke(ErrorModalResult.No);
+                    }
                 }
 
                 ImGui.EndPopup();

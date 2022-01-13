@@ -3,15 +3,17 @@ namespace LogiX.Editor;
 public class EditorAction
 {
     public Func<Editor, bool> Condition { get; set; }
+    public Func<Editor, bool> Selected { get; set; }
 
     public delegate bool Execution(Editor editor, out string error);
 
     public Execution Execute { get; set; }
     public KeyboardKey[] Keys { get; set; }
 
-    public EditorAction(Func<Editor, bool> condition, Execution execute, params KeyboardKey[] keys)
+    public EditorAction(Func<Editor, bool> condition, Func<Editor, bool> selected, Execution execute, params KeyboardKey[] keys)
     {
         Condition = condition;
+        this.Selected = selected;
         Execute = execute;
         Keys = keys;
     }
