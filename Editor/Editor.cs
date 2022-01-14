@@ -480,22 +480,13 @@ public class Editor : Application
 
         ImGui.EndMainMenuBar();
 
-        // SIDEBAR
-
-        ImGui.SetNextWindowPos(new Vector2(0, 22), ImGuiCond.Always);
-        float sidebarWidth = 150;
-        ImGui.SetNextWindowSize(new Vector2(sidebarWidth, base.WindowSize.Y - 19), ImGuiCond.Always);
-        ImGui.PushStyleVar(ImGuiStyleVar.WindowRounding, 0f);
-        ImGui.PushStyleColor(ImGuiCol.WindowBg, new Vector4(0.3f, 0.3f, 0.3f, 0.8f));
-        ImGui.Begin("Sidebar", ImGuiWindowFlags.NoCollapse | ImGuiWindowFlags.NoDecoration | ImGuiWindowFlags.NoNavInputs);
-        ImGui.End();
-        ImGui.PopStyleColor();
-        ImGui.PopStyleVar();
-
         // COMPONENTS WINDOW
 
         ImGui.PushStyleVar(ImGuiStyleVar.WindowRounding, 0f);
-        ImGui.Begin("Components", ImGuiWindowFlags.NoResize | ImGuiWindowFlags.AlwaysVerticalScrollbar | ImGuiWindowFlags.NoNavInputs | ImGuiWindowFlags.NoCollapse | ImGuiWindowFlags.NoTitleBar);
+        ImGui.SetNextWindowPos(new Vector2(0, 22), ImGuiCond.Always);
+        float sidebarWidth = 150;
+        ImGui.SetNextWindowSize(new Vector2(sidebarWidth, base.WindowSize.Y - 19), ImGuiCond.Always);
+        ImGui.Begin("Components", ImGuiWindowFlags.NoResize | ImGuiWindowFlags.AlwaysVerticalScrollbar | ImGuiWindowFlags.NoNavInputs | ImGuiWindowFlags.NoCollapse | ImGuiWindowFlags.NoTitleBar | ImGuiWindowFlags.NoMove | ImGuiWindowFlags.NoSavedSettings);
         ImGui.PopStyleVar();
         this.HandleComponentCreationContexts();
         ImGui.End();

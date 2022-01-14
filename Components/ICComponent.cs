@@ -76,6 +76,39 @@ public class ICComponent : Component
         return null;
     }
 
+    public Dictionary<string, int> GetContainedGatesAmount()
+    {
+        Dictionary<string, int> containedGates = new Dictionary<string, int>();
+        foreach (LogicGate g in this.Components.Where(x => x is LogicGate))
+        {
+            if (containedGates.ContainsKey(g.Text))
+            {
+                containedGates[g.Text]++;
+            }
+            else
+            {
+                containedGates.Add(g.Text, 1);
+            }
+        }
+
+        foreach (ICComponent ic in this.Components.Where(x => x is ICComponent))
+        {
+            foreach (KeyValuePair<string, int> kvp in ic.GetContainedGatesAmount())
+            {
+                if (containedGates.ContainsKey(kvp.Key))
+                {
+                    containedGates[kvp.Key] += kvp.Value;
+                }
+                else
+                {
+                    containedGates.Add(kvp.Key, kvp.Value);
+                }
+            }
+        }
+
+        return containedGates;
+    }
+
     public override void PerformLogic()
     {
         for (int i = 0; i < this.Description.InputOrder.Count; i++)
@@ -150,6 +183,12 @@ public class ICComponent : Component
         {
             CircuitDescription cd = this.Description.Circuit;
             editor.PasteComponentsAndWires(cd, UserInput.GetMousePositionInWorld(editor.editorCamera), true);
+        }
+
+        ImGui.Text("Contains gates: ");
+        foreach (KeyValuePair<string, int> kvp in this.GetContainedGatesAmount())
+        {
+            ImGui.Text($"{kvp.Key}: {kvp.Value}");
         }
     }
 }
