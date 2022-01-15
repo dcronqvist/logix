@@ -38,7 +38,7 @@ public abstract class Application
     private ErrorModalType lastErrorModalType;
     private Action<ErrorModalResult>? lastErrorCallback;
 
-    public void Run(int windowWidth, int windowHeight, string windowTitle, int initialTargetFPS)
+    public void Run(int windowWidth, int windowHeight, string windowTitle, int initialTargetFPS, string iconFile = null)
     {
 #if OSX
         Raylib.SetConfigFlags(ConfigFlags.FLAG_MSAA_4X_HINT | ConfigFlags.FLAG_VSYNC_HINT | ConfigFlags.FLAG_WINDOW_RESIZABLE | ConfigFlags.FLAG_WINDOW_HIGHDPI);
@@ -49,6 +49,14 @@ public abstract class Application
         Initialize();
 
         Raylib.InitWindow(windowWidth, windowHeight, windowTitle);
+
+        if (iconFile != null)
+        {
+            Image i = Raylib.LoadImage(iconFile);
+            Raylib.ImageFormat(ref i, PixelFormat.PIXELFORMAT_UNCOMPRESSED_R8G8B8A8);
+            Raylib.SetWindowIcon(i);
+        }
+
         this.uiTexture = Raylib.LoadRenderTexture(windowWidth, windowHeight);
         Raylib.SetTargetFPS(initialTargetFPS);
         WindowSize = new Vector2(windowWidth, windowHeight);

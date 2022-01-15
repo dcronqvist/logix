@@ -30,14 +30,14 @@ public class Clock : Component
 
     public override void PerformLogic()
     {
-        if (internalCounter < 0)
+        if (internalCounter > this.Interval)
         {
             this.OutputAt(0).SetValues(this.OutputAt(0).Values[0] == LogicValue.HIGH ? LogicValue.LOW : LogicValue.HIGH);
-            internalCounter = this.Interval;
+            internalCounter = 0;
         }
         else
         {
-            internalCounter -= Raylib.GetFrameTime() * 1000f;
+            internalCounter += 1;
         }
     }
 

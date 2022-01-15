@@ -136,9 +136,11 @@ public class StateOutputToInput : State<Editor>
             ComponentInput? hoveredInput = editor.hoveredInput;
 
             Wire wire = new Wire(connectFrom.Bits, hoveredInput.OnComponent, hoveredInput.OnComponentIndex, connectFrom!.OnComponent, connectFrom!.OnComponentIndex);
-            hoveredInput.SetSignal(wire);
-            connectFrom.AddOutputWire(wire);
-            editor.simulator.AddWire(wire);
+            if (hoveredInput.SetSignal(wire))
+            {
+                connectFrom.AddOutputWire(wire);
+                editor.simulator.AddWire(wire);
+            }
 
             this.GoToState<StateNone>();
             return;

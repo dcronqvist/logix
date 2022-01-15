@@ -8,13 +8,14 @@ public class ComponentOutput : ComponentIO
     public ComponentOutput(int bits, string identifier, Component component, int index) : base(bits, identifier, component, index) { this.Signals = new List<Wire>(); }
     public ComponentOutput(int bits, string identifier, Component component, int index, IEnumerable<LogicValue> values) : base(bits, identifier, component, index, values) { this.Signals = new List<Wire>(); }
 
-    public void AddOutputWire(Wire wire)
+    public bool AddOutputWire(Wire wire)
     {
         if (this.Bits != wire.Bits)
         {
-            throw new ArgumentException($"Cannot connect a {wire.Bits} bit wire to a {this.Bits} bit IO.");
+            return false;
         }
         this.Signals.Add(wire);
+        return true;
     }
 
     public void RemoveOutputSignal(int index)

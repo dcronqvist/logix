@@ -300,6 +300,10 @@ public class Editor : Application
             return new Splitter(ib, ob, im, om, UserInput.GetMousePositionInWorld(editorCamera));
         }));
         this.AddNewComponentCreationContext("Common", "Clock", () => { return new Clock(500, UserInput.GetMousePositionInWorld(editorCamera)); }, null);
+        this.AddNewComponentCreationContext("Common", "Delayer", () => { return new Delayer(100, 1, false, UserInput.GetMousePositionInWorld(editorCamera)); }, new CCPUSimple(true, true, false, false, (ib, im, _, _) =>
+        {
+            return new Delayer(100, ib, im, UserInput.GetMousePositionInWorld(editorCamera));
+        }));
 
         // GATES
         foreach (IGateLogic logic in this.availableGateLogics)

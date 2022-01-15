@@ -15,7 +15,8 @@ public enum ComponentType
     Memory,
     Constant,
     Splitter,
-    Clock
+    Clock,
+    Delayer
 }
 
 public class IODescription
