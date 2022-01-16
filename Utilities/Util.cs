@@ -187,4 +187,22 @@ public static class Util
         }
         return new Vector2(x / vectors.Count, y / vectors.Count);
     }
+
+    public static List<List<LogicValue>> ReadROM(string file)
+    {
+        // Load the file and create the ROMValues
+        List<List<LogicValue>> values = new List<List<LogicValue>>();
+        using (StreamReader sr = new StreamReader(file))
+        {
+            sr.ReadLine();
+            sr.ReadLine();
+            string? line = "";
+            while ((line = sr.ReadLine()) != null)
+            {
+                List<LogicValue> lineValues = Util.BinaryStringToLogicValues(line);
+                values.Add(lineValues);
+            }
+        }
+        return values;
+    }
 }

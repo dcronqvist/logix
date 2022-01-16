@@ -51,21 +51,7 @@ public class ROM : Component
                 return;
             }
 
-            // Load the file and create the ROMValues
-            List<List<LogicValue>> values = new List<List<LogicValue>>();
-            using (StreamReader sr = new StreamReader(this.ROMFile))
-            {
-                sr.ReadLine();
-                sr.ReadLine();
-                string? line = "";
-                while ((line = sr.ReadLine()) != null)
-                {
-                    List<LogicValue> lineValues = Util.BinaryStringToLogicValues(line);
-                    values.Add(lineValues);
-                }
-            }
-
-            this.ROMValues = values;
+            this.ROMValues = Util.ReadROM(this.ROMFile);
         }
     }
 

@@ -23,10 +23,10 @@ public class Simulator
             component.Update(mousePosInWorld);
         }
 
-        foreach (Wire wire in this.Wires)
-        {
-            wire.Update(mousePosInWorld);
-        }
+        // foreach (Wire wire in this.Wires)
+        // {
+        //     wire.Update(mousePosInWorld);
+        // }
     }
 
     public void Render(Vector2 mousePosInWorld)

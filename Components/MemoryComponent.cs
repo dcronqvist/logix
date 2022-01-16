@@ -176,5 +176,17 @@ public class MemoryComponent : Component
                 }
             });
         }
+
+        if (ImGui.Button("Load Memory From File..."))
+        {
+            editor.SelectFile(Directory.GetCurrentDirectory(), file =>
+            {
+                using (StreamReader sr = new StreamReader(file))
+                {
+                    this.ResetMemory();
+                    this.Memory = Util.ReadROM(file).ToArray();
+                }
+            }, ".txt");
+        }
     }
 }
