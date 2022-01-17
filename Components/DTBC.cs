@@ -9,7 +9,7 @@ public class DTBC : Component
     public override string Text => "DBTC";
     public override bool DrawIOIdentifiers => true;
 
-    public DTBC(int decimals, bool multibit, Vector2 position) : base(multibit ? Util.Listify(decimals - 1) : Util.NValues(1, decimals - 1), multibit ? Util.Listify((int)Math.Round(Math.Log2(decimals - 1))) : Util.NValues(1, (int)Math.Round(Math.Log2(decimals - 1))), position)
+    public DTBC(int decimals, bool multibit, Vector2 position) : base(multibit ? Util.Listify(decimals - 1) : Util.NValues(1, decimals - 1), multibit ? Util.Listify((int)Math.Ceiling(Math.Log2(decimals - 1))) : Util.NValues(1, (int)Math.Ceiling(Math.Log2(decimals - 1))), position)
     {
         this.decimals = decimals;
 
@@ -17,7 +17,7 @@ public class DTBC : Component
         {
             this.InputAt(0).Identifier = $"D{decimals - 1}-D1";
 
-            this.OutputAt(0).Identifier = $"Q{(int)Math.Round(Math.Log2(decimals - 1))}-Q0";
+            this.OutputAt(0).Identifier = $"Q{(int)Math.Ceiling(Math.Log2(decimals - 1))}-Q0";
         }
         else
         {
@@ -26,7 +26,7 @@ public class DTBC : Component
                 this.InputAt(i).Identifier = $"D{i + 1}";
             }
 
-            for (int i = 0; i < (int)Math.Round(Math.Log2(decimals - 1)); i++)
+            for (int i = 0; i < (int)Math.Ceiling(Math.Log2(decimals - 1)); i++)
             {
                 this.OutputAt(i).Identifier = $"Q{i}";
             }
