@@ -41,4 +41,9 @@ public class ConstantComponent : Component
             this.Value = value == 1 ? LogicValue.HIGH : LogicValue.LOW;
         }
     }
+
+    public override Dictionary<string, int> GetGateAmount()
+    {
+        return Util.EmptyGateAmount();
+    }
 }

@@ -48,4 +48,9 @@ public class TextComponent : Component
 
         ImGui.End();
     }
+
+    public override Dictionary<string, int> GetGateAmount()
+    {
+        return Util.EmptyGateAmount();
+    }
 }

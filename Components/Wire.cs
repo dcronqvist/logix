@@ -90,6 +90,7 @@ public class Wire
     {
         Vector2 fromPos = this.From.GetOutputLinePositions(this.FromIndex).Item1;
         Vector2 toPos = this.To.GetInputLinePositions(this.ToIndex).Item1;
-        Raylib.DrawLineBezier(fromPos, toPos, 2, Color.ORANGE);
+        Raylib.DrawLineBezier(fromPos, toPos, 6f, Color.ORANGE);
+        Raylib.DrawLineBezier(fromPos, toPos, 2, Util.InterpolateColors(Color.WHITE, Color.BLUE, this.GetHighFraction()));
     }
 }

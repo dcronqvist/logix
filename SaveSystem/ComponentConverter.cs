@@ -47,6 +47,8 @@ class ComponentConverter : Newtonsoft.Json.Converters.CustomCreationConverter<Co
                 return jObject.ToObject<MUXDescription>();
             case ComponentType.Demux:
                 return jObject.ToObject<MUXDescription>();
+            case ComponentType.DTBC:
+                return jObject.ToObject<DTBCDescription>();
         }
 
         throw new ApplicationException(String.Format("The component type {0} is not supported!", type));

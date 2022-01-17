@@ -55,4 +55,9 @@ public class Button : Component
     {
 
     }
+
+    public override Dictionary<string, int> GetGateAmount()
+    {
+        return Util.EmptyGateAmount();
+    }
 }

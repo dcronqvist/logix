@@ -205,4 +205,61 @@ public static class Util
         }
         return values;
     }
+
+    public static Dictionary<string, int> ConcatGateAmounts(Dictionary<string, int> a1, Dictionary<string, int> a2)
+    {
+        Dictionary<string, int> newDict = new Dictionary<string, int>();
+        foreach (KeyValuePair<string, int> kvp in a1)
+        {
+            newDict.Add(kvp.Key, kvp.Value);
+        }
+        foreach (KeyValuePair<string, int> kvp in a2)
+        {
+            if (newDict.ContainsKey(kvp.Key))
+            {
+                newDict[kvp.Key] += kvp.Value;
+            }
+            else
+            {
+                newDict.Add(kvp.Key, kvp.Value);
+            }
+        }
+        return newDict;
+    }
+
+    public static Dictionary<string, int> EmptyGateAmount()
+    {
+        return new Dictionary<string, int>();
+    }
+
+    public static Dictionary<string, int> GateAmount(params (string, int)[] amounts)
+    {
+        Dictionary<string, int> dict = new Dictionary<string, int>();
+        foreach ((string, int) t in amounts)
+        {
+            dict.Add(t.Item1, t.Item2);
+        }
+        return dict;
+    }
+
+    public static List<LogicValue> GetLogicValuesRepresentingDecimal(int dec, int bits)
+    {
+        List<LogicValue> values = Util.NValues(LogicValue.LOW, bits);
+        int i = 0;
+        while (dec > 0)
+        {
+            if (dec % 2 == 1)
+            {
+                values[bits - 1 - i] = LogicValue.HIGH;
+            }
+            else
+            {
+                values[bits - 1 - i] = LogicValue.LOW;
+            }
+            dec /= 2;
+            i++;
+        }
+        values.Reverse();
+        return values;
+    }
 }

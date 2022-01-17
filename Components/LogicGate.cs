@@ -56,4 +56,11 @@ public class LogicGate : Component
             this.Logic = Util.GetGateLogicFromName(items[this.currentlySelectedLogic]);
         }
     }
+
+    public override Dictionary<string, int> GetGateAmount()
+    {
+        return new Dictionary<string, int>() {
+            { this.Logic.GetLogicText(), 1 }
+        };
+    }
 }

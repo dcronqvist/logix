@@ -317,5 +317,7 @@ public abstract class Component
         }
     }
 
+    public abstract Dictionary<string, int> GetGateAmount();
+
     public abstract ComponentDescription ToDescription();
 }

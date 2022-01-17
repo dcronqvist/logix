@@ -81,4 +81,9 @@ public class HexViewer : Component
             return new GenIODescription(this.Position, Util.Listify(new IODescription(this.Inputs[0].Bits)), Util.EmptyList<IODescription>(), ComponentType.HexViewer);
         }
     }
+
+    public override Dictionary<string, int> GetGateAmount()
+    {
+        return Util.EmptyGateAmount();
+    }
 }

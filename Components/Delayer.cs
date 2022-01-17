@@ -53,4 +53,9 @@ public class Delayer : Component
             return new DelayerDescription(this.Position, this.Ticks, this.Inputs.Count, false);
         }
     }
+
+    public override Dictionary<string, int> GetGateAmount()
+    {
+        return Util.GateAmount(("Delayer", 1));
+    }
 }

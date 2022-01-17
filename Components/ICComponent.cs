@@ -76,37 +76,15 @@ public class ICComponent : Component
         return null;
     }
 
-    public Dictionary<string, int> GetContainedGatesAmount()
+    public override Dictionary<string, int> GetGateAmount()
     {
         Dictionary<string, int> containedGates = new Dictionary<string, int>();
-        foreach (LogicGate g in this.Components.Where(x => x is LogicGate))
+        foreach (Component c in this.Components)
         {
-            if (containedGates.ContainsKey(g.Text))
-            {
-                containedGates[g.Text]++;
-            }
-            else
-            {
-                containedGates.Add(g.Text, 1);
-            }
+            containedGates = Util.ConcatGateAmounts(containedGates, c.GetGateAmount());
         }
 
-        foreach (ICComponent ic in this.Components.Where(x => x is ICComponent))
-        {
-            foreach (KeyValuePair<string, int> kvp in ic.GetContainedGatesAmount())
-            {
-                if (containedGates.ContainsKey(kvp.Key))
-                {
-                    containedGates[kvp.Key] += kvp.Value;
-                }
-                else
-                {
-                    containedGates.Add(kvp.Key, kvp.Value);
-                }
-            }
-        }
-
-        return containedGates;
+        return Util.ConcatGateAmounts(containedGates, Util.GateAmount((this.Description.Name, 1)));
     }
 
     public override void PerformLogic()
@@ -187,7 +165,7 @@ public class ICComponent : Component
         }
 
         ImGui.Text("Contains gates: ");
-        foreach (KeyValuePair<string, int> kvp in this.GetContainedGatesAmount())
+        foreach (KeyValuePair<string, int> kvp in this.GetGateAmount())
         {
             ImGui.Text($"{kvp.Key}: {kvp.Value}");
         }

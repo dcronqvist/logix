@@ -318,6 +318,13 @@ public class Editor : Application
         {
             return new Demultiplexer(ib, im, ob, om, UserInput.GetMousePositionInWorld(editorCamera));
         }, "Selector Bits", "Selector Multibit", "Data Bits", "Data Multibit"));
+        this.AddNewComponentCreationContext("Common", "Dec to Bin", () =>
+        {
+            return new DTBC(16, true, UserInput.GetMousePositionInWorld(editorCamera));
+        }, new CCPUSimple(true, true, false, false, (ib, im, _, _) =>
+        {
+            return new DTBC(ib, im, UserInput.GetMousePositionInWorld(editorCamera));
+        }, "Decimals", "Multibit"));
 
         // GATES
         foreach (IGateLogic logic in this.availableGateLogics)
@@ -547,6 +554,16 @@ public class Editor : Application
             ImGui.Text("IO Want Mouse:");
             ImGui.Text(ImGui.GetIO().WantCaptureMouse.ToString());
             ImGui.Text($"FSM Current State: {this.fsm.CurrentState?.GetType().Name}");
+            ImGui.Text("Selected Components Gate Count:");
+            Dictionary<string, int> gateCounts = new Dictionary<string, int>();
+            foreach (Component c in simulator.SelectedComponents)
+            {
+                gateCounts = Util.ConcatGateAmounts(gateCounts, c.GetGateAmount());
+            }
+            foreach (KeyValuePair<string, int> kvp in gateCounts.OrderByDescending(x => x.Value))
+            {
+                ImGui.Text($"{kvp.Key}: {kvp.Value}");
+            }
 
             ImGui.Separator();
             ImGui.Text("Settings");

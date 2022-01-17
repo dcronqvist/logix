@@ -189,4 +189,9 @@ public class MemoryComponent : Component
             }, ".txt");
         }
     }
+
+    public override Dictionary<string, int> GetGateAmount()
+    {
+        return Util.GateAmount(("Memory", 1));
+    }
 }

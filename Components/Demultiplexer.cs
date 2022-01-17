@@ -123,9 +123,9 @@ public class Demultiplexer : Component
         else
         {
             // Singlebit output => singlebit input
-            for (int i = 0; i < this.Outputs.Count; i++)
+            for (int i = 0; i < this.Outputs[0].Bits; i++)
             {
-                this.OutputAt(address * this.dataBits + i).SetValues(Inputs[offsetAddress + i].Values);
+                this.OutputAt(address * this.dataBits + i).SetValues(Inputs[offsetAddress].Values);
             }
         }
     }
@@ -133,6 +133,11 @@ public class Demultiplexer : Component
     public override ComponentDescription ToDescription()
     {
         return new MUXDescription(this.Position, this.selectorBits, this.InputAt(0).Bits > 1, this.dataBits, this.OutputAt(0).Bits > 1, ComponentType.Demux);
+    }
+
+    public override Dictionary<string, int> GetGateAmount()
+    {
+        return Util.GateAmount(("Demultiplexer", 1));
     }
 
 }

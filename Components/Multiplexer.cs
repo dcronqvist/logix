@@ -131,4 +131,8 @@ public class Multiplexer : Component
         return new MUXDescription(this.Position, this.selectorBits, this.InputAt(0).Bits > 1, this.dataBits, this.OutputAt(0).Bits > 1, ComponentType.Mux);
     }
 
+    public override Dictionary<string, int> GetGateAmount()
+    {
+        return Util.GateAmount(("Multiplexer", 1));
+    }
 }

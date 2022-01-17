@@ -136,4 +136,9 @@ public class ROM : Component
 
         return new ROMDescription(this.Position, this.ROMFile, inputs, outputs);
     }
+
+    public override Dictionary<string, int> GetGateAmount()
+    {
+        return Util.GateAmount(("ROM", 1));
+    }
 }
