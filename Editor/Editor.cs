@@ -288,13 +288,13 @@ public class Editor : Application
         this.AddNewComponentCreationContext("I/O", "ROM", () => { return new ROM(false, 4, false, 4, UserInput.GetMousePositionInWorld(editorCamera)); }, new CCPUSimple(true, true, true, true, (ib, im, ob, om) =>
         {
             return new ROM(im, ib, om, ob, UserInput.GetMousePositionInWorld(editorCamera));
-        }));
+        }, "Address Bits", "Address Multibit", "Data Bits", "Data Multibit"));
         this.AddNewComponentCreationContext("I/O", "Constant", () => { return new ConstantComponent(LogicValue.HIGH, UserInput.GetMousePositionInWorld(editorCamera)); }, null);
         this.AddNewComponentCreationContext("I/O", "Clock", () => { return new Clock(500, UserInput.GetMousePositionInWorld(editorCamera)); }, null);
         this.AddNewComponentCreationContext("Common", "Memory", () => { return new MemoryComponent(4, false, 8, false, UserInput.GetMousePositionInWorld(editorCamera)); }, new CCPUSimple(true, true, true, true, (ib, im, ob, om) =>
         {
             return new MemoryComponent(ib, im, ob, om, UserInput.GetMousePositionInWorld(editorCamera));
-        }));
+        }, "Address Bits", "Address Multibit", "Data Bits", "Data Multibit"));
         this.AddNewComponentCreationContext("Common", "Label", () => { return new TextComponent(UserInput.GetMousePositionInWorld(editorCamera)); }, null);
         this.AddNewComponentCreationContext("Common", "Splitter", () => { return new Splitter(2, 2, true, false, UserInput.GetMousePositionInWorld(editorCamera)); }, new CCPUSimple(true, true, true, true, (ib, im, ob, om) =>
         {
@@ -307,11 +307,17 @@ public class Editor : Application
         this.AddNewComponentCreationContext("Common", "Multiplexer", () =>
         {
             return new Multiplexer(2, true, 4, true, UserInput.GetMousePositionInWorld(editorCamera));
-        }, null);
+        }, new CCPUSimple(true, true, true, true, (ib, im, ob, om) =>
+        {
+            return new Multiplexer(ib, im, ob, om, UserInput.GetMousePositionInWorld(editorCamera));
+        }, "Selector Bits", "Selector Multibit", "Data Bits", "Data Multibit"));
         this.AddNewComponentCreationContext("Common", "Demultiplexer", () =>
         {
             return new Demultiplexer(2, true, 4, true, UserInput.GetMousePositionInWorld(editorCamera));
-        }, null);
+        }, new CCPUSimple(true, true, true, true, (ib, im, ob, om) =>
+        {
+            return new Demultiplexer(ib, im, ob, om, UserInput.GetMousePositionInWorld(editorCamera));
+        }, "Selector Bits", "Selector Multibit", "Data Bits", "Data Multibit"));
 
         // GATES
         foreach (IGateLogic logic in this.availableGateLogics)
