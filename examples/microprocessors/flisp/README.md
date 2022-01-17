@@ -8,4 +8,4 @@ Both the data path and control unit have been implemented, however, only a very 
 
 Instructions that have been implemented are in [instruction_addresses.txt](rom/instruction_addresses.txt), and their control sequences can be seen in [instructions.txt](rom/instructions.txt). These files are loaded as ROMs into the project for *instant* lookup of instructions during execution.
 
-Currently operates at 1 instruction per 100 ticks (ticks correspond to one update frame = FPS). Because of poor optimisation of the logic simulation, the project might be **VERY** laggy, but I'm looking into how to optimise the logic simulation, if anyone has suggestions, let me know.
+Operates at 1 instruction per 20 ticks, which is a lot faster than it was before (which was 1 instruction per 100 ticks). Using new predefined multiplexer and demultiplexer components, I was able to bring down the total gate amount by about 50%.
