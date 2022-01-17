@@ -9,7 +9,7 @@ public class Editor : Application
     // Editor states
     public Camera2D editorCamera;
     EditorState editorState;
-    public Simulator simulator;
+    public static Simulator simulator;
     public Project loadedProject;
     Component contextMenuComponent;
     EditorFSM fsm;
@@ -86,8 +86,8 @@ public class Editor : Application
         {
             this.loadedProject = proj;
             (List<Component> comps, List<Wire> wires) = proj.GetComponentsAndWires();
-            this.simulator.AddComponents(comps);
-            this.simulator.AddWires(wires);
+            simulator.AddComponents(comps);
+            simulator.AddWires(wires);
         }
         else
         {
@@ -96,10 +96,10 @@ public class Editor : Application
 
             this.loadedProject = proj;
             (List<Component> comps, List<Wire> wires) = proj.GetComponentsAndWires();
-            this.simulator.Components.Clear();
-            this.simulator.Wires.Clear();
-            this.simulator.AddComponents(comps);
-            this.simulator.AddWires(wires);
+            simulator.Components.Clear();
+            simulator.Wires.Clear();
+            simulator.AddComponents(comps);
+            simulator.AddWires(wires);
         }
 
         Raylib.SetWindowTitle("LogiX - " + proj.GetFileName());
@@ -112,7 +112,7 @@ public class Editor : Application
         this.editorCamera = new Camera2D(windowSize / 2.0f, Vector2.Zero, 0f, 1f);
         this.editorState = EditorState.None;
 
-        this.simulator = new Simulator();
+        simulator = new Simulator();
 
         Util.OpenSans = Raylib.LoadFontEx($"{Directory.GetCurrentDirectory()}/assets/opensans-bold.ttf", 100, Enumerable.Range(0, 1000).ToArray(), 1000);
         Raylib.SetTextureFilter(Util.OpenSans.texture, TextureFilter.TEXTURE_FILTER_TRILINEAR);
@@ -126,7 +126,7 @@ public class Editor : Application
         {
             if (this.loadedProject.HasFile())
             {
-                this.loadedProject.SaveComponentsInWorkspace(this.simulator.Components);
+                this.loadedProject.SaveComponentsInWorkspace(simulator.Components);
                 this.loadedProject.SaveToFile(this.loadedProject.LoadedFromFile);
                 error = ""; return true;
             }
@@ -192,13 +192,13 @@ public class Editor : Application
             error = ""; return true;
         }, this.primaryKeyMod, KeyboardKey.KEY_I, KeyboardKey.KEY_C));
 
-        AddNewMainMenuItem("Edit", "Copy", new EditorAction((editor) => this.simulator.SelectedComponents.Count > 0, (editor) => false, (Editor editor, out string error) => { MMCopy(); error = ""; return true; }, this.primaryKeyMod, KeyboardKey.KEY_C));
+        AddNewMainMenuItem("Edit", "Copy", new EditorAction((editor) => simulator.SelectedComponents.Count > 0, (editor) => false, (Editor editor, out string error) => { MMCopy(); error = ""; return true; }, this.primaryKeyMod, KeyboardKey.KEY_C));
         AddNewMainMenuItem("Edit", "Paste", new EditorAction((editor) => this.copiedCircuit != null, (editor) => false, (Editor editor, out string error) => { MMPaste(); error = ""; return true; }, this.primaryKeyMod, KeyboardKey.KEY_V));
-        AddNewMainMenuItem("Edit", "Select All", new EditorAction((editor) => true, (editor) => false, (Editor editor, out string error) => { this.simulator.SelectAllComponents(); error = ""; return true; }, this.primaryKeyMod, KeyboardKey.KEY_A));
-        AddNewMainMenuItem("Edit", "Delete Selection", new EditorAction((editor) => this.simulator.SelectedComponents.Count > 0, (editor) => false, (Editor editor, out string error) => { this.simulator.DeleteSelection(); error = ""; return true; }, KeyboardKey.KEY_BACKSPACE));
-        AddNewMainMenuItem("Edit", "Horizontally Align", new EditorAction((editor) => this.simulator.SelectedComponents.Count > 0, (editor) => false, (Editor editor, out string error) =>
+        AddNewMainMenuItem("Edit", "Select All", new EditorAction((editor) => true, (editor) => false, (Editor editor, out string error) => { simulator.SelectAllComponents(); error = ""; return true; }, this.primaryKeyMod, KeyboardKey.KEY_A));
+        AddNewMainMenuItem("Edit", "Delete Selection", new EditorAction((editor) => simulator.SelectedComponents.Count > 0, (editor) => false, (Editor editor, out string error) => { simulator.DeleteSelection(); error = ""; return true; }, KeyboardKey.KEY_BACKSPACE));
+        AddNewMainMenuItem("Edit", "Horizontally Align", new EditorAction((editor) => simulator.SelectedComponents.Count > 0, (editor) => false, (Editor editor, out string error) =>
         {
-            List<Component> selected = this.simulator.SelectedComponents;
+            List<Component> selected = simulator.SelectedComponents;
             Vector2 middle = Util.GetMiddleOfListOfVectors(selected.Select(c => c.Position).ToList());
             foreach (Component c in selected)
             {
@@ -207,9 +207,9 @@ public class Editor : Application
             error = "";
             return true;
         }, this.primaryKeyMod, KeyboardKey.KEY_H));
-        AddNewMainMenuItem("Integrated Circuits", "Create IC from Selection", new EditorAction((editor) => this.simulator.SelectedComponents.Count > 0, (editor) => false, (Editor editor, out string error) =>
+        AddNewMainMenuItem("Integrated Circuits", "Create IC from Selection", new EditorAction((editor) => simulator.SelectedComponents.Count > 0, (editor) => false, (Editor editor, out string error) =>
         {
-            CircuitDescription cd = new CircuitDescription(this.simulator.SelectedComponents);
+            CircuitDescription cd = new CircuitDescription(simulator.SelectedComponents);
 
             if (cd.ValidForIC())
             {
@@ -255,7 +255,7 @@ public class Editor : Application
 
         // Initial project based on setting latestProject
         string latestProject = Settings.GetSetting("latestProject").GetValue<string>();
-        if (latestProject != null && latestProject != "")
+        if (latestProject != null && latestProject != "" && File.Exists(latestProject))
         {
             Project p = Project.LoadFromFile(latestProject);
             SetProject(p);
@@ -272,38 +272,46 @@ public class Editor : Application
         this.componentCreationContexts = new Dictionary<string, Tuple<Func<Component>, IUISubmitter<bool, Editor>?>>();
 
         // I/O
-        this.AddNewComponentCreationContext("Common", "Switch", () => { return new Switch(1, UserInput.GetMousePositionInWorld(editorCamera)); }, new CCPUSimple(false, false, true, false, (_, _, ob, _) =>
+        this.AddNewComponentCreationContext("I/O", "Switch", () => { return new Switch(1, UserInput.GetMousePositionInWorld(editorCamera)); }, new CCPUSimple(false, false, true, false, (_, _, ob, _) =>
         {
             return new Switch(ob, UserInput.GetMousePositionInWorld(editorCamera));
         }));
-        this.AddNewComponentCreationContext("Common", "Button", () => { return new Button(1, UserInput.GetMousePositionInWorld(editorCamera)); }, null);
-        this.AddNewComponentCreationContext("Common", "Lamp", () => { return new Lamp(1, UserInput.GetMousePositionInWorld(editorCamera)); }, new CCPUSimple(true, true, false, false, (ib, _, _, _) =>
+        this.AddNewComponentCreationContext("I/O", "Button", () => { return new Button(1, UserInput.GetMousePositionInWorld(editorCamera)); }, null);
+        this.AddNewComponentCreationContext("I/O", "Lamp", () => { return new Lamp(1, UserInput.GetMousePositionInWorld(editorCamera)); }, new CCPUSimple(true, true, false, false, (ib, _, _, _) =>
         {
             return new Lamp(ib, UserInput.GetMousePositionInWorld(editorCamera));
         }));
-        this.AddNewComponentCreationContext("Common", "Hex Viewer", () => { return new HexViewer(4, false, UserInput.GetMousePositionInWorld(editorCamera)); }, new CCPUSimple(true, true, false, false, (ib, im, _, _) =>
+        this.AddNewComponentCreationContext("I/O", "Hex Viewer", () => { return new HexViewer(4, false, UserInput.GetMousePositionInWorld(editorCamera)); }, new CCPUSimple(true, true, false, false, (ib, im, _, _) =>
         {
             return new HexViewer(ib, im, UserInput.GetMousePositionInWorld(editorCamera));
         }));
-        this.AddNewComponentCreationContext("Common", "ROM", () => { return new ROM(false, 4, false, 4, UserInput.GetMousePositionInWorld(editorCamera)); }, new CCPUSimple(true, true, true, true, (ib, im, ob, om) =>
+        this.AddNewComponentCreationContext("I/O", "ROM", () => { return new ROM(false, 4, false, 4, UserInput.GetMousePositionInWorld(editorCamera)); }, new CCPUSimple(true, true, true, true, (ib, im, ob, om) =>
         {
             return new ROM(im, ib, om, ob, UserInput.GetMousePositionInWorld(editorCamera));
         }));
+        this.AddNewComponentCreationContext("I/O", "Constant", () => { return new ConstantComponent(LogicValue.HIGH, UserInput.GetMousePositionInWorld(editorCamera)); }, null);
+        this.AddNewComponentCreationContext("I/O", "Clock", () => { return new Clock(500, UserInput.GetMousePositionInWorld(editorCamera)); }, null);
         this.AddNewComponentCreationContext("Common", "Memory", () => { return new MemoryComponent(4, false, 8, false, UserInput.GetMousePositionInWorld(editorCamera)); }, new CCPUSimple(true, true, true, true, (ib, im, ob, om) =>
         {
             return new MemoryComponent(ib, im, ob, om, UserInput.GetMousePositionInWorld(editorCamera));
         }));
         this.AddNewComponentCreationContext("Common", "Label", () => { return new TextComponent(UserInput.GetMousePositionInWorld(editorCamera)); }, null);
-        this.AddNewComponentCreationContext("Common", "Constant", () => { return new ConstantComponent(LogicValue.HIGH, UserInput.GetMousePositionInWorld(editorCamera)); }, null);
         this.AddNewComponentCreationContext("Common", "Splitter", () => { return new Splitter(2, 2, true, false, UserInput.GetMousePositionInWorld(editorCamera)); }, new CCPUSimple(true, true, true, true, (ib, im, ob, om) =>
         {
             return new Splitter(ib, ob, im, om, UserInput.GetMousePositionInWorld(editorCamera));
         }));
-        this.AddNewComponentCreationContext("Common", "Clock", () => { return new Clock(500, UserInput.GetMousePositionInWorld(editorCamera)); }, null);
         this.AddNewComponentCreationContext("Common", "Delayer", () => { return new Delayer(100, 1, false, UserInput.GetMousePositionInWorld(editorCamera)); }, new CCPUSimple(true, true, false, false, (ib, im, _, _) =>
         {
             return new Delayer(100, ib, im, UserInput.GetMousePositionInWorld(editorCamera));
         }));
+        this.AddNewComponentCreationContext("Common", "Multiplexer", () =>
+        {
+            return new Multiplexer(2, true, 4, true, UserInput.GetMousePositionInWorld(editorCamera));
+        }, null);
+        this.AddNewComponentCreationContext("Common", "Demultiplexer", () =>
+        {
+            return new Demultiplexer(2, true, 4, true, UserInput.GetMousePositionInWorld(editorCamera));
+        }, null);
 
         // GATES
         foreach (IGateLogic logic in this.availableGateLogics)
@@ -418,7 +426,7 @@ public class Editor : Application
 
     public void MMCopy()
     {
-        copiedCircuit = new CircuitDescription(this.simulator.SelectedComponents);
+        copiedCircuit = new CircuitDescription(simulator.SelectedComponents);
     }
 
     public void MMPaste()
@@ -432,14 +440,14 @@ public class Editor : Application
     public void PasteComponentsAndWires(CircuitDescription cd, Vector2 pos, bool preserveIDs)
     {
         (List<Component> comps, List<Wire> wires) = cd.CreateComponentsAndWires(pos, preserveIDs);
-        this.simulator.AddComponents(comps);
-        this.simulator.AddWires(wires);
+        simulator.AddComponents(comps);
+        simulator.AddWires(wires);
 
-        this.simulator.ClearSelection();
+        simulator.ClearSelection();
 
         foreach (Component c in comps)
         {
-            this.simulator.SelectComponent(c);
+            simulator.SelectComponent(c);
         }
     }
 
@@ -547,16 +555,16 @@ public class Editor : Application
         }
 
         // If single selecting a component
-        if (this.simulator.SelectedComponents.Count == 1)
+        if (simulator.SelectedComponents.Count == 1)
         {
-            Component c = this.simulator.SelectedComponents[0];
+            Component c = simulator.SelectedComponents[0];
             c.OnSingleSelectedSubmitUI();
         }
 
         if (!ImGui.GetIO().WantCaptureMouse)
         {
             // On right clicking component, open its context menu
-            foreach (Component c in this.simulator.Components)
+            foreach (Component c in simulator.Components)
             {
                 if (ImGui.IsMouseDoubleClicked(ImGuiMouseButton.Left) && Raylib.CheckCollisionPointRec(UserInput.GetMousePositionInWorld(this.editorCamera), c.Box))
                 {
@@ -614,9 +622,9 @@ public class Editor : Application
 
     public void NewComponent(Component comp)
     {
-        this.simulator.AddComponent(comp);
-        this.simulator.ClearSelection();
-        this.simulator.SelectComponent(comp);
+        simulator.AddComponent(comp);
+        simulator.ClearSelection();
+        simulator.SelectComponent(comp);
         this.fsm.SetState<StateMovingSelection>();
     }
 
@@ -636,9 +644,9 @@ public class Editor : Application
             }
         }
 
-        this.hoveredInput = this.simulator.GetInputFromWorldPos(mousePosInWorld);
-        this.hoveredOutput = this.simulator.GetOutputFromWorldPos(mousePosInWorld);
-        this.hoveredComponent = this.simulator.GetComponentFromWorldPos(mousePosInWorld);
+        this.hoveredInput = simulator.GetInputFromWorldPos(mousePosInWorld);
+        this.hoveredOutput = simulator.GetOutputFromWorldPos(mousePosInWorld);
+        this.hoveredComponent = simulator.GetComponentFromWorldPos(mousePosInWorld);
 
         this.fsm.Update(this);
 
@@ -654,7 +662,7 @@ public class Editor : Application
             }
         }
 
-        this.simulator.Update(mousePosInWorld);
+        simulator.Update(mousePosInWorld);
     }
 
     public override void Render()
@@ -665,7 +673,7 @@ public class Editor : Application
 
         Vector2 mousePosInWorld = UserInput.GetMousePositionInWorld(this.editorCamera);
 
-        this.simulator.Render(mousePosInWorld);
+        simulator.Render(mousePosInWorld);
         this.fsm.Render(this);
 
         Raylib.EndMode2D();

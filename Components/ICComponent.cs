@@ -124,6 +124,7 @@ public class ICComponent : Component
                 {
                     s.Values[k] = this.Inputs[i].Values[cumBits];
                     cumBits += 1;
+                    s.UpdateOutputs();
                 }
             }
         }

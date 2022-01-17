@@ -44,20 +44,20 @@ public class StateNone : State<Editor>
 
         if (!ImGui.GetIO().WantCaptureMouse)
         {
-            if (editor.hoveredComponent != null && editor.simulator.IsComponentSelected(editor.hoveredComponent) && Raylib.IsMouseButtonPressed(MouseButton.MOUSE_LEFT_BUTTON))
+            if (editor.hoveredComponent != null && Editor.simulator.IsComponentSelected(editor.hoveredComponent) && Raylib.IsMouseButtonPressed(MouseButton.MOUSE_LEFT_BUTTON))
             {
                 this.GoToState<StateMovingSelection>();
             }
-            else if (editor.hoveredComponent != null && !editor.simulator.IsComponentSelected(editor.hoveredComponent) && Raylib.IsMouseButtonPressed(MouseButton.MOUSE_LEFT_BUTTON))
+            else if (editor.hoveredComponent != null && !Editor.simulator.IsComponentSelected(editor.hoveredComponent) && Raylib.IsMouseButtonPressed(MouseButton.MOUSE_LEFT_BUTTON))
             {
-                editor.simulator.ClearSelection();
-                editor.simulator.SelectComponent(editor.hoveredComponent);
+                Editor.simulator.ClearSelection();
+                Editor.simulator.SelectComponent(editor.hoveredComponent);
                 this.GoToState<StateMovingSelection>();
             }
 
             if (editor.hoveredComponent == null && Raylib.IsMouseButtonPressed(MouseButton.MOUSE_LEFT_BUTTON))
             {
-                editor.simulator.ClearSelection();
+                Editor.simulator.ClearSelection();
                 editor.recSelectFirstCorner = UserInput.GetMousePositionInWorld(editor.editorCamera);
                 this.GoToState<StateRectangleSelecting>();
             }
@@ -91,7 +91,7 @@ public class StateHoveringInput : State<Editor>
         {
             if (editor.hoveredInput.HasSignal())
             {
-                editor.simulator.DeleteWire(editor.hoveredInput.Signal);
+                Editor.simulator.DeleteWire(editor.hoveredInput.Signal);
                 editor.hoveredInput.RemoveSignal();
             }
         }
@@ -139,7 +139,7 @@ public class StateOutputToInput : State<Editor>
             if (hoveredInput.SetSignal(wire))
             {
                 connectFrom.AddOutputWire(wire);
-                editor.simulator.AddWire(wire);
+                Editor.simulator.AddWire(wire);
             }
 
             this.GoToState<StateNone>();
@@ -167,7 +167,7 @@ public class StateMovingSelection : State<Editor>
 {
     public override void Update(Editor editor)
     {
-        editor.simulator.MoveSelection(editor.editorCamera);
+        Editor.simulator.MoveSelection(editor.editorCamera);
 
         if (Raylib.IsMouseButtonReleased(MouseButton.MOUSE_LEFT_BUTTON))
         {
@@ -182,8 +182,8 @@ public class StateRectangleSelecting : State<Editor>
     public override void Update(Editor editor)
     {
         Rectangle rec = Util.CreateRecFromTwoCorners(editor.recSelectFirstCorner, UserInput.GetMousePositionInWorld(editor.editorCamera));
-        editor.simulator.ClearSelection();
-        editor.simulator.SelectComponentsInRectangle(rec);
+        Editor.simulator.ClearSelection();
+        Editor.simulator.SelectComponentsInRectangle(rec);
 
         if (Raylib.IsMouseButtonReleased(MouseButton.MOUSE_LEFT_BUTTON))
         {
