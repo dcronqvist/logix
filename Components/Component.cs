@@ -304,6 +304,17 @@ public abstract class Component
     {
         int offset = 4;
         Raylib.DrawRectangleLinesEx(new Rectangle(this.Box.x - offset, this.Box.y - offset, this.Size.X + offset * 2, this.Size.Y + offset * 2), 4, Color.ORANGE);
+
+        // Render all wires from inputs and outputs in orange as well
+        foreach (ComponentInput cio in this.Inputs)
+        {
+            cio.Signal?.RenderSelected();
+        }
+
+        foreach (ComponentOutput cio in this.Outputs)
+        {
+            cio.Signals.ForEach(x => x.RenderSelected());
+        }
     }
 
     public abstract ComponentDescription ToDescription();

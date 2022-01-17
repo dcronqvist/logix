@@ -85,4 +85,11 @@ public class Wire
         Raylib.DrawLineBezier(fromPos, toPos, 4f, Color.BLACK);
         Raylib.DrawLineBezier(fromPos, toPos, 2, Util.InterpolateColors(Color.WHITE, Color.BLUE, this.GetHighFraction()));
     }
+
+    public void RenderSelected()
+    {
+        Vector2 fromPos = this.From.GetOutputLinePositions(this.FromIndex).Item1;
+        Vector2 toPos = this.To.GetInputLinePositions(this.ToIndex).Item1;
+        Raylib.DrawLineBezier(fromPos, toPos, 2, Color.ORANGE);
+    }
 }
