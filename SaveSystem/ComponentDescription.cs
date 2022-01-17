@@ -16,7 +16,9 @@ public enum ComponentType
     Constant,
     Splitter,
     Clock,
-    Delayer
+    Delayer,
+    Mux,
+    Demux,
 }
 
 public class IODescription

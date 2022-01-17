@@ -43,6 +43,10 @@ class ComponentConverter : Newtonsoft.Json.Converters.CustomCreationConverter<Co
                 return jObject.ToObject<ClockDescription>();
             case ComponentType.Delayer:
                 return jObject.ToObject<DelayerDescription>();
+            case ComponentType.Mux:
+                return jObject.ToObject<MUXDescription>();
+            case ComponentType.Demux:
+                return jObject.ToObject<MUXDescription>();
         }
 
         throw new ApplicationException(String.Format("The component type {0} is not supported!", type));
