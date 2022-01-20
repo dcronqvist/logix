@@ -38,7 +38,7 @@ public class CustomANDGate : CustomComponent
     // The constructor of ALL custom components must ALWAYS expect a Vector2 for position
     // and a JObject for your component's data. This data is saved in project files and
     // will be loaded when the project is loaded, to restore potential states of components.
-    public CustomANDGate(Vector2 position, JObject data) : base("example-plugin:custom-and", Util.Listify(1, 1), Util.Listify(1), position)
+    public CustomANDGate(Vector2 position, JObject data) : base("example-plugin:custom-and", "Custom AND", Util.Listify(1, 1), Util.Listify(1), position)
     {
         // This is where you would load your data from the JObject, if you had any.
         // This is where you would set up your component's properties.
@@ -50,6 +50,13 @@ public class CustomANDGate : CustomComponent
         // This is used to determine how many gates/components that are in the workspace.
         // It has no actual value, it is only for being able to display the amount of gates/components in the editor.
         return Util.GateAmount(("Custom AND Gate", 1));
+    }
+
+    public static JObject GetDefaultComponentData()
+    {
+        // This static method MUST exist on all custom components.
+        // It should return the initial data you would like a component to have.
+        return new JObject();
     }
 
     public override void PerformLogic()
@@ -75,6 +82,6 @@ public class CustomANDGate : CustomComponent
         // from e.g. a project file.
         // The IODescriptions at the end should be the same as the ones you used in the constructor.
         // Util.Listify(1, 1), Util.Listify(1) -> Util.Listify(new IODescription(1), new IODescription(1)), Util.Listify(new IODescription(1))
-        return new CustomDescription("example-plugin:custom-and", new JObject(), this.Position, Util.Listify(new IODescription(1), new IODescription(1)), Util.Listify(new IODescription(1)));
+        return new CustomDescription("example-plugin:custom-and", "Custom AND", new JObject(), this.Position, Util.Listify(new IODescription(1), new IODescription(1)), Util.Listify(new IODescription(1)));
     }
 }

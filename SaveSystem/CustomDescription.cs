@@ -8,6 +8,9 @@ public class CustomDescription : ComponentDescription
     [JsonProperty(PropertyName = "componentIdentifier")]
     public string ComponentIdentifier { get; private set; }
 
+    [JsonProperty(PropertyName = "componentName")]
+    public string ComponentName { get; set; }
+
     [JsonProperty(PropertyName = "plugin")]
     public string Plugin { get; set; }
 
@@ -16,9 +19,10 @@ public class CustomDescription : ComponentDescription
 
     public JObject Data { get; set; }
 
-    public CustomDescription(string componentIdentifier, JObject data, Vector2 position, List<IODescription> inputs, List<IODescription> outputs) : base(position, inputs, outputs, ComponentType.Custom)
+    public CustomDescription(string componentIdentifier, string componentName, JObject data, Vector2 position, List<IODescription> inputs, List<IODescription> outputs) : base(position, inputs, outputs, ComponentType.Custom)
     {
         this.ComponentIdentifier = componentIdentifier;
+        this.ComponentName = componentName;
         this.Data = data;
     }
 
