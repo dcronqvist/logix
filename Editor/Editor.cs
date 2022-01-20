@@ -239,29 +239,6 @@ public class Editor : Application
             error = ""; return true;
         }));
 
-        /*AddNewMainMenuItem("Integrated Circuits", "Export IC Collection from Selection", () => this.simulator.SelectedComponents.All(x => x is ICComponent), null, null, () =>
-        {
-            List<ICComponent> components = this.simulator.SelectedComponents.Cast<ICComponent>().ToList();
-
-            List<ICDescription> descriptions = new List<ICDescription>();
-
-            foreach (ICComponent c in components)
-            {
-                ICDescription icd = c.Description;
-                descriptions.Add(icd);
-            }
-
-            ICCollection collection = new ICCollection("testing", descriptions);
-
-            base.SelectFolder(Directory.GetCurrentDirectory(), (folder) =>
-            {
-                collection.SaveToFile(folder);
-            }, () =>
-            {
-
-            });
-        });*/
-
         // Initial project based on setting latestProject
         string latestProject = Settings.GetSetting("latestProject").GetValue<string>();
         if (latestProject != null && latestProject != "" && File.Exists(latestProject))
@@ -352,7 +329,7 @@ public class Editor : Application
         {
             foreach (KeyValuePair<string, CustomDescription> cds in p.customComponents)
             {
-                this.AddNewComponentCreationContext("Plugins", cds.Key, () => { return p.CreateComponent(cds.Key, UserInput.GetMousePositionInWorld(editorCamera)); }, null);
+                this.AddNewComponentCreationContext("Plugins", cds.Value.ComponentName, () => { return p.CreateComponent(cds.Key, UserInput.GetMousePositionInWorld(editorCamera)); }, null);
             }
         }
 
@@ -679,7 +656,7 @@ public class Editor : Application
             // On right clicking component, open its context menu
             foreach (Component c in simulator.Components)
             {
-                if (ImGui.IsMouseDoubleClicked(ImGuiMouseButton.Left) && Raylib.CheckCollisionPointRec(UserInput.GetMousePositionInWorld(this.editorCamera), c.Box))
+                if (c.HasContextMenu && ImGui.IsMouseClicked(ImGuiMouseButton.Right) && Raylib.CheckCollisionPointRec(UserInput.GetMousePositionInWorld(this.editorCamera), c.Box))
                 {
                     this.contextMenuComponent = c;
                     ImGui.OpenPopup($"###ContextMenuComp{this.contextMenuComponent.uniqueID}");

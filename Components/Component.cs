@@ -40,6 +40,7 @@ public abstract class Component
     public virtual bool TextVisible => true;
     public virtual bool DrawIOIdentifiers => false;
     public virtual bool DrawBoxNormal => true;
+    public virtual bool HasContextMenu => false;
 
     public string uniqueID;
 

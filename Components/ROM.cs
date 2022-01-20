@@ -23,6 +23,7 @@ public class ROM : Component
     public override Vector2 Size => this.Inputs.Count == 0 && this.Outputs.Count == 0 ? new Vector2(100, 100) : base.Size;
     private bool multibitAddress;
     private bool multibitOutput;
+    public override bool HasContextMenu => true;
 
     public ROM(bool multibitAddress, int addressBits, bool multibitOutput, int outputBits, Vector2 position) : base(multibitAddress ? Util.Listify(addressBits) : Util.NValues(1, addressBits), multibitOutput ? Util.Listify(outputBits) : Util.NValues(1, outputBits), position)
     {

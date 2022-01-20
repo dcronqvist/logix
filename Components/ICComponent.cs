@@ -7,6 +7,7 @@ public class ICComponent : Component
     public ICDescription Description { get; set; }
     public override string Text => Description.Name;
     public override bool DrawIOIdentifiers => true;
+    public override bool HasContextMenu => true;
 
     private List<Component> Components { get; set; }
     private List<Wire> Wires { get; set; }

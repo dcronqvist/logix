@@ -13,6 +13,7 @@ public class MemoryComponent : Component
 
     public override bool DrawIOIdentifiers => true;
     public override string Text => $"{1 << this.AddressBits}x{this.DataBits} Bit Memory";
+    public override bool HasContextMenu => true;
 
     public bool previousClock = false;
 

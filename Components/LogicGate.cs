@@ -6,6 +6,7 @@ public class LogicGate : Component
 {
     private IGateLogic Logic { get; set; }
     public override string Text => this.Logic.GetLogicText();
+    public override bool HasContextMenu => true;
 
     private int newGateBits;
     private bool newGateMultibit;
