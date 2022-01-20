@@ -1,10 +1,15 @@
 using LogiX.Components;
+using LogiX.SaveSystem;
+using Newtonsoft.Json.Linq;
 
 namespace LogiX;
 
 public static class Util
 {
     public static Font OpenSans { get; set; }
+    public static string EnvironmentPath = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) + @"/LogiX";
+    public static string FileDialogStartDir = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
+    public static List<Plugin> Plugins { get; set; }
 
     public static List<T> NValues<T>(T value, int n)
     {
@@ -261,5 +266,42 @@ public static class Util
         }
         values.Reverse();
         return values;
+    }
+
+    public static Component CreateComponentWithPluginIdentifier(string identifier, Vector2 position, JObject data)
+    {
+        foreach (Plugin p in Plugins)
+        {
+            foreach (KeyValuePair<string, CustomDescription> cd in p.customComponents)
+            {
+                if (cd.Key == identifier)
+                {
+                    return p.CreateComponent(identifier, position, data);
+                }
+            }
+        }
+        return null;
+    }
+
+    public static List<(string, string)> GetMissingPluginsFromDescriptions(List<CustomDescription> descriptions)
+    {
+        List<(string, string)> missingPlugins = new List<(string, string)>();
+        foreach (CustomDescription cd in descriptions)
+        {
+            if (!Plugins.Any(p => p.customComponents.ContainsKey(cd.ComponentIdentifier)))
+            {
+                missingPlugins.Add((cd.Plugin + ", v" + cd.PluginVersion, "Component " + cd.ComponentIdentifier + " is from the plugin " + cd.Plugin + " but that plugin is not installed."));
+            }
+            else
+            {
+                // Now check that the plugin version is the same as the description version
+                Plugin p = Plugins.First(p => p.customComponents.ContainsKey(cd.ComponentIdentifier));
+                if (p.version != cd.PluginVersion)
+                {
+                    missingPlugins.Add((p.name + ", v" + p.version, "Component uses version " + cd.PluginVersion + " but the installed version is " + p.version + ". \nTo load the circuit, you need to install version " + cd.PluginVersion));
+                }
+            }
+        }
+        return missingPlugins;
     }
 }

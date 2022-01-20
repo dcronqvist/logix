@@ -22,7 +22,13 @@ public class CircuitDescription
     {
         this.Components = components.Select((comp) =>
         {
-            return comp.ToDescription();
+            ComponentDescription cd = comp.ToDescription();
+            if (cd is CustomDescription)
+            {
+                (cd as CustomDescription).Plugin = ((CustomComponent)comp).Plugin;
+                (cd as CustomDescription).PluginVersion = ((CustomComponent)comp).PluginVersion;
+            }
+            return cd;
         }).ToList();
 
         Vector2 weighted = this.WeightedMiddlePosition();
@@ -85,6 +91,19 @@ public class CircuitDescription
 
     public Tuple<List<Component>, List<Wire>> CreateComponentsAndWires(Vector2 basePosition, bool preservIds)
     {
+        // Check if circuit contains components from a plugin
+        // make sure that the plugin exists
+
+        List<CustomDescription> pluginDescriptions = this.Components.Where(x => x is CustomDescription).Cast<CustomDescription>().ToList();
+        List<(string, string)> missingPlugins = Util.GetMissingPluginsFromDescriptions(pluginDescriptions);
+
+        if (missingPlugins.Count > 0)
+        {
+            throw new Exception("The circuit you are trying to load contains components from plugins. When loading these components\n" +
+                "one or more errors occured.\n\n" +
+                string.Join("\n", missingPlugins.Select(x => $"{x.Item1}, {x.Item2}")));
+        }
+
         List<Component> components = this.Components.Select((cd) =>
         {
             Component c = cd.ToComponent(preservIds);

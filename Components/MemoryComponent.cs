@@ -165,7 +165,7 @@ public class MemoryComponent : Component
 
         if (ImGui.Button("Dump Memory to File..."))
         {
-            editor.SelectFolder(Directory.GetCurrentDirectory(), folder =>
+            editor.SelectFolder(Util.FileDialogStartDir, folder =>
             {
                 using (StreamWriter sw = new StreamWriter(folder + "/memory.txt"))
                 {
@@ -179,7 +179,7 @@ public class MemoryComponent : Component
 
         if (ImGui.Button("Load Memory From File..."))
         {
-            editor.SelectFile(Directory.GetCurrentDirectory(), file =>
+            editor.SelectFile(Util.FileDialogStartDir, file =>
             {
                 using (StreamReader sr = new StreamReader(file))
                 {

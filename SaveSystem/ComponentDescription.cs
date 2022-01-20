@@ -19,7 +19,8 @@ public enum ComponentType
     Delayer,
     Mux,
     Demux,
-    DTBC
+    DTBC,
+    Custom
 }
 
 public class IODescription

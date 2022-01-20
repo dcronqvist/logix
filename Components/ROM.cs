@@ -111,7 +111,7 @@ public class ROM : Component
         base.SubmitContextPopup(editor);
         if (ImGui.Button("Select file"))
         {
-            editor.SelectFile(Directory.GetCurrentDirectory(), (file) =>
+            editor.SelectFile(Util.FileDialogStartDir, (file) =>
             {
                 this.ROMFile = file;
             }, ".txt");

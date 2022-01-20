@@ -47,7 +47,7 @@ public static class Settings
 
     public static void LoadSettings()
     {
-        settingsFile = $"{Directory.GetCurrentDirectory()}/assets/config.json";
+        settingsFile = $"{Util.EnvironmentPath}/config.json";
 
         Dictionary<string, Setting> defaultSettings = GetDefaultSettings();
 
@@ -93,6 +93,8 @@ public static class Settings
 
     public static void SaveSettings()
     {
+        Directory.CreateDirectory(Util.EnvironmentPath);
+
         using (StreamWriter sw = new StreamWriter(settingsFile))
         {
             Dictionary<string, Object> sets = new Dictionary<string, object>();

@@ -17,7 +17,7 @@ public class CCPUIC : IUISubmitter<bool, Editor.Editor>
     {
         if (ImGui.Button("Export to file..."))
         {
-            arg.SelectFolder(Directory.GetCurrentDirectory(), (folder) =>
+            arg.SelectFolder(Util.FileDialogStartDir, (folder) =>
             {
                 desc.SaveToFile(folder);
             });

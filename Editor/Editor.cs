@@ -82,27 +82,34 @@ public class Editor : Application
 
     public void SetProject(Project proj)
     {
-        if (this.loadedProject == null)
+        try
         {
-            this.loadedProject = proj;
-            (List<Component> comps, List<Wire> wires) = proj.GetComponentsAndWires();
-            simulator.AddComponents(comps);
-            simulator.AddWires(wires);
+            if (this.loadedProject == null)
+            {
+                this.loadedProject = proj;
+                (List<Component> comps, List<Wire> wires) = proj.GetComponentsAndWires();
+                simulator.AddComponents(comps);
+                simulator.AddWires(wires);
+            }
+            else
+            {
+                // There is an already ongoing project, save it
+
+                this.loadedProject = proj;
+                simulator.ClearSelection();
+                simulator.Components.Clear();
+                simulator.Wires.Clear();
+                (List<Component> comps, List<Wire> wires) = proj.GetComponentsAndWires();
+                simulator.AddComponents(comps);
+                simulator.AddWires(wires);
+            }
+
+            Raylib.SetWindowTitle("LogiX - " + proj.GetFileName());
         }
-        else
+        catch (Exception e)
         {
-            // There is an already ongoing project, save it
-            //this.loadedProject.SaveToFile(Directory.GetCurrentDirectory());
-
-            this.loadedProject = proj;
-            (List<Component> comps, List<Wire> wires) = proj.GetComponentsAndWires();
-            simulator.Components.Clear();
-            simulator.Wires.Clear();
-            simulator.AddComponents(comps);
-            simulator.AddWires(wires);
+            base.ModalError(e.Message);
         }
-
-        Raylib.SetWindowTitle("LogiX - " + proj.GetFileName());
         this.LoadComponentButtons();
     }
 
@@ -117,9 +124,11 @@ public class Editor : Application
         Util.OpenSans = Raylib.LoadFontEx($"{Directory.GetCurrentDirectory()}/assets/opensans-bold.ttf", 100, Enumerable.Range(0, 1000).ToArray(), 1000);
         Raylib.SetTextureFilter(Util.OpenSans.texture, TextureFilter.TEXTURE_FILTER_TRILINEAR);
 
-        Settings.LoadSettings();
-
         this.fsm = new EditorFSM();
+
+        // LOAD ALL PLUGINS
+        List<Plugin> plugins = Plugin.LoadAllPlugins();
+        Util.Plugins = plugins;
 
         // ASSIGNING KEYCOMBO ACTIONS
         AddNewMainMenuItem("File", "Save", new EditorAction((editor) => true, (editor) => false, (Editor editor, out string error) =>
@@ -132,7 +141,7 @@ public class Editor : Application
             }
             else
             {
-                this.SaveFile(Directory.GetCurrentDirectory(), (filePath) =>
+                this.SaveFile(Util.FileDialogStartDir, (filePath) =>
                 {
                     this.loadedProject.SaveToFile(filePath);
                     Settings.SetSetting<string>("latestProject", this.loadedProject.LoadedFromFile);
@@ -154,7 +163,7 @@ public class Editor : Application
 
         AddNewMainMenuItem("File", "Open Project", new EditorAction((editor) => true, (editor) => false, (Editor editor, out string error) =>
         {
-            this.SelectFile(Directory.GetCurrentDirectory(), (file) =>
+            this.SelectFile(Util.FileDialogStartDir, (file) =>
             {
                 Project p = Project.LoadFromFile(file);
                 Settings.SetSetting<string>("latestProject", p.LoadedFromFile);
@@ -166,7 +175,7 @@ public class Editor : Application
 
         AddNewMainMenuItem("File", "Include IC File", new EditorAction((editor) => true, (editor) => false, (Editor editor, out string error) =>
         {
-            this.SelectFile(Directory.GetCurrentDirectory(), (file) =>
+            this.SelectFile(Util.FileDialogStartDir, (file) =>
             {
                 if (!this.loadedProject.IncludeICFile(file))
                 {
@@ -184,7 +193,7 @@ public class Editor : Application
 
         AddNewMainMenuItem("File", "Include IC Collection", new EditorAction((editor) => true, (editor) => false, (Editor editor, out string error) =>
         {
-            this.SelectFile(Directory.GetCurrentDirectory(), (file) =>
+            this.SelectFile(Util.FileDialogStartDir, (file) =>
             {
                 this.loadedProject.IncludeICCollectionFile(file);
                 this.LoadComponentButtons();
@@ -338,6 +347,15 @@ public class Editor : Application
             }));
         }
 
+        // PLUGINS
+        foreach (Plugin p in Util.Plugins)
+        {
+            foreach (KeyValuePair<string, CustomDescription> cds in p.customComponents)
+            {
+                this.AddNewComponentCreationContext("Plugins", cds.Key, () => { return p.CreateComponent(cds.Key, UserInput.GetMousePositionInWorld(editorCamera)); }, null);
+            }
+        }
+
         // ICs
         // Project created ICs
         foreach (ICDescription icd in this.loadedProject.ProjectCreatedICs.ToArray())
@@ -452,15 +470,22 @@ public class Editor : Application
 
     public void PasteComponentsAndWires(CircuitDescription cd, Vector2 pos, bool preserveIDs)
     {
-        (List<Component> comps, List<Wire> wires) = cd.CreateComponentsAndWires(pos, preserveIDs);
-        simulator.AddComponents(comps);
-        simulator.AddWires(wires);
-
-        simulator.ClearSelection();
-
-        foreach (Component c in comps)
+        try
         {
-            simulator.SelectComponent(c);
+            (List<Component> comps, List<Wire> wires) = cd.CreateComponentsAndWires(pos, preserveIDs);
+            simulator.AddComponents(comps);
+            simulator.AddWires(wires);
+
+            simulator.ClearSelection();
+
+            foreach (Component c in comps)
+            {
+                simulator.SelectComponent(c);
+            }
+        }
+        catch (Exception e)
+        {
+            base.ModalError(e.Message, ErrorModalType.OK);
         }
     }
 
@@ -499,6 +524,71 @@ public class Editor : Application
             }
 
             ImGui.Text("Project file: " + this.loadedProject.LoadedFromFile);
+
+            ImGui.EndMenu();
+        }
+
+        ImGui.Separator();
+
+        if (ImGui.BeginMenu("Plugins"))
+        {
+
+            // Import new plugin
+            if (ImGui.MenuItem("Install plugin from file..."))
+            {
+                this.SelectFile(Util.FileDialogStartDir, (file) =>
+                {
+                    File.Copy(file, Path.Combine(Plugin.PluginsPath, Path.GetFileName(file)));
+                    Util.Plugins = Plugin.LoadAllPlugins();
+                    this.SetProject(this.loadedProject);
+                }, ".zip");
+            }
+
+            if (Util.Plugins.Count > 0 && ImGui.BeginMenu("Uninstall plugin"))
+            {
+                foreach (Plugin p in Util.Plugins)
+                {
+                    if (ImGui.MenuItem(p.name + ", " + p.version))
+                    {
+                        base.ModalError("Are you sure you want to uninstall " + p.name + ", v" + p.version + "?", ErrorModalType.YesNo, (result) =>
+                        {
+                            if (result == ErrorModalResult.Yes)
+                            {
+                                File.Delete(p.file);
+                                Util.Plugins = Plugin.LoadAllPlugins();
+                                this.SetProject(this.loadedProject);
+                            }
+                        });
+                    }
+                }
+
+                ImGui.EndMenu();
+            }
+
+            ImGui.Separator();
+
+            // Show list of plugins
+            foreach (Plugin plugin in Util.Plugins)
+            {
+                if (ImGui.BeginMenu(plugin.name + ", " + plugin.version))
+                {
+                    if (ImGui.MenuItem("About"))
+                    {
+                        this.ModalError(plugin.GetAboutInfo());
+                    }
+                    ImGui.Separator();
+                    // Here we do all the plugin methods
+                    foreach (KeyValuePair<string, PluginMethod> methods in plugin.customMethods)
+                    {
+                        if (ImGui.MenuItem(methods.Key))
+                        {
+                            methods.Value.OnRun(this);
+                        }
+                    }
+
+                    ImGui.EndMenu();
+                }
+            }
 
             ImGui.EndMenu();
         }

@@ -189,7 +189,7 @@ public class Project
         this.LoadedFromFile = finalPath;
         using (StreamWriter sw = new StreamWriter(finalPath))
         {
-            string json = JsonConvert.SerializeObject(this, Formatting.Indented);
+            string json = JsonConvert.SerializeObject(this);
             sw.Write(json);
         }
     }
