@@ -31,6 +31,8 @@ It is not complete, since only a small subset of the instruction set has been im
 
 You can already create integrated circuits that you can export and share if you'd like - but these components might become very complex and therefore slow down the simulation quite substantially. 
 
+If you want to create your own plugin, you can use the [plugin template](/examples/plugins/plugin_template).
+
 ### Custom Components
 
 Plugins are an easy way to create components which are very flexible and operate in a single simulation tick. With plugins you can make your own **Custom Components** which basically override the basic functionality of components in LogiX, allowing you to take control of the component completely.
