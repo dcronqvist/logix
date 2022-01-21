@@ -157,7 +157,7 @@ public class ICComponent : Component
     {
         base.SubmitContextPopup(editor);
 
-        ImGui.Text($"ICDescription ID: {this.Description.ID}");
+        //ImGui.Text($"ICDescription ID: {this.Description.ID}");
 
         if (ImGui.Button("Paste inner circuit"))
         {
@@ -165,10 +165,13 @@ public class ICComponent : Component
             editor.PasteComponentsAndWires(cd, UserInput.GetMousePositionInWorld(editor.editorCamera), true);
         }
 
-        ImGui.Text("Contains gates: ");
-        foreach (KeyValuePair<string, int> kvp in this.GetGateAmount())
+        if (ImGui.TreeNodeEx("Contains gates"))
         {
-            ImGui.Text($"{kvp.Key}: {kvp.Value}");
+            foreach (KeyValuePair<string, int> kvp in this.GetGateAmount())
+            {
+                ImGui.Text($"{kvp.Key}: {kvp.Value}");
+            }
+            ImGui.TreePop();
         }
     }
 }

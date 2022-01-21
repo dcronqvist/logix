@@ -127,8 +127,17 @@ public class Editor : Application
         this.fsm = new EditorFSM();
 
         // LOAD ALL PLUGINS
-        List<Plugin> plugins = Plugin.LoadAllPlugins();
+        Plugin.TryLoadAllPlugins(out List<Plugin> plugins, out Dictionary<string, string> failedPlugins);
         Util.Plugins = plugins;
+        if (failedPlugins.Count > 0)
+        {
+            string error = "";
+            foreach (KeyValuePair<string, string> kvp in failedPlugins)
+            {
+                error += $"{kvp.Key} failed to load: {kvp.Value}\n";
+            }
+            base.ModalError(error);
+        }
 
         // ASSIGNING KEYCOMBO ACTIONS
         AddNewMainMenuItem("File", "Save", new EditorAction((editor) => true, (editor) => false, (Editor editor, out string error) =>
@@ -329,7 +338,7 @@ public class Editor : Application
         {
             foreach (KeyValuePair<string, CustomDescription> cds in p.customComponents)
             {
-                this.AddNewComponentCreationContext("Plugins", cds.Value.ComponentName, () => { return p.CreateComponent(cds.Key, UserInput.GetMousePositionInWorld(editorCamera)); }, null);
+                this.AddNewComponentCreationContext("Plugins", cds.Value.Plugin + ":" + cds.Value.ComponentName, () => { return p.CreateComponent(cds.Key, UserInput.GetMousePositionInWorld(editorCamera)); }, null);
             }
         }
 
@@ -516,7 +525,17 @@ public class Editor : Application
                 this.SelectFile(Util.FileDialogStartDir, (file) =>
                 {
                     File.Copy(file, Path.Combine(Plugin.PluginsPath, Path.GetFileName(file)));
-                    Util.Plugins = Plugin.LoadAllPlugins();
+                    Plugin.TryLoadAllPlugins(out List<Plugin> plugins, out Dictionary<string, string> failedPlugins);
+                    Util.Plugins = plugins;
+                    if (failedPlugins.Count > 0)
+                    {
+                        string error = "";
+                        foreach (KeyValuePair<string, string> kvp in failedPlugins)
+                        {
+                            error += $"{kvp.Key} failed to load: {kvp.Value}\n";
+                        }
+                        base.ModalError(error);
+                    }
                     this.SetProject(this.loadedProject);
                 }, ".zip");
             }
@@ -532,7 +551,17 @@ public class Editor : Application
                             if (result == ErrorModalResult.Yes)
                             {
                                 File.Delete(p.file);
-                                Util.Plugins = Plugin.LoadAllPlugins();
+                                Plugin.TryLoadAllPlugins(out List<Plugin> plugins, out Dictionary<string, string> failedPlugins);
+                                Util.Plugins = plugins;
+                                if (failedPlugins.Count > 0)
+                                {
+                                    string error = "";
+                                    foreach (KeyValuePair<string, string> kvp in failedPlugins)
+                                    {
+                                        error += $"{kvp.Key} failed to load: {kvp.Value}\n";
+                                    }
+                                    base.ModalError(error);
+                                }
                                 this.SetProject(this.loadedProject);
                             }
                         });

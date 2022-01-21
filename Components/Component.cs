@@ -298,7 +298,7 @@ public abstract class Component
 
     public virtual void SubmitContextPopup(LogiX.Editor.Editor editor)
     {
-        ImGui.Text($"ID: {this.uniqueID}");
+        //ImGui.Text($"ID: {this.uniqueID}");
     }
 
     public virtual void RenderSelected()

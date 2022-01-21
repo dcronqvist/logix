@@ -17,39 +17,45 @@ public class Plugin
 {
     public static string PluginsPath => $"{Util.EnvironmentPath}/plugins";
 
-    public static List<Plugin> LoadAllPlugins()
+    public static bool TryLoadAllPlugins(out List<Plugin> plugins, out Dictionary<string, string> failedPlugins)
     {
         Directory.CreateDirectory(PluginsPath);
-        List<Plugin> plugins = new List<Plugin>();
-
+        plugins = new List<Plugin>();
+        failedPlugins = new Dictionary<string, string>();
         // Plugins are zipfiles
         foreach (string file in Directory.GetFiles(PluginsPath, "*.zip"))
         {
-            Plugin plugin = LoadFromFile(file);
-            if (plugin != null)
+            if (!TryLoadFromFile(file, out Plugin? plugin, out string? error))
             {
-                plugins.Add(plugin);
+                failedPlugins.Add(file, error);
+                continue;
+            }
+            else
+            {
+                plugins.Add(plugin!);
             }
         }
-        return plugins;
+        return true;
     }
 
-    public static Plugin LoadFromFile(string file)
+    public static bool TryGetPluginInfo(string file, out Plugin? plugin, out string? error, out ZipArchive? archive)
     {
-        Plugin p;
+        string pluginInfoFile = "plugin.json";
 
-        // Unzip zip file and check the contents
-        ZipArchive zip = ZipFile.OpenRead(file);
+        ZipArchive a = ZipFile.OpenRead(file);
 
-        ZipArchiveEntry pluginInfo = zip.Entries.FirstOrDefault(entry => entry.FullName == "plugin.json");
-
-        if (pluginInfo == null)
+        if (!a.Entries.Any(x => x.FullName == pluginInfoFile))
         {
-            return null;
+            error = $"Plugin does not contain a {pluginInfoFile} file.";
+            plugin = null;
+            archive = null;
+            return false;
         }
-        else
+
+        ZipArchiveEntry pluginInfo = a.Entries.FirstOrDefault(entry => entry.FullName == pluginInfoFile);
+
+        try
         {
-            // Read the plugin.json file
             using (StreamReader sr = new StreamReader(pluginInfo.Open()))
             {
                 Dictionary<string, string> pluginInfoDict = JsonConvert.DeserializeObject<Dictionary<string, string>>(sr.ReadToEnd());
@@ -60,52 +66,90 @@ public class Plugin
                 string name = pluginInfoDict["name"];
                 string website = pluginInfoDict["website"];
 
-                p = new Plugin(version, author, description, name, website, file);
+                plugin = new Plugin(version, author, description, name, website, file);
+                error = null;
+                archive = a;
+                return true;
             }
         }
-
-        ZipArchiveEntry pluginDll = zip.Entries.FirstOrDefault(entry => Path.GetExtension(entry.FullName) == ".dll");
-
-        if (pluginDll == null)
+        catch (Exception e)
         {
-            return null;
+            error = $"Error reading plugin info: {e.Message}";
+            plugin = null;
+            archive = null;
+            return false;
         }
-        else
+    }
+
+    public static bool TryGetPluginAssembly(ZipArchive zip, Plugin p, out Plugin? plugin, out string? error)
+    {
+        if (!zip.Entries.Any(x => x.FullName.EndsWith(".dll")))
         {
-            // Read the plugin.dll file
-            using (Stream s = pluginDll.Open())
+            error = "Plugin does not contain a .dll file.";
+            plugin = null;
+            return false;
+        }
+
+        if (zip.Entries.Where(x => x.FullName.EndsWith(".dll")).Count() > 1)
+        {
+            error = "Plugin contains multiple .dll files.";
+            plugin = null;
+            return false;
+        }
+
+        ZipArchiveEntry assemblyFile = zip.Entries.FirstOrDefault(x => x.FullName != "logix.dll" && x.FullName.EndsWith(".dll"))!;
+
+        // Read the plugin.dll file
+        using (Stream s = assemblyFile.Open())
+        {
+            byte[] buffer = new byte[assemblyFile.Length];
+            s.Read(buffer, 0, buffer.Length);
+            Assembly assembly = Assembly.Load(buffer);
+
+            // Get all classes that have base type "CustomComponent"
+            List<Type> types = assembly.GetTypes().Where(t => t.BaseType == typeof(CustomComponent)).ToList();
+
+            foreach (Type type in types)
             {
-                byte[] buffer = new byte[pluginDll.Length];
-                s.Read(buffer, 0, buffer.Length);
-                Assembly assembly = Assembly.Load(buffer);
+                // All classes that have base type "CustomComponent" may ONLY take in a Vector2 in the constructor
+                JObject data = (JObject)type.GetMethod("GetDefaultComponentData").Invoke(null, null);
 
-                // Get all classes that have base type "CustomComponent"
-                List<Type> types = assembly.GetTypes().Where(t => t.BaseType == typeof(CustomComponent)).ToList();
+                CustomComponent cc = (CustomComponent)assembly.CreateInstance(type.FullName, true, BindingFlags.CreateInstance, null, new object[] { Vector2.Zero, data }, null, null);
+                CustomDescription cd = cc.ToDescription();
+                cd.Plugin = p.name;
+                cd.PluginVersion = p.version;
+                p.AddCustomComponent(cd);
+                p.customComponentTypes.Add(cc.ComponentIdentifier, type);
+            }
 
-                foreach (Type type in types)
-                {
-                    // All classes that have base type "CustomComponent" may ONLY take in a Vector2 in the constructor
-                    JObject data = (JObject)type.GetMethod("GetDefaultComponentData").Invoke(null, null);
-
-                    CustomComponent cc = (CustomComponent)assembly.CreateInstance(type.FullName, true, BindingFlags.CreateInstance, null, new object[] { Vector2.Zero, data }, null, null);
-                    CustomDescription cd = cc.ToDescription();
-                    cd.Plugin = p.name;
-                    cd.PluginVersion = p.version;
-                    p.AddCustomComponent(cd);
-                    p.customComponentTypes.Add(cc.ComponentIdentifier, type);
-                }
-
-                // Get all classes that have base type "PluginMethod"
-                types = assembly.GetTypes().Where(t => t.BaseType == typeof(PluginMethod)).ToList();
-                foreach (Type type in types)
-                {
-                    PluginMethod pm = (PluginMethod)assembly.CreateInstance(type.FullName, true, BindingFlags.CreateInstance, null, null, null, null);
-                    p.AddCustomMethod(pm.Name, pm);
-                }
+            // Get all classes that have base type "PluginMethod"
+            types = assembly.GetTypes().Where(t => t.BaseType == typeof(PluginMethod)).ToList();
+            foreach (Type type in types)
+            {
+                PluginMethod pm = (PluginMethod)assembly.CreateInstance(type.FullName, true, BindingFlags.CreateInstance, null, null, null, null);
+                p.AddCustomMethod(pm.Name, pm);
             }
         }
 
-        return p;
+        plugin = p;
+        error = null;
+        return true;
+    }
+
+    public static bool TryLoadFromFile(string file, out Plugin? plugin, out string? error)
+    {
+        ZipArchive? archive;
+        if (!TryGetPluginInfo(file, out plugin, out error, out archive))
+        {
+            return false;
+        }
+
+        if (!TryGetPluginAssembly(archive!, plugin!, out plugin, out error))
+        {
+            return false;
+        }
+
+        return true;
     }
 
     // Plugin information

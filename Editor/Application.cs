@@ -88,7 +88,6 @@ public abstract class Application
             Update();
 
             Raylib.BeginTextureMode(this.uiTexture);
-            Raylib.BeginBlendMode(BlendMode.BLEND_ALPHA);
 
             Raylib.ClearBackground(Color.BLANK);
             SubmitUI();
@@ -101,7 +100,9 @@ public abstract class Application
             Raylib.BeginDrawing();
 
             Render();
+            Raylib.BeginBlendMode(BlendMode.BLEND_ALPHA);
             Raylib.DrawTextureRec(this.uiTexture.texture, new Rectangle(0, 0, this.uiTexture.texture.width, -this.uiTexture.texture.height), Vector2.Zero, Color.WHITE);
+            Raylib.EndBlendMode();
 
             Raylib.EndDrawing();
             UserInput.End();
