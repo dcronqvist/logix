@@ -304,4 +304,10 @@ public static class Util
         }
         return missingPlugins;
     }
+
+    public static string GetPathAsRelative(string path)
+    {
+        // Also replace all \\ with /
+        return Path.GetRelativePath(Directory.GetCurrentDirectory(), path).Replace("\\", "/");
+    }
 }
