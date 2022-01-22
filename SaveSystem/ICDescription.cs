@@ -111,9 +111,10 @@ public class ICDescription : ComponentDescription
         return icd;
     }
 
-    public void SaveToFile(string directory)
+    public void SaveToFile(string file)
     {
-        using (StreamWriter sw = new StreamWriter($"{directory}/{this.Name.ToSuitableFileName()}{ICDescription.EXTENSION}"))
+        string finalFile = file.Contains(".") ? file : file + EXTENSION;
+        using (StreamWriter sw = new StreamWriter(finalFile))
         {
             sw.Write(JsonConvert.SerializeObject(this, Formatting.Indented));
         }

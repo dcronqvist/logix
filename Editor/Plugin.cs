@@ -111,8 +111,26 @@ public class Plugin
 
             foreach (Type type in types)
             {
+                // Make sure that all types have a method "GetDefaultComponentData"
+                MethodInfo? method = type.GetMethod("GetDefaultComponentData");
+                if (method == null || method.IsStatic == false)
+                {
+                    error = $"Type {type.Name} does not have a static method GetDefaultComponentData.";
+                    plugin = null;
+                    return false;
+                }
+
                 // All classes that have base type "CustomComponent" may ONLY take in a Vector2 in the constructor
                 JObject data = (JObject)type.GetMethod("GetDefaultComponentData").Invoke(null, null);
+
+                // Make sure that all types have a constructor which takes in a Vector2 and JObject
+                ConstructorInfo? constructor = type.GetConstructor(new Type[] { typeof(Vector2), typeof(JObject) });
+                if (constructor == null)
+                {
+                    error = $"Type {type.Name} does not have a constructor which takes in a Vector2 and JObject.";
+                    plugin = null;
+                    return false;
+                }
 
                 CustomComponent cc = (CustomComponent)assembly.CreateInstance(type.FullName, true, BindingFlags.CreateInstance, null, new object[] { Vector2.Zero, data }, null, null);
                 CustomDescription cd = cc.ToDescription();
@@ -149,6 +167,19 @@ public class Plugin
             return false;
         }
 
+        return true;
+    }
+
+    public static bool TryInstall(string file, out List<Plugin> plugins, out string? error)
+    {
+        if (!TryLoadFromFile(file, out Plugin? plugin, out error))
+        {
+            plugins = null;
+            return false;
+        }
+
+        plugins = new List<Plugin>();
+        plugins.Add(plugin!);
         return true;
     }
 

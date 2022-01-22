@@ -518,24 +518,16 @@ public class Editor : Application
 
         if (ImGui.BeginMenu("Plugins"))
         {
-
             // Import new plugin
             if (ImGui.MenuItem("Install plugin from file..."))
             {
                 this.SelectFile(Util.FileDialogStartDir, (file) =>
                 {
-                    File.Copy(file, Path.Combine(Plugin.PluginsPath, Path.GetFileName(file)));
-                    Plugin.TryLoadAllPlugins(out List<Plugin> plugins, out Dictionary<string, string> failedPlugins);
-                    Util.Plugins = plugins;
-                    if (failedPlugins.Count > 0)
+                    if (!Plugin.TryInstall(file, out List<Plugin> newPluginList, out string? error))
                     {
-                        string error = "";
-                        foreach (KeyValuePair<string, string> kvp in failedPlugins)
-                        {
-                            error += $"{kvp.Key} failed to load: {kvp.Value}\n";
-                        }
-                        base.ModalError(error);
+                        base.ModalError(error!);
                     }
+                    Util.Plugins = newPluginList;
                     this.SetProject(this.loadedProject);
                 }, ".zip");
             }
