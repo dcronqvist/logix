@@ -224,7 +224,38 @@ public class Editor : Application
             }
             error = "";
             return true;
-        }, this.primaryKeyMod, KeyboardKey.KEY_H));
+        }));
+        AddNewMainMenuItem("Edit", "Vertically Align", new EditorAction((editor) => simulator.SelectedComponents.Count > 0, (editor) => false, (Editor editor, out string error) =>
+        {
+            List<Component> selected = simulator.SelectedComponents;
+            Vector2 middle = Util.GetMiddleOfListOfVectors(selected.Select(c => c.Position).ToList());
+            foreach (Component c in selected)
+            {
+                c.Position = new Vector2(c.Position.X, middle.Y);
+            }
+            error = "";
+            return true;
+        }));
+        AddNewMainMenuItem("Edit", "Automatically Name Selected IOs", new EditorAction((editor) => simulator.SelectedComponents.Count > 0 && (simulator.SelectedComponents.All(x => x is Switch) || simulator.SelectedComponents.All(x => x is Lamp)), (editor) => false, (Editor editor, out string error) =>
+        {
+            List<Component> selected = simulator.SelectedComponents;
+            List<Component> orderedByY = selected.OrderBy(c => c.Position.Y).ToList();
+            // Lower Y gets index 0, higher Y gets highest index
+            for (int i = 0; i < orderedByY.Count; i++)
+            {
+                if (orderedByY[i] is Switch)
+                {
+                    ((Switch)orderedByY[i]).ID += i.ToString();
+                }
+                else if (orderedByY[i] is Lamp)
+                {
+                    ((Lamp)orderedByY[i]).ID += i.ToString();
+                }
+            }
+
+            error = "";
+            return true;
+        }, this.primaryKeyMod, KeyboardKey.KEY_N));
         AddNewMainMenuItem("Integrated Circuits", "Create IC from Selection", new EditorAction((editor) => simulator.SelectedComponents.Count > 0, (editor) => false, (Editor editor, out string error) =>
         {
             CircuitDescription cd = new CircuitDescription(simulator.SelectedComponents);
@@ -241,7 +272,6 @@ public class Editor : Application
                 return false;
             }
         }, this.primaryKeyMod, KeyboardKey.KEY_I));
-
         AddNewMainMenuItem("View", "Debug Window", new EditorAction((editor) => true, (editor) => editor.displayDebugWindow, (Editor editor, out string error) =>
         {
             this.displayDebugWindow = !this.displayDebugWindow;
