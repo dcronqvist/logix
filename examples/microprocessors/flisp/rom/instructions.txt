@@ -1,5 +1,5 @@
-all instruction control signals for all instructions, 12 bit addressable, 4096 addresses. Last 4 bits are conditional bits. Described in README next to this file.
-NF:LD_A:LD_I:OE_A:LD_T:CLR_T:LD_R:OE_R:LD_CC:OE_CC:LD_X:OE_X:LD_Y:OE_Y:LD_PC:OE_PC:INC_PC:LD_SP:OE_SP:INC_SP:DEC_SP:LD_TA:MR:MW:F3-F0:G14-G0         :C3-C0
+;; all instruction control signals for all instructions, 12 bit addressable, 4096 addresses. Last 4 bits are conditional bits. Described in README next to this file.
+;; NF:LD_A:LD_I:OE_A:LD_T:CLR_T:LD_R:OE_R:LD_CC:OE_CC:LD_X:OE_X:LD_Y:OE_Y:LD_PC:OE_PC:INC_PC:LD_SP:OE_SP:INC_SP:DEC_SP:LD_TA:MR:MW:F3-F0:G14-G0         :C3-C0
 1  0    0    0    0    0     0    0    0     0     0    0    0    0    0     0     0      0     0     0      0      0     0  0  0000  000000000000000 0000 ;; NOP S4
 0  0    0    0    1    0     0    0    0     1     0    0    0    0    0     0     0      0     0     0      0      0     0  0  0000  000000000000000 0000 ;; ANDCC S4
 0  0    0    0    0    0     1    0    0     0     0    0    0    0    0     0     0      0     0     0      0      0     1  0  0111  000000000000000 0000 ;; ANDCC S5
@@ -187,3 +187,19 @@ NF:LD_A:LD_I:OE_A:LD_T:CLR_T:LD_R:OE_R:LD_CC:OE_CC:LD_X:OE_X:LD_Y:OE_Y:LD_PC:OE_
 1  1    0    0    0    1     0    1    0     0     0    0    0    0    0     0     0      0     0     0      0      0     0  0  0000  000000000000000 0000 ;; ADDA S6     ;; R -> A
 0  0    0    0    1    0     0    0    0     0     0    0    0    0    0     0     1      0     0     0      0      0     1  0  0000  000000000000000 0000 ;; CMPA S4     ;; M(PC) -> T, INC PC
 1  0    0    1    0    0     1    0    1     0     0    0    0    0    0     0     0      0     0     0      0      0     0  0  1100  000000000000001 0000 ;; CMPA S5     ;; A - T -> R, LD CC
+0  0    0    0    1    0     0    0    0     0     0    0    0    0    0     0     1      0     0     0      0      0     1  0  0000  000000000000000 0000 ;; BITA S4     ;; M(PC) -> T, INC PC
+1  0    0    1    0    0     1    0    1     0     0    0    0    0    0     0     0      0     0     0      0      0     0  0  0111  000000000000000 0000 ;; BITA S5     ;; A & T -> R, LD CC
+0  0    0    0    1    0     0    0    0     0     0    0    0    0    0     0     1      0     0     0      0      0     1  0  0000  000000000000000 0000 ;; ANDA S4     ;; M(PC) -> T, INC PC
+0  0    0    1    0    0     1    0    1     0     0    0    0    0    0     0     0      0     0     0      0      0     0  0  0111  000000000000000 0000 ;; ANDA S5     ;; A & T -> R
+1  1    0    0    0    1     0    1    0     0     0    0    0    0    0     0     0      0     0     0      0      0     0  0  0000  000000000000000 0000 ;; ANDA S6     ;; R -> A
+0  0    0    0    1    0     0    0    0     0     0    0    0    0    0     0     1      0     0     0      0      0     1  0  0000  000000000000000 0000 ;; ORA S4      ;; M(PC) -> T, INC PC
+0  0    0    1    0    0     1    0    1     0     0    0    0    0    0     0     0      0     0     0      0      0     0  0  0110  000000000000000 0000 ;; ORA S5      ;; A | T -> R
+1  1    0    0    0    1     0    1    0     0     0    0    0    0    0     0     0      0     0     0      0      0     0  0  0000  000000000000000 0000 ;; ORA S6      ;; R -> A
+0  0    0    0    1    0     0    0    0     0     0    0    0    0    0     0     1      0     0     0      0      0     1  0  0000  000000000000000 0000 ;; EORA S4     ;; M(PC) -> T, INC PC
+0  0    0    1    0    0     1    0    1     0     0    0    0    0    0     0     0      0     0     0      0      0     0  0  1000  000000000000000 0000 ;; EORA S5     ;; A ^ T -> R
+1  1    0    0    0    1     0    1    0     0     0    0    0    0    0     0     0      0     0     0      0      0     0  0  0000  000000000000000 0000 ;; EORA S6     ;; R -> A
+0  0    0    0    0    0     0    0    0     0     0    0    0    0    0     0     1      0     0     0      0      1     1  0  0000  000000000000000 0000 ;; STA Adr S4  ;; M(PC) -> TA, INC PC
+1  0    0    1    0    0     0    0    0     0     0    0    0    0    0     0     0      0     0     0      0      0     0  1  0000  100000000000000 0000 ;; STA Adr S5  ;; A -> M(TA) 
+1  1    0    0    0    0     0    0    0     0     0    0    0    0    0     0     1      0     0     0      0      0     1  0  0000  000000000000000 0000 ;; LDA #Data S4;; M(PC) -> A, INC PC
+0  0    0    0    0    0     0    0    0     0     0    0    0    0    0     0     1      0     0     0      0      1     1  0  0000  000000000000000 0000 ;; LDA Adr S4  ;; M(PC) -> TA, INC PC
+1  1    0    0    0    0     0    0    0     0     0    0    0    0    0     0     0      0     0     0      0      0     1  0  0000  100000000000000 0000 ;; LDA Adr S5  ;; M(TA) -> A
