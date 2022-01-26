@@ -23,15 +23,15 @@ dotnet run
 
 ## FLIS-Processor
 
-The FLIS-Processor described in the course [EDA452 Introduction to computer engineering](https://student.portal.chalmers.se/en/chalmersstudies/courseinformation/Pages/SearchCourse.aspx?course_id=31745&parsergrp=3) at Chalmers has been implemented in LogiX and exists as an example project in [examples/microprocessors/flisp/](examples/microprocessors/flisp/) for you to play around with.
+The FLIS-Processor described in the course [EDA452 Introduction to computer engineering](https://student.portal.chalmers.se/en/chalmersstudies/courseinformation/Pages/SearchCourse.aspx?course_id=31745&parsergrp=3) at Chalmers has been implemented in LogiX and exists as an example project in [/examples/microprocessors/flisp/](/examples/microprocessors/flisp/) for you to play around with.
 
-It is not complete, since only a small subset of the instruction set has been implemented, but feel free to contribute since it is quite tedious to implement the control sequences of all ~250 instructions (more info [here](examples/microprocessors/flisp/)).
+It is not complete, since only a small subset of the instruction set has been implemented, but feel free to contribute since it is quite tedious to implement the control sequences of all ~250 instructions (more info [here](/examples/microprocessors/flisp/)).
 
 ## Plugins
 
 You can already create integrated circuits that you can export and share if you'd like - but these components might become very complex and therefore slow down the simulation quite substantially. 
 
-If you want to create your own plugin, you can use the [plugin template](/examples/plugins/plugin_template).
+If you want to create your own plugin, you can use the [plugin template](/plugins/plugin_template).
 
 ### Custom Components
 

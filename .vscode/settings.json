@@ -6,7 +6,7 @@
         "**/CVS": true,
         "**/.DS_Store": true,
         "**/Thumbs.db": true,
-        "imgui.ini": true,
+        "**/imgui.ini": true,
     },
     "explorer.compactFolders": false
 }
