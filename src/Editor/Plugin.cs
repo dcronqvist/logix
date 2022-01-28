@@ -5,11 +5,19 @@ using LogiX.SaveSystem;
 
 namespace LogiX.Editor;
 
+public delegate bool Execution(Editor editor, out string? error);
+
 public abstract class PluginMethod
 {
     public abstract string Name { get; }
     public abstract string Description { get; }
-    public abstract Action<Editor> OnRun { get; }
+    public abstract Execution OnRun { get; }
+    public abstract Func<Editor, bool> CanRun { get; }
+}
+
+public abstract class AdditionalComponentContext<TComp> where TComp : Component
+{
+    public abstract Action Submit { get; }
 }
 
 public class Plugin
@@ -24,14 +32,21 @@ public class Plugin
         // Plugins are zipfiles
         foreach (string file in Directory.GetFiles(PluginsPath, "*.zip"))
         {
-            if (!TryLoadFromFile(file, out Plugin? plugin, out string? error))
+            try
             {
-                failedPlugins.Add(file, error);
-                continue;
+                if (!TryLoadFromFile(file, out Plugin? plugin, out string? error))
+                {
+                    failedPlugins.Add(file, error);
+                    continue;
+                }
+                else
+                {
+                    plugins.Add(plugin!);
+                }
             }
-            else
+            catch (Exception e)
             {
-                plugins.Add(plugin!);
+                failedPlugins.Add(file, e.Message);
             }
         }
         return true;
@@ -244,8 +259,8 @@ public class Plugin
         return c;
     }
 
-    public void RunMethod(Editor editor, string name)
+    public bool CanRunMethod(Editor editor, string name)
     {
-        customMethods[name].OnRun(editor);
+        return customMethods[name].CanRun(editor);
     }
 }

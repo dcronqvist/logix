@@ -8,7 +8,7 @@ public class Editor : Application
     // Editor states
     public Camera2D editorCamera;
     EditorState editorState;
-    public static Simulator simulator;
+    public Simulator simulator;
     public Project loadedProject;
     Component contextMenuComponent;
     EditorFSM fsm;
@@ -595,11 +595,14 @@ public class Editor : Application
                     // Here we do all the plugin methods
                     foreach (KeyValuePair<string, PluginMethod> methods in plugin.customMethods)
                     {
-                        if (ImGui.MenuItem(methods.Key))
+                        if (ImGui.MenuItem(methods.Key, methods.Value.CanRun(this)))
                         {
                             try
                             {
-                                methods.Value.OnRun(this);
+                                if (!methods.Value.OnRun(this, out string? error))
+                                {
+                                    base.ModalError(error!);
+                                }
                             }
                             catch (Exception e)
                             {

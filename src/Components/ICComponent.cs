@@ -113,10 +113,11 @@ public class ICComponent : Component
             c.Update(Vector2.Zero);
         }
 
-        foreach (Wire w in this.Wires)
-        {
-            w.Update(Vector2.Zero);
-        }
+        // No need to update wires inside of ICComponents, since you can't see them.
+        // foreach (Wire w in this.Wires)
+        // {
+        //     w.Update(Vector2.Zero, null);
+        // }
 
         // for (int i = 0; i < this.Outputs.Count; i++)
         // {

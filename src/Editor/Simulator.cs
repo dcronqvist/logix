@@ -26,7 +26,7 @@ public class Simulator
 
         foreach (Wire wire in this.Wires)
         {
-            wire.Update(mousePosInWorld);
+            wire.Update(mousePosInWorld, this);
         }
     }
 

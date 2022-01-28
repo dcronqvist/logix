@@ -124,7 +124,7 @@ public class Wire
         return false;
     }
 
-    public void Update(Vector2 mousePosInWorld)
+    public void Update(Vector2 mousePosInWorld, Simulator simulator)
     {
         if (Raylib.IsMouseButtonPressed(MouseButton.MOUSE_LEFT_BUTTON) && this.IsPositionOnWire(mousePosInWorld, out Vector2 lStart, out Vector2 lEnd))
         {
@@ -138,9 +138,9 @@ public class Wire
             // If mouse is on wire, remove intermediate point
             int index = this.IntermediatePoints.IndexOf(point);
             this.IntermediatePoints.Remove(point);
-            if (Editor.Editor.simulator.SelectedWirePoints.Contains((this, index)))
+            if (simulator.SelectedWirePoints.Contains((this, index)))
             {
-                Editor.Editor.simulator.SelectedWirePoints.Remove((this, index));
+                simulator.SelectedWirePoints.Remove((this, index));
             }
         }
     }

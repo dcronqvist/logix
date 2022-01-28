@@ -325,4 +325,18 @@ public static class Util
         // Also replace all \\ with /
         return Path.GetRelativePath(Directory.GetCurrentDirectory(), path).Replace("\\", "/");
     }
+
+    public static bool IsSubclassOfRawGeneric(Type generic, Type toCheck)
+    {
+        while (toCheck != null && toCheck != typeof(object))
+        {
+            var cur = toCheck.IsGenericType ? toCheck.GetGenericTypeDefinition() : toCheck;
+            if (generic == cur)
+            {
+                return true;
+            }
+            toCheck = toCheck.BaseType;
+        }
+        return false;
+    }
 }

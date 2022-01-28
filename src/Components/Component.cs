@@ -56,6 +56,8 @@ public abstract class Component
     public virtual bool DrawBoxNormal => true;
     public virtual bool HasContextMenu => false;
 
+    public List<Action> AdditionalUISubmitters { get; private set; }
+
     public string uniqueID;
 
     public int Rotation { get; set; }
@@ -82,6 +84,11 @@ public abstract class Component
 
         this.uniqueID = Guid.NewGuid().ToString();
         this.Rotation = 0;
+    }
+
+    internal void AddAdditionalUISubmitter(Action action)
+    {
+        this.AdditionalUISubmitters.Add(action);
     }
 
     public Component SetPosition(Vector2 pos)
@@ -385,7 +392,10 @@ public abstract class Component
 
     public virtual void SubmitContextPopup(LogiX.Editor.Editor editor)
     {
-        //ImGui.Text($"ID: {this.uniqueID}");
+        foreach (Action a in this.AdditionalUISubmitters)
+        {
+            a();
+        }
     }
 
     public virtual void RenderSelected()
