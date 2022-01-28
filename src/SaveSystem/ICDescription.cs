@@ -4,22 +4,22 @@ namespace LogiX.SaveSystem;
 
 public class ICDescription : ComponentDescription
 {
-    [JsonProperty(PropertyName = "name")]
+    [JsonPropertyName("name")]
     public string Name { get; set; }
-    [JsonProperty(PropertyName = "circuit")]
+    [JsonPropertyName("circuit")]
     public CircuitDescription Circuit { get; set; }
-    [JsonProperty(PropertyName = "inputOrder")]
+    [JsonPropertyName("inputOrder")]
     public List<List<string>> InputOrder { get; set; }
-    [JsonProperty(PropertyName = "outputOrder")]
+    [JsonPropertyName("outputOrder")]
     public List<List<string>> OutputOrder { get; set; }
 
     [JsonIgnore]
     public const string EXTENSION = ".lgxic";
 
-    public ICDescription(string name, Vector2 position, CircuitDescription cd, List<List<string>> inputOrder, List<List<string>> outputOrder) : base(position, inputOrder.Select(x => new IODescription(x.Count)).ToList(), outputOrder.Select(x => new IODescription(x.Count)).ToList(), ComponentType.Integrated)
+    public ICDescription(string name, Vector2 position, CircuitDescription circuit, List<List<string>> inputOrder, List<List<string>> outputOrder) : base(position, inputOrder.Select(x => new IODescription(x.Count)).ToList(), outputOrder.Select(x => new IODescription(x.Count)).ToList(), ComponentType.Integrated)
     {
         this.Name = name;
-        this.Circuit = cd;
+        this.Circuit = circuit;
         this.InputOrder = inputOrder;
         this.OutputOrder = outputOrder;
     }
@@ -116,7 +116,7 @@ public class ICDescription : ComponentDescription
         string finalFile = file.Contains(".") ? file : file + EXTENSION;
         using (StreamWriter sw = new StreamWriter(finalFile))
         {
-            sw.Write(JsonConvert.SerializeObject(this, Formatting.Indented));
+            sw.Write(JsonSerializer.Serialize(this));
         }
     }
 }

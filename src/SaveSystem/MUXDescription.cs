@@ -9,13 +9,13 @@ public class MUXDescription : ComponentDescription
     public int dataBits;
     public bool dataMultibit;
 
-    public MUXDescription(Vector2 position, int selectorBits, bool selectorMultibit, int dataBits, bool dataMultibit, ComponentType ct) : base(position,
-                                                                                                                                            (ct == ComponentType.Mux ?
+    public MUXDescription(Vector2 position, int selectorBits, bool selectorMultibit, int dataBits, bool dataMultibit, ComponentType type) : base(position,
+                                                                                                                                            (type == ComponentType.Mux ?
                                                                                                                                                 (Multiplexer.GetBitsPerInput(selectorBits, selectorMultibit, dataBits, dataMultibit).Select(x => new IODescription(x)).ToList()) :
                                                                                                                                                 (Demultiplexer.GetBitsPerInput(selectorBits, selectorMultibit, dataBits, dataMultibit).Select(x => new IODescription(x)).ToList())),
-                                                                                                                                            (ct == ComponentType.Mux ?
+                                                                                                                                            (type == ComponentType.Mux ?
                                                                                                                                                 (dataMultibit ? Util.Listify(dataBits) : Util.NValues(1, dataBits)).Select(x => new IODescription(x)).ToList() :
-                                                                                                                                                (dataMultibit ? Util.NValues(dataBits, (int)Math.Pow(2, selectorBits)) : Util.NValues(1, dataBits * (int)Math.Pow(2, selectorBits))).Select(x => new IODescription(x)).ToList()), ct)
+                                                                                                                                                (dataMultibit ? Util.NValues(dataBits, (int)Math.Pow(2, selectorBits)) : Util.NValues(1, dataBits * (int)Math.Pow(2, selectorBits))).Select(x => new IODescription(x)).ToList()), type)
     {
         this.selectorBits = selectorBits;
         this.selectorMultibit = selectorMultibit;

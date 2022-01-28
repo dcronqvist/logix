@@ -1,6 +1,5 @@
 using LogiX.Components;
 using LogiX.SaveSystem;
-using Newtonsoft.Json.Linq;
 
 namespace LogiX;
 
@@ -54,6 +53,20 @@ public static class Util
 
         // ax + by + c = 0
         return new Tuple<float, float, float>(slope, -1f, m);
+    }
+
+    public static float DistanceToLine(Vector2 lineStart, Vector2 lineEnd, Vector2 point)
+    {
+        // Line defined by two points
+        float numerator = MathF.Abs((lineEnd.X - lineStart.X) * (lineStart.Y - point.Y) - (lineStart.X - point.X) * (lineEnd.Y - lineStart.Y));
+        float denominator = MathF.Sqrt(MathF.Pow(lineEnd.X - lineStart.X, 2) + MathF.Pow(lineEnd.Y - lineStart.Y, 2));
+
+        return numerator / denominator;
+    }
+
+    public static Vector2 Vector2Towards(this Vector2 start, float dist, Vector2 other)
+    {
+        return start + Vector2.Normalize(other - start) * dist;
     }
 
     public static Rectangle CreateRecFromTwoCorners(Vector2 a, Vector2 b)
@@ -270,7 +283,7 @@ public static class Util
         return values;
     }
 
-    public static Component CreateComponentWithPluginIdentifier(string identifier, Vector2 position, JObject data)
+    public static Component CreateComponentWithPluginIdentifier(string identifier, Vector2 position, JsonDocument data)
     {
         foreach (Plugin p in Plugins)
         {

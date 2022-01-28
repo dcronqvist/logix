@@ -4,7 +4,7 @@ namespace LogiX.SaveSystem;
 
 public class ConstantDescription : ComponentDescription
 {
-    [JsonProperty(PropertyName = "value")]
+    [JsonPropertyName("value")]
     public LogicValue Value { get; set; }
 
     public ConstantDescription(Vector2 position, LogicValue value) : base(position, Util.EmptyList<IODescription>(), Util.Listify(new IODescription(1)), ComponentType.Constant)

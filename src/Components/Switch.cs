@@ -13,7 +13,7 @@ public class Switch : Component
     public Switch(int bits, Vector2 position, string id = "") : base(Util.EmptyList<int>(), Util.Listify(bits), position)
     {
         this.Values = Util.NValues(LogicValue.LOW, bits);
-        this.ID = id;
+        this.ID = (id == null) ? "" : id;
     }
 
     public override void PerformLogic()

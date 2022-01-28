@@ -4,7 +4,7 @@ namespace LogiX.SaveSystem;
 
 public class GateDescription : ComponentDescription
 {
-    [JsonProperty(PropertyName = "gateLogic")]
+    [JsonPropertyName("gateLogic")]
     public string GateLogic { get; set; }
 
     [JsonConstructor]

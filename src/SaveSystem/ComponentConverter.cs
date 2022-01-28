@@ -1,72 +1,72 @@
-using Newtonsoft.Json.Linq;
 using LogiX.Components;
 
 namespace LogiX.SaveSystem;
 
-class ComponentConverter : Newtonsoft.Json.Converters.CustomCreationConverter<ComponentDescription>
+class ComponentConverter : JsonConverter<ComponentDescription>
 {
-    public override ComponentDescription Create(Type objectType)
+    private JsonSerializerOptions jso;
+
+    public ComponentConverter()
     {
-        throw new NotImplementedException();
+        jso = new JsonSerializerOptions();
+        jso.IncludeFields = true;
     }
 
-    public ComponentDescription Create(Type objectType, JObject jObject)
+    public override bool CanConvert(Type typeToConvert)
     {
-        int type = (int)jObject.Property("type");
+        return typeof(ComponentDescription).IsAssignableFrom(typeToConvert) && typeToConvert != typeof(ICDescription);
+    }
+
+    public override ComponentDescription? Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
+    {
+        JsonDocument document = JsonDocument.ParseValue(ref reader);
+        document.RootElement.TryGetProperty("type", out JsonElement ty);
+        int type = ty.GetInt32();
         ComponentType ct = (ComponentType)type;
 
         switch (ct)
         {
             case ComponentType.Button:
-                return jObject.ToObject<GenIODescription>();
+                return document.Deserialize<GenIODescription>(jso);
             case ComponentType.HexViewer:
-                return jObject.ToObject<GenIODescription>();
+                return document.Deserialize<GenIODescription>(jso);
             case ComponentType.Switch:
-                return jObject.ToObject<SLDescription>();
+                return document.Deserialize<SLDescription>(jso);
             case ComponentType.Lamp:
-                return jObject.ToObject<SLDescription>();
+                return document.Deserialize<SLDescription>(jso);
             case ComponentType.Gate:
-                return jObject.ToObject<GateDescription>();
+                return document.Deserialize<GateDescription>(jso);
             case ComponentType.Integrated:
-                return jObject.ToObject<ICDescription>();
+                return document.Deserialize<ICDescription>(options);
             case ComponentType.ROM:
-                return jObject.ToObject<ROMDescription>();
+                return document.Deserialize<ROMDescription>(jso);
             case ComponentType.TextLabel:
-                return jObject.ToObject<TextComponentDescription>();
+                return document.Deserialize<TextComponentDescription>(jso);
             case ComponentType.Memory:
-                return jObject.ToObject<MemoryDescription>();
+                return document.Deserialize<MemoryDescription>(jso);
             case ComponentType.Constant:
-                return jObject.ToObject<ConstantDescription>();
+                return document.Deserialize<ConstantDescription>(jso);
             case ComponentType.Splitter:
-                return jObject.ToObject<SplitterDescription>();
+                return document.Deserialize<SplitterDescription>(jso);
             case ComponentType.Clock:
-                return jObject.ToObject<ClockDescription>();
+                return document.Deserialize<ClockDescription>(jso);
             case ComponentType.Delayer:
-                return jObject.ToObject<DelayerDescription>();
+                return document.Deserialize<DelayerDescription>(jso);
             case ComponentType.Mux:
-                return jObject.ToObject<MUXDescription>();
+                return document.Deserialize<MUXDescription>(jso);
             case ComponentType.Demux:
-                return jObject.ToObject<MUXDescription>();
+                return document.Deserialize<MUXDescription>(jso);
             case ComponentType.DTBC:
-                return jObject.ToObject<DTBCDescription>();
+                return document.Deserialize<DTBCDescription>(jso);
             case ComponentType.Custom:
-                return jObject.ToObject<CustomDescription>();
+                return document.Deserialize<CustomDescription>(jso);
         }
 
         throw new ApplicationException(String.Format("The component type {0} is not supported!", type));
     }
 
-    public override object ReadJson(JsonReader reader, Type objectType, object existingValue, JsonSerializer serializer)
+    public override void Write(Utf8JsonWriter writer, ComponentDescription value, JsonSerializerOptions jso)
     {
-        // Load JObject from stream 
-        JObject jObject = JObject.Load(reader);
-
-        // Create target object based on JObject 
-        var target = Create(objectType, jObject);
-
-        // Populate the object properties 
-        serializer.Populate(jObject.CreateReader(), target);
-
-        return target;
+        throw new NotImplementedException();
     }
 }

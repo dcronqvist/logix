@@ -4,7 +4,7 @@ namespace LogiX.SaveSystem;
 
 public class ClockDescription : ComponentDescription
 {
-    [JsonProperty(PropertyName = "interval")]
+    [JsonPropertyName("interval")]
     public float Interval { get; set; }
 
     public ClockDescription(Vector2 position, float interval) : base(position, Util.EmptyList<IODescription>(), Util.Listify(new IODescription(1)), ComponentType.Clock)

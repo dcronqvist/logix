@@ -13,6 +13,7 @@ class Program
     {
         Editor editor = new Editor();
         Settings.LoadSettings();
-        editor.Run(Settings.GetSettingValue<int>("windowWidth"), Settings.GetSettingValue<int>("windowHeight"), "LogiX", 144, "assets/logo.png");
+        Console.WriteLine(Raylib.GetMonitorRefreshRate(Raylib.GetCurrentMonitor()) + "Hz");
+        editor.Run(Settings.GetSettingValue<int>("windowWidth"), Settings.GetSettingValue<int>("windowHeight"), "LogiX", Raylib.GetMonitorRefreshRate(Raylib.GetCurrentMonitor()), "assets/logo.png");
     }
 }

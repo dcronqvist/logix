@@ -1,5 +1,4 @@
 using LogiX.Components;
-using Newtonsoft.Json;
 
 namespace LogiX.Editor;
 
@@ -8,12 +7,14 @@ public class Simulator
     public List<Component> Components { get; private set; }
     public List<Wire> Wires { get; private set; }
     public List<Component> SelectedComponents { get; private set; }
+    public List<(Wire, int)> SelectedWirePoints { get; private set; }
 
     public Simulator()
     {
         this.Components = new List<Component>();
         this.Wires = new List<Wire>();
         this.SelectedComponents = new List<Component>();
+        this.SelectedWirePoints = new List<(Wire, int)>();
     }
 
     public void Update(Vector2 mousePosInWorld)
@@ -23,10 +24,10 @@ public class Simulator
             component.Update(mousePosInWorld);
         }
 
-        // foreach (Wire wire in this.Wires)
-        // {
-        //     wire.Update(mousePosInWorld);
-        // }
+        foreach (Wire wire in this.Wires)
+        {
+            wire.Update(mousePosInWorld);
+        }
     }
 
     public void Render(Vector2 mousePosInWorld)
@@ -46,6 +47,13 @@ public class Simulator
         foreach (Component component in this.SelectedComponents)
         {
             component.RenderSelected();
+        }
+
+        foreach ((Wire w, int i) in this.SelectedWirePoints)
+        {
+            Vector2 p = w.IntermediatePoints[i];
+            Raylib.DrawCircleV(p, 7f, Color.ORANGE);
+            Raylib.DrawCircleV(p, 5f, Util.InterpolateColors(Color.WHITE, Color.BLUE, w.GetHighFraction()));
         }
     }
 
@@ -132,15 +140,31 @@ public class Simulator
 
     public Wire? GetWireFromWorldPos(Vector2 posInWorld)
     {
-        foreach (Wire wire in this.Wires)
+        foreach (Wire w in this.Wires)
         {
-            if (wire.IsPositionOnWire(posInWorld))
+            if (w.IsPositionOnWire(posInWorld, out Vector2 lStart, out Vector2 lEnd))
             {
-                return wire;
+                return w;
             }
         }
-
         return null;
+    }
+
+    public (Wire?, int) GetWireAndPointFromWorldPos(Vector2 posInWorld)
+    {
+        foreach (Wire w in this.Wires)
+        {
+            if (w.IsPositionOnIntermediatePoint(posInWorld, out Vector2 p))
+            {
+                return (w, w.IntermediatePoints.IndexOf(p));
+            }
+        }
+        return (null, -1);
+    }
+
+    public void SelectWirePoint(Wire w, int index)
+    {
+        this.SelectedWirePoints.Add((w, index));
     }
 
     public void MoveSelection(Camera2D cam)
@@ -148,6 +172,11 @@ public class Simulator
         foreach (Component c in this.SelectedComponents)
         {
             c.Position += UserInput.GetMouseDelta(cam);
+        }
+
+        foreach ((Wire w, int i) in this.SelectedWirePoints)
+        {
+            w.IntermediatePoints[i] += UserInput.GetMouseDelta(cam);
         }
     }
 
@@ -163,6 +192,20 @@ public class Simulator
             if (Raylib.CheckCollisionRecs(c.Box, rec))
             {
                 this.SelectComponent(c);
+            }
+        }
+    }
+
+    public void SelectWirePointsInRectangle(Rectangle rec)
+    {
+        foreach (Wire w in this.Wires)
+        {
+            for (int i = 0; i < w.IntermediatePoints.Count; i++)
+            {
+                if (Raylib.CheckCollisionPointRec(w.IntermediatePoints[i], rec))
+                {
+                    this.SelectWirePoint(w, i);
+                }
             }
         }
     }
@@ -211,6 +254,7 @@ public class Simulator
     public void ClearSelection()
     {
         this.SelectedComponents.Clear();
+        //this.SelectedWirePoints.Clear();
     }
 
     public ComponentInput? GetInputFromWorldPos(Vector2 posInWorld)
@@ -237,10 +281,5 @@ public class Simulator
         }
 
         return null;
-    }
-
-    public void Save()
-    {
-        Console.WriteLine(JsonConvert.SerializeObject(this));
     }
 }

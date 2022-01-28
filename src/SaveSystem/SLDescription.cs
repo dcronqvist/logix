@@ -4,10 +4,10 @@ namespace LogiX.SaveSystem;
 
 public class SLDescription : ComponentDescription
 {
-    [JsonProperty(PropertyName = "name")]
+    [JsonPropertyName("name")]
     public string Name { get; set; }
 
-    public SLDescription(Vector2 position, List<IODescription> inputs, List<IODescription> outputs, ComponentType ct, string name) : base(position, inputs, outputs, ct)
+    public SLDescription(Vector2 position, List<IODescription> inputs, List<IODescription> outputs, ComponentType type, string name) : base(position, inputs, outputs, type)
     {
         this.Name = name;
     }

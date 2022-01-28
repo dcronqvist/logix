@@ -12,7 +12,7 @@ public class Lamp : Component
     public Lamp(int bits, Vector2 position, string id = "") : base(Util.Listify(bits), Util.EmptyList<int>(), position)
     {
         this.Values = Util.NValues(LogicValue.LOW, bits);
-        this.ID = id;
+        this.ID = this.ID = (id == null) ? "" : id;
     }
 
     public override void PerformLogic()

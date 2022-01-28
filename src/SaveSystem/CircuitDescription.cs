@@ -1,14 +1,13 @@
 using LogiX.Components;
-using Newtonsoft.Json;
 
 namespace LogiX.SaveSystem;
 
 public class CircuitDescription
 {
-    [JsonProperty(PropertyName = "components")]
+    [JsonPropertyName("components")]
     public List<ComponentDescription> Components { get; set; }
 
-    [JsonProperty(PropertyName = "wires")]
+    [JsonPropertyName("wires")]
     public List<WireDescription> Wires { get; set; }
 
     [JsonConstructor]
@@ -38,10 +37,10 @@ public class CircuitDescription
             cd.Position -= weighted;
         }
 
-        this.Wires = GetAllWiresInCircuit(components, this.Components);
+        this.Wires = GetAllWiresInCircuit(components, this.Components, weighted);
     }
 
-    public List<WireDescription> GetAllWiresInCircuit(List<Component> components, List<ComponentDescription> componentDescriptions)
+    public List<WireDescription> GetAllWiresInCircuit(List<Component> components, List<ComponentDescription> componentDescriptions, Vector2 weighted)
     {
         List<Wire> wires = new List<Wire>();
 
@@ -69,7 +68,7 @@ public class CircuitDescription
 
         foreach (Wire w in wires)
         {
-            WireDescription wd = new WireDescription(w.Bits, componentDescriptions[components.IndexOf(w.From)].ID, w.FromIndex, componentDescriptions[components.IndexOf(w.To)].ID, w.ToIndex);
+            WireDescription wd = new WireDescription(w.Bits, componentDescriptions[components.IndexOf(w.From)].ID, w.FromIndex, componentDescriptions[components.IndexOf(w.To)].ID, w.ToIndex, w.IntermediatePoints.Select(p => p - weighted).ToList());
             wireDescriptions.Add(wd);
         }
 
@@ -119,6 +118,10 @@ public class CircuitDescription
             Component from = components[IndexOfComponentWithID(this.Components, wd.From)];
 
             Wire w = new Wire(wd.Bits, to, wd.ToInputIndex, from, wd.FromOutputIndex);
+            if (wd.IntermediatePoints != null)
+                w.IntermediatePoints = wd.IntermediatePoints.Select(p => p + basePosition).ToList();
+            else
+                w.IntermediatePoints = new List<Vector2>();
 
             to.SetInputWire(wd.ToInputIndex, w);
             from.AddOutputWire(wd.FromOutputIndex, w);

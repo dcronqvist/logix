@@ -4,16 +4,16 @@ namespace LogiX.SaveSystem;
 
 public class Project
 {
-    [JsonProperty(PropertyName = "currentWorkspace")]
+    [JsonPropertyName("currentWorkspace")]
     public CircuitDescription CurrentWorkspace { get; set; }
 
-    [JsonProperty(PropertyName = "includedICFiles")]
+    [JsonPropertyName("includedICFiles")]
     public List<string> IncludedICFiles { get; set; }
 
-    [JsonProperty(PropertyName = "projectCreatedICs")]
+    [JsonPropertyName("projectCreatedICs")]
     public List<ICDescription> ProjectCreatedICs { get; set; }
 
-    [JsonProperty(PropertyName = "includedICCollectionFiles")]
+    [JsonPropertyName("includedICCollectionFiles")]
     public List<string> IncludedICCollectionFiles { get; set; }
 
     [JsonIgnore]
@@ -46,7 +46,6 @@ public class Project
         this.ICCollectionToFilePath = new Dictionary<ICCollection, string>();
     }
 
-    [JsonConstructor]
     public Project(CircuitDescription workspace, string name)
     {
         this.CurrentWorkspace = workspace;
@@ -57,6 +56,14 @@ public class Project
         this.IncludedICCollectionFiles = new List<string>();
         this.ICCollections = new Dictionary<string, ICCollection>();
         this.ICCollectionToFilePath = new Dictionary<ICCollection, string>();
+    }
+
+    public Project(CircuitDescription currentWorkspace, List<string> includedICFiles, List<ICDescription> projectCreatedICs, List<string> includedICCollectionFiles)
+    {
+        CurrentWorkspace = currentWorkspace;
+        IncludedICFiles = includedICFiles;
+        ProjectCreatedICs = projectCreatedICs;
+        IncludedICCollectionFiles = includedICCollectionFiles;
     }
 
     public string GetFileName()
@@ -127,11 +134,17 @@ public class Project
             {
                 using (StreamReader sr = new StreamReader(includedIcfile))
                 {
-                    ICDescription icd = JsonConvert.DeserializeObject<ICDescription>(sr.ReadToEnd(), new JsonSerializerSettings()
-                    {
-                        Converters = new List<JsonConverter>() { new ComponentConverter() },
-                        ObjectCreationHandling = ObjectCreationHandling.Replace
-                    });
+                    JsonSerializerOptions jso = new JsonSerializerOptions();
+                    jso.Converters.Add(new ComponentConverter());
+                    jso.IncludeFields = true;
+
+                    ICDescription icd = JsonSerializer.Deserialize<ICDescription>(sr.ReadToEnd(), jso);
+
+                    // ICDescription icd = JsonConvert.DeserializeObject<ICDescription>(sr.ReadToEnd(), new JsonSerializerSettings()
+                    // {
+                    //     Converters = new List<JsonConverter>() { new ComponentConverter() },
+                    //     ObjectCreationHandling = ObjectCreationHandling.Replace
+                    // });
 
                     this.ICsFromFile.Add(icd);
                     this.ICFromFileToFilePath.Add(icd, includedIcfile);
@@ -145,11 +158,11 @@ public class Project
             {
                 using (StreamReader sr = new StreamReader(includedICCollectionFile))
                 {
-                    ICCollection icc = JsonConvert.DeserializeObject<ICCollection>(sr.ReadToEnd(), new JsonSerializerSettings()
-                    {
-                        Converters = new List<JsonConverter>() { new ComponentConverter() },
-                        ObjectCreationHandling = ObjectCreationHandling.Replace
-                    });
+                    JsonSerializerOptions jso = new JsonSerializerOptions();
+                    jso.Converters.Add(new ComponentConverter());
+                    jso.IncludeFields = true;
+
+                    ICCollection icc = JsonSerializer.Deserialize<ICCollection>(sr.ReadToEnd(), jso);
 
                     this.ICCollections.Add(icc.Name, icc);
                     this.ICCollectionToFilePath.Add(icc, includedICCollectionFile);
@@ -162,11 +175,11 @@ public class Project
     {
         using (StreamReader sr = new StreamReader(file))
         {
-            Project p = JsonConvert.DeserializeObject<Project>(sr.ReadToEnd(), new JsonSerializerSettings()
-            {
-                Converters = new List<JsonConverter>() { new ComponentConverter() },
-                ObjectCreationHandling = ObjectCreationHandling.Replace
-            });
+            JsonSerializerOptions jso = new JsonSerializerOptions();
+            jso.Converters.Add(new ComponentConverter());
+            jso.IncludeFields = true;
+
+            Project p = JsonSerializer.Deserialize<Project>(sr.ReadToEnd(), jso);
             p.ReloadProjectICs();
             p.LoadedFromFile = file;
             return p;
@@ -189,7 +202,10 @@ public class Project
         this.LoadedFromFile = finalPath;
         using (StreamWriter sw = new StreamWriter(finalPath))
         {
-            string json = JsonConvert.SerializeObject(this);
+            JsonSerializerOptions jso = new JsonSerializerOptions();
+            jso.IncludeFields = true;
+
+            string json = JsonSerializer.Serialize(this, jso);
             sw.Write(json);
         }
     }

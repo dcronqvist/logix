@@ -1,6 +1,5 @@
 using LogiX.Components;
 using LogiX.SaveSystem;
-using Newtonsoft.Json;
 
 namespace LogiX.Editor;
 
@@ -214,7 +213,7 @@ public class Editor : Application
         AddNewMainMenuItem("Edit", "Paste", new EditorAction((editor) => this.copiedCircuit != null, (editor) => false, (Editor editor, out string error) => { MMPaste(); error = ""; return true; }, this.primaryKeyMod, KeyboardKey.KEY_V));
         AddNewMainMenuItem("Edit", "Select All", new EditorAction((editor) => true, (editor) => false, (Editor editor, out string error) => { simulator.SelectAllComponents(); error = ""; return true; }, this.primaryKeyMod, KeyboardKey.KEY_A));
         AddNewMainMenuItem("Edit", "Delete Selection", new EditorAction((editor) => simulator.SelectedComponents.Count > 0, (editor) => false, (Editor editor, out string error) => { simulator.DeleteSelection(); error = ""; return true; }, KeyboardKey.KEY_BACKSPACE));
-        AddNewMainMenuItem("Edit", "Horizontally Align", new EditorAction((editor) => simulator.SelectedComponents.Count > 0, (editor) => false, (Editor editor, out string error) =>
+        AddNewMainMenuItem("Edit", "Horizontally Align", new EditorAction((editor) => simulator.SelectedComponents.Count > 0 || simulator.SelectedWirePoints.Count > 0, (editor) => false, (Editor editor, out string error) =>
         {
             List<Component> selected = simulator.SelectedComponents;
             Vector2 middle = Util.GetMiddleOfListOfVectors(selected.Select(c => c.Position).ToList());
@@ -223,9 +222,17 @@ public class Editor : Application
                 c.Position = new Vector2(middle.X, c.Position.Y);
             }
             error = "";
+
+            List<(Wire, int)> selectedWirePoints = simulator.SelectedWirePoints;
+            middle = Util.GetMiddleOfListOfVectors(selectedWirePoints.Select(w => w.Item1.IntermediatePoints[w.Item2]).ToList());
+            foreach ((Wire w, int i) in selectedWirePoints)
+            {
+                w.IntermediatePoints[i] = new Vector2(middle.X, w.IntermediatePoints[i].Y);
+            }
+
             return true;
         }));
-        AddNewMainMenuItem("Edit", "Vertically Align", new EditorAction((editor) => simulator.SelectedComponents.Count > 0, (editor) => false, (Editor editor, out string error) =>
+        AddNewMainMenuItem("Edit", "Vertically Align", new EditorAction((editor) => simulator.SelectedComponents.Count > 0 || simulator.SelectedWirePoints.Count > 0, (editor) => false, (Editor editor, out string error) =>
         {
             List<Component> selected = simulator.SelectedComponents;
             Vector2 middle = Util.GetMiddleOfListOfVectors(selected.Select(c => c.Position).ToList());
@@ -234,6 +241,14 @@ public class Editor : Application
                 c.Position = new Vector2(c.Position.X, middle.Y);
             }
             error = "";
+
+            List<(Wire, int)> selectedWirePoints = simulator.SelectedWirePoints;
+            middle = Util.GetMiddleOfListOfVectors(selectedWirePoints.Select(w => w.Item1.IntermediatePoints[w.Item2]).ToList());
+            foreach ((Wire w, int i) in selectedWirePoints)
+            {
+                w.IntermediatePoints[i] = new Vector2(w.IntermediatePoints[i].X, middle.Y);
+            }
+
             return true;
         }));
         AddNewMainMenuItem("Edit", "Automatically Name Selected IOs", new EditorAction((editor) => simulator.SelectedComponents.Count > 0 && (simulator.SelectedComponents.All(x => x is Switch) || simulator.SelectedComponents.All(x => x is Lamp)), (editor) => false, (Editor editor, out string error) =>
@@ -493,10 +508,18 @@ public class Editor : Application
             simulator.AddWires(wires);
 
             simulator.ClearSelection();
+            simulator.SelectedWirePoints.Clear();
 
             foreach (Component c in comps)
             {
                 simulator.SelectComponent(c);
+            }
+            foreach (Wire w in wires)
+            {
+                for (int i = 0; i < w.IntermediatePoints.Count; i++)
+                {
+                    simulator.SelectWirePoint(w, i);
+                }
             }
         }
         catch (Exception e)
@@ -562,37 +585,6 @@ public class Editor : Application
                 }, ".zip");
             }
 
-            if (Util.Plugins.Count > 0 && ImGui.BeginMenu("Uninstall plugin"))
-            {
-                foreach (Plugin p in Util.Plugins)
-                {
-                    if (ImGui.MenuItem(p.name + ", " + p.version))
-                    {
-                        base.ModalError("Are you sure you want to uninstall " + p.name + ", v" + p.version + "?", ErrorModalType.YesNo, (result) =>
-                        {
-                            if (result == ErrorModalResult.Yes)
-                            {
-                                File.Delete(p.file);
-                                Plugin.TryLoadAllPlugins(out List<Plugin> plugins, out Dictionary<string, string> failedPlugins);
-                                Util.Plugins = plugins;
-                                if (failedPlugins.Count > 0)
-                                {
-                                    string error = "";
-                                    foreach (KeyValuePair<string, string> kvp in failedPlugins)
-                                    {
-                                        error += $"{kvp.Key} failed to load: {kvp.Value}\n";
-                                    }
-                                    base.ModalError(error);
-                                }
-                                this.SetProject(this.loadedProject);
-                            }
-                        });
-                    }
-                }
-
-                ImGui.EndMenu();
-            }
-
             ImGui.Separator();
 
             // Show list of plugins
@@ -600,11 +592,6 @@ public class Editor : Application
             {
                 if (ImGui.BeginMenu(plugin.name + ", " + plugin.version))
                 {
-                    if (ImGui.MenuItem("About"))
-                    {
-                        this.ModalError(plugin.GetAboutInfo());
-                    }
-                    ImGui.Separator();
                     // Here we do all the plugin methods
                     foreach (KeyValuePair<string, PluginMethod> methods in plugin.customMethods)
                     {
@@ -619,6 +606,33 @@ public class Editor : Application
                                 base.ModalError(e.Message);
                             }
                         }
+                    }
+                    ImGui.Separator();
+                    if (ImGui.MenuItem("About"))
+                    {
+                        this.ModalError(plugin.GetAboutInfo());
+                    }
+                    if (ImGui.MenuItem("Uninstall"))
+                    {
+                        base.ModalError("Are you sure you want to uninstall " + plugin.name + ", v" + plugin.version + "?", ErrorModalType.YesNo, (result) =>
+                        {
+                            if (result == ErrorModalResult.Yes)
+                            {
+                                File.Delete(plugin.file);
+                                Plugin.TryLoadAllPlugins(out List<Plugin> plugins, out Dictionary<string, string> failedPlugins);
+                                Util.Plugins = plugins;
+                                if (failedPlugins.Count > 0)
+                                {
+                                    string error = "";
+                                    foreach (KeyValuePair<string, string> kvp in failedPlugins)
+                                    {
+                                        error += $"{kvp.Key} failed to load: {kvp.Value}\n";
+                                    }
+                                    base.ModalError(error);
+                                }
+                                this.SetProject(this.loadedProject);
+                            }
+                        });
                     }
 
                     ImGui.EndMenu();

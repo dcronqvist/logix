@@ -2,23 +2,27 @@ namespace LogiX.SaveSystem;
 
 public class WireDescription
 {
-    [JsonProperty(PropertyName = "bits")]
+    [JsonPropertyName("bits")]
     public int Bits { get; set; }
-    [JsonProperty(PropertyName = "from")]
+    [JsonPropertyName("from")]
     public string From { get; set; }
-    [JsonProperty(PropertyName = "fromOutputIndex")]
+    [JsonPropertyName("fromOutputIndex")]
     public int FromOutputIndex { get; set; }
-    [JsonProperty(PropertyName = "to")]
+    [JsonPropertyName("to")]
     public string To { get; set; }
-    [JsonProperty(PropertyName = "toInputIndex")]
+    [JsonPropertyName("toInputIndex")]
     public int ToInputIndex { get; set; }
 
-    public WireDescription(int bits, string from, int fromOutputIndex, string to, int toInputIndex)
+    [JsonPropertyName("intermediatePoints")]
+    public List<Vector2> IntermediatePoints { get; set; }
+
+    public WireDescription(int bits, string from, int fromOutputIndex, string to, int toInputIndex, List<Vector2> intermediatePoints)
     {
         Bits = bits;
         From = from;
         FromOutputIndex = fromOutputIndex;
         To = to;
         ToInputIndex = toInputIndex;
+        this.IntermediatePoints = intermediatePoints;
     }
 }

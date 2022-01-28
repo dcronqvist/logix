@@ -2,7 +2,6 @@ using System.IO.Compression;
 using System.Reflection;
 using LogiX.Components;
 using LogiX.SaveSystem;
-using Newtonsoft.Json.Linq;
 
 namespace LogiX.Editor;
 
@@ -58,7 +57,7 @@ public class Plugin
         {
             using (StreamReader sr = new StreamReader(pluginInfo.Open()))
             {
-                Dictionary<string, string> pluginInfoDict = JsonConvert.DeserializeObject<Dictionary<string, string>>(sr.ReadToEnd());
+                Dictionary<string, string> pluginInfoDict = JsonSerializer.Deserialize<Dictionary<string, string>>(sr.ReadToEnd());
 
                 string version = pluginInfoDict["version"];
                 string author = pluginInfoDict["author"];
@@ -121,10 +120,10 @@ public class Plugin
                 }
 
                 // All classes that have base type "CustomComponent" may ONLY take in a Vector2 in the constructor
-                JObject data = (JObject)type.GetMethod("GetDefaultComponentData").Invoke(null, null);
+                JsonDocument data = (JsonDocument)type.GetMethod("GetDefaultComponentData").Invoke(null, null);
 
                 // Make sure that all types have a constructor which takes in a Vector2 and JObject
-                ConstructorInfo? constructor = type.GetConstructor(new Type[] { typeof(Vector2), typeof(JObject) });
+                ConstructorInfo? constructor = type.GetConstructor(new Type[] { typeof(Vector2), typeof(JsonDocument) });
                 if (constructor == null)
                 {
                     error = $"Type {type.Name} does not have a constructor which takes in a Vector2 and JObject.";
@@ -233,13 +232,13 @@ public class Plugin
     public Component CreateComponent(string identifier, Vector2 position)
     {
         Type t = customComponentTypes[identifier];
-        return CreateComponent(identifier, position, (JObject)t.GetMethod("GetDefaultComponentData").Invoke(null, null));
+        return CreateComponent(identifier, position, (JsonDocument)t.GetMethod("GetDefaultComponentData").Invoke(null, null));
     }
 
-    public Component CreateComponent(string identifier, Vector2 position, JObject data)
+    public Component CreateComponent(string identifier, Vector2 position, JsonDocument data)
     {
         Type t = customComponentTypes[identifier];
-        CustomComponent c = (CustomComponent)t.GetConstructor(new Type[] { typeof(Vector2), typeof(JObject) }).Invoke(new object[] { position, data });
+        CustomComponent c = (CustomComponent)t.GetConstructor(new Type[] { typeof(Vector2), typeof(JsonDocument) }).Invoke(new object[] { position, data });
         c.Plugin = this.name;
         c.PluginVersion = this.version;
         return c;

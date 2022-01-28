@@ -2,10 +2,10 @@ namespace LogiX.SaveSystem;
 
 public class ICCollection
 {
-    [JsonProperty(PropertyName = "ics")]
+    [JsonPropertyName("ics")]
     public List<ICDescription> ICs { get; set; }
 
-    [JsonProperty(PropertyName = "name")]
+    [JsonPropertyName("name")]
     public string Name { get; set; }
 
     [JsonIgnore]
@@ -38,7 +38,7 @@ public class ICCollection
     {
         using (StreamWriter sw = new StreamWriter($"{directory}/{this.Name.ToSuitableFileName()}{ICCollection.EXTENSION}"))
         {
-            sw.Write(JsonConvert.SerializeObject(this));
+            sw.Write(JsonSerializer.Serialize(this));
         }
     }
 }

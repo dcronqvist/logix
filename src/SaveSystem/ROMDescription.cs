@@ -4,7 +4,7 @@ namespace LogiX.SaveSystem;
 
 public class ROMDescription : ComponentDescription
 {
-    [JsonProperty(PropertyName = "romFile")]
+    [JsonPropertyName("romFile")]
     public string ROMFile { get; set; }
 
     public ROMDescription(Vector2 position, string romFile, List<IODescription> inputs, List<IODescription> outputs) : base(position, inputs, outputs, ComponentType.ROM)

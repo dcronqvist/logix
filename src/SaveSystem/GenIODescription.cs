@@ -4,7 +4,7 @@ namespace LogiX.SaveSystem;
 
 public class GenIODescription : ComponentDescription
 {
-    public GenIODescription(Vector2 position, List<IODescription> inputs, List<IODescription> outputs, ComponentType ct) : base(position, inputs, outputs, ct)
+    public GenIODescription(Vector2 position, List<IODescription> inputs, List<IODescription> outputs, ComponentType type) : base(position, inputs, outputs, type)
     {
 
     }

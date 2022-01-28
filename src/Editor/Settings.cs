@@ -55,16 +55,16 @@ public static class Settings
         {
             using (StreamReader sr = new StreamReader(settingsFile))
             {
-                Dictionary<string, Object> sets = JsonConvert.DeserializeObject<Dictionary<string, Object>>(sr.ReadToEnd());
-                foreach (KeyValuePair<string, Object> kvp in sets)
+                Dictionary<string, JsonElement> sets = JsonSerializer.Deserialize<Dictionary<string, JsonElement>>(sr.ReadToEnd());
+                foreach (KeyValuePair<string, JsonElement> kvp in sets)
                 {
                     if (defaultSettings.ContainsKey(kvp.Key))
                     {
-                        if (kvp.Value.GetType() == typeof(string))
+                        if (kvp.Value.ValueKind == JsonValueKind.String)
                         {
                             defaultSettings[kvp.Key] = new Setting(kvp.Value.ToString(), defaultSettings[kvp.Key].VisibleInSettingsEditor, defaultSettings[kvp.Key].Type);
                         }
-                        else if (kvp.Value.GetType() == typeof(Int64))
+                        else if (kvp.Value.ValueKind == JsonValueKind.Number)
                         {
                             defaultSettings[kvp.Key] = new Setting(int.Parse(kvp.Value.ToString()), defaultSettings[kvp.Key].VisibleInSettingsEditor, defaultSettings[kvp.Key].Type);
                         }
@@ -104,7 +104,7 @@ public static class Settings
                 sets.Add(setting.Key, setting.Value.Value);
             }
 
-            string json = JsonConvert.SerializeObject(sets, Formatting.Indented);
+            string json = JsonSerializer.Serialize(sets, new JsonSerializerOptions() { WriteIndented = true });
             sw.Write(json);
         }
     }

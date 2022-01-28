@@ -4,7 +4,7 @@ namespace LogiX.SaveSystem;
 
 public class MemoryDescription : ComponentDescription
 {
-    [JsonProperty(PropertyName = "memory")]
+    [JsonPropertyName("memory")]
     public List<LogicValue>[] Memory { get; set; }
 
     public MemoryDescription(Vector2 position, List<LogicValue>[] memory, List<IODescription> inputs, List<IODescription> outputs) : base(position, inputs, outputs, ComponentType.Memory)

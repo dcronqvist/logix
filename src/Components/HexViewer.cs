@@ -50,24 +50,9 @@ public class HexViewer : Component
 
     public override void Render(Vector2 mousePosInWorld)
     {
-        if (this.DrawBoxNormal)
-        {
-            Raylib.DrawRectanglePro(this.Box, Vector2.Zero, 0f, this.BodyColor);
-            Raylib.DrawRectangleLinesEx(this.Box, 1, Color.BLACK);
-        }
-
-        this.RenderIO(GetInputLinePositions, this.Inputs.Cast<ComponentIO>().ToList(), mousePosInWorld);
-        this.RenderIO(GetOutputLinePositions, this.Outputs.Cast<ComponentIO>().ToList(), mousePosInWorld);
-
-        if (this.TextVisible)
-        {
-            int fontSize = 35;
-
-            Vector2 middleOfBox = new Vector2(this.Box.x, this.Box.y) + new Vector2(this.Box.width / 2f, this.Box.height / 2f);
-            Vector2 textSize = Raylib.MeasureTextEx(Util.OpenSans, this.Text, fontSize, 1);
-
-            Raylib.DrawTextEx(Util.OpenSans, this.Text, middleOfBox - textSize / 2f, fontSize, 1, Color.BLACK);
-        }
+        this.RenderBox();
+        this.RenderIOs(mousePosInWorld);
+        this.RenderComponentText(mousePosInWorld, 35);
     }
 
     public override ComponentDescription ToDescription()

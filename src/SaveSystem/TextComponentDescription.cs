@@ -4,7 +4,7 @@ namespace LogiX.SaveSystem;
 
 public class TextComponentDescription : ComponentDescription
 {
-    [JsonProperty(PropertyName = "text")]
+    [JsonPropertyName("text")]
     public string Text { get; set; }
 
     public TextComponentDescription(Vector2 position, string text) : base(position, new List<IODescription>(), new List<IODescription>(), ComponentType.TextLabel)

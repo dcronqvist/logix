@@ -1,25 +1,24 @@
 using LogiX.Components;
-using Newtonsoft.Json.Linq;
 
 namespace LogiX.SaveSystem;
 
 public class CustomDescription : ComponentDescription
 {
-    [JsonProperty(PropertyName = "componentIdentifier")]
+    [JsonPropertyName("componentIdentifier")]
     public string ComponentIdentifier { get; private set; }
 
-    [JsonProperty(PropertyName = "componentName")]
+    [JsonPropertyName("componentName")]
     public string ComponentName { get; set; }
 
-    [JsonProperty(PropertyName = "plugin")]
+    [JsonPropertyName("plugin")]
     public string Plugin { get; set; }
 
-    [JsonProperty(PropertyName = "pluginVersion")]
+    [JsonPropertyName("pluginVersion")]
     public string PluginVersion { get; set; }
 
-    public JObject Data { get; set; }
+    public JsonDocument Data { get; set; }
 
-    public CustomDescription(string componentIdentifier, string componentName, JObject data, Vector2 position, List<IODescription> inputs, List<IODescription> outputs) : base(position, inputs, outputs, ComponentType.Custom)
+    public CustomDescription(string componentIdentifier, string componentName, JsonDocument data, Vector2 position, List<IODescription> inputs, List<IODescription> outputs) : base(position, inputs, outputs, ComponentType.Custom)
     {
         this.ComponentIdentifier = componentIdentifier;
         this.ComponentName = componentName;

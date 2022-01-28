@@ -4,7 +4,7 @@ namespace LogiX.SaveSystem;
 
 public class DTBCDescription : ComponentDescription
 {
-    [JsonProperty(PropertyName = "decimals")]
+    [JsonPropertyName("decimals")]
     public int decimals;
     public bool multibit;
 

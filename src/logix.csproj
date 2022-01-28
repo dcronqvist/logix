@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <OutputType>Exe</OutputType>
+    <OutputType>Winexe</OutputType>
     <TargetFramework>net6.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
@@ -16,13 +16,13 @@
     <Using Include="Raylib_cs" />
     <Using Include="System.Numerics" />
     <Using Include="ImGuiNET" />
-    <Using Include="Newtonsoft.Json" />
+    <Using Include="System.Text.Json" />
+    <Using Include="System.Text.Json.Serialization" />
     <Using Include="LogiX.Editor" />
   </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="ImGui.NET" Version="1.78.0" />
-    <PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
     <PackageReference Include="Raylib-cs" Version="3.7.0.1" />
   </ItemGroup>
 

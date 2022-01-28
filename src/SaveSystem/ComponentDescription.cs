@@ -25,7 +25,7 @@ public enum ComponentType
 
 public class IODescription
 {
-    [JsonProperty(PropertyName = "bits")]
+    [JsonPropertyName("bits")]
     public int Bits { get; set; }
 
     public IODescription(int bits)
@@ -36,15 +36,15 @@ public class IODescription
 
 public class ComponentDescription
 {
-    [JsonProperty(PropertyName = "position")]
+    [JsonPropertyName("position")]
     public Vector2 Position { get; set; }
-    [JsonProperty(PropertyName = "inputs")]
+    [JsonPropertyName("inputs")]
     public List<IODescription> Inputs { get; set; }
-    [JsonProperty(PropertyName = "outputs")]
+    [JsonPropertyName("outputs")]
     public List<IODescription> Outputs { get; set; }
-    [JsonProperty(PropertyName = "type")]
+    [JsonPropertyName("type")]
     public ComponentType Type { get; set; }
-    [JsonProperty(PropertyName = "id")]
+    [JsonPropertyName("id")]
     public string ID { get; set; }
 
     public ComponentDescription(Vector2 position, List<IODescription> inputs, List<IODescription> outputs, ComponentType ct)

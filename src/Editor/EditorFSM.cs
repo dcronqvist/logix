@@ -44,6 +44,35 @@ public class StateNone : State<Editor>
 
         if (!ImGui.GetIO().WantCaptureMouse)
         {
+            (Wire? w, int wpi) = Editor.simulator.GetWireAndPointFromWorldPos(UserInput.GetMousePositionInWorld(editor.editorCamera));
+
+            if (w != null && Editor.simulator.SelectedWirePoints.Contains((w, wpi)) && Raylib.IsMouseButtonPressed(MouseButton.MOUSE_LEFT_BUTTON))
+            {
+                this.GoToState<StateMovingSelection>();
+                return;
+            }
+
+            if (w != null && wpi >= 0 && Raylib.IsMouseButtonPressed(MouseButton.MOUSE_LEFT_BUTTON))
+            {
+                if (!Raylib.IsKeyDown(KeyboardKey.KEY_LEFT_SHIFT))
+                {
+                    Editor.simulator.SelectedWirePoints.Clear();
+                    Editor.simulator.ClearSelection();
+                }
+                Editor.simulator.SelectWirePoint(w, wpi);
+                this.GoToState<StateMovingSelection>();
+                return;
+            }
+
+            if (w == null && editor.hoveredComponent == null && Raylib.IsMouseButtonPressed(MouseButton.MOUSE_LEFT_BUTTON))
+            {
+                Editor.simulator.SelectedWirePoints.Clear();
+                editor.recSelectFirstCorner = UserInput.GetMousePositionInWorld(editor.editorCamera);
+                this.GoToState<StateRectangleSelecting>();
+                return;
+            }
+
+
             if (editor.hoveredComponent != null && Editor.simulator.IsComponentSelected(editor.hoveredComponent) && Raylib.IsMouseButtonPressed(MouseButton.MOUSE_LEFT_BUTTON))
             {
                 this.GoToState<StateMovingSelection>();
@@ -51,6 +80,7 @@ public class StateNone : State<Editor>
             else if (editor.hoveredComponent != null && !Editor.simulator.IsComponentSelected(editor.hoveredComponent) && Raylib.IsMouseButtonPressed(MouseButton.MOUSE_LEFT_BUTTON))
             {
                 Editor.simulator.ClearSelection();
+                Editor.simulator.SelectedWirePoints.Clear();
                 Editor.simulator.SelectComponent(editor.hoveredComponent);
                 this.GoToState<StateMovingSelection>();
             }
@@ -183,7 +213,9 @@ public class StateRectangleSelecting : State<Editor>
     {
         Rectangle rec = Util.CreateRecFromTwoCorners(editor.recSelectFirstCorner, UserInput.GetMousePositionInWorld(editor.editorCamera));
         Editor.simulator.ClearSelection();
+        Editor.simulator.SelectedWirePoints.Clear();
         Editor.simulator.SelectComponentsInRectangle(rec);
+        Editor.simulator.SelectWirePointsInRectangle(rec);
 
         if (Raylib.IsMouseButtonReleased(MouseButton.MOUSE_LEFT_BUTTON))
         {
