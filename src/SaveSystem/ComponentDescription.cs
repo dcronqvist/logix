@@ -20,7 +20,8 @@ public enum ComponentType
     Mux,
     Demux,
     DTBC,
-    Custom
+    Custom,
+    Arithmetic
 }
 
 public class IODescription

@@ -48,6 +48,7 @@ public class StateNone : State<Editor>
 
             if (w != null && editor.simulator.SelectedWirePoints.Contains((w, wpi)) && Raylib.IsMouseButtonPressed(MouseButton.MOUSE_LEFT_BUTTON))
             {
+                editor.simulator.ClearSelection();
                 this.GoToState<StateMovingSelection>();
                 return;
             }
@@ -230,7 +231,7 @@ public class StateOutputToInput : State<Editor>
             }
         }
 
-        if (editor.hoveredOutput != null && editor.connectFrom != null)
+        if (editor.hoveredOutput != null && editor.connectFrom != null && editor.hoveredOutput != editor.connectFrom)
         {
             Util.Tooltip("Cannot connect to output");
         }

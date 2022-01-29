@@ -4,6 +4,7 @@ using LogiX.SaveSystem;
 using LogiX.Editor;
 using System.Numerics;
 using System.Text.Json;
+using ImGuiNET;
 
 // Below is an example of a plugin.
 // You can create your own plugins by following the same structure.
@@ -52,6 +53,8 @@ public class CustomANDGate : CustomComponent
     }
 
     public int CustomData { get; set; }
+
+    public override bool HasContextMenu => true;
 
     // The constructor of ALL custom components must ALWAYS expect a Vector2 for position
     // and a JObject for your component's data. This data is saved in project files and
@@ -102,5 +105,17 @@ public class CustomANDGate : CustomComponent
         // The IODescriptions at the end should be the same as the ones you used in the constructor.
         // Util.Listify(1, 1), Util.Listify(1) -> Util.Listify(new IODescription(1), new IODescription(1)), Util.Listify(new IODescription(1))
         return new CustomDescription("example-plugin:custom-and", "Custom AND", GetDefaultComponentData(), this.Position, this.Rotation, Util.Listify(new IODescription(1), new IODescription(1)), Util.Listify(new IODescription(1)));
+    }
+
+    public override void SubmitContextPopup(Editor editor)
+    {
+        ImGui.Text("This text is displayed in the context menu.");
+    }
+
+    public override void OnSingleSelectedSubmitUI()
+    {
+        ImGui.Begin("Custom AND Gate");
+        ImGui.Text("This text is displayed as a window when the component is selected.");
+        ImGui.End();
     }
 }

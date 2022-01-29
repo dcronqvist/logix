@@ -385,6 +385,20 @@ public class Editor : Application
         {
             return new DTBC(ib, im, UserInput.GetMousePositionInWorld(editorCamera));
         }, "Decimals", "Multibit"));
+        this.AddNewComponentCreationContext("Common", "Adder", () =>
+        {
+            return new AdderComponent(1, false, UserInput.GetMousePositionInWorld(editorCamera));
+        }, new CCPUSimple(true, true, false, false, (ib, im, _, _) =>
+        {
+            return new AdderComponent(ib, im, UserInput.GetMousePositionInWorld(editorCamera));
+        }, "Input Bits", "Multibit"));
+        this.AddNewComponentCreationContext("Common", "Multiplier", () =>
+        {
+            return new MultiplierComponent(1, false, UserInput.GetMousePositionInWorld(editorCamera));
+        }, new CCPUSimple(true, true, false, false, (ib, im, _, _) =>
+        {
+            return new MultiplierComponent(ib, im, UserInput.GetMousePositionInWorld(editorCamera));
+        }, "Input Bits", "Multibit"));
 
         // GATES
         foreach (IGateLogic logic in this.availableGateLogics)
@@ -403,7 +417,7 @@ public class Editor : Application
         {
             foreach (KeyValuePair<string, CustomDescription> cds in p.customComponents)
             {
-                this.AddNewComponentCreationContext("Plugins", cds.Value.Plugin + ":" + cds.Value.ComponentName, () => { return p.CreateComponent(cds.Key, UserInput.GetMousePositionInWorld(editorCamera), 0); }, null);
+                this.AddNewComponentCreationContext(p.name, cds.Value.ComponentName, () => { return p.CreateComponent(cds.Key, UserInput.GetMousePositionInWorld(editorCamera), 0); }, null);
             }
         }
 
@@ -468,7 +482,7 @@ public class Editor : Application
                 {
                     Tuple<Func<Component>, IUISubmitter<bool, Editor>?> context = this.componentCreationContexts[component];
 
-                    Vector2 buttonSize = new Vector2(120, 25);
+                    Vector2 buttonSize = new Vector2(140, 25);
                     ImGui.Button(component, buttonSize);
                     if (ImGui.IsItemClicked())
                     {
@@ -671,7 +685,7 @@ public class Editor : Application
 
         ImGui.PushStyleVar(ImGuiStyleVar.WindowRounding, 0f);
         ImGui.SetNextWindowPos(new Vector2(0, 22), ImGuiCond.Always);
-        float sidebarWidth = 150;
+        float sidebarWidth = 170;
         ImGui.SetNextWindowSize(new Vector2(sidebarWidth, base.WindowSize.Y - 19), ImGuiCond.Always);
         ImGui.Begin("Components", ImGuiWindowFlags.NoResize | ImGuiWindowFlags.AlwaysVerticalScrollbar | ImGuiWindowFlags.NoNavInputs | ImGuiWindowFlags.NoCollapse | ImGuiWindowFlags.NoTitleBar | ImGuiWindowFlags.NoMove | ImGuiWindowFlags.NoSavedSettings);
         ImGui.PopStyleVar();
@@ -835,6 +849,7 @@ public class Editor : Application
         this.hoveredOutput = simulator.GetOutputFromWorldPos(mousePosInWorld);
         this.hoveredComponent = simulator.GetComponentFromWorldPos(mousePosInWorld);
 
+        simulator.Update(mousePosInWorld);
         this.fsm.Update(this);
 
         if (!ImGui.GetIO().WantCaptureKeyboard)
@@ -849,7 +864,6 @@ public class Editor : Application
             }
         }
 
-        simulator.Update(mousePosInWorld);
     }
 
     public override void Render()

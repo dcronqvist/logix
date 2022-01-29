@@ -8,9 +8,6 @@ public class LogicGate : Component
     public override string Text => this.Logic.GetLogicText();
     public override bool HasContextMenu => true;
 
-    private int newGateBits;
-    private bool newGateMultibit;
-
     public LogicGate(int inputBits, bool multibit, IGateLogic gateLogic, Vector2 position) : base(multibit ? Util.Listify(inputBits) : Util.NValues(1, inputBits), Util.Listify(1), position)
     {
         if (inputBits < gateLogic.MinBits() || inputBits > gateLogic.MaxBits())

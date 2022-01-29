@@ -369,4 +369,54 @@ public static class Util
         ImGui.Text(text);
         ImGui.EndTooltip();
     }
+
+    public static (Vector2, Vector2) GetIntersectingCornersOfPoints(Vector2 a, Vector2 b)
+    {
+        Vector2 a1 = new Vector2(a.X, b.Y);
+        Vector2 a2 = new Vector2(b.X, a.Y);
+        return (a1, a2);
+    }
+
+    public static Vector2 GetClosestPoint(Vector2 point, params Vector2[] points)
+    {
+        Vector2 closest = points[0];
+        float closestDist = (point - closest).Length();
+        for (int i = 1; i < points.Length; i++)
+        {
+            float dist = (point - points[i]).Length();
+            if (dist < closestDist)
+            {
+                closest = points[i];
+                closestDist = dist;
+            }
+        }
+        return closest;
+    }
+
+    public static int GetAsInt(this LogicValue value)
+    {
+        return value == LogicValue.HIGH ? 1 : 0;
+    }
+
+    public static int GetAsInt(this IEnumerable<LogicValue> values)
+    {
+        int sum = 0;
+        int i = 0;
+        foreach (LogicValue value in values)
+        {
+            sum += value.GetAsInt() << i;
+            i += 1;
+        }
+        return sum;
+    }
+
+    public static List<LogicValue> GetAsLogicValues(this int value, int bits)
+    {
+        List<LogicValue> values = new List<LogicValue>();
+        for (int i = 0; i < bits; i++)
+        {
+            values.Add((value & (1 << i)) == 0 ? LogicValue.LOW : LogicValue.HIGH);
+        }
+        return values;
+    }
 }

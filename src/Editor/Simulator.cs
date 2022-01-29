@@ -174,9 +174,30 @@ public class Simulator
             c.Position += UserInput.GetMouseDelta(cam);
         }
 
-        foreach ((Wire w, int i) in this.SelectedWirePoints)
+        if (this.SelectedWirePoints.Count == 1 && Raylib.IsKeyReleased(KeyboardKey.KEY_LEFT_SHIFT))
         {
-            w.IntermediatePoints[i] += UserInput.GetMouseDelta(cam);
+            (Wire w, int i) = this.SelectedWirePoints[0];
+            w.IntermediatePoints[i] = UserInput.GetMousePositionInWorld(cam);
+        }
+
+        if (this.SelectedWirePoints.Count == 1 && Raylib.IsKeyDown(KeyboardKey.KEY_LEFT_SHIFT))
+        {
+            // Snap to adjacent positions
+            (Wire w, int i) = this.SelectedWirePoints[0];
+            Vector2 p = w.IntermediatePoints[i];
+            (Vector2 p1, Vector2 p2) = w.GetAdjacentPositionsToIntermediate(p);
+
+            // Snap to closest to c1 or c2
+            (Vector2 c1, Vector2 c2) = Util.GetIntersectingCornersOfPoints(p1, p2);
+
+            w.IntermediatePoints[i] = Util.GetClosestPoint(UserInput.GetMousePositionInWorld(cam), c1, c2);
+        }
+        else
+        {
+            foreach ((Wire w, int i) in this.SelectedWirePoints)
+            {
+                w.IntermediatePoints[i] += UserInput.GetMouseDelta(cam);
+            }
         }
     }
 

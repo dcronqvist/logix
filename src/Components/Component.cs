@@ -56,7 +56,7 @@ public abstract class Component
     public virtual bool DrawBoxNormal => true;
     public virtual bool HasContextMenu => false;
 
-    public List<Action> AdditionalUISubmitters { get; private set; }
+    //public List<Action> AdditionalUISubmitters { get; private set; }
 
     public string uniqueID;
 
@@ -88,7 +88,7 @@ public abstract class Component
 
     internal void AddAdditionalUISubmitter(Action action)
     {
-        this.AdditionalUISubmitters.Add(action);
+        //this.AdditionalUISubmitters.Add(action);
     }
 
     public Component SetPosition(Vector2 pos)
@@ -341,6 +341,16 @@ public abstract class Component
         }
     }
 
+    public bool IsPositionOnInput(int index, Vector2 pos)
+    {
+        return (GetInputPosition(index) - pos).Length() < 7f;
+    }
+
+    public bool IsPositionOnOutput(int index, Vector2 pos)
+    {
+        return (GetOutputPosition(index) - pos).Length() < 7f;
+    }
+
     public virtual void RenderIOs(Vector2 mousePosInWorld)
     {
         int ioWidth = 7;
@@ -367,6 +377,19 @@ public abstract class Component
                 Vector2 measure = Raylib.MeasureTextEx(Util.OpenSans, bits.ToString(), 13, 0);
                 Raylib.DrawTextEx(Util.OpenSans, $"{bits}", start - measure / 2f, 13, 0f, Color.BLACK);
             }
+
+            if (this.DrawIOIdentifiers)
+            {
+                Vector2 measure = Raylib.MeasureTextEx(Util.OpenSans, this.Inputs[i].Identifier, 13, 0);
+                if (this.Rotation == 1 || this.Rotation == 3)
+                {
+                    this.RenderTextRotated(end + new Vector2(measure.Y / 2f, 5 - (this.Rotation == 3 ? 10 + measure.X : 0)), Util.OpenSans, 13, 0, this.Inputs[i].Identifier, 90f, Color.BLACK);
+                }
+                else
+                {
+                    Raylib.DrawTextEx(Util.OpenSans, this.Inputs[i].Identifier, end + new Vector2(5 - (this.Rotation == 2 ? 10 + measure.X : 0), measure.Y / -2f), 13, 0f, Color.BLACK);
+                }
+            }
         }
 
         for (int i = 0; i < this.Outputs.Count; i++)
@@ -391,6 +414,19 @@ public abstract class Component
                 Vector2 measure = Raylib.MeasureTextEx(Util.OpenSans, bits.ToString(), 13, 0);
                 Raylib.DrawTextEx(Util.OpenSans, $"{bits}", start - measure / 2f, 13, 0f, Color.BLACK);
             }
+
+            if (this.DrawIOIdentifiers)
+            {
+                Vector2 measure = Raylib.MeasureTextEx(Util.OpenSans, this.Outputs[i].Identifier, 13, 0);
+                if (this.Rotation == 1 || this.Rotation == 3)
+                {
+                    this.RenderTextRotated(end + new Vector2(measure.Y / 2f, 5 + (this.Rotation == 3 ? 0 : -measure.X - 10)), Util.OpenSans, 13, 0, this.Outputs[i].Identifier, 90f, Color.BLACK);
+                }
+                else
+                {
+                    Raylib.DrawTextEx(Util.OpenSans, this.Outputs[i].Identifier, end - new Vector2(5 + (this.Rotation == 2 ? -10 : measure.X), measure.Y / 2f), 13, 0f, Color.BLACK);
+                }
+            }
         }
     }
 
@@ -402,6 +438,15 @@ public abstract class Component
     public void RotateLeft()
     {
         this.Rotation = (this.Rotation + 3) % 4;
+    }
+
+    public void RenderTextRotated(Vector2 position, Font font, int fontSize, int spacing, string text, float rotation, Color color)
+    {
+        Rlgl.rlPushMatrix();
+        Rlgl.rlTranslatef(position.X, position.Y, 0);
+        Rlgl.rlRotatef(rotation, 0, 0, 1);
+        Raylib.DrawTextEx(font, text, Vector2.Zero, fontSize, spacing, color);
+        Rlgl.rlPopMatrix();
     }
 
     public virtual void RenderComponentText(Vector2 mousePosInWorld, int fontSize, bool alwaysHorizontalText = false)
@@ -445,10 +490,10 @@ public abstract class Component
 
     public virtual void SubmitContextPopup(LogiX.Editor.Editor editor)
     {
-        foreach (Action a in this.AdditionalUISubmitters)
-        {
-            a();
-        }
+        // foreach (Action a in this.AdditionalUISubmitters)
+        // {
+        //     a();
+        // }
     }
 
     public virtual void RenderSelected()

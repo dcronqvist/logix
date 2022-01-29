@@ -60,6 +60,10 @@ public class Wire
     {
         float width = 4f;
 
+        bool posIsOnOutput = this.From.IsPositionOnOutput(this.FromIndex, pos);
+        bool posIsOnInput = this.To.IsPositionOnInput(this.ToIndex, pos);
+        bool posIsOnIO = posIsOnOutput || posIsOnInput;
+
         // Get distance to line describing wire, if less than width, then on wire
         if (this.IntermediatePoints.Count == 0)
         {
@@ -78,7 +82,7 @@ public class Wire
             {
                 lStart = lineStart;
                 lEnd = lineEnd;
-                return true;
+                return true && !this.IsPositionOnIntermediatePoint(pos, out Vector2 iPoint) && !posIsOnIO;
             }
         }
         else
@@ -98,7 +102,7 @@ public class Wire
                     {
                         lStart = previousPos;
                         lEnd = linePoints[i];
-                        return true;
+                        return true && !this.IsPositionOnIntermediatePoint(pos, out Vector2 iPoint) && !posIsOnIO;
                     }
                 }
                 previousPos = linePoints[i];
@@ -131,23 +135,53 @@ public class Wire
             // If mouse is on wire, update intermediate points.
             int index = this.IntermediatePoints.IndexOf(lStart);
             this.IntermediatePoints.Insert(index + 1, mousePosInWorld);
+            simulator.SelectedWirePoints.Clear();
+            simulator.SelectedWirePoints.Add((this, index + 1));
         }
 
         if (Raylib.IsMouseButtonPressed(MouseButton.MOUSE_RIGHT_BUTTON) && this.IsPositionOnIntermediatePoint(mousePosInWorld, out Vector2 point))
         {
             // If mouse is on wire, remove intermediate point
             int index = this.IntermediatePoints.IndexOf(point);
-            this.IntermediatePoints.Remove(point);
             if (simulator.SelectedWirePoints.Contains((this, index)))
             {
                 simulator.SelectedWirePoints.Remove((this, index));
             }
+            // Check if any of the following intermediate points on this wire is in the selected wire points.
+            // If any are, then decrement their index to fit in the new list.
+            for (int i = index; i < this.IntermediatePoints.Count; i++)
+            {
+                if (simulator.SelectedWirePoints.Contains((this, i)))
+                {
+                    simulator.SelectedWirePoints.Remove((this, i));
+                    simulator.SelectedWirePoints.Add((this, i - 1));
+                }
+            }
+
+            this.IntermediatePoints.Remove(point);
         }
     }
 
     public void AddIntermediatePoint(Vector2 pos)
     {
         this.IntermediatePoints.Add(pos);
+    }
+
+    public (Vector2, Vector2) GetAdjacentPositionsToIntermediate(Vector2 point)
+    {
+        int index = this.IntermediatePoints.IndexOf(point);
+        if (index == 0)
+        {
+            return (this.From.GetOutputPosition(this.FromIndex), this.IntermediatePoints.Count > 1 ? this.IntermediatePoints[1] : this.To.GetInputPosition(this.ToIndex));
+        }
+        else if (index == this.IntermediatePoints.Count - 1)
+        {
+            return (this.IntermediatePoints.Count > 1 ? this.IntermediatePoints[this.IntermediatePoints.Count - 2] : this.From.GetOutputPosition(this.FromIndex), this.To.GetInputPosition(this.ToIndex));
+        }
+        else
+        {
+            return (this.IntermediatePoints[index - 1], this.IntermediatePoints[index + 1]);
+        }
     }
 
     public void Render(Vector2 mousePosInWorld)

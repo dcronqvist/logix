@@ -65,6 +65,8 @@ class ComponentConverter : JsonConverter<ComponentDescription>
                 CustomDescription customDescription = document.Deserialize<CustomDescription>(jso);
                 customDescription.Data = ccd;
                 return customDescription;
+            case ComponentType.Arithmetic:
+                return document.Deserialize<ArithmeticDescription>(jso);
         }
 
         throw new ApplicationException(String.Format("The component type {0} is not supported!", type));
@@ -124,6 +126,9 @@ class ComponentConverter : JsonConverter<ComponentDescription>
                 break;
             case ComponentType.Custom:
                 writer.WriteRawValue(JsonSerializer.Serialize<CustomDescription>((CustomDescription)value, jso));
+                break;
+            case ComponentType.Arithmetic:
+                writer.WriteRawValue(JsonSerializer.Serialize<ArithmeticDescription>((ArithmeticDescription)value, jso));
                 break;
         }
     }

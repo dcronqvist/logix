@@ -27,15 +27,24 @@ public class CCPUSimple : IUISubmitter<bool, Editor.Editor>
         {
             ImGui.SetNextItemWidth(80);
             ImGui.InputInt(inputBitsString, ref this.selectedInputBits);
+            if (this.selectedInputBits < 1)
+            {
+                this.selectedInputBits = 1;
+            }
         }
         if (inputMultibit)
         {
             ImGui.Checkbox(inputMultibitString, ref this.selectedInputMultibit);
+
         }
         if (outputBits)
         {
             ImGui.SetNextItemWidth(80);
             ImGui.InputInt(outputBitsString, ref this.selectedOutputBits);
+            if (this.selectedOutputBits < 1)
+            {
+                this.selectedOutputBits = 1;
+            }
         }
         if (outputMultibit)
         {
