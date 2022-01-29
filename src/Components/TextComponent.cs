@@ -33,7 +33,7 @@ public class TextComponent : Component
 
     public override ComponentDescription ToDescription()
     {
-        return new TextComponentDescription(this.Position, this.text);
+        return new TextComponentDescription(this.Position, this.Rotation, this.text);
     }
 
     public override void OnSingleSelectedSubmitUI()

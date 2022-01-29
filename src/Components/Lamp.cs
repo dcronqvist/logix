@@ -45,7 +45,7 @@ public class Lamp : Component
 
     public override ComponentDescription ToDescription()
     {
-        return new SLDescription(this.Position, Util.Listify(new IODescription(this.Inputs[0].Bits)), Util.EmptyList<IODescription>(), ComponentType.Lamp, this.ID);
+        return new SLDescription(this.Position, this.Rotation, Util.Listify(new IODescription(this.Inputs[0].Bits)), Util.EmptyList<IODescription>(), ComponentType.Lamp, this.ID);
     }
 
     public override void OnSingleSelectedSubmitUI()

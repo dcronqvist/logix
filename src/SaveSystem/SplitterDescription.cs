@@ -4,7 +4,7 @@ namespace LogiX.SaveSystem;
 
 public class SplitterDescription : ComponentDescription
 {
-    public SplitterDescription(Vector2 position, List<IODescription> inputs, List<IODescription> outputs) : base(position, inputs, outputs, ComponentType.Splitter)
+    public SplitterDescription(Vector2 position, int rotation, List<IODescription> inputs, List<IODescription> outputs) : base(position, inputs, outputs, rotation, ComponentType.Splitter)
     {
 
     }
@@ -44,6 +44,7 @@ public class SplitterDescription : ComponentDescription
         Splitter s = new Splitter(inBits, outBits, multibitIn, multibitOut, this.Position);
         if (preserveID)
             s.SetUniqueID(this.ID);
+        s.Rotation = Rotation;
         return s;
     }
 }

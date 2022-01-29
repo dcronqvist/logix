@@ -45,12 +45,12 @@ public class Delayer : Component
         if (this.Inputs.Count == 1)
         {
             // multibit
-            return new DelayerDescription(this.Position, this.Ticks, this.Inputs[0].Bits, true);
+            return new DelayerDescription(this.Position, this.Rotation, this.Ticks, this.Inputs[0].Bits, true);
         }
         else
         {
             // single bit
-            return new DelayerDescription(this.Position, this.Ticks, this.Inputs.Count, false);
+            return new DelayerDescription(this.Position, this.Rotation, this.Ticks, this.Inputs.Count, false);
         }
     }
 

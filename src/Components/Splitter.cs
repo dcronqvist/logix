@@ -73,7 +73,7 @@ public class Splitter : Component
 
     public override ComponentDescription ToDescription()
     {
-        return new SplitterDescription(this.Position, this.Inputs.Select(x => new IODescription(x.Bits)).ToList(), this.Outputs.Select(x => new IODescription(x.Bits)).ToList());
+        return new SplitterDescription(this.Position, this.Rotation, this.Inputs.Select(x => new IODescription(x.Bits)).ToList(), this.Outputs.Select(x => new IODescription(x.Bits)).ToList());
     }
 
     public override Dictionary<string, int> GetGateAmount()

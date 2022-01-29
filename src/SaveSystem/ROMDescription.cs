@@ -7,7 +7,7 @@ public class ROMDescription : ComponentDescription
     [JsonPropertyName("romFile")]
     public string ROMFile { get; set; }
 
-    public ROMDescription(Vector2 position, string romFile, List<IODescription> inputs, List<IODescription> outputs) : base(position, inputs, outputs, ComponentType.ROM)
+    public ROMDescription(Vector2 position, int rotation, string romFile, List<IODescription> inputs, List<IODescription> outputs) : base(position, inputs, outputs, rotation, ComponentType.ROM)
     {
         this.ROMFile = romFile;
     }
@@ -43,6 +43,7 @@ public class ROMDescription : ComponentDescription
             c.SetUniqueID(this.ID);
         }
         c.ROMFile = this.ROMFile;
+        c.Rotation = Rotation;
 
         return c;
     }

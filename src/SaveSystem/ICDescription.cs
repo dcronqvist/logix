@@ -16,7 +16,7 @@ public class ICDescription : ComponentDescription
     [JsonIgnore]
     public const string EXTENSION = ".lgxic";
 
-    public ICDescription(string name, Vector2 position, CircuitDescription circuit, List<List<string>> inputOrder, List<List<string>> outputOrder) : base(position, inputOrder.Select(x => new IODescription(x.Count)).ToList(), outputOrder.Select(x => new IODescription(x.Count)).ToList(), ComponentType.Integrated)
+    public ICDescription(string name, Vector2 position, int rotation, CircuitDescription circuit, List<List<string>> inputOrder, List<List<string>> outputOrder) : base(position, inputOrder.Select(x => new IODescription(x.Count)).ToList(), outputOrder.Select(x => new IODescription(x.Count)).ToList(), rotation, ComponentType.Integrated)
     {
         this.Name = name;
         this.Circuit = circuit;
@@ -101,12 +101,13 @@ public class ICDescription : ComponentDescription
         Component c = new ICComponent(this, this.Position);
         if (preserveIDs)
             c.SetUniqueID(this.ID);
+        c.Rotation = Rotation;
         return c;
     }
 
     public ICDescription Copy()
     {
-        ICDescription icd = new ICDescription(this.Name, this.Position, this.Circuit, this.InputOrder, this.OutputOrder);
+        ICDescription icd = new ICDescription(this.Name, this.Position, this.Rotation, this.Circuit, this.InputOrder, this.OutputOrder);
         icd.ID = this.ID;
         return icd;
     }

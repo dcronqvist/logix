@@ -34,7 +34,7 @@ public class IODescription
     }
 }
 
-public class ComponentDescription
+public abstract class ComponentDescription
 {
     [JsonPropertyName("position")]
     public Vector2 Position { get; set; }
@@ -46,14 +46,17 @@ public class ComponentDescription
     public ComponentType Type { get; set; }
     [JsonPropertyName("id")]
     public string ID { get; set; }
+    [JsonPropertyName("rotation")]
+    public int Rotation { get; set; }
 
-    public ComponentDescription(Vector2 position, List<IODescription> inputs, List<IODescription> outputs, ComponentType ct)
+    public ComponentDescription(Vector2 position, List<IODescription> inputs, List<IODescription> outputs, int rotation, ComponentType ct)
     {
         this.Inputs = inputs;
         this.Outputs = outputs;
         this.Type = ct;
         this.ID = Guid.NewGuid().ToString();
         this.Position = position;
+        this.Rotation = rotation;
     }
 
     public virtual Component ToComponent(bool preserveID)

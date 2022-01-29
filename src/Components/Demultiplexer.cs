@@ -132,7 +132,7 @@ public class Demultiplexer : Component
 
     public override ComponentDescription ToDescription()
     {
-        return new MUXDescription(this.Position, this.selectorBits, this.InputAt(0).Bits > 1, this.dataBits, this.OutputAt(0).Bits > 1, ComponentType.Demux);
+        return new MUXDescription(this.Position, this.Rotation, this.selectorBits, this.InputAt(0).Bits > 1, this.dataBits, this.OutputAt(0).Bits > 1, ComponentType.Demux);
     }
 
     public override Dictionary<string, int> GetGateAmount()

@@ -157,7 +157,7 @@ public class MemoryComponent : Component
     {
         List<IODescription> inputs = this.Inputs.Select(i => new IODescription(i.Bits)).ToList();
         List<IODescription> outputs = this.Outputs.Select(i => new IODescription(i.Bits)).ToList();
-        return new MemoryDescription(this.Position, this.Memory, inputs, outputs);
+        return new MemoryDescription(this.Position, this.Rotation, this.Memory, inputs, outputs);
     }
 
     public override void SubmitContextPopup(Editor.Editor editor)

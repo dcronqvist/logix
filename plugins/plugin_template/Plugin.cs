@@ -3,7 +3,7 @@ using LogiX.Components;
 using LogiX.SaveSystem;
 using LogiX.Editor;
 using System.Numerics;
-using Newtonsoft.Json.Linq;
+using System.Text.Json;
 
 // Below is an example of a plugin.
 // You can create your own plugins by following the same structure.
@@ -16,10 +16,19 @@ public class ExampleMethod : PluginMethod
     public override string Name => "Example Method";
     // This is the description of this method, it is currently not being displayed in the editor.
     public override string Description => "This example method does nothing.";
+    // Used to determine wether or not the function can be run from the editor UI.
+    public override Func<Editor, bool> CanRun => (editor) => true;
     // When clicking the method in the editor, this is the method that will be called.
-    public override Action<Editor> OnRun => (editor) =>
+    public override Execution OnRun => (Editor editor, out string? error) =>
     {
+        // This is the code that will be run when the method is clicked.
+        // The editor is passed in as a parameter, and a potential error string
+        // can be returned. If an error has ocurred, you must specify this by returning false and 
+        // setting the error string.
         editor.ModalError("You pressed a button!");
+
+        error = null;
+        return true;
     };
 }
 
@@ -27,21 +36,31 @@ public class ExampleMethod2 : PluginMethod
 {
     public override string Name => "Example Method 2";
     public override string Description => "This example method does nothing either.";
-    public override Action<Editor> OnRun => (editor) =>
+    public override Func<Editor, bool> CanRun => (editor) => true;
+    public override Execution OnRun => (Editor editor, out string? error) =>
     {
-        editor.ModalError("You pressed another button!");
+        error = "An error has ocurred!";
+        return false;
     };
 }
 
 public class CustomANDGate : CustomComponent
 {
+    public class CustomANDGateData : CustomComponentData
+    {
+        public int CustomData { get; set; }
+    }
+
+    public int CustomData { get; set; }
+
     // The constructor of ALL custom components must ALWAYS expect a Vector2 for position
     // and a JObject for your component's data. This data is saved in project files and
     // will be loaded when the project is loaded, to restore potential states of components.
-    public CustomANDGate(Vector2 position, JObject data) : base("example-plugin:custom-and", "Custom AND", Util.Listify(1, 1), Util.Listify(1), position)
+    public CustomANDGate(Vector2 position, CustomANDGateData data) : base("example-plugin:custom-and", "Custom AND", Util.Listify(1, 1), Util.Listify(1), position)
     {
         // This is where you would load your data from the JObject, if you had any.
         // This is where you would set up your component's properties.
+        this.CustomData = data.CustomData;
     }
 
     public override Dictionary<string, int> GetGateAmount()
@@ -52,11 +71,11 @@ public class CustomANDGate : CustomComponent
         return Util.GateAmount(("Custom AND Gate", 1));
     }
 
-    public static JObject GetDefaultComponentData()
+    public static CustomANDGateData GetDefaultComponentData()
     {
         // This static method MUST exist on all custom components.
         // It should return the initial data you would like a component to have.
-        return new JObject();
+        return new CustomANDGateData() { CustomData = 42 };
     }
 
     public override void PerformLogic()
@@ -77,11 +96,11 @@ public class CustomANDGate : CustomComponent
     {
         // This is where you would convert your component to a description.
         // This is used to save the component's state in project files.
-        // The supplied JObject is used to store the data of the component, if you'd like to save it.
+        // The supplied JsonDocument is used to store the data of the component, if you'd like to save it.
         // This data will be inputted to the created component in the constructor when creating this component again
         // from e.g. a project file.
         // The IODescriptions at the end should be the same as the ones you used in the constructor.
         // Util.Listify(1, 1), Util.Listify(1) -> Util.Listify(new IODescription(1), new IODescription(1)), Util.Listify(new IODescription(1))
-        return new CustomDescription("example-plugin:custom-and", "Custom AND", new JObject(), this.Position, Util.Listify(new IODescription(1), new IODescription(1)), Util.Listify(new IODescription(1)));
+        return new CustomDescription("example-plugin:custom-and", "Custom AND", GetDefaultComponentData(), this.Position, this.Rotation, Util.Listify(new IODescription(1), new IODescription(1)), Util.Listify(new IODescription(1)));
     }
 }

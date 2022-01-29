@@ -7,7 +7,7 @@ public class DelayerDescription : ComponentDescription
     [JsonPropertyName("ticks")]
     public int Ticks { get; set; }
 
-    public DelayerDescription(Vector2 position, int ticks, int bits, bool multibit) : base(position, multibit ? Util.Listify(new IODescription(bits)) : Util.NValues(new IODescription(1), bits), multibit ? Util.Listify(new IODescription(bits)) : Util.NValues(new IODescription(1), bits), ComponentType.Delayer)
+    public DelayerDescription(Vector2 position, int rotation, int ticks, int bits, bool multibit) : base(position, multibit ? Util.Listify(new IODescription(bits)) : Util.NValues(new IODescription(1), bits), multibit ? Util.Listify(new IODescription(bits)) : Util.NValues(new IODescription(1), bits), rotation, ComponentType.Delayer)
     {
         this.Ticks = ticks;
     }

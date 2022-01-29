@@ -135,7 +135,7 @@ public class ROM : Component
             return new IODescription(co.Bits);
         }).ToList();
 
-        return new ROMDescription(this.Position, Util.GetPathAsRelative(this.ROMFile), inputs, outputs);
+        return new ROMDescription(this.Position, this.Rotation, Util.GetPathAsRelative(this.ROMFile), inputs, outputs);
     }
 
     public override Dictionary<string, int> GetGateAmount()

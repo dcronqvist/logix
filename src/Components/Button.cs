@@ -48,7 +48,7 @@ public class Button : Component
 
     public override ComponentDescription ToDescription()
     {
-        return new GenIODescription(this.Position, Util.EmptyList<IODescription>(), Util.Listify(new IODescription(this.Outputs[0].Bits)), ComponentType.Button);
+        return new GenIODescription(this.Position, this.Rotation, Util.EmptyList<IODescription>(), Util.Listify(new IODescription(this.Outputs[0].Bits)), ComponentType.Button);
     }
 
     public override void OnSingleSelectedSubmitUI()

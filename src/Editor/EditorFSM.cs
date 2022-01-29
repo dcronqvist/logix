@@ -165,12 +165,19 @@ public class StateOutputToInput : State<Editor>
             ComponentOutput? connectFrom = editor.connectFrom;
             ComponentInput? hoveredInput = editor.hoveredInput;
 
+            if (hoveredInput.HasSignal() || hoveredInput.Bits != connectFrom.Bits)
+            {
+                return;
+            }
+
             Wire wire = new Wire(connectFrom.Bits, hoveredInput.OnComponent, hoveredInput.OnComponentIndex, connectFrom!.OnComponent, connectFrom!.OnComponentIndex);
             if (hoveredInput.SetSignal(wire))
             {
                 connectFrom.AddOutputWire(wire);
                 editor.simulator.AddWire(wire);
             }
+
+            editor.connectFrom = null;
 
             this.GoToState<StateNone>();
             return;
@@ -187,8 +194,45 @@ public class StateOutputToInput : State<Editor>
         ComponentOutput? connectFrom = editor.connectFrom;
         if (connectFrom != null)
         {
-            Raylib.DrawLineBezier(connectFrom.Position, UserInput.GetMousePositionInWorld(editor.editorCamera), 4, Color.BLACK);
-            Raylib.DrawLineBezier(connectFrom.Position, UserInput.GetMousePositionInWorld(editor.editorCamera), 2, Color.WHITE);
+            Color color = Util.InterpolateColors(Color.WHITE, Color.BLUE, connectFrom.GetHighFraction());
+
+            if (editor.hoveredInput != null)
+            {
+                if (editor.hoveredInput.HasSignal() || editor.hoveredInput.Bits != connectFrom.Bits)
+                {
+                    color = new Color(255, 97, 97, 255);
+                }
+            }
+
+            if (editor.hoveredOutput != null)
+            {
+                color = new Color(255, 97, 97, 255);
+            }
+
+            Raylib.DrawLineEx(connectFrom.Position, UserInput.GetMousePositionInWorld(editor.editorCamera), 6, Color.BLACK);
+            Raylib.DrawLineEx(connectFrom.Position, UserInput.GetMousePositionInWorld(editor.editorCamera), 4, color);
+        }
+    }
+
+    public override void SubmitUI(Editor editor)
+    {
+        if (editor.hoveredInput != null && editor.connectFrom != null)
+        {
+            ComponentInput? hoveredInput = editor.hoveredInput;
+            if (hoveredInput.HasSignal())
+            {
+                Util.Tooltip("Already connected");
+            }
+
+            if (editor.hoveredInput.Bits != editor.connectFrom.Bits)
+            {
+                Util.Tooltip("Different bit widths");
+            }
+        }
+
+        if (editor.hoveredOutput != null && editor.connectFrom != null)
+        {
+            Util.Tooltip("Cannot connect to output");
         }
     }
 }

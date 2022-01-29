@@ -170,7 +170,7 @@ public class ModalCreateIC : Modal
                     }
                 }
 
-                ICDescription icd = new ICDescription(this.icName, Vector2.Zero, this.cd, inputOrder, outputOrder);
+                ICDescription icd = new ICDescription(this.icName, Vector2.Zero, 0, this.cd, inputOrder, outputOrder);
 
                 //this.simulator.AddComponent(icd.ToComponent());
                 editor.loadedProject.AddProjectCreatedIC(icd);

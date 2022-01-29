@@ -14,6 +14,11 @@ public class HexViewer : Component
             float maxIOs = Math.Max(this.Inputs.Count, this.Outputs.Count);
             Vector2 measure = Raylib.MeasureTextEx(Util.OpenSans, this.Text, 35, 1);
 
+            if (this.Rotation == 1 || this.Rotation == 3)
+            {
+                return new Vector2(MathF.Max(maxIOs * 25f, measure.Y + 10f), MathF.Max(measure.X + 20f, 50f));
+            }
+
             return new Vector2(MathF.Max(measure.X + 20f, 50f), MathF.Max(maxIOs * 25f, measure.Y + 10f));
         }
     }
@@ -52,18 +57,18 @@ public class HexViewer : Component
     {
         this.RenderBox();
         this.RenderIOs(mousePosInWorld);
-        this.RenderComponentText(mousePosInWorld, 35);
+        this.RenderComponentText(mousePosInWorld, 35, true);
     }
 
     public override ComponentDescription ToDescription()
     {
         if (this.Inputs.Count != 1)
         {
-            return new GenIODescription(this.Position, Util.NValues(new IODescription(1), this.Inputs.Count), Util.EmptyList<IODescription>(), ComponentType.HexViewer);
+            return new GenIODescription(this.Position, this.Rotation, Util.NValues(new IODescription(1), this.Inputs.Count), Util.EmptyList<IODescription>(), ComponentType.HexViewer);
         }
         else
         {
-            return new GenIODescription(this.Position, Util.Listify(new IODescription(this.Inputs[0].Bits)), Util.EmptyList<IODescription>(), ComponentType.HexViewer);
+            return new GenIODescription(this.Position, this.Rotation, Util.Listify(new IODescription(this.Inputs[0].Bits)), Util.EmptyList<IODescription>(), ComponentType.HexViewer);
         }
     }
 

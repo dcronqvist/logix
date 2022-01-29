@@ -16,13 +16,21 @@ public class CustomDescription : ComponentDescription
     [JsonPropertyName("pluginVersion")]
     public string PluginVersion { get; set; }
 
-    public JsonDocument Data { get; set; }
+    [JsonPropertyName("componentData")]
+    public CustomComponentData Data { get; set; }
 
-    public CustomDescription(string componentIdentifier, string componentName, JsonDocument data, Vector2 position, List<IODescription> inputs, List<IODescription> outputs) : base(position, inputs, outputs, ComponentType.Custom)
+    [JsonConstructor]
+    public CustomDescription(string componentIdentifier, string componentName, Vector2 position, int rotation, List<IODescription> inputs, List<IODescription> outputs) : base(position, inputs, outputs, rotation, ComponentType.Custom)
     {
         this.ComponentIdentifier = componentIdentifier;
         this.ComponentName = componentName;
-        this.Data = data;
+    }
+
+    public CustomDescription(string componentIdentifier, string componentName, CustomComponentData componentData, Vector2 position, int rotation, List<IODescription> inputs, List<IODescription> outputs) : base(position, inputs, outputs, rotation, ComponentType.Custom)
+    {
+        this.ComponentIdentifier = componentIdentifier;
+        this.ComponentName = componentName;
+        this.Data = componentData;
     }
 
     public override Component ToComponent(bool preserveID)
@@ -33,6 +41,6 @@ public class CustomDescription : ComponentDescription
         // the correct assembly and the correct type.
         // We can do this by using the ComponentIdentifier.
 
-        return Util.CreateComponentWithPluginIdentifier(this.ComponentIdentifier, this.Position, this.Data);
+        return Util.CreateComponentWithPluginIdentifier(this.ComponentIdentifier, this.Position, this.Rotation, this.Data);
     }
 }

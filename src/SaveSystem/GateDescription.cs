@@ -8,12 +8,12 @@ public class GateDescription : ComponentDescription
     public string GateLogic { get; set; }
 
     [JsonConstructor]
-    public GateDescription(Vector2 position, List<IODescription> inputs, List<IODescription> outputs, string gateLogic) : base(position, inputs, outputs, ComponentType.Gate)
+    public GateDescription(Vector2 position, int rotation, List<IODescription> inputs, List<IODescription> outputs, string gateLogic) : base(position, inputs, outputs, rotation, ComponentType.Gate)
     {
         this.GateLogic = gateLogic;
     }
 
-    public GateDescription(Vector2 position, List<IODescription> inputs, List<IODescription> outputs, IGateLogic gateLogic) : base(position, inputs, outputs, ComponentType.Gate)
+    public GateDescription(Vector2 position, int rotation, List<IODescription> inputs, List<IODescription> outputs, IGateLogic gateLogic) : base(position, inputs, outputs, rotation, ComponentType.Gate)
     {
         this.GateLogic = gateLogic.GetLogicText();
     }
@@ -54,7 +54,7 @@ public class GateDescription : ComponentDescription
         }
         if (preserveIDs)
             c.SetUniqueID(this.ID);
-
+        c.Rotation = Rotation;
         return c;
     }
 }

@@ -20,6 +20,8 @@ public abstract class AdditionalComponentContext<TComp> where TComp : Component
     public abstract Action Submit { get; }
 }
 
+public class CustomComponentData { }
+
 public class Plugin
 {
     public static string PluginsPath => $"{Util.EnvironmentPath}/plugins";
@@ -135,23 +137,35 @@ public class Plugin
                 }
 
                 // All classes that have base type "CustomComponent" may ONLY take in a Vector2 in the constructor
-                JsonDocument data = (JsonDocument)type.GetMethod("GetDefaultComponentData").Invoke(null, null);
+                CustomComponentData data = (CustomComponentData)type.GetMethod("GetDefaultComponentData").Invoke(null, null);
 
                 // Make sure that all types have a constructor which takes in a Vector2 and JObject
-                ConstructorInfo? constructor = type.GetConstructor(new Type[] { typeof(Vector2), typeof(JsonDocument) });
+                ConstructorInfo? constructor = null;
+                foreach (ConstructorInfo ci in type.GetConstructors())
+                {
+                    if (ci.GetParameters().Length == 2)
+                    {
+                        ParameterInfo[] parameters = ci.GetParameters();
+                        if (parameters[0].ParameterType == typeof(Vector2) && parameters[1].ParameterType.IsSubclassOf(typeof(CustomComponentData)))
+                        {
+                            constructor = ci;
+                            break;
+                        }
+                    }
+                }
                 if (constructor == null)
                 {
-                    error = $"Type {type.Name} does not have a constructor which takes in a Vector2 and JObject.";
+                    error = $"Type {type.Name} does not have a constructor which takes in a Vector2 and CustomComponentData.";
                     plugin = null;
                     return false;
                 }
 
-                CustomComponent cc = (CustomComponent)assembly.CreateInstance(type.FullName, true, BindingFlags.CreateInstance, null, new object[] { Vector2.Zero, data }, null, null);
+                CustomComponent cc = (CustomComponent)constructor.Invoke(BindingFlags.CreateInstance, null, new object[] { Vector2.Zero, data }, null);
                 CustomDescription cd = cc.ToDescription();
                 cd.Plugin = p.name;
                 cd.PluginVersion = p.version;
                 p.AddCustomComponent(cd);
-                p.customComponentTypes.Add(cc.ComponentIdentifier, type);
+                p.customComponentTypes.Add(cc.ComponentIdentifier, (type, constructor, data.GetType()));
             }
 
             // Get all classes that have base type "PluginMethod"
@@ -212,7 +226,7 @@ public class Plugin
     // contain custom components
     // run void methods by clicking them in the editor
 
-    public Dictionary<string, Type> customComponentTypes;
+    public Dictionary<string, (Type, ConstructorInfo, Type)> customComponentTypes;
     public Dictionary<string, CustomDescription> customComponents;
     public Dictionary<string, PluginMethod> customMethods;
 
@@ -225,7 +239,7 @@ public class Plugin
         this.website = website;
         this.customComponents = new Dictionary<string, CustomDescription>();
         this.customMethods = new Dictionary<string, PluginMethod>();
-        this.customComponentTypes = new Dictionary<string, Type>();
+        this.customComponentTypes = new Dictionary<string, (Type, ConstructorInfo, Type)>();
         this.file = file;
     }
 
@@ -244,18 +258,19 @@ public class Plugin
         customMethods.Add(name, method);
     }
 
-    public Component CreateComponent(string identifier, Vector2 position)
+    public Component CreateComponent(string identifier, Vector2 position, int rotation)
     {
-        Type t = customComponentTypes[identifier];
-        return CreateComponent(identifier, position, (JsonDocument)t.GetMethod("GetDefaultComponentData").Invoke(null, null));
+        (Type t, ConstructorInfo ci, Type dt) = customComponentTypes[identifier];
+        return CreateComponent(identifier, position, rotation, (CustomComponentData)t.GetMethod("GetDefaultComponentData").Invoke(null, null));
     }
 
-    public Component CreateComponent(string identifier, Vector2 position, JsonDocument data)
+    public Component CreateComponent(string identifier, Vector2 position, int rotation, CustomComponentData data)
     {
-        Type t = customComponentTypes[identifier];
-        CustomComponent c = (CustomComponent)t.GetConstructor(new Type[] { typeof(Vector2), typeof(JsonDocument) }).Invoke(new object[] { position, data });
+        (Type t, ConstructorInfo ci, Type dt) = customComponentTypes[identifier];
+        CustomComponent c = (CustomComponent)ci.Invoke(new object[] { position, data });
         c.Plugin = this.name;
         c.PluginVersion = this.version;
+        c.Rotation = rotation;
         return c;
     }
 

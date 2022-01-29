@@ -7,7 +7,7 @@ public class MemoryDescription : ComponentDescription
     [JsonPropertyName("memory")]
     public List<LogicValue>[] Memory { get; set; }
 
-    public MemoryDescription(Vector2 position, List<LogicValue>[] memory, List<IODescription> inputs, List<IODescription> outputs) : base(position, inputs, outputs, ComponentType.Memory)
+    public MemoryDescription(Vector2 position, int rotation, List<LogicValue>[] memory, List<IODescription> inputs, List<IODescription> outputs) : base(position, inputs, outputs, rotation, ComponentType.Memory)
     {
         this.Memory = memory;
     }
@@ -57,6 +57,8 @@ public class MemoryDescription : ComponentDescription
         c.Memory = memory;
         if (preserveIDs)
             c.SetUniqueID(this.ID);
+
+        c.Rotation = Rotation;
         return c;
     }
 }

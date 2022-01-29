@@ -12,6 +12,7 @@ public abstract class State<TUpdate>
 
     public abstract void Update(TUpdate arg);
     public virtual void Render(TUpdate arg) { }
+    public virtual void SubmitUI(TUpdate arg) { }
 
     public void GoToState<TState>() where TState : State<TUpdate>
     {
@@ -91,5 +92,10 @@ public class FSM<TUpdate>
     public void Render(TUpdate arg)
     {
         this.CurrentState?.Render(arg);
+    }
+
+    public void SubmitUI(TUpdate arg)
+    {
+        this.CurrentState?.SubmitUI(arg);
     }
 }

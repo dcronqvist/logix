@@ -4,7 +4,7 @@ namespace LogiX.SaveSystem;
 
 public class GenIODescription : ComponentDescription
 {
-    public GenIODescription(Vector2 position, List<IODescription> inputs, List<IODescription> outputs, ComponentType type) : base(position, inputs, outputs, type)
+    public GenIODescription(Vector2 position, int rotation, List<IODescription> inputs, List<IODescription> outputs, ComponentType type) : base(position, inputs, outputs, rotation, type)
     {
 
     }
@@ -35,6 +35,8 @@ public class GenIODescription : ComponentDescription
 
         if (preserveIDs)
             c.SetUniqueID(this.ID);
+
+        c.Rotation = Rotation;
 
         return c;
     }

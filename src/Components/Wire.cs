@@ -67,7 +67,7 @@ public class Wire
             Vector2 lineStart = this.From.GetOutputLinePositions(this.FromIndex).Item1;
             Vector2 lineEnd = this.To.GetInputLinePositions(this.ToIndex).Item1;
 
-            if (!Raylib.CheckCollisionPointRec(pos, Util.CreateRecFromTwoCorners(lineStart.Vector2Towards(5, lineEnd), lineEnd.Vector2Towards(5, lineStart))))
+            if (!Raylib.CheckCollisionPointRec(pos, Util.CreateRecFromTwoCorners(lineStart.Vector2Towards(5, lineEnd), lineEnd.Vector2Towards(5, lineStart), width / 2)))
             {
                 lStart = lEnd = Vector2.Zero;
                 return false;
@@ -91,7 +91,7 @@ public class Wire
             Vector2 previousPos = start;
             for (int i = 0; i < linePoints.Count; i++)
             {
-                Rectangle rec = Util.CreateRecFromTwoCorners(previousPos.Vector2Towards(5, linePoints[i]), linePoints[i].Vector2Towards(5, previousPos));
+                Rectangle rec = Util.CreateRecFromTwoCorners(previousPos.Vector2Towards(5, linePoints[i]), linePoints[i].Vector2Towards(5, previousPos), width / 2);
                 if (Raylib.CheckCollisionPointRec(pos, rec))
                 {
                     if (Util.DistanceToLine(previousPos, linePoints[i], pos) < width)
@@ -163,7 +163,7 @@ public class Wire
         {
             Raylib.DrawLineEx(previousPos, linePoints[i], width + 2f, Color.BLACK);
             Raylib.DrawLineEx(previousPos, linePoints[i], width, color);
-            Rectangle rec = Util.CreateRecFromTwoCorners(previousPos.Vector2Towards(5, linePoints[i]), linePoints[i].Vector2Towards(5, previousPos));
+            Rectangle rec = Util.CreateRecFromTwoCorners(previousPos.Vector2Towards(5, linePoints[i]), linePoints[i].Vector2Towards(5, previousPos), width / 2);
             //Raylib.DrawRectangleRec(rec, Color.BLUE.Opacity(0.3f));
             previousPos = linePoints[i];
         }
@@ -190,7 +190,7 @@ public class Wire
     {
         Vector2 fromPos = this.From.GetOutputLinePositions(this.FromIndex).Item1;
         Vector2 toPos = this.To.GetInputLinePositions(this.ToIndex).Item1;
-        //Raylib.DrawLineBezier(fromPos, toPos, 6f, Color.ORANGE);
-        //Raylib.DrawLineBezier(fromPos, toPos, 2, Util.InterpolateColors(Color.WHITE, Color.BLUE, this.GetHighFraction()));
+        //Raylib.DrawLineEx(fromPos, toPos, 6f, Color.ORANGE);
+        //Raylib.DrawLineEx(fromPos, toPos, 4, Util.InterpolateColors(Color.WHITE, Color.BLUE, this.GetHighFraction()));
     }
 }

@@ -43,7 +43,7 @@ public class Clock : Component
 
     public override ComponentDescription ToDescription()
     {
-        return new ClockDescription(this.Position, this.Interval);
+        return new ClockDescription(this.Position, this.Rotation, this.Interval);
     }
 
     public override void OnSingleSelectedSubmitUI()

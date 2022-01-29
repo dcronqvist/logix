@@ -61,6 +61,11 @@ public static class Util
         float numerator = MathF.Abs((lineEnd.X - lineStart.X) * (lineStart.Y - point.Y) - (lineStart.X - point.X) * (lineEnd.Y - lineStart.Y));
         float denominator = MathF.Sqrt(MathF.Pow(lineEnd.X - lineStart.X, 2) + MathF.Pow(lineEnd.Y - lineStart.Y, 2));
 
+        if (numerator < 0.05f)
+        {
+            return 0f;
+        }
+
         return numerator / denominator;
     }
 
@@ -69,28 +74,28 @@ public static class Util
         return start + Vector2.Normalize(other - start) * dist;
     }
 
-    public static Rectangle CreateRecFromTwoCorners(Vector2 a, Vector2 b)
+    public static Rectangle CreateRecFromTwoCorners(Vector2 a, Vector2 b, float padding = 0)
     {
         if (a.Y < b.Y)
         {
             if (a.X < b.X)
             {
-                return new Rectangle(a.X, a.Y, (b.X - a.X), (b.Y - a.Y));
+                return new Rectangle(a.X - padding, a.Y - padding, (b.X - a.X) + padding * 2, (b.Y - a.Y) + padding * 2);
             }
             else
             {
-                return new Rectangle(b.X, a.Y, (a.X - b.X), (b.Y - a.Y));
+                return new Rectangle(b.X - padding, a.Y - padding, (a.X - b.X) + padding * 2, (b.Y - a.Y) + padding * 2);
             }
         }
         else
         {
             if (a.X < b.X)
             {
-                return new Rectangle(a.X, b.Y, (b.X - a.X), (a.Y - b.Y));
+                return new Rectangle(a.X - padding, b.Y - padding, (b.X - a.X) + padding * 2, (a.Y - b.Y) + padding * 2);
             }
             else
             {
-                return new Rectangle(b.X, b.Y, (a.X - b.X), (a.Y - b.Y));
+                return new Rectangle(b.X - padding, b.Y - padding, (a.X - b.X) + padding * 2, (a.Y - b.Y) + padding * 2);
             }
         }
     }
@@ -283,7 +288,7 @@ public static class Util
         return values;
     }
 
-    public static Component CreateComponentWithPluginIdentifier(string identifier, Vector2 position, JsonDocument data)
+    public static Component CreateComponentWithPluginIdentifier(string identifier, Vector2 position, int rotation, CustomComponentData data)
     {
         foreach (Plugin p in Plugins)
         {
@@ -291,7 +296,7 @@ public static class Util
             {
                 if (cd.Key == identifier)
                 {
-                    return p.CreateComponent(identifier, position, data);
+                    return p.CreateComponent(identifier, position, rotation, data);
                 }
             }
         }
@@ -320,6 +325,24 @@ public static class Util
         return missingPlugins;
     }
 
+    public static Plugin GetPluginWithComponent(string componentIdentifier)
+    {
+        foreach (Plugin p in Plugins)
+        {
+            if (p.customComponents.ContainsKey(componentIdentifier))
+            {
+                return p;
+            }
+        }
+        return null;
+    }
+
+    public static Type GetCustomDataTypeOfCustomComponent(string componentIdentifier)
+    {
+        Plugin p = GetPluginWithComponent(componentIdentifier);
+        return p.customComponentTypes[componentIdentifier].Item3;
+    }
+
     public static string GetPathAsRelative(string path)
     {
         // Also replace all \\ with /
@@ -338,5 +361,12 @@ public static class Util
             toCheck = toCheck.BaseType;
         }
         return false;
+    }
+
+    public static void Tooltip(string text)
+    {
+        ImGui.BeginTooltip();
+        ImGui.Text(text);
+        ImGui.EndTooltip();
     }
 }

@@ -343,14 +343,30 @@ public abstract class Component
 
     public virtual void RenderIOs(Vector2 mousePosInWorld)
     {
+        int ioWidth = 7;
+
         for (int i = 0; i < this.Inputs.Count; i++)
         {
             (Vector2 start, Vector2 end) = GetInputLinePositions(i);
             Color color = Util.InterpolateColors(Color.WHITE, Color.BLUE, this.Inputs[i].GetHighFraction());
 
+            if ((mousePosInWorld - start).Length() < ioWidth)
+            {
+                color = Color.ORANGE;
+            }
+
             Raylib.DrawLineEx(start, end, 4f, Color.GRAY);
-            Raylib.DrawCircleV(start, 7f, Color.BLACK);
-            Raylib.DrawCircleV(start, 6f, color);
+            Raylib.DrawCircleV(start, ioWidth + 1f, Color.BLACK);
+            Raylib.DrawCircleV(start, ioWidth, color);
+
+            int bits = this.InputAt(i).Bits;
+
+            if (bits > 1)
+            {
+                // Draw text displaying amount of bits
+                Vector2 measure = Raylib.MeasureTextEx(Util.OpenSans, bits.ToString(), 13, 0);
+                Raylib.DrawTextEx(Util.OpenSans, $"{bits}", start - measure / 2f, 13, 0f, Color.BLACK);
+            }
         }
 
         for (int i = 0; i < this.Outputs.Count; i++)
@@ -358,20 +374,60 @@ public abstract class Component
             (Vector2 start, Vector2 end) = GetOutputLinePositions(i);
             Color color = Util.InterpolateColors(Color.WHITE, Color.BLUE, this.Outputs[i].GetHighFraction());
 
+            if ((mousePosInWorld - start).Length() < ioWidth)
+            {
+                color = Color.ORANGE;
+            }
+
             Raylib.DrawLineEx(start, end, 4f, Color.GRAY);
-            Raylib.DrawCircleV(start, 7f, Color.BLACK);
-            Raylib.DrawCircleV(start, 6f, color);
+            Raylib.DrawCircleV(start, ioWidth + 1f, Color.BLACK);
+            Raylib.DrawCircleV(start, ioWidth, color);
+
+            int bits = this.OutputAt(i).Bits;
+
+            if (bits > 1)
+            {
+                // Draw text displaying amount of bits
+                Vector2 measure = Raylib.MeasureTextEx(Util.OpenSans, bits.ToString(), 13, 0);
+                Raylib.DrawTextEx(Util.OpenSans, $"{bits}", start - measure / 2f, 13, 0f, Color.BLACK);
+            }
         }
     }
 
-    public virtual void RenderComponentText(Vector2 mousePosInWorld, int fontSize)
+    public void RotateRight()
+    {
+        this.Rotation = (this.Rotation + 1) % 4;
+    }
+
+    public void RotateLeft()
+    {
+        this.Rotation = (this.Rotation + 3) % 4;
+    }
+
+    public virtual void RenderComponentText(Vector2 mousePosInWorld, int fontSize, bool alwaysHorizontalText = false)
     {
         if (this.TextVisible)
         {
             Vector2 middleOfBox = new Vector2(this.Box.x, this.Box.y) + new Vector2(this.Box.width / 2f, this.Box.height / 2f);
             Vector2 textSize = Raylib.MeasureTextEx(Util.OpenSans, this.Text, fontSize, 1);
+            Vector2 flippedSize = new Vector2(-textSize.Y, textSize.X);
 
-            Raylib.DrawTextEx(Util.OpenSans, this.Text, middleOfBox - textSize / 2f, fontSize, 1, Color.BLACK);
+            if ((this.Rotation == 1 || this.Rotation == 3) && !alwaysHorizontalText)
+            {
+                // On its side, render text vertically
+                Rlgl.rlPushMatrix();
+                Vector2 pos = middleOfBox - flippedSize / 2f;
+                Rlgl.rlTranslatef(pos.X, pos.Y, 0);
+                Rlgl.rlRotatef(90f, 0, 0, 1);
+                //
+                Raylib.DrawTextEx(Util.OpenSans, this.Text, Vector2.Zero, fontSize, 1, Color.BLACK);
+                Rlgl.rlPopMatrix();
+            }
+            else
+            {
+                // Straight, render normally
+                Raylib.DrawTextEx(Util.OpenSans, this.Text, middleOfBox - textSize / 2f, fontSize, 1, Color.BLACK);
+            }
         }
     }
 
@@ -384,10 +440,7 @@ public abstract class Component
 
     public virtual void OnSingleSelectedSubmitUI()
     {
-        if (ImGui.Button("Rotate"))
-        {
-            this.Rotation = (this.Rotation + 1) % 4;
-        }
+
     }
 
     public virtual void SubmitContextPopup(LogiX.Editor.Editor editor)
@@ -401,7 +454,7 @@ public abstract class Component
     public virtual void RenderSelected()
     {
         int offset = 4;
-        Raylib.DrawRectangleLinesEx(new Rectangle(this.Box.x - offset, this.Box.y - offset, this.Size.X + offset * 2, this.Size.Y + offset * 2), 4, Color.ORANGE);
+        Raylib.DrawRectangleLinesEx(new Rectangle(this.Box.x - offset, this.Box.y - offset, this.Box.width + offset * 2, this.Box.height + offset * 2), 4, Color.ORANGE);
 
         // Render all wires from inputs and outputs in orange as well
         foreach (ComponentInput cio in this.Inputs)

@@ -72,7 +72,7 @@ public class Switch : Component
 
     public override ComponentDescription ToDescription()
     {
-        return new SLDescription(this.Position, Util.EmptyList<IODescription>(), Util.Listify(new IODescription(this.Outputs[0].Bits)), ComponentType.Switch, this.ID);
+        return new SLDescription(this.Position, this.Rotation, Util.EmptyList<IODescription>(), Util.Listify(new IODescription(this.Outputs[0].Bits)), ComponentType.Switch, this.ID);
     }
 
     public override void OnSingleSelectedSubmitUI()

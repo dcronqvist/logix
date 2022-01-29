@@ -7,7 +7,7 @@ public class TextComponentDescription : ComponentDescription
     [JsonPropertyName("text")]
     public string Text { get; set; }
 
-    public TextComponentDescription(Vector2 position, string text) : base(position, new List<IODescription>(), new List<IODescription>(), ComponentType.TextLabel)
+    public TextComponentDescription(Vector2 position, int rotation, string text) : base(position, new List<IODescription>(), new List<IODescription>(), rotation, ComponentType.TextLabel)
     {
         this.Text = text;
     }
@@ -19,6 +19,7 @@ public class TextComponentDescription : ComponentDescription
 
         if (preserveID)
             c.SetUniqueID(this.ID);
+        c.Rotation = Rotation;
 
         return c;
     }

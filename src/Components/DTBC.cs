@@ -6,7 +6,7 @@ public class DTBC : Component
 {
     int decimals;
 
-    public override string Text => "DBTC";
+    public override string Text => "DTBC";
     public override bool DrawIOIdentifiers => true;
 
     public DTBC(int decimals, bool multibit, Vector2 position) : base(multibit ? Util.Listify(decimals - 1) : Util.NValues(1, decimals - 1), multibit ? Util.Listify((int)Math.Ceiling(Math.Log2(decimals - 1))) : Util.NValues(1, (int)Math.Ceiling(Math.Log2(decimals - 1))), position)
@@ -35,7 +35,7 @@ public class DTBC : Component
 
     public override Dictionary<string, int> GetGateAmount()
     {
-        return Util.GateAmount(("DBTC", 1));
+        return Util.GateAmount(("DTBC", 1));
     }
 
     public override void PerformLogic()
@@ -106,7 +106,7 @@ public class DTBC : Component
 
     public override ComponentDescription ToDescription()
     {
-        return new DTBCDescription(this.decimals, this.Inputs.Count == 1, this.Position);
+        return new DTBCDescription(this.decimals, this.Inputs.Count == 1, this.Position, this.Rotation);
     }
 
 }

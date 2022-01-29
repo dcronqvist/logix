@@ -37,7 +37,7 @@ public class LogicGate : Component
             return new IODescription(co.Bits);
         }).ToList();
 
-        return new GateDescription(this.Position, inputs, outputs, this.Logic);
+        return new GateDescription(this.Position, this.Rotation, inputs, outputs, this.Logic);
     }
 
     private int currentlySelectedLogic = 0;

@@ -7,7 +7,7 @@ public class SLDescription : ComponentDescription
     [JsonPropertyName("name")]
     public string Name { get; set; }
 
-    public SLDescription(Vector2 position, List<IODescription> inputs, List<IODescription> outputs, ComponentType type, string name) : base(position, inputs, outputs, type)
+    public SLDescription(Vector2 position, int rotation, List<IODescription> inputs, List<IODescription> outputs, ComponentType type, string name) : base(position, inputs, outputs, rotation, type)
     {
         this.Name = name;
     }
@@ -27,6 +27,7 @@ public class SLDescription : ComponentDescription
         }
         if (preserveIDs)
             c.SetUniqueID(this.ID);
+        c.Rotation = Rotation;
         return c;
     }
 }

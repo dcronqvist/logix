@@ -28,7 +28,7 @@ public class ConstantComponent : Component
 
     public override ComponentDescription ToDescription()
     {
-        return new ConstantDescription(this.Position, this.Value);
+        return new ConstantDescription(this.Position, this.Rotation, this.Value);
     }
 
     public override void OnSingleSelectedSubmitUI()

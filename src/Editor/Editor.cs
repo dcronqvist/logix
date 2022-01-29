@@ -271,6 +271,26 @@ public class Editor : Application
             error = "";
             return true;
         }, this.primaryKeyMod, KeyboardKey.KEY_N));
+        AddNewMainMenuItem("Edit", "Rotate Clockwise", new EditorAction((editor) => simulator.SelectedComponents.Count > 0, (editor) => false, (Editor editor, out string error) =>
+        {
+            List<Component> selected = simulator.SelectedComponents;
+            foreach (Component c in selected)
+            {
+                c.RotateRight();
+            }
+            error = "";
+            return true;
+        }, KeyboardKey.KEY_RIGHT));
+        AddNewMainMenuItem("Edit", "Rotate Counterclockwise", new EditorAction((editor) => simulator.SelectedComponents.Count > 0, (editor) => false, (Editor editor, out string error) =>
+        {
+            List<Component> selected = simulator.SelectedComponents;
+            foreach (Component c in selected)
+            {
+                c.RotateLeft();
+            }
+            error = "";
+            return true;
+        }, KeyboardKey.KEY_LEFT));
         AddNewMainMenuItem("Integrated Circuits", "Create IC from Selection", new EditorAction((editor) => simulator.SelectedComponents.Count > 0, (editor) => false, (Editor editor, out string error) =>
         {
             CircuitDescription cd = new CircuitDescription(simulator.SelectedComponents);
@@ -383,7 +403,7 @@ public class Editor : Application
         {
             foreach (KeyValuePair<string, CustomDescription> cds in p.customComponents)
             {
-                this.AddNewComponentCreationContext("Plugins", cds.Value.Plugin + ":" + cds.Value.ComponentName, () => { return p.CreateComponent(cds.Key, UserInput.GetMousePositionInWorld(editorCamera)); }, null);
+                this.AddNewComponentCreationContext("Plugins", cds.Value.Plugin + ":" + cds.Value.ComponentName, () => { return p.CreateComponent(cds.Key, UserInput.GetMousePositionInWorld(editorCamera), 0); }, null);
             }
         }
 
@@ -753,6 +773,8 @@ public class Editor : Application
                 this.currentModal = null;
             }
         }
+
+        this.fsm.SubmitUI(this);
     }
 
     public void DrawGrid()

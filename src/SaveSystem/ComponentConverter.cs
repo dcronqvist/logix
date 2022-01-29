@@ -59,14 +59,72 @@ class ComponentConverter : JsonConverter<ComponentDescription>
             case ComponentType.DTBC:
                 return document.Deserialize<DTBCDescription>(jso);
             case ComponentType.Custom:
-                return document.Deserialize<CustomDescription>(jso);
+                document.RootElement.TryGetProperty("componentIdentifier", out JsonElement ci);
+                document.RootElement.TryGetProperty("componentData", out JsonElement cd);
+                CustomComponentData ccd = (CustomComponentData)cd.Deserialize(Util.GetCustomDataTypeOfCustomComponent(ci.Deserialize<string>()));
+                CustomDescription customDescription = document.Deserialize<CustomDescription>(jso);
+                customDescription.Data = ccd;
+                return customDescription;
         }
 
         throw new ApplicationException(String.Format("The component type {0} is not supported!", type));
     }
 
-    public override void Write(Utf8JsonWriter writer, ComponentDescription value, JsonSerializerOptions jso)
+    public override void Write(Utf8JsonWriter writer, ComponentDescription value, JsonSerializerOptions options)
     {
-        throw new NotImplementedException();
+        switch (value.Type)
+        {
+            case ComponentType.Button:
+                writer.WriteRawValue(JsonSerializer.Serialize<GenIODescription>((GenIODescription)value, jso));
+                break;
+            case ComponentType.HexViewer:
+                writer.WriteRawValue(JsonSerializer.Serialize<GenIODescription>((GenIODescription)value, jso));
+                break;
+            case ComponentType.Switch:
+                writer.WriteRawValue(JsonSerializer.Serialize<SLDescription>((SLDescription)value, jso));
+                break;
+            case ComponentType.Lamp:
+                writer.WriteRawValue(JsonSerializer.Serialize<SLDescription>((SLDescription)value, jso));
+                break;
+            case ComponentType.Gate:
+                writer.WriteRawValue(JsonSerializer.Serialize<GateDescription>((GateDescription)value, jso));
+                break;
+            case ComponentType.Integrated:
+                writer.WriteRawValue(JsonSerializer.Serialize<ICDescription>((ICDescription)value, options));
+                break;
+            case ComponentType.ROM:
+                writer.WriteRawValue(JsonSerializer.Serialize<ROMDescription>((ROMDescription)value, jso));
+                break;
+            case ComponentType.TextLabel:
+                writer.WriteRawValue(JsonSerializer.Serialize<TextComponentDescription>((TextComponentDescription)value, jso));
+                break;
+            case ComponentType.Memory:
+                writer.WriteRawValue(JsonSerializer.Serialize<MemoryDescription>((MemoryDescription)value, jso));
+                break;
+            case ComponentType.Constant:
+                writer.WriteRawValue(JsonSerializer.Serialize<ConstantDescription>((ConstantDescription)value, jso));
+                break;
+            case ComponentType.Splitter:
+                writer.WriteRawValue(JsonSerializer.Serialize<SplitterDescription>((SplitterDescription)value, jso));
+                break;
+            case ComponentType.Clock:
+                writer.WriteRawValue(JsonSerializer.Serialize<ClockDescription>((ClockDescription)value, jso));
+                break;
+            case ComponentType.Delayer:
+                writer.WriteRawValue(JsonSerializer.Serialize<DelayerDescription>((DelayerDescription)value, jso));
+                break;
+            case ComponentType.Mux:
+                writer.WriteRawValue(JsonSerializer.Serialize<MUXDescription>((MUXDescription)value, jso));
+                break;
+            case ComponentType.Demux:
+                writer.WriteRawValue(JsonSerializer.Serialize<MUXDescription>((MUXDescription)value, jso));
+                break;
+            case ComponentType.DTBC:
+                writer.WriteRawValue(JsonSerializer.Serialize<DTBCDescription>((DTBCDescription)value, jso));
+                break;
+            case ComponentType.Custom:
+                writer.WriteRawValue(JsonSerializer.Serialize<CustomDescription>((CustomDescription)value, jso));
+                break;
+        }
     }
 }

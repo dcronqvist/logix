@@ -203,6 +203,7 @@ public class Project
         using (StreamWriter sw = new StreamWriter(finalPath))
         {
             JsonSerializerOptions jso = new JsonSerializerOptions();
+            jso.Converters.Add(new ComponentConverter());
             jso.IncludeFields = true;
 
             string json = JsonSerializer.Serialize(this, jso);
