@@ -130,6 +130,11 @@ public class Wire
 
     public void Update(Vector2 mousePosInWorld, Simulator simulator)
     {
+
+    }
+
+    public void Interact(Vector2 mousePosInWorld, Simulator simulator)
+    {
         if (Raylib.IsMouseButtonPressed(MouseButton.MOUSE_LEFT_BUTTON) && this.IsPositionOnWire(mousePosInWorld, out Vector2 lStart, out Vector2 lEnd))
         {
             // If mouse is on wire, update intermediate points.

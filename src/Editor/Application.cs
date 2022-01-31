@@ -67,50 +67,60 @@ public abstract class Application
 
         LoadContent();
 
-        // Main application loop
-        while (!Raylib.WindowShouldClose())
+        try
         {
-            // Feed the input events to our ImGui controller, which passes them through to ImGui.
-            igc.Update(Raylib.GetFrameTime());
-
-            if (Raylib.IsWindowResized())
+            // Main application loop
+            while (!Raylib.WindowShouldClose())
             {
-                int x = Raylib.GetScreenWidth();
-                int y = Raylib.GetScreenHeight();
-                igc.Resize(x, y);
-                WindowSize = new Vector2(x, y);
-                Raylib.UnloadTexture(this.uiTexture.texture);
-                this.uiTexture = Raylib.LoadRenderTexture(x, y);
-                OnWindowResized?.Invoke(x, y);
+                // Feed the input events to our ImGui controller, which passes them through to ImGui.
+                igc.Update(Raylib.GetFrameTime());
+
+                if (Raylib.IsWindowResized())
+                {
+                    int x = Raylib.GetScreenWidth();
+                    int y = Raylib.GetScreenHeight();
+                    igc.Resize(x, y);
+                    WindowSize = new Vector2(x, y);
+                    Raylib.UnloadTexture(this.uiTexture.texture);
+                    this.uiTexture = Raylib.LoadRenderTexture(x, y);
+                    OnWindowResized?.Invoke(x, y);
+                }
+
+                UserInput.Begin();
+                Update();
+
+                Raylib.BeginTextureMode(this.uiTexture);
+
+                Raylib.ClearBackground(Color.BLANK);
+                SubmitUI();
+
+                HandleErrorModal();
+                igc.Draw();
+
+                Raylib.EndTextureMode();
+
+                Raylib.BeginDrawing();
+
+                Render();
+                Raylib.BeginBlendMode(BlendMode.BLEND_ALPHA);
+                Raylib.DrawTextureRec(this.uiTexture.texture, new Rectangle(0, 0, this.uiTexture.texture.width, -this.uiTexture.texture.height), Vector2.Zero, Color.WHITE);
+                Raylib.EndBlendMode();
+
+                Raylib.EndDrawing();
+                UserInput.End();
             }
-
-            UserInput.Begin();
-            Update();
-
-            Raylib.BeginTextureMode(this.uiTexture);
-
-            Raylib.ClearBackground(Color.BLANK);
-            SubmitUI();
-
-            HandleErrorModal();
-            igc.Draw();
-
-            Raylib.EndTextureMode();
-
-            Raylib.BeginDrawing();
-
-            Render();
-            Raylib.BeginBlendMode(BlendMode.BLEND_ALPHA);
-            Raylib.DrawTextureRec(this.uiTexture.texture, new Rectangle(0, 0, this.uiTexture.texture.width, -this.uiTexture.texture.height), Vector2.Zero, Color.WHITE);
-            Raylib.EndBlendMode();
-
-            Raylib.EndDrawing();
-            UserInput.End();
         }
-
-        igc.Dispose();
-        Raylib.CloseWindow();
-        this.OnClose();
+        catch (Exception e)
+        {
+            // Application ran into uncaught exception
+            this.ModalError("Uncaught error: " + e.Message, ErrorModalType.OK);
+        }
+        finally
+        {
+            igc.Dispose();
+            Raylib.CloseWindow();
+            this.OnClose();
+        }
     }
 
     public void ModalError(string errorMessage, ErrorModalType type = ErrorModalType.OK, Action<ErrorModalResult> onResult = null)

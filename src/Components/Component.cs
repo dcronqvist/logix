@@ -238,9 +238,9 @@ public abstract class Component
         else if (this.Rotation == 1)
         {
             // Top to bottom
-            float x = this.Position.X - ((outputs - 1) * dist) / 2;
+            float x = this.Position.X + ((outputs - 1) * dist) / 2;
             float y = this.Position.Y + this.RotatedSize.Y / 2f;
-            return new Vector2(x + (index * dist), y + len);
+            return new Vector2(x - (index * dist), y + len);
         }
         else if (this.Rotation == 2)
         {
@@ -483,6 +483,12 @@ public abstract class Component
         this.RenderComponentText(mousePosInWorld, 18);
     }
 
+    // Is called between Update and Render
+    public virtual void Interact(Vector2 mousePosInWorld, Simulator simulator)
+    {
+
+    }
+
     public virtual void OnSingleSelectedSubmitUI()
     {
 
@@ -494,6 +500,7 @@ public abstract class Component
         // {
         //     a();
         // }
+        ImGui.Text("ID: " + this.uniqueID.ToString());
     }
 
     public virtual void RenderSelected()

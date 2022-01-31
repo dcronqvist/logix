@@ -23,6 +23,11 @@ public class Switch : Component
 
     public override void Update(Vector2 mousePosInWorld)
     {
+        base.Update(mousePosInWorld);
+    }
+
+    public override void Interact(Vector2 mousePosInWorld, Simulator simulator)
+    {
         if (Raylib.IsMouseButtonPressed(MouseButton.MOUSE_RIGHT_BUTTON))
         {
             for (int i = 0; i < this.Values.Count; i++)
@@ -35,11 +40,7 @@ public class Switch : Component
                     this.ToggleValue(this.Values.Count - i - 1);
                 }
             }
-
-
         }
-
-        base.Update(mousePosInWorld);
     }
 
     public override void Render(Vector2 mousePosInWorld)

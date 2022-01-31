@@ -19,6 +19,7 @@ public class Simulator
 
     public void Update(Vector2 mousePosInWorld)
     {
+        //this.Components.Shuffle();
         foreach (Component component in this.Components)
         {
             component.Update(mousePosInWorld);
@@ -27,6 +28,19 @@ public class Simulator
         foreach (Wire wire in this.Wires)
         {
             wire.Update(mousePosInWorld, this);
+        }
+    }
+
+    public void Interact(Vector2 mousePosInWorld)
+    {
+        foreach (Component component in this.Components)
+        {
+            component.Interact(mousePosInWorld, this);
+        }
+
+        foreach (Wire w in this.Wires)
+        {
+            w.Interact(mousePosInWorld, this);
         }
     }
 
@@ -40,8 +54,6 @@ public class Simulator
         foreach (Component component in this.Components)
         {
             component.Render(mousePosInWorld);
-            //if (Raylib.CheckCollisionPointRec(c))
-            // TODO: ADD context menu to component in world
         }
 
         foreach (Component component in this.SelectedComponents)

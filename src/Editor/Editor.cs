@@ -825,6 +825,7 @@ public class Editor : Application
     {
         simulator.AddComponent(comp);
         simulator.ClearSelection();
+        simulator.SelectedWirePoints.Clear();
         simulator.SelectComponent(comp);
         this.fsm.SetState<StateMovingSelection>();
     }
@@ -850,6 +851,10 @@ public class Editor : Application
         this.hoveredComponent = simulator.GetComponentFromWorldPos(mousePosInWorld);
 
         simulator.Update(mousePosInWorld);
+        if (!ImGui.GetIO().WantCaptureMouse)
+        {
+            this.simulator.Interact(mousePosInWorld);
+        }
         this.fsm.Update(this);
 
         if (!ImGui.GetIO().WantCaptureKeyboard)
