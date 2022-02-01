@@ -39,10 +39,13 @@ public class Demultiplexer : Component
         }
         else
         {
+            for (int i = 0; i < dataBits; i++)
+            {
+                this.InputAt(selectorMultibit ? 1 + i : selectorBits + i).Identifier = $"D{i}";
+            }
+
             for (int i = 0; i < (int)Math.Pow(2, selectorBits); i++)
             {
-                this.InputAt(selectorMultibit ? 1 : selectorBits + i).Identifier = $"D{i}";
-
                 for (int j = 0; j < dataBits; j++)
                 {
                     this.OutputAt(i * dataBits + j).Identifier = $"{i}-{j}";

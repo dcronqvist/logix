@@ -27,7 +27,7 @@ public class ROM : Component
 
     public ROM(bool multibitAddress, int addressBits, bool multibitOutput, int outputBits, Vector2 position) : base(multibitAddress ? Util.Listify(addressBits) : Util.NValues(1, addressBits), multibitOutput ? Util.Listify(outputBits) : Util.NValues(1, outputBits), position)
     {
-        this.ROMFile = null;
+        this.ROMFile = "";
         this.ROMValues = new List<List<LogicValue>>();
 
         for (int i = 0; i < Inputs.Count(); i++)
@@ -44,11 +44,11 @@ public class ROM : Component
 
     public void ReloadROM()
     {
-        if (ROMFile != null)
+        if (ROMFile != "")
         {
             if (!File.Exists(this.ROMFile))
             {
-                this.ROMFile = null;
+                this.ROMFile = "";
                 return;
             }
 
@@ -58,7 +58,7 @@ public class ROM : Component
 
     public override void PerformLogic()
     {
-        if (this.ROMFile != null)
+        if (this.ROMFile != "")
         {
             int address = 0;
 
@@ -135,7 +135,7 @@ public class ROM : Component
             return new IODescription(co.Bits);
         }).ToList();
 
-        return new ROMDescription(this.Position, this.Rotation, Util.GetPathAsRelative(this.ROMFile), inputs, outputs);
+        return new ROMDescription(this.Position, this.Rotation, this.ROMFile == "" ? "" : Util.GetPathAsRelative(this.ROMFile), inputs, outputs);
     }
 
     public override Dictionary<string, int> GetGateAmount()
