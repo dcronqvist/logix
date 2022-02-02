@@ -1,3 +1,4 @@
+using System.Text;
 using LogiX.Components;
 using LogiX.SaveSystem;
 
@@ -46,6 +47,7 @@ public class Editor : Application
     int newRomOutputbits;
     bool newRomOutputMultibit;
     bool displayDebugWindow;
+    bool displayDemoWindow;
 
     public override void Initialize()
     {
@@ -77,6 +79,7 @@ public class Editor : Application
         this.componentCreationContexts = new Dictionary<string, Tuple<Func<Component>, IUISubmitter<bool, Editor>?>>();
         this.componentCategories = new Dictionary<string, List<string>>();
         this.displayDebugWindow = false;
+        this.displayDemoWindow = false;
     }
 
     public void SetProject(Project proj)
@@ -310,6 +313,11 @@ public class Editor : Application
         AddNewMainMenuItem("View", "Debug Window", new EditorAction((editor) => true, (editor) => editor.displayDebugWindow, (Editor editor, out string error) =>
         {
             this.displayDebugWindow = !this.displayDebugWindow;
+            error = ""; return true;
+        }));
+        AddNewMainMenuItem("View", "Demo Window", new EditorAction((editor) => true, (editor) => editor.displayDemoWindow, (Editor editor, out string error) =>
+        {
+            this.displayDemoWindow = !this.displayDemoWindow;
             error = ""; return true;
         }));
 
@@ -558,7 +566,7 @@ public class Editor : Application
         }
         catch (Exception e)
         {
-            base.ModalError(e.Message, ErrorModalType.OK);
+            base.ModalError(e.Message, ModalButtonsType.OK);
         }
     }
 
@@ -663,13 +671,13 @@ public class Editor : Application
                     ImGui.Separator();
                     if (ImGui.MenuItem("About"))
                     {
-                        this.ModalError(plugin.GetAboutInfo());
+                        this.Modal(plugin.name, plugin.GetAboutInfo());
                     }
                     if (ImGui.MenuItem("Uninstall"))
                     {
-                        base.ModalError("Are you sure you want to uninstall " + plugin.name + ", v" + plugin.version + "?", ErrorModalType.YesNo, (result) =>
+                        base.Modal("Uninstall plugin", "Are you sure you want to uninstall " + plugin.name + ", v" + plugin.version + "?", ModalButtonsType.YesNo, (result) =>
                         {
-                            if (result == ErrorModalResult.Yes)
+                            if (result == ModalResult.Yes)
                             {
                                 File.Delete(plugin.file);
                                 Plugin.TryLoadAllPlugins(out List<Plugin> plugins, out Dictionary<string, string> failedPlugins);
@@ -839,6 +847,8 @@ public class Editor : Application
 
     public void NewComponent(Component comp)
     {
+        List<Action<Editor, Component>> additionalContexts = Util.GetAdditionalComponentContexts(comp.GetType());
+        comp.AdditionalUISubmitters = additionalContexts;
         simulator.AddComponent(comp);
         simulator.ClearSelection();
         simulator.SelectedWirePoints.Clear();

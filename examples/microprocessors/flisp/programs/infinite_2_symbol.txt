@@ -1,0 +1,5 @@
+        ORG     $20
+
+a:      EQU     $00
+loop:   INC     a
+        JMP     loop

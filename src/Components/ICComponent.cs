@@ -157,10 +157,6 @@ public class ICComponent : Component
 
     public override void SubmitContextPopup(Editor.Editor editor)
     {
-        base.SubmitContextPopup(editor);
-
-        //ImGui.Text($"ICDescription ID: {this.Description.ID}");
-
         if (ImGui.Button("Paste inner circuit"))
         {
             CircuitDescription cd = this.Description.Circuit;
@@ -175,5 +171,6 @@ public class ICComponent : Component
             }
             ImGui.TreePop();
         }
+        base.SubmitContextPopup(editor);
     }
 }

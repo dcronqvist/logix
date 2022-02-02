@@ -15,9 +15,10 @@ public abstract class PluginMethod
     public abstract Func<Editor, bool> CanRun { get; }
 }
 
-public abstract class AdditionalComponentContext<TComp> where TComp : Component
+public abstract class AdditionalComponentContext
 {
-    public abstract Action Submit { get; }
+    public abstract IEnumerable<Type> AppliesToComponentTypes { get; }
+    public abstract Action<Editor, Component> Submit { get; }
 }
 
 public class CustomComponentData { }
@@ -175,6 +176,21 @@ public class Plugin
                 PluginMethod pm = (PluginMethod)assembly.CreateInstance(type.FullName, true, BindingFlags.CreateInstance, null, null, null, null);
                 p.AddCustomMethod(pm.Name, pm);
             }
+
+            // Get all classes that base type AdditionalComponentContext
+            types = assembly.GetTypes().Where(t => t.BaseType == typeof(AdditionalComponentContext)).ToList();
+            foreach (Type type in types)
+            {
+                AdditionalComponentContext ac = (AdditionalComponentContext)assembly.CreateInstance(type.FullName, true, BindingFlags.CreateInstance, null, null, null, null);
+                foreach (Type t in ac.AppliesToComponentTypes)
+                {
+                    if (!p.additionalComponentContexts.ContainsKey(t))
+                    {
+                        p.additionalComponentContexts.Add(t, new List<Action<Editor, Component>>());
+                    }
+                    p.additionalComponentContexts[t].Add(ac.Submit);
+                }
+            }
         }
 
         plugin = p;
@@ -229,6 +245,7 @@ public class Plugin
     public Dictionary<string, (Type, ConstructorInfo, Type)> customComponentTypes;
     public Dictionary<string, CustomDescription> customComponents;
     public Dictionary<string, PluginMethod> customMethods;
+    public Dictionary<Type, List<Action<Editor, Component>>> additionalComponentContexts;
 
     public Plugin(string version, string author, string description, string name, string website, string file)
     {
@@ -240,12 +257,22 @@ public class Plugin
         this.customComponents = new Dictionary<string, CustomDescription>();
         this.customMethods = new Dictionary<string, PluginMethod>();
         this.customComponentTypes = new Dictionary<string, (Type, ConstructorInfo, Type)>();
+        this.additionalComponentContexts = new Dictionary<Type, List<Action<Editor, Component>>>();
         this.file = file;
     }
 
     public string GetAboutInfo()
     {
-        return $"{name} by {author}\nVersion: {version}\nWebsite: {website}\n\n{description}";
+        string s = $"{name} by {author}\nVersion: {version}\nWebsite: {website}\n\n{description}";
+        if (this.additionalComponentContexts.Count > 0)
+        {
+            s += "\n\nAdds additional component contexts to the following components:\n";
+            foreach (Type t in this.additionalComponentContexts.Keys)
+            {
+                s += $"\n{t.Name}";
+            }
+        }
+        return s;
     }
 
     public void AddCustomComponent(CustomDescription customComponent)
@@ -277,5 +304,14 @@ public class Plugin
     public bool CanRunMethod(Editor editor, string name)
     {
         return customMethods[name].CanRun(editor);
+    }
+
+    public List<Action<Editor, Component>> GetComponentAdditionalContexts(Type componentType)
+    {
+        if (!additionalComponentContexts.ContainsKey(componentType))
+        {
+            return new List<Action<Editor, Component>>();
+        }
+        return additionalComponentContexts[componentType];
     }
 }

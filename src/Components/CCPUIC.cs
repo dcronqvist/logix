@@ -26,9 +26,9 @@ public class CCPUIC : IUISubmitter<bool, Editor.Editor>
 
         if (ImGui.Button("Exclude"))
         {
-            arg.ModalError("Are you sure you want to exclude this IC?", ErrorModalType.YesNo, (result) =>
+            arg.ModalError("Are you sure you want to exclude this IC?", ModalButtonsType.YesNo, (result) =>
             {
-                if (result == ErrorModalResult.Yes)
+                if (result == ModalResult.Yes)
                 {
                     exclude(desc);
                 }

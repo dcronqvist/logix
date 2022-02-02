@@ -168,8 +168,6 @@ public class MemoryComponent : Component
 
     public override void SubmitContextPopup(Editor.Editor editor)
     {
-        base.SubmitContextPopup(editor);
-
         if (ImGui.Button("Dump Memory to File..."))
         {
             editor.SelectFolder(Util.FileDialogStartDir, folder =>
@@ -195,6 +193,7 @@ public class MemoryComponent : Component
                 }
             }, ".txt");
         }
+        base.SubmitContextPopup(editor);
     }
 
     public override Dictionary<string, int> GetGateAmount()

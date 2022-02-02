@@ -5,6 +5,12 @@ using ImGuiNET;
 
 namespace LogiX.Editor;
 
+public enum Icons
+{
+    InfoCircle = 0xF05A,
+    AppStore = 0xF36F,
+}
+
 /// <summary>
 /// ImGui controller using Raylib-cs
 /// </summary>
@@ -29,12 +35,11 @@ public class ImguiController : IDisposable
     /// <summary>
     /// Creates a texture and loads the font data from ImGui.
     /// </summary>
-    public void Load(int width, int height, out ImFontPtr font)
+    public unsafe void Load(int width, int height, out ImFontPtr font)
     {
         ImGuiIOPtr io = ImGui.GetIO();
-        io.Fonts.AddFontDefault();
-        font = io.Fonts.AddFontFromFileTTF($"{Directory.GetCurrentDirectory()}/assets/opensans.ttf", 17);
-
+        ImFontPtr defaultFont = io.Fonts.AddFontDefault();
+        font = io.Fonts.AddFontFromFileTTF($"{Directory.GetCurrentDirectory()}/assets/opensans.ttf", 16);
         Resize(width, height);
         LoadFontTexture();
         SetupInput();

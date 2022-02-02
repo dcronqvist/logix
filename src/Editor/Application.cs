@@ -2,14 +2,14 @@ using LogiX.SaveSystem;
 
 namespace LogiX.Editor;
 
-public enum ErrorModalType
+public enum ModalButtonsType
 {
     OK,
     OKCancel,
     YesNo
 }
 
-public enum ErrorModalResult
+public enum ModalResult
 {
     OK,
     Cancel,
@@ -27,18 +27,17 @@ public abstract class Application
     public abstract void OnClose();
 
     public delegate void WindowResizeCallback(int x, int y);
-    public event WindowResizeCallback OnWindowResized;
+    public event WindowResizeCallback? OnWindowResized;
     public Vector2 WindowSize { get; set; }
     private RenderTexture2D uiTexture;
 
-    protected Modal currentModal;
+    private bool modalRequested;
+    private string? lastModalTitle;
+    private string? lastModalMessage;
+    private ModalButtonsType lastModalType;
+    private Action<ModalResult>? lastModalCallback;
 
-    private bool encounteredError;
-    private string lastErrorMessage;
-    private ErrorModalType lastErrorModalType;
-    private Action<ErrorModalResult>? lastErrorCallback;
-
-    public void Run(int windowWidth, int windowHeight, string windowTitle, int initialTargetFPS, string iconFile = null)
+    public void Run(int windowWidth, int windowHeight, string windowTitle, int initialTargetFPS, string? iconFile = null)
     {
 #if OSX
         Raylib.SetConfigFlags(ConfigFlags.FLAG_MSAA_4X_HINT | ConfigFlags.FLAG_VSYNC_HINT | ConfigFlags.FLAG_WINDOW_RESIZABLE | ConfigFlags.FLAG_WINDOW_HIGHDPI);
@@ -67,10 +66,10 @@ public abstract class Application
 
         LoadContent();
 
-        try
+        // Main application loop
+        while (!Raylib.WindowShouldClose())
         {
-            // Main application loop
-            while (!Raylib.WindowShouldClose())
+            try
             {
                 // Feed the input events to our ImGui controller, which passes them through to ImGui.
                 igc.Update(Raylib.GetFrameTime());
@@ -94,9 +93,9 @@ public abstract class Application
                 Raylib.ClearBackground(Color.BLANK);
                 ImGui.PushFont(font);
                 SubmitUI();
-                ImGui.PopFont();
 
-                HandleErrorModal();
+                HandleModal();
+                ImGui.PopFont();
                 igc.Draw();
 
                 Raylib.EndTextureMode();
@@ -110,78 +109,84 @@ public abstract class Application
 
                 Raylib.EndDrawing();
                 UserInput.End();
+
+            }
+            catch (Exception e)
+            {
+                // Application ran into uncaught exception
+                this.ModalError("Uncaught error: " + e.Message, ModalButtonsType.OK);
             }
         }
-        catch (Exception e)
-        {
-            // Application ran into uncaught exception
-            this.ModalError("Uncaught error: " + e.Message, ErrorModalType.OK);
-        }
-        finally
-        {
-            igc.Dispose();
-            Raylib.CloseWindow();
-            this.OnClose();
-        }
+
+
+        igc.Dispose();
+        Raylib.CloseWindow();
+        this.OnClose();
     }
 
-    public void ModalError(string errorMessage, ErrorModalType type = ErrorModalType.OK, Action<ErrorModalResult> onResult = null)
+    public void Modal(string modalTitle, string modalMessage, ModalButtonsType type = ModalButtonsType.OK, Action<ModalResult>? onResult = null)
     {
-        this.encounteredError = true;
-        this.lastErrorMessage = errorMessage;
-        this.lastErrorModalType = type;
-        this.lastErrorCallback = onResult;
+        this.modalRequested = true;
+        this.lastModalTitle = modalTitle;
+        this.lastModalMessage = modalMessage;
+        this.lastModalType = type;
+        this.lastModalCallback = onResult;
     }
 
-    private void HandleErrorModal()
+    public void ModalError(string errorMessage, ModalButtonsType type = ModalButtonsType.OK, Action<ModalResult>? onResult = null)
     {
-        if (encounteredError)
-        {
-            ImGui.OpenPopup("###Error");
+        Modal("Error", errorMessage, type, onResult);
+    }
 
-            if (ImGui.BeginPopupModal("###Error", ref this.encounteredError, ImGuiWindowFlags.AlwaysAutoResize))
+    private void HandleModal()
+    {
+        if (modalRequested)
+        {
+            ImGui.OpenPopup($"###{this.lastModalTitle}");
+
+            if (ImGui.BeginPopupModal($"###{this.lastModalTitle}", ref this.modalRequested, ImGuiWindowFlags.AlwaysAutoResize))
             {
-                ImGui.Text(this.lastErrorMessage);
+                ImGui.Text(this.lastModalMessage);
 
-                if (this.lastErrorModalType == ErrorModalType.OK)
+                if (this.lastModalType == ModalButtonsType.OK)
                 {
                     if (ImGui.Button("OK"))
                     {
                         ImGui.CloseCurrentPopup();
-                        encounteredError = false;
-                        this.lastErrorCallback?.Invoke(ErrorModalResult.OK);
+                        modalRequested = false;
+                        this.lastModalCallback?.Invoke(ModalResult.OK);
                     }
                 }
-                else if (this.lastErrorModalType == ErrorModalType.OKCancel)
+                else if (this.lastModalType == ModalButtonsType.OKCancel)
                 {
                     if (ImGui.Button("OK"))
                     {
                         ImGui.CloseCurrentPopup();
-                        encounteredError = false;
-                        this.lastErrorCallback?.Invoke(ErrorModalResult.OK);
+                        modalRequested = false;
+                        this.lastModalCallback?.Invoke(ModalResult.OK);
                     }
                     ImGui.SameLine();
                     if (ImGui.Button("Cancel"))
                     {
                         ImGui.CloseCurrentPopup();
-                        encounteredError = false;
-                        this.lastErrorCallback?.Invoke(ErrorModalResult.Cancel);
+                        modalRequested = false;
+                        this.lastModalCallback?.Invoke(ModalResult.Cancel);
                     }
                 }
-                else if (this.lastErrorModalType == ErrorModalType.YesNo)
+                else if (this.lastModalType == ModalButtonsType.YesNo)
                 {
                     if (ImGui.Button("Yes"))
                     {
                         ImGui.CloseCurrentPopup();
-                        encounteredError = false;
-                        this.lastErrorCallback?.Invoke(ErrorModalResult.Yes);
+                        modalRequested = false;
+                        this.lastModalCallback?.Invoke(ModalResult.Yes);
                     }
                     ImGui.SameLine();
                     if (ImGui.Button("No"))
                     {
                         ImGui.CloseCurrentPopup();
-                        encounteredError = false;
-                        this.lastErrorCallback?.Invoke(ErrorModalResult.No);
+                        modalRequested = false;
+                        this.lastModalCallback?.Invoke(ModalResult.No);
                     }
                 }
 

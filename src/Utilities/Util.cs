@@ -1,3 +1,4 @@
+using System.Text;
 using LogiX.Components;
 using LogiX.SaveSystem;
 
@@ -448,5 +449,18 @@ public static class Util
             list[k] = list[n];
             list[n] = value;
         }
+    }
+
+    public static List<Action<Editor.Editor, Component>> GetAdditionalComponentContexts(Type component)
+    {
+        if (Plugins == null)
+            return new List<Action<Editor.Editor, Component>>();
+
+        List<Action<Editor.Editor, Component>> actions = new List<Action<Editor.Editor, Component>>();
+        foreach (Plugin p in Plugins)
+        {
+            actions = actions.Concat(p.GetComponentAdditionalContexts(component)).ToList();
+        }
+        return actions;
     }
 }

@@ -1,0 +1,6 @@
+ORG $20
+
+LDA #$44
+SUBA #$01
+STA $5
+JMP $22

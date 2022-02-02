@@ -54,9 +54,9 @@ public abstract class Component
     public virtual bool TextVisible => true;
     public virtual bool DrawIOIdentifiers => false;
     public virtual bool DrawBoxNormal => true;
-    public virtual bool HasContextMenu => false;
+    public virtual bool HasContextMenu => this.AdditionalUISubmitters.Count > 0;
 
-    //public List<Action> AdditionalUISubmitters { get; private set; }
+    public List<Action<Editor.Editor, Component>> AdditionalUISubmitters { get; set; }
 
     public string uniqueID;
 
@@ -65,6 +65,7 @@ public abstract class Component
     public Component(IEnumerable<int> bitsPerInput, IEnumerable<int> bitsPerOutput, Vector2 position)
     {
         this.Position = position;
+        this.AdditionalUISubmitters = Util.GetAdditionalComponentContexts(this.GetType());
 
         // Creating inputs
         this.Inputs = new List<ComponentInput>();
@@ -496,11 +497,10 @@ public abstract class Component
 
     public virtual void SubmitContextPopup(LogiX.Editor.Editor editor)
     {
-        // foreach (Action a in this.AdditionalUISubmitters)
-        // {
-        //     a();
-        // }
-        ImGui.Text("ID: " + this.uniqueID.ToString());
+        foreach (Action<Editor.Editor, Component> a in this.AdditionalUISubmitters)
+        {
+            a(editor, this);
+        }
     }
 
     public virtual void RenderSelected()
