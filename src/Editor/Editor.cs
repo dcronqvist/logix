@@ -622,7 +622,6 @@ public class Editor : Application
             if (ImGui.MenuItem("Reload plugins"))
             {
                 Plugin.TryLoadAllPlugins(out List<Plugin> plugins, out Dictionary<string, string> failedPlugins);
-                Util.Plugins = plugins;
                 if (failedPlugins.Count > 0)
                 {
                     string error = "";
@@ -632,6 +631,7 @@ public class Editor : Application
                     }
                     base.ModalError(error);
                 }
+                Util.Plugins = plugins;
                 this.SetProject(this.loadedProject);
             }
 
@@ -673,7 +673,6 @@ public class Editor : Application
                             {
                                 File.Delete(plugin.file);
                                 Plugin.TryLoadAllPlugins(out List<Plugin> plugins, out Dictionary<string, string> failedPlugins);
-                                Util.Plugins = plugins;
                                 if (failedPlugins.Count > 0)
                                 {
                                     string error = "";
@@ -683,6 +682,7 @@ public class Editor : Application
                                     }
                                     base.ModalError(error);
                                 }
+                                Util.Plugins = plugins;
                                 this.SetProject(this.loadedProject);
                             }
                         });

@@ -17,7 +17,19 @@ public class FileDialog : Modal
 {
     private static readonly Vector2 DefaultFilePickerSize = new Vector2(600, 400);
 
-    public string CurrentFolder { get; set; }
+    private string _currentFolder;
+    public string CurrentFolder
+    {
+        get
+        {
+            return _currentFolder;
+        }
+        set
+        {
+            _currentFolder = value;
+            Util.FileDialogStartDir = value;
+        }
+    }
     public string currentSelectedFile;
     public string SelectedFile { get; set; }
     public string[] FilteredExtensions { get; set; }
