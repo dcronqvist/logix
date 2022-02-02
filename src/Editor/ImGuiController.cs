@@ -29,11 +29,11 @@ public class ImguiController : IDisposable
     /// <summary>
     /// Creates a texture and loads the font data from ImGui.
     /// </summary>
-    public void Load(int width, int height)
+    public void Load(int width, int height, out ImFontPtr font)
     {
         ImGuiIOPtr io = ImGui.GetIO();
-        //io.Fonts.AddFontDefault();
-        io.Fonts.AddFontFromFileTTF($"{Directory.GetCurrentDirectory()}/assets/opensans.ttf", 17);
+        io.Fonts.AddFontDefault();
+        font = io.Fonts.AddFontFromFileTTF($"{Directory.GetCurrentDirectory()}/assets/opensans.ttf", 17);
 
         Resize(width, height);
         LoadFontTexture();

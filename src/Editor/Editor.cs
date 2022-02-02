@@ -619,6 +619,22 @@ public class Editor : Application
                 }, ".zip");
             }
 
+            if (ImGui.MenuItem("Reload plugins"))
+            {
+                Plugin.TryLoadAllPlugins(out List<Plugin> plugins, out Dictionary<string, string> failedPlugins);
+                Util.Plugins = plugins;
+                if (failedPlugins.Count > 0)
+                {
+                    string error = "";
+                    foreach (KeyValuePair<string, string> kvp in failedPlugins)
+                    {
+                        error += $"{kvp.Key} failed to load: {kvp.Value}\n";
+                    }
+                    base.ModalError(error);
+                }
+                this.SetProject(this.loadedProject);
+            }
+
             ImGui.Separator();
 
             // Show list of plugins

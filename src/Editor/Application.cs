@@ -63,7 +63,7 @@ public abstract class Application
 
         Raylib.SetExitKey(KeyboardKey.KEY_NULL);
         ImguiController igc = new ImguiController();
-        igc.Load(windowWidth, windowHeight);
+        igc.Load(windowWidth, windowHeight, out ImFontPtr font);
 
         LoadContent();
 
@@ -92,7 +92,9 @@ public abstract class Application
                 Raylib.BeginTextureMode(this.uiTexture);
 
                 Raylib.ClearBackground(Color.BLANK);
+                ImGui.PushFont(font);
                 SubmitUI();
+                ImGui.PopFont();
 
                 HandleErrorModal();
                 igc.Draw();

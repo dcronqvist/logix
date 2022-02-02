@@ -410,6 +410,16 @@ public static class Util
         return sum;
     }
 
+    public static byte GetAsByte(this IEnumerable<LogicValue> values)
+    {
+        return (byte)GetAsInt(values);
+    }
+
+    public static byte GetAsByte(this LogicValue value)
+    {
+        return (byte)value.GetAsInt();
+    }
+
     public static List<LogicValue> GetAsLogicValues(this int value, int bits)
     {
         List<LogicValue> values = new List<LogicValue>();
@@ -418,6 +428,11 @@ public static class Util
             values.Add((value & (1 << i)) == 0 ? LogicValue.LOW : LogicValue.HIGH);
         }
         return values;
+    }
+
+    public static List<LogicValue> GetAsLogicValues(this byte value, int bits)
+    {
+        return GetAsLogicValues((int)value, bits);
     }
 
     private static Random rng = new Random();
