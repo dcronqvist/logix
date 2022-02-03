@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using System.Text;
 using LogiX.Components;
 using LogiX.SaveSystem;
@@ -8,7 +9,7 @@ public class Editor : Application
 {
     // Editor states
     public Camera2D editorCamera;
-    EditorState editorState;
+
     public Simulator simulator;
     public Project loadedProject;
     Component contextMenuComponent;
@@ -33,13 +34,7 @@ public class Editor : Application
     public Vector2 recSelectFirstCorner;
 
     public ComponentOutput? connectFrom;
-
     CircuitDescription? copiedCircuit;
-    List<SLDescription> icSwitches;
-    Dictionary<SLDescription, int> icSwitchGroup;
-    Dictionary<SLDescription, int> icLampGroup;
-    List<SLDescription> icLamps;
-    string icName;
 
     // UI VARIABLES
     int newComponentBits;
@@ -119,7 +114,6 @@ public class Editor : Application
     {
         Vector2 windowSize = new Vector2(Raylib.GetScreenWidth(), Raylib.GetScreenHeight());
         this.editorCamera = new Camera2D(windowSize / 2.0f, Vector2.Zero, 0f, 1f);
-        this.editorState = EditorState.None;
 
         simulator = new Simulator();
 
@@ -716,24 +710,6 @@ public class Editor : Application
         this.HandleComponentCreationContexts();
         ImGui.End();
 
-        if (this.editorState == EditorState.MakingIC)
-        {
-            ImGui.OpenPopup("Create Integrated Circuit");
-        }
-
-        // MAKING IC WINDOW
-        /*
-        Vector2 windowSize = new Vector2(Raylib.GetScreenWidth(), Raylib.GetScreenHeight());
-        ImGui.SetNextWindowPos(windowSize / 2, ImGuiCond.Always, new Vector2(0.5f, 0.5f));
-        Vector2 popupSize = new Vector2(120) * 4f;
-        ImGui.SetNextWindowSizeConstraints(popupSize, popupSize);
-        ImGui.SetNextWindowSize(popupSize);
-        if (ImGui.BeginPopupModal("Create Integrated Circuit"))
-        {
-            
-            ImGui.EndPopup();
-        }*/
-
         // DEBUG WINDOW
         if (this.displayDebugWindow && ImGui.Begin("Debug stuff", ref this.displayDebugWindow))
         {
@@ -745,8 +721,6 @@ public class Editor : Application
             ImGui.Text(UserInput.GetMousePositionInWorld(this.editorCamera).ToString());
             ImGui.Text("Camera View Size:");
             ImGui.Text(UserInput.GetViewSize(this.editorCamera).ToString());
-            ImGui.Text("Current editor state:");
-            ImGui.Text(this.editorState.ToString());
             ImGui.Text("IO Want Keyboard:");
             ImGui.Text(ImGui.GetIO().WantCaptureKeyboard.ToString());
             ImGui.Text("IO Any Item Active:");
