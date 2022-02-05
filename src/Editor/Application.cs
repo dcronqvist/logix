@@ -39,10 +39,12 @@ public abstract class Application
 
     public void Run(int windowWidth, int windowHeight, string windowTitle, int initialTargetFPS, string? iconFile = null)
     {
+        ConfigFlags commonFlags = ConfigFlags.FLAG_MSAA_4X_HINT | ConfigFlags.FLAG_VSYNC_HINT | ConfigFlags.FLAG_WINDOW_RESIZABLE;
+
 #if OSX
-        Raylib.SetConfigFlags(ConfigFlags.FLAG_MSAA_4X_HINT | ConfigFlags.FLAG_VSYNC_HINT | ConfigFlags.FLAG_WINDOW_RESIZABLE | ConfigFlags.FLAG_WINDOW_HIGHDPI);
+        Raylib.SetConfigFlags(commonFlags | ConfigFlags.FLAG_WINDOW_HIGHDPI);
 #else
-        Raylib.SetConfigFlags(ConfigFlags.FLAG_MSAA_4X_HINT | ConfigFlags.FLAG_VSYNC_HINT | ConfigFlags.FLAG_WINDOW_RESIZABLE);
+        Raylib.SetConfigFlags(commonFlags);
 #endif
 
         Initialize();

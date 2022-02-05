@@ -1,8 +1,12 @@
 rm -rf ./build
 
-dotnet publish . --self-contained true --use-current-runtime -c Release -o .\build\win-x64 --os win
-dotnet publish . --self-contained true --use-current-runtime -c Release -o .\build\osx-x64 --os osx
-dotnet publish . --self-contained true --use-current-runtime -c Release -o .\build\linux-x64 --os linux
+mkdir -p build/win-x64/assets
+mkdir -p build/osx-x64/assets
+mkdir -p build/linux-x64/assets
+
+dotnet publish . --self-contained true --runtime win-x64 -c Release -o ./build/win-x64
+dotnet publish . --self-contained true --runtime osx-x64 -c Release -o ./build/osx-x64
+dotnet publish . --self-contained true --runtime linux-x64 -c Release -o ./build/linux-x64
 
 cp -r ./assets ./build/win-x64/assets
 cp -r ./assets ./build/osx-x64/assets
