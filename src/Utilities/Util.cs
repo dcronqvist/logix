@@ -467,7 +467,7 @@ public static class Util
         return actions;
     }
 
-    public static ICDescription CreateICDescriptionFromGateAlgebra(string icName, string gateAlgebra)
+    public static ICDescription? CreateICDescriptionFromGateAlgebra(string icName, string gateAlgebra)
     {
         GateAlgebraLexer mgl = new GateAlgebraLexer(CharStreams.fromString(gateAlgebra));
         GateAlgebraParser mgp = new GateAlgebraParser(new CommonTokenStream(mgl));
@@ -479,5 +479,35 @@ public static class Util
         List<List<string>> outputOrder = cd.GetLamps().Select(x => new List<string>() { x.ID }).ToList();
         ICDescription icd = new ICDescription(icName, System.Numerics.Vector2.Zero, 0, cd, inputOrder, outputOrder);
         return icd;
+    }
+
+    public static bool TryValidateGateAlgebra(string gateAlgebra, out string error)
+    {
+        using (StringWriter sw = new StringWriter())
+        {
+            try
+            {
+                GateAlgebraLexer mgl = new GateAlgebraLexer(CharStreams.fromString(gateAlgebra));
+                GateAlgebraParser mgp = new GateAlgebraParser(new CommonTokenStream(mgl), sw, sw);
+                mgp.BuildParseTree = true;
+
+                if (mgp.component() == null)
+                {
+                    error = sw.ToString();
+                    return false;
+                }
+
+                IParseTree tree = mgp.component();
+                VisitorCreateCircuit vcc = new VisitorCreateCircuit();
+                CircuitDescription cd = vcc.Visit(tree);
+                error = "";
+                return true;
+            }
+            catch (Exception e)
+            {
+                error = sw.ToString();
+                return false;
+            }
+        }
     }
 }

@@ -134,6 +134,11 @@ public abstract class Application
         this.lastModalCallback = onResult;
     }
 
+    public bool AppModalRequested()
+    {
+        return this.modalRequested;
+    }
+
     public void ModalError(string errorMessage, ModalButtonsType type = ModalButtonsType.OK, Action<ModalResult>? onResult = null)
     {
         Modal("Error", errorMessage, type, onResult);

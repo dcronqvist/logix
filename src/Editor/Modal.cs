@@ -13,15 +13,16 @@ public abstract class Modal
 
     public Modal(ImGuiPopupFlags popupFlags, ImGuiWindowFlags windowFlags) : this()
     {
+        this.isOpen = true;
         this.popupFlags = popupFlags;
         this.windowFlags = windowFlags;
     }
 
     public bool SubmitUI(Editor editor)
     {
-        ImGui.OpenPopup($"###Modal");
+        ImGui.OpenPopup($"###Modal", this.popupFlags);
 
-        if (ImGui.BeginPopupModal($"###Modal", ref this.isOpen, ImGuiWindowFlags.NoNav))
+        if (ImGui.BeginPopupModal($"###Modal", ref this.isOpen, this.windowFlags | ImGuiWindowFlags.NoNav))
         {
             if (this.SubmitContent(editor))
             {

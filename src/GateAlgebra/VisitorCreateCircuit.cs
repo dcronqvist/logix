@@ -4,19 +4,15 @@ using LogiX.SaveSystem;
 using LogiX.Components;
 using System.Numerics;
 using LogiX;
-using Antlr4.Runtime.Tree;
-using Antlr4.Runtime;
 
 namespace LogiX.GateAlgebra;
 
 public class VisitorCreateCircuit : IGateAlgebraVisitor<CircuitDescription?>
 {
     List<Component> components = new List<Component>();
-    LogicGate currentGate;
-    Component currentComponent;
+    Component currentFrom;
+    Component currentTo;
     Dictionary<string, Switch> switches = new Dictionary<string, Switch>();
-
-    bool debug = false;
 
     public VisitorCreateCircuit()
     {
@@ -32,19 +28,22 @@ public class VisitorCreateCircuit : IGateAlgebraVisitor<CircuitDescription?>
     public CircuitDescription? VisitAssignment([NotNull] GateAlgebraParser.AssignmentContext context)
     {
         string name = context.variable().GetText();
-        if (debug)
-            Console.WriteLine($"Ass: Creating new output {name}");
+        Console.WriteLine($"Ass: Creating new output {name}");
 
-
-        context.primary().Accept(this);
 
         Lamp l = new Lamp(1, Vector2.Zero, name);
-        Console.WriteLine($"Ass: Connecting wire from {currentComponent.Text} to {l.ID}");
-        Wire w = new Wire(1, l, 0, currentComponent, 0);
-        l.SetInputWire(0, w);
-        currentGate.AddOutputWire(0, w);
+        currentTo = l;
+        context.primary().Accept(this);
 
-        components.Add(l);
+        Console.WriteLine($"Ass: Connecting wire from {currentFrom.Text} to {l.ID}");
+        Wire w = new Wire(1, l, 0, currentFrom, 0);
+        l.SetInputWire(0, w);
+        currentFrom.AddOutputWire(0, w);
+
+        if (!components.Contains(l))
+        {
+            components.Add(l);
+        }
         return null;
     }
 
@@ -86,9 +85,8 @@ public class VisitorCreateCircuit : IGateAlgebraVisitor<CircuitDescription?>
 
     public CircuitDescription? VisitGate([NotNull] GateAlgebraParser.GateContext context)
     {
-        currentGate = new LogicGate(2, false, Util.GetGateLogicFromName(context.Start.Text.ToUpper()), Vector2.Zero);
-        if (debug)
-            Console.WriteLine($"Gate: Created new {currentGate.Text} gate");
+        currentTo = new LogicGate(2, false, Util.GetGateLogicFromName(context.Start.Text.ToUpper()), Vector2.Zero);
+        Console.WriteLine($"Gate: Created new {currentTo.Text} gate");
         return null;
     }
 
@@ -101,39 +99,51 @@ public class VisitorCreateCircuit : IGateAlgebraVisitor<CircuitDescription?>
             for (int i = 0; i < context.gate().Length; i++)
             {
                 context.gate(i).Accept(this);
-                Component prevCom = currentGate;
+                Component previousTo = currentTo;
 
+                Wire w1 = new Wire(1, currentTo, 0, currentFrom, 0);
 
-                Wire w1 = new Wire(1, currentGate, 0, currentComponent, 0);
+                if (!components.Contains(currentTo))
+                    components.Add(currentTo);
+                if (!components.Contains(currentFrom))
+                    components.Add(currentFrom);
 
-                if (!components.Contains(currentGate))
-                    components.Add(currentGate);
+                currentTo.SetInputWire(0, w1);
+                currentFrom.AddOutputWire(0, w1);
 
-                currentGate.SetInputWire(0, w1);
-                currentComponent.AddOutputWire(0, w1);
-                if (debug)
-                    Console.WriteLine($"Prim1: Connecting wire from {currentComponent.Text} gate to {currentGate.Text}");
-
-                if (!components.Contains(currentComponent))
-                {
-                    components.Add(currentComponent);
-                }
+                Console.WriteLine($"Prim1: Connecting wire from {currentFrom.Text} gate to {currentTo.Text}");
 
                 context.expression(i + 1).Accept(this);
 
-                Wire w2 = new Wire(1, prevCom, 1, currentComponent, 0);
-                prevCom.SetInputWire(1, w2);
-                currentComponent.AddOutputWire(0, w2);
-                if (debug)
-                    Console.WriteLine($"Prim2: Connecting wire from {currentComponent.Text} gate to {prevCom.Text}");
+                Wire w2 = new Wire(1, previousTo, 1, currentFrom, 0);
+                previousTo.SetInputWire(1, w2);
+                currentFrom.AddOutputWire(0, w2);
 
-                if (!components.Contains(currentComponent))
+                Console.WriteLine($"Prim2: Connecting wire from {currentFrom.Text} gate to {previousTo.Text}");
+
+                if (!components.Contains(currentFrom))
                 {
-                    components.Add(currentComponent);
+                    components.Add(currentFrom);
                 }
 
-                currentComponent = prevCom;
+                currentFrom = previousTo;
             }
+        }
+        else
+        {
+            if (!components.Contains(currentFrom))
+            {
+                components.Add(currentFrom);
+            }
+
+            if (!components.Contains(currentTo))
+            {
+                components.Add(currentTo);
+            }
+
+            Wire w3 = new Wire(0, currentTo, 0, currentFrom, 0);
+            currentTo.SetInputWire(0, w3);
+            currentFrom.AddOutputWire(0, w3);
         }
 
         return null;
@@ -150,9 +160,8 @@ public class VisitorCreateCircuit : IGateAlgebraVisitor<CircuitDescription?>
         {
             switches.Add(context.Start.Text, new Switch(1, Vector2.Zero, context.Start.Text));
         }
-        currentComponent = switches[context.Start.Text];
-        if (debug)
-            Console.WriteLine($"Var: Current switch is now: {context.Start.Text}");
+        currentFrom = switches[context.Start.Text];
+        Console.WriteLine($"Var: Current switch is now: {context.Start.Text}");
         return null;
     }
 }

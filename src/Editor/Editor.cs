@@ -786,10 +786,15 @@ public class Editor : Application
 
         if (this.currentModal != null)
         {
+            if (base.AppModalRequested())
+            {
+                this.currentModal = null;
+            }
             if (this.currentModal.SubmitUI(this))
             {
                 this.currentModal = null;
             }
+
         }
 
         this.fsm.SubmitUI(this);
