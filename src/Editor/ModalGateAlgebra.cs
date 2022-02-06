@@ -25,6 +25,8 @@ public class ModalGateAlgebra : Modal
             return true;
         }
         ImGui.SameLine();
+        Util.HelpMarkerLink("https://github.com/dcronqvist/logix", "For help regarding GateAlgebra and its syntax, see this link");
+        ImGui.SameLine();
 
         if (this.isValid)
         {

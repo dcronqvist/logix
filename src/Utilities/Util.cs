@@ -510,4 +510,19 @@ public static class Util
             }
         }
     }
+
+    public static void HelpMarkerLink(string url, string tooltip = null)
+    {
+        ImGui.TextDisabled("(?)");
+        if (ImGui.IsItemHovered())
+        {
+            ImGui.BeginTooltip();
+            ImGui.Text(tooltip == null ? $"Click to open in browser: {url}" : tooltip + $"\nOpens {url} in browser");
+            ImGui.EndTooltip();
+            if (ImGui.IsMouseClicked(ImGuiMouseButton.Left))
+            {
+                Raylib.OpenURL(url);
+            }
+        }
+    }
 }

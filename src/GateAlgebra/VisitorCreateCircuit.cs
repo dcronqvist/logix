@@ -28,7 +28,7 @@ public class VisitorCreateCircuit : IGateAlgebraVisitor<CircuitDescription?>
     public CircuitDescription? VisitAssignment([NotNull] GateAlgebraParser.AssignmentContext context)
     {
         string name = context.variable().GetText();
-        Console.WriteLine($"Ass: Creating new output {name}");
+        //Console.WriteLine($"Ass: Creating new output {name}");
 
 
         Lamp l = new Lamp(1, Vector2.Zero, name);
@@ -86,7 +86,7 @@ public class VisitorCreateCircuit : IGateAlgebraVisitor<CircuitDescription?>
     public CircuitDescription? VisitGate([NotNull] GateAlgebraParser.GateContext context)
     {
         currentTo = new LogicGate(2, false, Util.GetGateLogicFromName(context.Start.Text.ToUpper()), Vector2.Zero);
-        Console.WriteLine($"Gate: Created new {currentTo.Text} gate");
+        //Console.WriteLine($"Gate: Created new {currentTo.Text} gate");
         return null;
     }
 
@@ -111,7 +111,7 @@ public class VisitorCreateCircuit : IGateAlgebraVisitor<CircuitDescription?>
                 currentTo.SetInputWire(0, w1);
                 currentFrom.AddOutputWire(0, w1);
 
-                Console.WriteLine($"Prim1: Connecting wire from {currentFrom.Text} gate to {currentTo.Text}");
+                //Console.WriteLine($"Prim1: Connecting wire from {currentFrom.Text} gate to {currentTo.Text}");
 
                 context.expression(i + 1).Accept(this);
 
@@ -119,7 +119,7 @@ public class VisitorCreateCircuit : IGateAlgebraVisitor<CircuitDescription?>
                 previousTo.SetInputWire(1, w2);
                 currentFrom.AddOutputWire(0, w2);
 
-                Console.WriteLine($"Prim2: Connecting wire from {currentFrom.Text} gate to {previousTo.Text}");
+                //Console.WriteLine($"Prim2: Connecting wire from {currentFrom.Text} gate to {previousTo.Text}");
 
                 if (!components.Contains(currentFrom))
                 {
@@ -161,7 +161,7 @@ public class VisitorCreateCircuit : IGateAlgebraVisitor<CircuitDescription?>
             switches.Add(context.Start.Text, new Switch(1, Vector2.Zero, context.Start.Text));
         }
         currentFrom = switches[context.Start.Text];
-        Console.WriteLine($"Var: Current switch is now: {context.Start.Text}");
+        //Console.WriteLine($"Var: Current switch is now: {context.Start.Text}");
         return null;
     }
 }
