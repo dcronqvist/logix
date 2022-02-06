@@ -304,6 +304,12 @@ public class Editor : Application
                 return false;
             }
         }, this.primaryKeyMod, KeyboardKey.KEY_I));
+        AddNewMainMenuItem("Integrated Circuits", "Create IC from Gate Algebra", new EditorAction((editor) => true, (editor) => false, (Editor editor, out string error) =>
+        {
+            this.currentModal = new ModalGateAlgebra();
+            error = "";
+            return true;
+        }, this.primaryKeyMod, KeyboardKey.KEY_G));
         AddNewMainMenuItem("View", "Debug Window", new EditorAction((editor) => true, (editor) => editor.displayDebugWindow, (Editor editor, out string error) =>
         {
             this.displayDebugWindow = !this.displayDebugWindow;

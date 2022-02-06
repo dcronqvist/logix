@@ -13,6 +13,6 @@ class Program
     {
         Editor editor = new Editor();
         Settings.LoadSettings();
-        editor.Run(Settings.GetSettingValue<int>("windowWidth"), Settings.GetSettingValue<int>("windowHeight"), "LogiX", 0, "assets/logo.png");
+        editor.Run(Settings.GetSettingValue<int>("windowWidth"), Settings.GetSettingValue<int>("windowHeight"), "LogiX", Settings.GetSettingValue<int>("preferredFramerate"), "assets/logo.png");
     }
 }

@@ -8,5 +8,12 @@
         "**/Thumbs.db": true,
         "**/imgui.ini": true,
     },
-    "explorer.compactFolders": false
+    "explorer.compactFolders": false,
+    "antlr4.generation": {
+        "mode": "external",
+        "language": "CSharp",
+        "listeners": false,
+        "visitors": true,
+        "package": "LogiX.GateAlgebra",
+    }
 }

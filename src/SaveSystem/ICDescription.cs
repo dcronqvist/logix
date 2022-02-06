@@ -117,7 +117,11 @@ public class ICDescription : ComponentDescription
         string finalFile = file.Contains(".") ? file : file + EXTENSION;
         using (StreamWriter sw = new StreamWriter(finalFile))
         {
-            sw.Write(JsonSerializer.Serialize(this));
+            JsonSerializerOptions jso = new JsonSerializerOptions();
+            jso.Converters.Add(new ComponentConverter());
+            jso.IncludeFields = true;
+
+            sw.Write(JsonSerializer.Serialize(this, jso));
         }
     }
 }

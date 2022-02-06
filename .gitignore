@@ -8,6 +8,10 @@ imgui.ini
 .DS_Store
 assets/config.json
 
+# Antlr4 stuff
+*/**/.antlr
+*/**/*.tokens
+
 # User-specific files
 *.rsuser
 *.suo

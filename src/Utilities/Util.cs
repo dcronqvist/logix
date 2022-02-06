@@ -1,6 +1,9 @@
 using System.Text;
 using LogiX.Components;
 using LogiX.SaveSystem;
+using LogiX.GateAlgebra;
+using Antlr4.Runtime.Tree;
+using Antlr4.Runtime;
 
 namespace LogiX;
 
@@ -462,5 +465,19 @@ public static class Util
             actions = actions.Concat(p.GetComponentAdditionalContexts(component)).ToList();
         }
         return actions;
+    }
+
+    public static ICDescription CreateICDescriptionFromGateAlgebra(string icName, string gateAlgebra)
+    {
+        GateAlgebraLexer mgl = new GateAlgebraLexer(CharStreams.fromString(gateAlgebra));
+        GateAlgebraParser mgp = new GateAlgebraParser(new CommonTokenStream(mgl));
+        mgp.BuildParseTree = true;
+        IParseTree tree = mgp.component();
+        VisitorCreateCircuit vcc = new VisitorCreateCircuit();
+        CircuitDescription cd = vcc.Visit(tree);
+        List<List<string>> inputOrder = cd.GetSwitches().Select(x => new List<string>() { x.ID }).ToList();
+        List<List<string>> outputOrder = cd.GetLamps().Select(x => new List<string>() { x.ID }).ToList();
+        ICDescription icd = new ICDescription(icName, System.Numerics.Vector2.Zero, 0, cd, inputOrder, outputOrder);
+        return icd;
     }
 }

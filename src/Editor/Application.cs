@@ -39,14 +39,13 @@ public abstract class Application
 
     public void Run(int windowWidth, int windowHeight, string windowTitle, int initialTargetFPS, string? iconFile = null)
     {
-        ConfigFlags commonFlags = ConfigFlags.FLAG_MSAA_4X_HINT | ConfigFlags.FLAG_VSYNC_HINT | ConfigFlags.FLAG_WINDOW_RESIZABLE;
-
+        ConfigFlags commonFlags = ConfigFlags.FLAG_MSAA_4X_HINT | ConfigFlags.FLAG_WINDOW_RESIZABLE;
 #if OSX
-        Raylib.SetConfigFlags(commonFlags | ConfigFlags.FLAG_WINDOW_HIGHDPI);
+        // Maybe this should eventually be moved to a settings page rather than being forced?
+        Raylib.SetConfigFlags(commonFlags | ConfigFlags.FLAG_WINDOW_HIGHDPI); // On OSX, we need to enable high DPI because of Retina display
 #else
         Raylib.SetConfigFlags(commonFlags);
 #endif
-
         Initialize();
 
         Raylib.InitWindow(windowWidth, windowHeight, windowTitle);

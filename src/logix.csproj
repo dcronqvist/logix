@@ -25,6 +25,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <PackageReference Include="Antlr4.Runtime.Standard" Version="4.9.3" />
     <PackageReference Include="ImGui.NET" Version="1.78.0" />
     <PackageReference Include="Raylib-cs" Version="3.7.0.1" />
   </ItemGroup>
