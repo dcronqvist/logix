@@ -21,7 +21,8 @@ public enum ComponentType
     Demux,
     DTBC,
     Custom,
-    Arithmetic
+    Arithmetic,
+    Register
 }
 
 public class IODescription

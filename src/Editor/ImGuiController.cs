@@ -20,6 +20,8 @@ public class ImguiController : IDisposable
     Texture2D fontTexture;
     Vector2 scaleFactor = Vector2.One;
 
+    private static Dictionary<string, ImFontPtr> Fonts = new Dictionary<string, ImFontPtr>();
+
     public ImguiController()
     {
         context = ImGui.CreateContext();
@@ -35,11 +37,16 @@ public class ImguiController : IDisposable
     /// <summary>
     /// Creates a texture and loads the font data from ImGui.
     /// </summary>
-    public unsafe void Load(int width, int height, out ImFontPtr font)
+    public unsafe void Load(int width, int height, List<(string, string, float)> keyAndFontfiles, out Dictionary<string, ImFontPtr> fonts)
     {
         ImGuiIOPtr io = ImGui.GetIO();
         ImFontPtr defaultFont = io.Fonts.AddFontDefault();
-        font = io.Fonts.AddFontFromFileTTF($"{Directory.GetCurrentDirectory()}/assets/opensans.ttf", 16);
+        fonts = new Dictionary<string, ImFontPtr>();
+        fonts.Add("default", defaultFont);
+        foreach ((string key, string fontFile, float size) in keyAndFontfiles)
+        {
+            fonts.Add(key, io.Fonts.AddFontFromFileTTF(fontFile, size));
+        }
         Resize(width, height);
         LoadFontTexture();
         SetupInput();

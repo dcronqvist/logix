@@ -4,6 +4,8 @@ using LogiX.SaveSystem;
 using LogiX.GateAlgebra;
 using Antlr4.Runtime.Tree;
 using Antlr4.Runtime;
+using Markdig;
+using Markdig.Syntax;
 
 namespace LogiX;
 
@@ -13,6 +15,8 @@ public static class Util
     public static string EnvironmentPath = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) + @"/LogiX";
     public static string FileDialogStartDir = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
     public static List<Plugin> Plugins { get; set; }
+
+    public static Dictionary<string, ImFontPtr> ImGuiFonts { get; set; }
 
     public static List<T> NValues<T>(T value, int n)
     {
@@ -511,18 +515,45 @@ public static class Util
         }
     }
 
+    public static void WithFont(string fontName, Action action)
+    {
+        ImFontPtr oldFont = ImGui.GetFont();
+        ImGui.PushFont(ImGuiFonts[fontName]);
+        action();
+        ImGui.PopFont();
+    }
+
     public static void HelpMarkerLink(string url, string tooltip = null)
     {
         ImGui.TextDisabled("(?)");
         if (ImGui.IsItemHovered())
         {
             ImGui.BeginTooltip();
-            ImGui.Text(tooltip == null ? $"Click to open in browser: {url}" : tooltip + $"\nOpens {url} in browser");
+            ImGui.Text(tooltip == null ? $"Click to open in browser: {url}" : tooltip + $"Click to open in browser: {url}");
             ImGui.EndTooltip();
             if (ImGui.IsMouseClicked(ImGuiMouseButton.Left))
             {
                 Raylib.OpenURL(url);
             }
         }
+    }
+
+    public static bool AssetFileExists(string assetFile)
+    {
+        string assetDir = Directory.GetCurrentDirectory() + "/assets/";
+        return File.Exists(Path.Combine(assetDir, assetFile));
+    }
+
+    public static Texture2D GetAssetTexture(string assetFile)
+    {
+        string assetDir = Directory.GetCurrentDirectory() + "/assets/";
+        return Raylib.LoadTexture(Path.Combine(assetDir, assetFile));
+    }
+
+    public static void RenderMarkdown(string markdown)
+    {
+        MarkdownDocument md = Markdown.Parse(markdown);
+        ImGuiMarkdownRenderer igmr = new ImGuiMarkdownRenderer();
+        igmr.Render(md);
     }
 }

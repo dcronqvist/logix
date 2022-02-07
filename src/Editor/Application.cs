@@ -63,7 +63,18 @@ public abstract class Application
 
         Raylib.SetExitKey(KeyboardKey.KEY_NULL);
         ImguiController igc = new ImguiController();
-        igc.Load(windowWidth, windowHeight, out ImFontPtr font);
+
+        string assetDir = Directory.GetCurrentDirectory() + "/assets/";
+        List<(string, string, float)> fonts = new List<(string, string, float)>() {
+            ("opensans", "opensans.ttf", 16),
+            ("opensans-20", "opensans.ttf", 20),
+            ("opensans-bold", "opensans-bold.ttf", 16),
+            ("opensans-bold-20", "opensans-bold.ttf", 20)
+        };
+        fonts = fonts.Select(x => (x.Item1, assetDir + x.Item2, x.Item3)).ToList();
+
+        igc.Load(windowWidth, windowHeight, fonts, out Dictionary<string, ImFontPtr> fontsPtrs);
+        Util.ImGuiFonts = fontsPtrs;
 
         LoadContent();
 
@@ -92,7 +103,7 @@ public abstract class Application
                 Raylib.BeginTextureMode(this.uiTexture);
 
                 Raylib.ClearBackground(Color.BLANK);
-                ImGui.PushFont(font);
+                ImGui.PushFont(fontsPtrs["opensans"]);
                 SubmitUI();
 
                 HandleModal();
@@ -111,6 +122,11 @@ public abstract class Application
                 Raylib.EndDrawing();
                 UserInput.End();
 
+            }
+            catch (NotImplementedException nie)
+            {
+                // Application ran into a feature that hasn't been implemented yet
+                this.ModalError("Not implemented: " + nie.Message, ModalButtonsType.OK);
             }
             catch (Exception e)
             {
