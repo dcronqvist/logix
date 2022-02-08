@@ -54,7 +54,8 @@ public abstract class Component
     public virtual bool TextVisible => true;
     public virtual bool DrawIOIdentifiers => false;
     public virtual bool DrawBoxNormal => true;
-    public virtual bool HasContextMenu => this.AdditionalUISubmitters.Count > 0;
+    public virtual bool HasContextMenu => this.AdditionalUISubmitters.Count > 0 || this.Documentation != null;
+    public virtual string? Documentation => null;
 
     public List<Action<Editor.Editor, Component>> AdditionalUISubmitters { get; set; }
 
@@ -500,6 +501,14 @@ public abstract class Component
         foreach (Action<Editor.Editor, Component> a in this.AdditionalUISubmitters)
         {
             a(editor, this);
+        }
+
+        if (this.Documentation != null)
+        {
+            if (ImGui.Button("Show Documentation"))
+            {
+                editor.currentComponentDocumentation = this;
+            }
         }
     }
 

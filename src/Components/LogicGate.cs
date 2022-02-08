@@ -7,6 +7,26 @@ public class LogicGate : Component
     private IGateLogic Logic { get; set; }
     public override string Text => this.Logic.GetLogicText();
     public override bool HasContextMenu => true;
+    public override string? Documentation => @"
+
+# Logic Gate
+
+These are the basic building blocks of all logic circuits.
+
+The below gates can be configured to have between 2 and a virtually infinite amount of inputs.
+When configured to have 2 inputs, the gate will behave as expected.
+
+When configured to have more than 2 inputs, the gates will instead behave as follows:
+
+* AND: The gate will return HIGH if all inputs are HIGH, otherwise LOW.
+* NAND: The gate will return LOW if all inputs are HIGH, otherwise HIGH.
+* OR: The gate will return HIGH if at least one input is HIGH, otherwise LOW.
+* NOR: The gate will return LOW if at least one input is HIGH, otherwise HIGH.
+* XOR: The gate will return HIGH if an uneven amount of inputs are HIGH, otherwise LOW.
+
+There is also a NOT gate, which is a special gate since it only has one input. It cannot be configured to have more than 1 input, and therefore always behaves as an inverter of the single input.
+
+";
 
     public LogicGate(int inputBits, bool multibit, IGateLogic gateLogic, Vector2 position) : base(multibit ? Util.Listify(inputBits) : Util.NValues(1, inputBits), Util.Listify(1), position)
     {

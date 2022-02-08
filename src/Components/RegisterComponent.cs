@@ -12,6 +12,23 @@ public class RegisterComponent : Component
 
     public List<LogicValue> StoredValue { get; set; }
 
+    public override string? Documentation => @"
+# Register Component
+
+This component is used to store values. It can store between 1 and a virtually infinite amount of bits.
+As the amount of bits increase however, the performance of the simulation will decrease.
+
+A register with N data bits functions in the following way:
+
+* Connect the bits you want to store to DN-D0.
+* If at any point RST is set to HIGH, all stored bits will be set to LOW.
+* On rising edges of CLK, the bits inputted at DN-D0 will be stored in the register, instantly. However, this only happens if LD is HIGH.
+* The stored bits are always outputted at QN-Q0.
+
+Important to note is that the DN-D0 and QN-Q0 will consider the Nth bit to be the most significant bit, and the 0th bit to be the least significant bit. When connected to a switch of N bits, the most
+significant bit will be the leftmost one, which matches our convention of writing binary.
+";
+
     public RegisterComponent(int databits, bool multibit, Vector2 position) : base(multibit ? Util.Listify(databits, 1, 1, 1) : Util.NValues(1, databits + 3), multibit ? Util.Listify(databits) : Util.NValues(1, databits), position)
     {
         DataBits = databits;
