@@ -15,6 +15,12 @@ public class MultiplierComponent : Component
 
     public override string Text => "Multiplier";
     public override bool DrawIOIdentifiers => true;
+    public override string? Documentation => @"
+# Multiplier Component
+
+This multiplier component will perform integer multiplication on the inputs.
+
+";
 
     public MultiplierComponent(int bits, bool multibit, Vector2 position) : base(multibit ? Util.Listify(bits, bits) : Util.NValues(1, bits * 2), multibit ? Util.Listify(bits * 2) : Util.NValues(1, bits * 2), position)
     {

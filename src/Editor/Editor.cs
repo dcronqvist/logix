@@ -774,10 +774,6 @@ public class Editor : Application
             ImGui.End();
         }
 
-        ImGui.Begin("Markdown");
-        Util.RenderMarkdown("# Heading with cool stuff\n\nI wonder what this is all about.\n\n# Another heading\n\nThis is a [link](https://github.com/dcronqvist) and here I have written a lot of text so don't mind me, another [link](https://github.com/dcronqvist) by the way, I'm just typing away!\n\nHere is another thing, it's new, it's an image. \n\n![image](logo.png)![image](logo.png)![image](logo.png) \n\nWhat happens after an image? Automatic newline it seems like.\n\n* this is item 1\n* this is item 2\n* item 3 is a link [here](https://github.com/dcronqvist/logix)");
-        ImGui.End();
-
         if (currentComponentDocumentation != null)
         {
             bool open = true;

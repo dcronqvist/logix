@@ -5,9 +5,9 @@ namespace LogiX.SaveSystem;
 public class MemoryDescription : ComponentDescription
 {
     [JsonPropertyName("memory")]
-    public List<LogicValue>[] Memory { get; set; }
+    public ByteAddressableMemory Memory { get; set; }
 
-    public MemoryDescription(Vector2 position, int rotation, List<LogicValue>[] memory, List<IODescription> inputs, List<IODescription> outputs) : base(position, inputs, outputs, rotation, ComponentType.Memory)
+    public MemoryDescription(Vector2 position, int rotation, ByteAddressableMemory memory, List<IODescription> inputs, List<IODescription> outputs) : base(position, inputs, outputs, rotation, ComponentType.Memory)
     {
         this.Memory = memory;
     }
@@ -45,16 +45,7 @@ public class MemoryDescription : ComponentDescription
         }
 
         MemoryComponent c = new MemoryComponent(addressBits, multibitAddress, dataBits, multibitOutput, this.Position);
-        List<LogicValue>[] memory = new List<LogicValue>[c.Memory.Length];
-        for (int i = 0; i < memory.Length; i++)
-        {
-            memory[i] = new List<LogicValue>();
-            for (int j = 0; j < dataBits; j++)
-            {
-                memory[i].Add(this.Memory[i][j]);
-            }
-        }
-        c.Memory = memory;
+        c.ByteMemory = this.Memory;
         if (preserveIDs)
             c.SetUniqueID(this.ID);
 

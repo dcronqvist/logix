@@ -3,6 +3,47 @@ using System.Globalization;
 
 namespace LogiX.Components;
 
+public class ByteAddressableMemory
+{
+    [JsonPropertyName("data")]
+    public byte[] Data { get; set; }
+
+    [JsonConstructor]
+    public ByteAddressableMemory(byte[] data)
+    {
+        this.Data = data;
+    }
+
+    public ByteAddressableMemory(int size)
+    {
+        this.Data = new byte[size];
+    }
+
+    public byte this[int index]
+    {
+        get => this.Data[index];
+        set => this.Data[index] = value;
+    }
+
+    public void Reset()
+    {
+        for (int i = 0; i < this.Data.Length; i++)
+        {
+            this.Data[i] = 0;
+        }
+    }
+
+    public List<LogicValue> GetLogicValuesAtAddress(int address, int databits)
+    {
+        List<LogicValue> values = new List<LogicValue>(databits);
+        for (int i = 0; i < databits / 8; i++)
+        {
+            values.AddRange(this.Data[address + i].GetAsLogicValues(8));
+        }
+        return values;
+    }
+}
+
 public class MemoryComponent : Component
 {
     public int AddressBits { get; set; }
@@ -10,11 +51,17 @@ public class MemoryComponent : Component
     public bool MultibitAddress { get; set; }
     public bool MultibitOutput { get; set; }
 
-    public List<LogicValue>[] Memory { get; set; }
+    public ByteAddressableMemory ByteMemory { get; set; }
 
     public override bool DrawIOIdentifiers => true;
     public override string Text => $"{1 << this.AddressBits}x{this.DataBits} Bit Memory";
     public override bool HasContextMenu => true;
+    public override string? Documentation => @"
+# Memory Component
+
+Memory components are very useful components in the way that they will store data in a READ/WRITE fashion, effectively mimicing a real memory. 
+
+";
 
     public bool previousClock = false;
     public MemoryEditor memEditor;
@@ -29,7 +76,7 @@ public class MemoryComponent : Component
         this.MultibitAddress = multibitAddress;
         this.MultibitOutput = multibitOutput;
 
-        this.Memory = new List<LogicValue>[1 << addressBits];
+        this.ByteMemory = new ByteAddressableMemory(1 << this.AddressBits);
 
         if (multibitAddress)
         {
@@ -72,16 +119,13 @@ public class MemoryComponent : Component
 
     public void ResetMemory()
     {
-        for (int i = 0; i < this.Memory.Length; i++)
-        {
-            this.Memory[i] = Util.NValues(LogicValue.LOW, this.DataBits);
-        }
+        this.ByteMemory.Reset();
     }
 
     public override void PerformLogic()
     {
         int address = 0;
-        LogicValue[] data = new LogicValue[this.DataBits];
+        byte[] data = new byte[this.DataBits / 8];
         bool loading = false;
         bool clk = false;
         bool r = false;
@@ -91,9 +135,9 @@ public class MemoryComponent : Component
             {
                 address += this.Inputs[0].Values[i] == LogicValue.HIGH ? (1 << (i)) : 0;
             }
-            for (int i = 0; i < this.DataBits; i++)
+            for (int i = 0; i < this.DataBits / 8; i++)
             {
-                data[i] = this.Inputs[1].Values[i];
+                data[i] = this.Inputs[1].Values.Take(new Range(i * 8, (i + 1) * 8)).ToArray().GetAsByte();
             }
             loading = this.Inputs[2].Values[0] == LogicValue.HIGH;
             clk = this.Inputs[3].Values[0] == LogicValue.HIGH;
@@ -105,10 +149,12 @@ public class MemoryComponent : Component
             {
                 address += this.Inputs[i].Values[0] == LogicValue.HIGH ? (1 << (i)) : 0;
             }
+            List<LogicValue> dataValues = new List<LogicValue>(this.DataBits);
             for (int i = 0; i < this.DataBits; i++)
             {
-                data[i] = this.Inputs[this.AddressBits + i].Values[0];
+                dataValues.Add(this.Inputs[this.AddressBits + i].Values[0]);
             }
+            data = dataValues.GetAsByteArray();
             loading = this.Inputs[this.AddressBits + this.DataBits].Values[0] == LogicValue.HIGH;
             clk = this.Inputs[this.AddressBits + this.DataBits + 1].Values[0] == LogicValue.HIGH;
             r = this.Inputs[this.AddressBits + this.DataBits + 2].Values[0] == LogicValue.HIGH;
@@ -120,16 +166,14 @@ public class MemoryComponent : Component
             this.ResetMemory();
             if (this.MultibitOutput)
             {
-                for (int i = 0; i < this.DataBits; i++)
-                {
-                    this.Outputs[0].Values[i] = this.Memory[address][i];
-                }
+                this.Outputs[0].SetValues(this.ByteMemory.GetLogicValuesAtAddress(address, DataBits));
             }
             else
             {
+                List<LogicValue> values = this.ByteMemory.GetLogicValuesAtAddress(address, DataBits);
                 for (int i = 0; i < this.DataBits; i++)
                 {
-                    this.Outputs[i].Values[0] = this.Memory[address][i];
+                    this.Outputs[i].Values[0] = values[i];
                 }
             }
             return;
@@ -137,22 +181,26 @@ public class MemoryComponent : Component
 
         if (loading && clk && !previousClock)
         {
-            this.Memory[address] = data.ToList();
+            for (int i = 0; i < this.DataBits / 8; i++)
+            {
+                this.ByteMemory[address + i] = data[i];
+            }
         }
 
-        // Set output to data att current address
+        //Set output to data att current address
         if (this.MultibitOutput)
         {
             for (int i = 0; i < this.DataBits; i++)
             {
-                this.Outputs[0].Values[i] = this.Memory[address][i];
+                this.Outputs[0].SetValues(this.ByteMemory.GetLogicValuesAtAddress(address, this.DataBits));
             }
         }
         else
         {
+            List<LogicValue> values = this.ByteMemory.GetLogicValuesAtAddress(address, this.DataBits);
             for (int i = 0; i < this.DataBits; i++)
             {
-                this.Outputs[i].Values[0] = this.Memory[address][i];
+                this.Outputs[i].Values[0] = values[i];
             }
         }
 
@@ -163,36 +211,36 @@ public class MemoryComponent : Component
     {
         List<IODescription> inputs = this.Inputs.Select(i => new IODescription(i.Bits)).ToList();
         List<IODescription> outputs = this.Outputs.Select(i => new IODescription(i.Bits)).ToList();
-        return new MemoryDescription(this.Position, this.Rotation, this.Memory, inputs, outputs);
+        return new MemoryDescription(this.Position, this.Rotation, this.ByteMemory, inputs, outputs);
     }
 
     public override void SubmitContextPopup(Editor.Editor editor)
     {
-        if (ImGui.Button("Dump Memory to File..."))
-        {
-            editor.SelectFolder(Util.FileDialogStartDir, folder =>
-            {
-                using (StreamWriter sw = new StreamWriter(folder + "/memory.txt"))
-                {
-                    for (int i = 0; i < this.Memory.Length; i++)
-                    {
-                        sw.WriteLine(Util.LogicValuesToBinaryString(this.Memory[i]));
-                    }
-                }
-            });
-        }
+        // if (ImGui.Button("Dump Memory to File..."))
+        // {
+        //     editor.SelectFolder(Util.FileDialogStartDir, folder =>
+        //     {
+        //         using (StreamWriter sw = new StreamWriter(folder + "/memory.txt"))
+        //         {
+        //             for (int i = 0; i < this.Memory.Length; i++)
+        //             {
+        //                 sw.WriteLine(Util.LogicValuesToBinaryString(this.Memory[i]));
+        //             }
+        //         }
+        //     });
+        // }
 
-        if (ImGui.Button("Load Memory From File..."))
-        {
-            editor.SelectFile(Util.FileDialogStartDir, file =>
-            {
-                using (StreamReader sr = new StreamReader(file))
-                {
-                    this.ResetMemory();
-                    this.Memory = Util.ReadROM(file).ToArray();
-                }
-            }, ".txt");
-        }
+        // if (ImGui.Button("Load Memory From File..."))
+        // {
+        //     editor.SelectFile(Util.FileDialogStartDir, file =>
+        //     {
+        //         using (StreamReader sr = new StreamReader(file))
+        //         {
+        //             this.ResetMemory();
+        //             this.Memory = Util.ReadROM(file).ToArray();
+        //         }
+        //     }, ".txt");
+        // }
         base.SubmitContextPopup(editor);
     }
 
@@ -203,18 +251,19 @@ public class MemoryComponent : Component
 
     public override void OnSingleSelectedSubmitUI()
     {
-        byte[] bytes = new byte[this.Memory.Length];
-        bytes = this.Memory.Select(l => l.GetAsByte()).ToArray();
+        //byte[] bytes = new byte[this.Memory.Length];
+        //bytes = this.Memory.Select(l => l.GetAsByte()).ToArray();
         ImGui.PushFont(ImGui.GetIO().FontDefault);
-        this.memEditor.Draw("Memory Editor", bytes, bytes.Length, this.currentAddress, 0);
+        this.memEditor.Draw("Memory Editor", this.ByteMemory, this.ByteMemory.Data.Length, (int)(ImGui.GetContentRegionAvail().Y), this.currentAddress, 0);
         ImGui.PopFont();
 
-        List<List<LogicValue>> memory = new List<List<LogicValue>>();
-        for (int i = 0; i < this.Memory.Length; i++)
-        {
-            memory.Add(bytes[i].GetAsLogicValues(this.DataBits));
-        }
-        this.Memory = memory.ToArray();
+        // List<List<LogicValue>> memory = new List<List<LogicValue>>();
+        // for (int i = 0; i < this.Memory.Length; i++)
+        // {
+        //     byte[] bytes = this.MemoryAsBytes.Take(new Range(i * this.DataBits, (i * this.DataBits) + this.DataBits)).ToArray();
+        //     memory.Add(bytes.Select(x => x.GetAsLogicValues(this.DataBits).ToList()).ToList().Aggregate((a, b) => a.Concat(b).ToList()));
+        // }
+        // this.Memory = memory.ToArray();
     }
 }
 
@@ -269,7 +318,7 @@ public class MemoryEditor
         }
     }
 
-    public unsafe void Draw(string title, byte[] mem_data, int mem_size, int currentlySelectedMemoryAddress = -1, int base_display_addr = 0)
+    public unsafe void Draw(string title, ByteAddressableMemory mem_data, int mem_size, int heightOfWindow, int currentlySelectedMemoryAddress = -1, int base_display_addr = 0)
     {
         ImGui.SetNextWindowSize(new Vector2(500, 350), ImGuiCond.FirstUseEver);
         if (!ImGui.Begin(title, ImGuiWindowFlags.NoNav))

@@ -12,6 +12,12 @@ public class Splitter : Component
     public override bool DrawIOIdentifiers => true;
     public override bool TextVisible => false;
     public override string Text => "";
+    public override string? Documentation => @"
+# Splitter Component
+
+The splitter component allows for easy splitting of a multibit input into multiple single bit outputs, or vice versa.
+
+";
 
     public Splitter(int inBits, int outBits, bool min, bool mout, Vector2 position) : base(min ? Util.Listify(inBits) : Util.NValues(1, inBits), mout ? Util.Listify(outBits) : Util.NValues(1, outBits), position)
     {

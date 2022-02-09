@@ -10,6 +10,13 @@ public class Demultiplexer : Component
 
     public override bool DrawIOIdentifiers => true;
     public override string Text => "DEMUX";
+    public override string? Documentation => @"
+# Demultiplexer Component
+
+A demultiplexer component splits the input into multiple outputs, one for each combination of selector bits. 
+
+A demultiplexer is useful in situations where you would like to redirect the input to multiple different outputs depending on some kind of selection.
+";
 
     public Demultiplexer(int selectorBits, bool selectorMultibit, int dataBits, bool dataMultibit, Vector2 position) : base(GetBitsPerInput(selectorBits, selectorMultibit, dataBits, dataMultibit), dataMultibit ? Util.NValues(dataBits, (int)Math.Pow(2, selectorBits)) : Util.NValues(1, dataBits * (int)Math.Pow(2, selectorBits)), position)
     {

@@ -8,6 +8,16 @@ public class DTBC : Component
 
     public override string Text => "DTBC";
     public override bool DrawIOIdentifiers => true;
+    public override string? Documentation => @"
+# Decimal to Binary Component
+
+This component converts a decimal number (base 10) to binary (base 2), and outputs the result.
+The component can be configured to have a certain number of decimal numbers, and will output the binary result in the least amount of bits needed to represent that maximum decimal number.
+
+To output a binary 0, you must not have any of the inputs HIGH.
+You may only set one input HIGH at a time, if more are set, the component will output a binary 0.
+
+";
 
     public DTBC(int decimals, bool multibit, Vector2 position) : base(multibit ? Util.Listify(decimals - 1) : Util.NValues(1, decimals - 1), multibit ? Util.Listify((int)Math.Ceiling(Math.Log2(decimals - 1))) : Util.NValues(1, (int)Math.Ceiling(Math.Log2(decimals - 1))), position)
     {

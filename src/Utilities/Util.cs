@@ -428,6 +428,18 @@ public static class Util
         return (byte)value.GetAsInt();
     }
 
+    public static byte[] GetAsByteArray(this IEnumerable<LogicValue> values)
+    {
+        byte[] bytes = new byte[values.Count() / 8];
+        int i = 0;
+        foreach (LogicValue value in values)
+        {
+            bytes[i / 8] |= (byte)(value.GetAsInt() << (i % 8));
+            i += 1;
+        }
+        return bytes;
+    }
+
     public static List<LogicValue> GetAsLogicValues(this int value, int bits)
     {
         List<LogicValue> values = new List<LogicValue>();

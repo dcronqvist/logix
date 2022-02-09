@@ -22,6 +22,15 @@ public class HexViewer : Component
             return new Vector2(MathF.Max(measure.X + 20f, 50f), MathF.Max(maxIOs * 25f, measure.Y + 10f));
         }
     }
+    public override string? Documentation => @"
+# Hex Viewer
+
+This component will display the input as a hexadecimal number. 
+
+When configured as multibit, the most significant bit will be the leftmost bit, and the least significant bit will be the rightmost bit.
+
+In a normal configuration, the most significant bit will be the one at the bottom, and the least significant bit will be the one at the top.
+";
 
     public HexViewer(int bits, bool multibit, Vector2 position) : base(multibit ? Util.Listify(bits) : Util.NValues(1, bits), Util.EmptyList<int>(), position)
     {

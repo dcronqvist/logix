@@ -15,6 +15,15 @@ public class AdderComponent : Component
 
     public override string Text => "Adder";
     public override bool DrawIOIdentifiers => true;
+    public override string? Documentation => @"
+# Adder Component
+
+This component adds the values of the inputs and outputs the result.
+
+SN-S0 = AN-A0 + BN-B0 + CIN
+
+COUT = AN-A0 + BN-B0 + CIN > 2^N - 1
+";
 
     public AdderComponent(int bits, bool multibit, Vector2 position) : base(multibit ? Util.Listify(1, bits, bits) : Util.NValues(1, 1 + bits * 2), multibit ? Util.Listify(bits, 1) : Util.NValues(1, bits + 1), position)
     {

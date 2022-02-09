@@ -10,6 +10,13 @@ public class Multiplexer : Component
     public override bool DrawIOIdentifiers => true;
     public override string Text => "MUX";
 
+    public override string? Documentation => @"
+# Multiplexer
+
+This component will select one of all inputs and output that input. To select a specific input, the selector input must be set to the corresponding value.
+
+";
+
     public Multiplexer(int selectorBits, bool selectorMultibit, int dataBits, bool dataMultibit, Vector2 position) : base(GetBitsPerInput(selectorBits, selectorMultibit, dataBits, dataMultibit), dataMultibit ? Util.Listify(dataBits) : Util.NValues(1, dataBits), position)
     {
         this.selectorBits = selectorBits;

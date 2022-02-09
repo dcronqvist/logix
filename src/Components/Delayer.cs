@@ -9,6 +9,14 @@ public class Delayer : Component
     private Queue<List<LogicValue>> Buffer { get; set; }
     public override string Text => "Delayer: " + Ticks;
 
+    public override string? Documentation => @"
+# Delayer Component
+
+The delayer component delays the input by the specified number of ticks. The input is buffered and the output is the buffered input after the specified amount of ticks.
+
+The delayer component is useful in situations where some kind of circuit delay is wanted.
+";
+
     public Delayer(int ticks, int bits, bool multibit, Vector2 position) : base(multibit ? Util.Listify(bits) : Util.NValues(1, bits), multibit ? Util.Listify(bits) : Util.NValues(1, bits), position)
     {
         this.Ticks = ticks;

@@ -22,6 +22,11 @@ public class Clock : Component
     }
     private float internalCounter;
     public override string Text => "Clock: " + Interval;
+    public override string? Documentation => @"
+# Clock Component
+
+The clock component is a simple component whose output toggles every interval simulation ticks (equal to simulation frame rate).
+";
 
     public Clock(float interval, Vector2 position) : base(Util.EmptyList<int>(), Util.Listify(1), position)
     {
@@ -53,8 +58,6 @@ public class Clock : Component
         ImGui.InputFloat("Interval", ref this.interval, 1, 100, "%.0f");
 
         ImGui.End();
-
-
     }
 
     public override Dictionary<string, int> GetGateAmount()

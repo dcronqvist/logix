@@ -24,6 +24,13 @@ public class ROM : Component
     private bool multibitAddress;
     private bool multibitOutput;
     public override bool HasContextMenu => true;
+    public override string? Documentation => @"
+
+# Read Only Memory Component
+
+This component is a lot like the Memory Component, however it lacks the write functionality. To load the memory with data, you must load data from a ROM file.
+
+";
 
     public ROM(bool multibitAddress, int addressBits, bool multibitOutput, int outputBits, Vector2 position) : base(multibitAddress ? Util.Listify(addressBits) : Util.NValues(1, addressBits), multibitOutput ? Util.Listify(outputBits) : Util.NValues(1, outputBits), position)
     {

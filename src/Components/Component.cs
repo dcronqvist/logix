@@ -505,7 +505,7 @@ public abstract class Component
 
         if (this.Documentation != null)
         {
-            if (ImGui.Button("Show Documentation"))
+            if (ImGui.Button("Show Help"))
             {
                 editor.currentComponentDocumentation = this;
             }
