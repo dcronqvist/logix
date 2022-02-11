@@ -8,20 +8,40 @@ public enum SettingType
 
 public class Setting
 {
-    public object Value { get; set; }
+    [JsonIgnore]
+    public object _value;
+    public object Value
+    {
+        get { return _value; }
+        set
+        {
+            _value = value;
+            if (this.OnChange != null)
+                this.OnChange(this);
+        }
+    }
     public bool VisibleInSettingsEditor { get; set; }
     public SettingType Type { get; set; }
+    public string Name { get; set; }
+    public Action<Setting>? OnChange { get; set; }
 
-    public Setting(object value, bool visibleInSettings, SettingType type = SettingType.None)
+    public Setting(object value, bool visibleInSettings, string name = "", SettingType type = SettingType.None, Action<Setting> onChange = null)
     {
         this.Value = value;
         this.VisibleInSettingsEditor = visibleInSettings;
         this.Type = type;
+        this.Name = name;
+        this.OnChange = onChange;
     }
 
     public T GetValue<T>()
     {
         return (T)this.Value;
+    }
+
+    public void SetValue(object value)
+    {
+        this._value = value;
     }
 }
 
@@ -42,7 +62,8 @@ public static class Settings
             { "windowWidth", new Setting(1280, false) },
             { "windowHeight", new Setting(720, false) },
             { "latestProject", new Setting("", false) },
-            { "preferredFramerate", new Setting(144, true, SettingType.Editor) }
+            { "preferredFramerate", new Setting(144, true, "Preferred FPS", SettingType.Editor, (setting) => { Raylib.SetTargetFPS(setting.GetValue<int>()); }) },
+            { "editorBackgroundColor", new Setting(Color.LIGHTGRAY, true, "Editor Background Color", SettingType.Editor) },
         };
     }
 
@@ -61,14 +82,7 @@ public static class Settings
                 {
                     if (defaultSettings.ContainsKey(kvp.Key))
                     {
-                        if (kvp.Value.ValueKind == JsonValueKind.String)
-                        {
-                            defaultSettings[kvp.Key] = new Setting(kvp.Value.ToString(), defaultSettings[kvp.Key].VisibleInSettingsEditor, defaultSettings[kvp.Key].Type);
-                        }
-                        else if (kvp.Value.ValueKind == JsonValueKind.Number)
-                        {
-                            defaultSettings[kvp.Key] = new Setting(int.Parse(kvp.Value.ToString()), defaultSettings[kvp.Key].VisibleInSettingsEditor, defaultSettings[kvp.Key].Type);
-                        }
+                        defaultSettings[kvp.Key].SetValue(kvp.Value.Deserialize(defaultSettings[kvp.Key].Value.GetType(), new JsonSerializerOptions() { IncludeFields = true }));
                     }
                 }
 
@@ -89,7 +103,7 @@ public static class Settings
 
     public static void SetSetting<T>(string setting, T value)
     {
-        settings[setting] = new Setting(value, settings[setting].VisibleInSettingsEditor, settings[setting].Type);
+        settings[setting].Value = value;
     }
 
     public static void SaveSettings()
@@ -105,7 +119,8 @@ public static class Settings
                 sets.Add(setting.Key, setting.Value.Value);
             }
 
-            string json = JsonSerializer.Serialize(sets, new JsonSerializerOptions() { WriteIndented = true });
+
+            string json = JsonSerializer.Serialize(sets, new JsonSerializerOptions() { WriteIndented = true, IncludeFields = true });
             sw.Write(json);
         }
     }

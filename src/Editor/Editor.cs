@@ -45,6 +45,8 @@ public class Editor : Application
     bool displayDebugWindow;
     bool displayDemoWindow;
 
+    List<EditorWindow> editorWindows;
+
     public override void Initialize()
     {
         mainMenuButtons = new List<Tuple<string, List<Tuple<string, EditorAction>>>>();
@@ -76,6 +78,40 @@ public class Editor : Application
         this.componentCategories = new Dictionary<string, List<string>>();
         this.displayDebugWindow = false;
         this.displayDemoWindow = false;
+        this.editorWindows = new List<EditorWindow>();
+    }
+
+    public bool EditorWindowOfTypeOpen<T>() where T : EditorWindow
+    {
+        foreach (EditorWindow window in this.editorWindows)
+        {
+            if (window is T)
+            {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    public bool EditorWindowOfTypeOpen(Type t)
+    {
+        foreach (EditorWindow window in this.editorWindows)
+        {
+            if (window.GetType() == t)
+            {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    public void OpenEditorWindow(EditorWindow window)
+    {
+        if (EditorWindowOfTypeOpen(window.GetType()))
+        {
+            return;
+        }
+        this.editorWindows.Add(window);
     }
 
     public void SetProject(Project proj)
@@ -208,6 +244,12 @@ public class Editor : Application
             }, ICCollection.EXTENSION);
             error = ""; return true;
         }, this.primaryKeyMod, KeyboardKey.KEY_I, KeyboardKey.KEY_C));
+
+        AddNewMainMenuItem("File", "Settings", new EditorAction((editor) => !editor.EditorWindowOfTypeOpen<SettingsWindow>(), (editor) => false, (Editor editor, out string error) =>
+        {
+            this.OpenEditorWindow(new SettingsWindow());
+            error = ""; return true;
+        }));
 
         AddNewMainMenuItem("Edit", "Copy", new EditorAction((editor) => simulator.SelectedComponents.Count > 0, (editor) => false, (Editor editor, out string error) => { MMCopy(); error = ""; return true; }, this.primaryKeyMod, KeyboardKey.KEY_C));
         AddNewMainMenuItem("Edit", "Paste", new EditorAction((editor) => this.copiedCircuit != null, (editor) => false, (Editor editor, out string error) => { MMPaste(); error = ""; return true; }, this.primaryKeyMod, KeyboardKey.KEY_V));
@@ -586,6 +628,15 @@ public class Editor : Application
 
     public override void SubmitUI()
     {
+        // Color windowBg = new Vector4(0.06f, 0.06f, 0.06f, 1.0f).ToColor();
+        // Color buttonColor = new Vector4(0.13f, 0.30f, 0.59f, 1.0f).ToColor();
+
+        // ImGui.PushStyleVar(ImGuiStyleVar.FrameBorderSize, 1.0f);
+        // ImGui.PushStyleColor(ImGuiCol.WindowBg, windowBg.ToVector4());
+        // ImGui.PushStyleColor(ImGuiCol.PopupBg, windowBg.ToVector4());
+        // ImGui.PushStyleColor(ImGuiCol.Button, buttonColor.ToVector4());
+        // ImGui.PushStyleColor(ImGuiCol.FrameBg, buttonColor.ToVector4());
+
         // MAIN MENU BAR
         ImGui.BeginMainMenuBar();
 
@@ -606,21 +657,6 @@ public class Editor : Application
 
                 ImGui.EndMenu();
             }
-        }
-
-        ImGui.Separator();
-
-        if (ImGui.BeginMenu("Project"))
-        {
-            if (ImGui.Button("Reload ICs"))
-            {
-                this.loadedProject.ReloadProjectICs();
-                this.LoadComponentButtons();
-            }
-
-            ImGui.Text("Project file: " + this.loadedProject.LoadedFromFile);
-
-            ImGui.EndMenu();
         }
 
         ImGui.Separator();
@@ -730,47 +766,6 @@ public class Editor : Application
         this.HandleComponentCreationContexts();
         ImGui.End();
 
-        // DEBUG WINDOW
-        if (this.displayDebugWindow && ImGui.Begin("Debug stuff", ref this.displayDebugWindow))
-        {
-            ImGui.Text("Mouse Position in Window:");
-            ImGui.Text(UserInput.GetMousePositionInWindow().ToString());
-            ImGui.Text("Camera Position:");
-            ImGui.Text(this.editorCamera.target.ToString());
-            ImGui.Text("Mouse Position in World:");
-            ImGui.Text(UserInput.GetMousePositionInWorld(this.editorCamera).ToString());
-            ImGui.Text("Camera View Size:");
-            ImGui.Text(UserInput.GetViewSize(this.editorCamera).ToString());
-            ImGui.Text("IO Want Keyboard:");
-            ImGui.Text(ImGui.GetIO().WantCaptureKeyboard.ToString());
-            ImGui.Text("IO Any Item Active:");
-            ImGui.Text(ImGui.IsAnyItemActive().ToString());
-            ImGui.Text("IO Want Mouse:");
-            ImGui.Text(ImGui.GetIO().WantCaptureMouse.ToString());
-            ImGui.Text($"FSM Current State: {this.fsm.CurrentState?.GetType().Name}");
-            ImGui.Text("Selected Components Gate Count:");
-            Dictionary<string, int> gateCounts = new Dictionary<string, int>();
-            foreach (Component c in simulator.SelectedComponents)
-            {
-                gateCounts = Util.ConcatGateAmounts(gateCounts, c.GetGateAmount());
-            }
-            foreach (KeyValuePair<string, int> kvp in gateCounts.OrderByDescending(x => x.Value))
-            {
-                ImGui.Text($"{kvp.Key}: {kvp.Value}");
-            }
-
-            ImGui.Separator();
-            ImGui.Text("Settings");
-
-            Dictionary<string, Setting> settings = Settings.GetAllSettings();
-            foreach (KeyValuePair<string, Setting> setting in settings)
-            {
-                ImGui.Text(setting.Key + ": " + setting.Value.Value.ToString());
-            }
-
-            ImGui.End();
-        }
-
         if (currentComponentDocumentation != null)
         {
             bool open = true;
@@ -824,7 +819,22 @@ public class Editor : Application
 
         }
 
+        // Render additional editor windows
+        for (int i = this.editorWindows.Count - 1; i >= 0; i--)
+        {
+            if (!this.editorWindows[i].IsOpen)
+            {
+                this.editorWindows.RemoveAt(i);
+                continue;
+            }
+
+            this.editorWindows[i].Draw(this);
+        }
+
         this.fsm.SubmitUI(this);
+
+        // ImGui.PopStyleVar();
+        // ImGui.PopStyleColor(3);
     }
 
     public void DrawGrid()
@@ -912,7 +922,7 @@ public class Editor : Application
     public override void Render()
     {
         Raylib.BeginMode2D(this.editorCamera);
-        Raylib.ClearBackground(Color.LIGHTGRAY);
+        Raylib.ClearBackground(Settings.GetSettingValue<Color>("editorBackgroundColor"));
         DrawGrid();
 
         Vector2 mousePosInWorld = UserInput.GetMousePositionInWorld(this.editorCamera);

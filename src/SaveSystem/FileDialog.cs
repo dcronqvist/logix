@@ -1,4 +1,5 @@
 using ImGuiNET;
+using Microsoft.Win32;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -37,7 +38,7 @@ public class FileDialog : Modal
     public FileDialogType Type { get; set; }
     private Action<string> OnSelect { get; set; }
 
-    public FileDialog(string startDirectory, FileDialogType fdt, Action<string> onSelect, params string[] filteredExtensions)
+    public FileDialog(string startDirectory, FileDialogType fdt, Action<string> onSelect, params string[] filteredExtensions) : base(ImGuiPopupFlags.None, ImGuiWindowFlags.AlwaysAutoResize)
     {
         this.CurrentFolder = startDirectory;
         this.SelectedFile = null;
@@ -74,6 +75,11 @@ public class FileDialog : Modal
         return fileExists && validExtension;
     }
 
+    string GetDownloadFolderPath()
+    {
+        return Registry.GetValue(@"HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Explorer\Shell Folders", "{374DE290-123F-4565-9164-39C4925E467B}", String.Empty).ToString();
+    }
+
     public override bool SubmitContent(Editor.Editor editor)
     {
         if (this.Type == FileDialogType.SelectFile)
@@ -97,7 +103,7 @@ public class FileDialog : Modal
 
             ImGui.NewLine();
 
-            ImGui.BeginChild("hej", new Vector2((ImGui.GetWindowContentRegionWidth() / 4) * 3 - 5, ImGui.GetWindowHeight() * 0.7f), true);
+            ImGui.BeginChild("File Area", new Vector2(400, 250), true);
 
             if (ImGui.MenuItem(".."))
             {
@@ -144,9 +150,32 @@ public class FileDialog : Modal
 
             ImGui.SameLine();
 
-            ImGui.BeginChild("hej2", new Vector2(ImGui.GetWindowContentRegionWidth() / 4 - 5, ImGui.GetWindowHeight() * 0.7f), true);
+            ImGui.BeginChild("Common Directories", new Vector2(130, 250), true);
 
-            ImGui.Text("Group 2");
+            ImGui.TextDisabled("Common Directories");
+
+            if (ImGui.Button("LogiX", new Vector2(ImGui.GetContentRegionAvail().X, 0)))
+            {
+                this.CurrentFolder = Directory.GetCurrentDirectory();
+            }
+            if (editor.loadedProject != null && editor.loadedProject.HasFile() && ImGui.Button("Project Dir", new Vector2(ImGui.GetContentRegionAvail().X, 0)))
+            {
+                this.CurrentFolder = Path.GetDirectoryName(editor.loadedProject.LoadedFromFile);
+            }
+            ImGui.Separator();
+
+            (string, string)[] specialFolders = new (string, string)[] {
+                (Environment.GetFolderPath(Environment.SpecialFolder.Desktop), "Desktop"),
+                (Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "Documents"),
+            };
+
+            foreach ((string, string) specialFolder in specialFolders)
+            {
+                if (ImGui.Button(specialFolder.Item2, new Vector2(ImGui.GetContentRegionAvail().X, 0)))
+                {
+                    this.CurrentFolder = specialFolder.Item1;
+                }
+            }
 
             ImGui.EndChild();
 

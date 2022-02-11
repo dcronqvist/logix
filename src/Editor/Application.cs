@@ -115,9 +115,9 @@ public abstract class Application
                 Raylib.BeginDrawing();
 
                 Render();
-                Raylib.BeginBlendMode(BlendMode.BLEND_ALPHA);
+                //Raylib.BeginBlendMode(BlendMode.BLEND_MULTIPLIED);
                 Raylib.DrawTextureRec(this.uiTexture.texture, new Rectangle(0, 0, this.uiTexture.texture.width, -this.uiTexture.texture.height), Vector2.Zero, Color.WHITE);
-                Raylib.EndBlendMode();
+                //Raylib.EndBlendMode();
 
                 Raylib.EndDrawing();
                 UserInput.End();

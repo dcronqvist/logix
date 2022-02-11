@@ -43,7 +43,22 @@ public static class Util
 
     public static Vector4 ToVector4(this Color c)
     {
-        return new Vector4(c.r, c.g, c.b, c.a);
+        return new Vector4(c.r / 255f, c.g / 255f, c.b / 255f, c.a / 255f);
+    }
+
+    public static Vector3 ToVector3(this Color c)
+    {
+        return new Vector3(c.r / 255f, c.g / 255f, c.b / 255f);
+    }
+
+    public static Color ToColor(this Vector4 v)
+    {
+        return new Color((byte)(v.X * 255), (byte)(v.Y * 255), (byte)(v.Z * 255), (byte)(v.W * 255));
+    }
+
+    public static Color ToColor(this Vector3 v)
+    {
+        return new Color((byte)(v.X * 255), (byte)(v.Y * 255), (byte)(v.Z * 255), (byte)255);
     }
 
     public static Tuple<float, float, float> LineFromTwoPoints(Vector2 a, Vector2 b)

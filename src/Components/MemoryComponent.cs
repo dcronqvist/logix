@@ -61,6 +61,8 @@ public class MemoryComponent : Component
 
 Memory components are very useful components in the way that they will store data in a READ/WRITE fashion, effectively mimicing a real memory. 
 
+Stores data in a little-endian fashion, with the least significant bit stored in the lowest address.
+
 ";
 
     public bool previousClock = false;
@@ -254,7 +256,7 @@ Memory components are very useful components in the way that they will store dat
         //byte[] bytes = new byte[this.Memory.Length];
         //bytes = this.Memory.Select(l => l.GetAsByte()).ToArray();
         ImGui.PushFont(ImGui.GetIO().FontDefault);
-        this.memEditor.Draw("Memory Editor", this.ByteMemory, this.ByteMemory.Data.Length, (int)(ImGui.GetContentRegionAvail().Y), this.currentAddress, 0);
+        this.memEditor.Draw("Memory Editor", this.ByteMemory, this.ByteMemory.Data.Length, (this.DataBits / 8), this.currentAddress, 0);
         ImGui.PopFont();
 
         // List<List<LogicValue>> memory = new List<List<LogicValue>>();
@@ -318,7 +320,7 @@ public class MemoryEditor
         }
     }
 
-    public unsafe void Draw(string title, ByteAddressableMemory mem_data, int mem_size, int heightOfWindow, int currentlySelectedMemoryAddress = -1, int base_display_addr = 0)
+    public unsafe void Draw(string title, ByteAddressableMemory mem_data, int mem_size, int databytes, int currentlySelectedMemoryAddress = -1, int base_display_addr = 0)
     {
         ImGui.SetNextWindowSize(new Vector2(500, 350), ImGuiCond.FirstUseEver);
         if (!ImGui.Begin(title, ImGuiWindowFlags.NoNav))
@@ -400,7 +402,7 @@ public class MemoryEditor
             {
                 ImGui.SameLine(line_start_x + cell_width * n);
 
-                if (DataEditingAddr == addr)
+                if (addr == DataEditingAddr)
                 {
                     // Display text input on current byte
                     ImGui.PushID(addr);
@@ -445,12 +447,12 @@ public class MemoryEditor
                 }
                 else
                 {
-                    if (addr == currentlySelectedMemoryAddress)
+                    if (addr >= currentlySelectedMemoryAddress && addr < currentlySelectedMemoryAddress + databytes)
                     {
-                        ImGui.PushStyleColor(ImGuiCol.Text, Color.GREEN.ToVector4());
+                        ImGui.PushStyleColor(ImGuiCol.Text, Color.GOLD.ToVector4());
                     }
                     ImGui.Text(FixedHex(mem_data[addr], 2));
-                    if (addr == currentlySelectedMemoryAddress)
+                    if (addr >= currentlySelectedMemoryAddress && addr < currentlySelectedMemoryAddress + databytes)
                     {
                         ImGui.PopStyleColor();
                     }
