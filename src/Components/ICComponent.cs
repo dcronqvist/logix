@@ -31,6 +31,57 @@ public class ICComponent : Component
         this.Wires = ws;
     }
 
+    public override int GetMaxStepsToOtherComponent(Component other)
+    {
+        if (other == this)
+        {
+            return 1;
+        }
+        else
+        {
+            int max = 0;
+            for (int i = 0; i < this.Inputs.Count; i++)
+            {
+                for (int j = 0; j < this.Outputs.Count; j++)
+                {
+                    int steps = this.GetMaxStepsBetweenInputOutput(i, j);
+
+                    foreach (Wire w in this.OutputAt(j).Signals)
+                    {
+                        int stepsFromOutputToOther = w.To.GetMaxStepsToOtherComponent(other);
+
+                        max = Math.Max(max, steps + stepsFromOutputToOther - 1);
+                    }
+                }
+            }
+
+            return max;
+        }
+    }
+
+    public int GetMaxStepsBetweenInputOutput(int input, int output)
+    {
+        List<string> switchIds = this.Description.InputOrder[input];
+        List<string> lampIds = this.Description.OutputOrder[output];
+
+        int max = 0;
+
+        foreach (string sid in switchIds)
+        {
+            Switch s = this.GetSwitchWithID(sid);
+
+            foreach (string lid in lampIds)
+            {
+                Lamp l = this.GetLampWithID(lid);
+
+                int steps = s.GetMaxStepsToOtherComponent(l);
+                max = Math.Max(max, steps);
+            }
+        }
+
+        return max;
+    }
+
     public Lamp GetLampWithID(string id)
     {
         /*
@@ -88,8 +139,29 @@ public class ICComponent : Component
         return Util.ConcatGateAmounts(containedGates, Util.GateAmount((this.Description.Name, 1)));
     }
 
-    public override void PerformLogic()
+    private float currentSimCounter = 0f;
+
+    public void SingleLogic(Simulator simulator)
     {
+        if (simulator.Simulating)
+        {
+            currentSimCounter += simulator.SimulationSpeed;
+
+            while (currentSimCounter >= 1f)
+            {
+                foreach (Component c in this.Components)
+                {
+                    c.Update(Vector2.Zero, simulator);
+                }
+                currentSimCounter -= 1f;
+            }
+        }
+    }
+
+    public override void Update(Vector2 mousePosInWorld, Simulator simulator)
+    {
+        base.UpdateInputs();
+
         for (int i = 0; i < this.Description.InputOrder.Count; i++)
         {
             List<string> inputs = this.Description.InputOrder[i];
@@ -108,23 +180,7 @@ public class ICComponent : Component
             }
         }
 
-        foreach (Component c in this.Components)
-        {
-            c.Update(Vector2.Zero);
-        }
-
-        // No need to update wires inside of ICComponents, since you can't see them.
-        // foreach (Wire w in this.Wires)
-        // {
-        //     w.Update(Vector2.Zero, null);
-        // }
-
-        // for (int i = 0; i < this.Outputs.Count; i++)
-        // {
-        //     Lamp lamp = this.GetLampForOutput(this.Outputs[i]);
-
-        //     this.Outputs[i].SetValues(lamp.Values);
-        // }
+        SingleLogic(simulator);
 
         for (int i = 0; i < this.Description.OutputOrder.Count; i++)
         {
@@ -143,7 +199,7 @@ public class ICComponent : Component
             }
         }
 
-        //throw new NotImplementedException();
+        base.UpdateOutputs();
     }
 
     public override ICDescription ToDescription()
@@ -172,5 +228,10 @@ public class ICComponent : Component
             ImGui.TreePop();
         }
         base.SubmitContextPopup(editor);
+    }
+
+    public override void PerformLogic()
+    {
+
     }
 }

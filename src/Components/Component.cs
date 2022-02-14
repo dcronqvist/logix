@@ -88,6 +88,28 @@ public abstract class Component
         this.Rotation = 0;
     }
 
+    public virtual int GetMaxStepsToOtherComponent(Component other)
+    {
+        if (other == this)
+        {
+            return 1;
+        }
+        else
+        {
+            int maxSteps = 0;
+            foreach (ComponentOutput co in this.Outputs)
+            {
+                foreach (Wire w in co.Signals)
+                {
+                    int steps = w.To.GetMaxStepsToOtherComponent(other);
+                    maxSteps = Math.Max(maxSteps, steps);
+                }
+
+            }
+            return maxSteps + 1;
+        }
+    }
+
     internal void AddAdditionalUISubmitter(Action action)
     {
         //this.AdditionalUISubmitters.Add(action);
@@ -177,7 +199,7 @@ public abstract class Component
         }
     }
 
-    public virtual void Update(Vector2 mousePosInWorld)
+    public virtual void Update(Vector2 mousePosInWorld, Simulator simulator)
     {
         this.UpdateInputs();
         this.PerformLogic();

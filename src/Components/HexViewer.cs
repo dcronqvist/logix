@@ -2,9 +2,16 @@ using LogiX.SaveSystem;
 
 namespace LogiX.Components;
 
+public enum HexViewerMode
+{
+    Binary,
+    OnesComplement,
+    TwosComplement,
+}
+
 public class HexViewer : Component
 {
-    private int value;
+    private uint value;
     private string hexString;
     public override string Text => this.hexString;
     public override Vector2 Size
@@ -31,10 +38,36 @@ When configured as multibit, the most significant bit will be the leftmost bit, 
 
 In a normal configuration, the most significant bit will be the one at the bottom, and the least significant bit will be the one at the top.
 ";
+    public HexViewerMode Mode { get; set; } = HexViewerMode.Binary;
 
     public HexViewer(int bits, bool multibit, Vector2 position) : base(multibit ? Util.Listify(bits) : Util.NValues(1, bits), Util.EmptyList<int>(), position)
     {
         hexString = "";
+    }
+
+    public string GetHexadecimalStringWithMode(uint value, HexViewerMode mode, int bits)
+    {
+        switch (mode)
+        {
+            case HexViewerMode.Binary:
+                return value.ToString("X" + bits / 4);
+            case HexViewerMode.TwosComplement:
+                // Convert from two's complement representation to hexadecima
+                if (value >= (1 << (bits - 1)))
+                {
+                    return "-" + (-value - (1 << bits)).ToString("X" + bits / 4).TrimStart('F', 'E');
+                }
+                return ((value)).ToString("X" + bits / 4);
+            case HexViewerMode.OnesComplement:
+                // Convert from one's complement representation to hexadecima
+                if (value >= (1 << (bits - 1)))
+                {
+                    return "-" + (-value - 1).ToString("X" + bits / 4).TrimStart('F', 'E');
+                }
+                return ((value)).ToString("X" + bits / 4);
+            default:
+                return "";
+        }
     }
 
     public override void PerformLogic()
@@ -47,19 +80,30 @@ In a normal configuration, the most significant bit will be the one at the botto
 
             for (int i = 0; i < ci.Bits; i++)
             {
-                value += ci.Values[i] == LogicValue.HIGH ? (1 << (i)) : 0;
+                value += ci.Values[i] == LogicValue.HIGH ? (1u << (i)) : 0u;
             }
 
-            this.hexString = value.ToString("X" + (int)MathF.Ceiling(ci.Bits / 4f));
+            this.hexString = this.GetHexadecimalStringWithMode(value, this.Mode, ci.Bits);
         }
         else
         {
             for (int i = 0; i < this.Inputs.Count; i++)
             {
-                value += this.InputAt(i).Values[0] == LogicValue.HIGH ? (1 << (i)) : 0;
+                value += this.InputAt(i).Values[0] == LogicValue.HIGH ? (1u << (i)) : 0u;
             }
-            this.hexString = value.ToString("X" + (int)MathF.Ceiling(this.Inputs.Count / 4f));
+            this.hexString = this.GetHexadecimalStringWithMode(value, this.Mode, this.Inputs.Count);
         }
+    }
+
+    public override void OnSingleSelectedSubmitUI()
+    {
+        ImGui.Begin("HexViewer", ImGuiWindowFlags.AlwaysAutoResize);
+
+        int mode = (int)this.Mode;
+        ImGui.Combo("Mode", ref mode, "Binary\0One's Complement\0Two's Complement\0");
+        this.Mode = (HexViewerMode)mode;
+
+        ImGui.End();
     }
 
     public override void Render(Vector2 mousePosInWorld)

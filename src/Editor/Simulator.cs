@@ -8,6 +8,10 @@ public class Simulator
     public List<Wire> Wires { get; private set; }
     public List<Component> SelectedComponents { get; private set; }
     public List<(Wire, int)> SelectedWirePoints { get; private set; }
+    public float SimulationSpeed { get; set; } = 1f;
+    public float UpdatesPerFrame => 1f / this.SimulationSpeed;
+    public bool Simulating { get; set; } = true;
+    private float currentSimCounter = 0f;
 
     public Simulator()
     {
@@ -17,17 +21,34 @@ public class Simulator
         this.SelectedWirePoints = new List<(Wire, int)>();
     }
 
-    public void Update(Vector2 mousePosInWorld)
+    public void SingleUpdate(Vector2 mousePosInWorld)
     {
-        //this.Components.Shuffle();
+        bool oldSimulate = this.Simulating;
+        this.Simulating = true;
         foreach (Component component in this.Components)
         {
-            component.Update(mousePosInWorld);
+            component.Update(mousePosInWorld, this);
         }
 
         foreach (Wire wire in this.Wires)
         {
             wire.Update(mousePosInWorld, this);
+        }
+        this.Simulating = oldSimulate;
+    }
+
+    public void Update(Vector2 mousePosInWorld)
+    {
+        //this.Components.Shuffle();
+        if (Simulating)
+        {
+            this.currentSimCounter += this.SimulationSpeed;
+
+            while (this.currentSimCounter >= 1f)
+            {
+                this.currentSimCounter -= 1f;
+                this.SingleUpdate(mousePosInWorld);
+            }
         }
     }
 

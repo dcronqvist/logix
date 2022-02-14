@@ -13,6 +13,7 @@ public class EditorFSM : FSM<Editor>
         this.AddNewState(new StateOutputToInput());
         this.AddNewState(new StateMovingSelection());
         this.AddNewState(new StateRectangleSelecting());
+        this.AddNewState(new StateMeasuringSteps());
 
         this.SetState<StateNone>();
     }
@@ -78,6 +79,11 @@ public class StateNone : State<Editor>
             {
                 this.GoToState<StateMovingSelection>();
             }
+            else if (editor.hoveredComponent != null && !editor.simulator.IsComponentSelected(editor.hoveredComponent) && Raylib.IsMouseButtonPressed(MouseButton.MOUSE_LEFT_BUTTON) && Raylib.IsKeyDown(KeyboardKey.KEY_LEFT_SHIFT))
+            {
+                editor.simulator.SelectComponent(editor.hoveredComponent);
+                //this.GoToState<StateMovingSelection>();
+            }
             else if (editor.hoveredComponent != null && !editor.simulator.IsComponentSelected(editor.hoveredComponent) && Raylib.IsMouseButtonPressed(MouseButton.MOUSE_LEFT_BUTTON))
             {
                 editor.simulator.ClearSelection();
@@ -86,6 +92,7 @@ public class StateNone : State<Editor>
                 this.GoToState<StateMovingSelection>();
             }
 
+
             if (editor.hoveredComponent == null && Raylib.IsMouseButtonPressed(MouseButton.MOUSE_LEFT_BUTTON))
             {
                 editor.simulator.ClearSelection();
@@ -93,6 +100,41 @@ public class StateNone : State<Editor>
                 this.GoToState<StateRectangleSelecting>();
             }
         }
+    }
+}
+
+public class StateMeasuringSteps : State<Editor>
+{
+    public override void Update(Editor editor)
+    {
+        if (!ImGui.GetIO().WantCaptureMouse)
+        {
+            if (editor.hoveredComponent != null && !editor.simulator.IsComponentSelected(editor.hoveredComponent) && Raylib.IsMouseButtonPressed(MouseButton.MOUSE_LEFT_BUTTON))
+            {
+                editor.simulator.SelectComponent(editor.hoveredComponent);
+            }
+
+            Component fromComponent = editor.simulator.SelectedComponents[0];
+
+            if (editor.simulator.SelectedComponents.Count == 2)
+            {
+                Component toComponent = editor.simulator.SelectedComponents[1];
+
+                int steps = fromComponent.GetMaxStepsToOtherComponent(toComponent);
+                editor.Modal("Measured steps", "Max steps: " + steps, ModalButtonsType.OK);
+                this.GoToState<StateNone>();
+            }
+        }
+    }
+
+    public override void Render(Editor editor)
+    {
+
+    }
+
+    public override void SubmitUI(Editor editor)
+    {
+
     }
 }
 

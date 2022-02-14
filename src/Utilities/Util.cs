@@ -583,4 +583,49 @@ public static class Util
         ImGuiMarkdownRenderer igmr = new ImGuiMarkdownRenderer();
         igmr.Render(md);
     }
+
+    public static List<Component> TopologicallyOrder(List<Component> components)
+    {
+        List<Component> orderedComponents = new List<Component>();
+        List<Component> unorderedComponents = new List<Component>();
+        foreach (Component component in components)
+        {
+            if (component.Inputs.Count == 0)
+            {
+                orderedComponents.Add(component);
+            }
+            else
+            {
+                unorderedComponents.Add(component);
+            }
+        }
+
+        while (unorderedComponents.Count > 0)
+        {
+            List<Component> nextUnorderedComponents = new List<Component>();
+            foreach (Component component in unorderedComponents)
+            {
+                bool allInputsOrdered = true;
+                foreach (Component input in component.Inputs.Select(x => x.Signal.From))
+                {
+                    if (!orderedComponents.Contains(input))
+                    {
+                        allInputsOrdered = false;
+                        break;
+                    }
+                }
+                if (allInputsOrdered)
+                {
+                    orderedComponents.Add(component);
+                }
+                else
+                {
+                    nextUnorderedComponents.Add(component);
+                }
+            }
+            unorderedComponents = nextUnorderedComponents;
+        }
+
+        return orderedComponents;
+    }
 }

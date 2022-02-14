@@ -20,7 +20,7 @@ public class Button : Component
         this.Outputs[0].SetValues(this.Values);
     }
 
-    public override void Update(Vector2 mousePosInWorld)
+    public override void Interact(Vector2 mousePosInWorld, Simulator simulator)
     {
         if (Raylib.IsMouseButtonDown(MouseButton.MOUSE_RIGHT_BUTTON))
         {
@@ -34,8 +34,7 @@ public class Button : Component
         {
             this.Values[0] = LogicValue.LOW;
         }
-
-        base.Update(mousePosInWorld);
+        base.Interact(mousePosInWorld, simulator);
     }
 
     public override void Render(Vector2 mousePosInWorld)

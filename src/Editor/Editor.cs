@@ -255,7 +255,7 @@ public class Editor : Application
         AddNewMainMenuItem("Edit", "Paste", new EditorAction((editor) => this.copiedCircuit != null, (editor) => false, (Editor editor, out string error) => { MMPaste(); error = ""; return true; }, this.primaryKeyMod, KeyboardKey.KEY_V));
         AddNewMainMenuItem("Edit", "Select All", new EditorAction((editor) => true, (editor) => false, (Editor editor, out string error) => { simulator.SelectAllComponents(); error = ""; return true; }, this.primaryKeyMod, KeyboardKey.KEY_A));
         AddNewMainMenuItem("Edit", "Delete Selection", new EditorAction((editor) => simulator.SelectedComponents.Count > 0, (editor) => false, (Editor editor, out string error) => { simulator.DeleteSelection(); error = ""; return true; }, KeyboardKey.KEY_BACKSPACE));
-        AddNewMainMenuItem("Edit", "Horizontally Align", new EditorAction((editor) => simulator.SelectedComponents.Count > 0 || simulator.SelectedWirePoints.Count > 0, (editor) => false, (Editor editor, out string error) =>
+        AddNewMainMenuItem("Tools", "Horizontally Align", new EditorAction((editor) => simulator.SelectedComponents.Count > 0 || simulator.SelectedWirePoints.Count > 0, (editor) => false, (Editor editor, out string error) =>
         {
             List<Component> selected = simulator.SelectedComponents;
             Vector2 middle = Util.GetMiddleOfListOfVectors(selected.Select(c => c.Position).ToList());
@@ -274,7 +274,7 @@ public class Editor : Application
 
             return true;
         }));
-        AddNewMainMenuItem("Edit", "Vertically Align", new EditorAction((editor) => simulator.SelectedComponents.Count > 0 || simulator.SelectedWirePoints.Count > 0, (editor) => false, (Editor editor, out string error) =>
+        AddNewMainMenuItem("Tools", "Vertically Align", new EditorAction((editor) => simulator.SelectedComponents.Count > 0 || simulator.SelectedWirePoints.Count > 0, (editor) => false, (Editor editor, out string error) =>
         {
             List<Component> selected = simulator.SelectedComponents;
             Vector2 middle = Util.GetMiddleOfListOfVectors(selected.Select(c => c.Position).ToList());
@@ -293,7 +293,7 @@ public class Editor : Application
 
             return true;
         }));
-        AddNewMainMenuItem("Edit", "Automatically Name Selected IOs", new EditorAction((editor) => simulator.SelectedComponents.Count > 0 && (simulator.SelectedComponents.All(x => x is Switch) || simulator.SelectedComponents.All(x => x is Lamp)), (editor) => false, (Editor editor, out string error) =>
+        AddNewMainMenuItem("Tools", "Automatically Name Selected IOs", new EditorAction((editor) => simulator.SelectedComponents.Count > 0 && (simulator.SelectedComponents.All(x => x is Switch) || simulator.SelectedComponents.All(x => x is Lamp)), (editor) => false, (Editor editor, out string error) =>
         {
             List<Component> selected = simulator.SelectedComponents;
             List<Component> orderedByY = selected.OrderBy(c => c.Position.Y).ToList();
@@ -313,7 +313,7 @@ public class Editor : Application
             error = "";
             return true;
         }, this.primaryKeyMod, KeyboardKey.KEY_N));
-        AddNewMainMenuItem("Edit", "Rotate Clockwise", new EditorAction((editor) => simulator.SelectedComponents.Count > 0, (editor) => false, (Editor editor, out string error) =>
+        AddNewMainMenuItem("Tools", "Rotate Clockwise", new EditorAction((editor) => simulator.SelectedComponents.Count > 0, (editor) => false, (Editor editor, out string error) =>
         {
             List<Component> selected = simulator.SelectedComponents;
             foreach (Component c in selected)
@@ -323,7 +323,7 @@ public class Editor : Application
             error = "";
             return true;
         }, KeyboardKey.KEY_RIGHT));
-        AddNewMainMenuItem("Edit", "Rotate Counterclockwise", new EditorAction((editor) => simulator.SelectedComponents.Count > 0, (editor) => false, (Editor editor, out string error) =>
+        AddNewMainMenuItem("Tools", "Rotate Counterclockwise", new EditorAction((editor) => simulator.SelectedComponents.Count > 0, (editor) => false, (Editor editor, out string error) =>
         {
             List<Component> selected = simulator.SelectedComponents;
             foreach (Component c in selected)
@@ -333,6 +333,13 @@ public class Editor : Application
             error = "";
             return true;
         }, KeyboardKey.KEY_LEFT));
+        AddNewMainMenuItem("Tools", "Measure Steps", new EditorAction((editor) => simulator.SelectedComponents.Count == 1, (editor) => false, (Editor editor, out string error) =>
+        {
+            this.fsm.SetState<StateMeasuringSteps>();
+            error = "";
+            return true;
+        }, this.primaryKeyMod, KeyboardKey.KEY_M));
+
         AddNewMainMenuItem("Integrated Circuits", "Create IC from Selection", new EditorAction((editor) => simulator.SelectedComponents.Count > 0, (editor) => false, (Editor editor, out string error) =>
         {
             CircuitDescription cd = new CircuitDescription(simulator.SelectedComponents);
@@ -660,6 +667,24 @@ public class Editor : Application
         }
 
         ImGui.Separator();
+
+        if (ImGui.BeginMenu("Simulation"))
+        {
+            bool simulating = this.simulator.Simulating;
+            ImGui.Checkbox("Simulating", ref simulating);
+            this.simulator.Simulating = simulating;
+
+            float simSpeed = this.simulator.SimulationSpeed;
+            ImGui.SliderFloat("Simulation Speed", ref simSpeed, 0.001f, 5f, "%.2f", ImGuiSliderFlags.Logarithmic);
+            this.simulator.SimulationSpeed = simSpeed;
+
+            if (ImGui.Button("Run Update"))
+            {
+                this.simulator.SingleUpdate(UserInput.GetMousePositionInWorld(editorCamera));
+            }
+
+            ImGui.EndMenu();
+        }
 
         if (ImGui.BeginMenu("Plugins"))
         {
