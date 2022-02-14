@@ -2,7 +2,7 @@ namespace LogiX.Components;
 
 public interface IGateLogic
 {
-    LogicValue PerformLogic(List<ComponentInput> inputs);
+    LogicValue PerformLogic(List<LogicValue> inputs);
     string GetLogicText();
     int DefaultBits();
     int MinBits();

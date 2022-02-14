@@ -2,9 +2,9 @@ namespace LogiX.Components;
 
 public class NOTLogic : IGateLogic
 {
-    public LogicValue PerformLogic(List<ComponentInput> inputs)
+    public LogicValue PerformLogic(List<LogicValue> inputs)
     {
-        return inputs[0].Values[0] == LogicValue.LOW ? LogicValue.HIGH : LogicValue.LOW;
+        return inputs[0] == LogicValue.LOW ? LogicValue.HIGH : LogicValue.LOW;
     }
 
     public string GetLogicText() => "NOT";

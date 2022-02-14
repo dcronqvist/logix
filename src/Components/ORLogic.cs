@@ -2,18 +2,13 @@ namespace LogiX.Components;
 
 public class ORLogic : IGateLogic
 {
-    public LogicValue PerformLogic(List<ComponentInput> inputs)
+    public LogicValue PerformLogic(List<LogicValue> inputs)
     {
-        for (int i = 0; i < inputs.Count; i++)
+        foreach (LogicValue lv in inputs)
         {
-            ComponentInput ci = inputs[i];
-
-            for (int j = 0; j < ci.Bits; j++)
+            if (lv == LogicValue.HIGH)
             {
-                if (ci.Values[j] == LogicValue.HIGH)
-                {
-                    return LogicValue.HIGH;
-                }
+                return LogicValue.HIGH;
             }
         }
 

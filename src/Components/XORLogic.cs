@@ -2,20 +2,15 @@ namespace LogiX.Components;
 
 public class XORLogic : IGateLogic
 {
-    public LogicValue PerformLogic(List<ComponentInput> inputs)
+    public LogicValue PerformLogic(List<LogicValue> inputs)
     {
         int inputsHigh = 0;
 
-        for (int i = 0; i < inputs.Count; i++)
+        foreach (LogicValue lv in inputs)
         {
-            ComponentInput ci = inputs[i];
-
-            for (int j = 0; j < ci.Bits; j++)
+            if (lv == LogicValue.HIGH)
             {
-                if (ci.Values[j] == LogicValue.HIGH)
-                {
-                    inputsHigh += 1;
-                }
+                inputsHigh++;
             }
         }
 

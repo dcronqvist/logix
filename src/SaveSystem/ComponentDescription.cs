@@ -22,7 +22,8 @@ public enum ComponentType
     DTBC,
     Custom,
     Arithmetic,
-    Register
+    Register,
+    Bitwise
 }
 
 public class IODescription

@@ -413,10 +413,7 @@ public class Editor : Application
         this.AddNewComponentCreationContext("I/O", "Clock", () => { return new Clock(500, UserInput.GetMousePositionInWorld(editorCamera)); }, null);
         this.AddNewComponentCreationContext("Common", "Memory", () => { return new MemoryComponent(4, false, 8, false, UserInput.GetMousePositionInWorld(editorCamera)); }, new CCPUMemory());
         this.AddNewComponentCreationContext("Common", "Label", () => { return new TextComponent(UserInput.GetMousePositionInWorld(editorCamera)); }, null);
-        this.AddNewComponentCreationContext("Common", "Splitter", () => { return new Splitter(2, 2, true, false, UserInput.GetMousePositionInWorld(editorCamera)); }, new CCPUSimple(true, true, true, true, (ib, im, ob, om) =>
-        {
-            return new Splitter(ib, ob, im, om, UserInput.GetMousePositionInWorld(editorCamera));
-        }));
+        this.AddNewComponentCreationContext("Common", "Splitter", () => { return new Splitter(2, 2, true, false, UserInput.GetMousePositionInWorld(editorCamera)); }, new CCPUSplitter());
         this.AddNewComponentCreationContext("Common", "Delayer", () => { return new Delayer(100, 1, false, UserInput.GetMousePositionInWorld(editorCamera)); }, new CCPUSimple(true, true, false, false, (ib, im, _, _) =>
         {
             return new Delayer(100, ib, im, UserInput.GetMousePositionInWorld(editorCamera));
@@ -463,6 +460,10 @@ public class Editor : Application
         {
             return new RegisterComponent(ib, im, UserInput.GetMousePositionInWorld(editorCamera));
         }, "Data Bits", "Multibit"));
+        this.AddNewComponentCreationContext("Common", "Bitwise Gate", () =>
+        {
+            return new BitwiseComponent(Util.GetGateLogicFromName("AND"), 4, true, UserInput.GetMousePositionInWorld(editorCamera));
+        }, new CCPUBitwise());
 
         // GATES
         foreach (IGateLogic logic in this.availableGateLogics)

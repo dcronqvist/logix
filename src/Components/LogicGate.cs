@@ -39,7 +39,7 @@ There is also a NOT gate, which is a special gate since it only has one input. I
 
     public override void PerformLogic()
     {
-        this.OutputAt(0).SetValues(this.Logic.PerformLogic(this.Inputs));
+        this.OutputAt(0).SetValues(this.Logic.PerformLogic(this.Inputs.Select(i => i.Values).Aggregate((a, b) => a.Concat(b).ToList())));
     }
 
     public override ComponentDescription ToDescription()

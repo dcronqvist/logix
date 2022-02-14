@@ -2,18 +2,13 @@ namespace LogiX.Components;
 
 public class NANDLogic : IGateLogic
 {
-    public LogicValue PerformLogic(List<ComponentInput> inputs)
+    public LogicValue PerformLogic(List<LogicValue> inputs)
     {
-        for (int i = 0; i < inputs.Count; i++)
+        foreach (LogicValue lv in inputs)
         {
-            ComponentInput ci = inputs[i];
-
-            for (int j = 0; j < ci.Bits; j++)
+            if (lv == LogicValue.LOW)
             {
-                if (ci.Values[j] == LogicValue.LOW)
-                {
-                    return LogicValue.HIGH;
-                }
+                return LogicValue.HIGH;
             }
         }
 
