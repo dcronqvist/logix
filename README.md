@@ -1,17 +1,18 @@
-# logix
-🔌 simulator for logic gates and integrated circuits, created with [raylib](https://github.com/raysan5/raylib) and made cross-platform using .NET (6)
+# 🔌 logix
+
+simulator for logic gates and integrated circuits, created with [raylib](https://github.com/raysan5/raylib) and made cross-platform using .NET (6)
 
 ## Table of contents
 
 - [Getting started](#getting-started)
 - [FLIS-Processor](#flis-processor)
 - [Plugins](#plugins)
-    - [Custom Components](#custom-components)
-    - [Plugin Methods](#plugin-methods)
+  - [Custom Components](#custom-components)
+  - [Plugin Methods](#plugin-methods)
 
 ## Getting started
 
-If you just want to get your hands dirty and start placing out logic gates and make circuits, all you'll need is a `dotnet` runtime, and to clone down the repository. 
+If you just want to get your hands dirty and start placing out logic gates and make circuits, all you'll need is a `dotnet` runtime, and to clone down the repository.
 
 The `.csproj` targets `.NET 6`, so you'll need a runtime with version >= 6.
 
@@ -29,7 +30,7 @@ It is not complete, since only a small subset of the instruction set has been im
 
 ## Plugins
 
-You can already create integrated circuits that you can export and share if you'd like - but these components might become very complex and therefore slow down the simulation quite substantially. 
+You can already create integrated circuits that you can export and share if you'd like - but these components might become very complex and therefore slow down the simulation quite substantially.
 
 If you want to create your own plugin, you can use the [plugin template](/plugins/plugin_template).
 
@@ -39,4 +40,4 @@ Plugins are an easy way to create components which are very flexible and operate
 
 ### Plugin Methods
 
-Plugins also allow you to create **Plugin Methods** which are void methods that can be run from the editor UI, allowing you access to the entire editor. With access to the editor, you can add/delete/copy components in the simulation, change the UI, whatever you feel like. 
+Plugins also allow you to create **Plugin Methods** which are void methods that can be run from the editor UI, allowing you access to the entire editor. With access to the editor, you can add/delete/copy components in the simulation, change the UI, whatever you feel like.
