@@ -61,8 +61,8 @@ COUT = AN-A0 + BN-B0 + CIN > 2^N - 1
     public override void PerformLogic()
     {
         int carryIn = this.InputAt(0).Values[0].GetAsInt();
-        int a = 0;
-        int b = 0;
+        long a = 0;
+        long b = 0;
 
         if (!this.MultiBit)
         {
@@ -79,12 +79,12 @@ COUT = AN-A0 + BN-B0 + CIN > 2^N - 1
         }
         else
         {
-            a = this.InputAt(1).Values.GetAsInt();
-            b = this.InputAt(2).Values.GetAsInt();
+            a = this.InputAt(1).Values.GetAsLong();
+            b = this.InputAt(2).Values.GetAsLong();
         }
 
-        int sum = (a + b + carryIn) % (int)Math.Pow(2, this.Bits);
-        int carryOut = (a + b + carryIn) > (int)Math.Pow(2, this.Bits) - 1 ? 1 : 0;
+        long sum = (a + b + carryIn) % (long)Math.Pow(2, this.Bits);
+        long carryOut = (a + b + carryIn) > (long)Math.Pow(2, this.Bits) - 1 ? 1 : 0;
 
         if (!this.MultiBit)
         {

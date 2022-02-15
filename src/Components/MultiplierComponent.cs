@@ -55,29 +55,29 @@ This multiplier component will perform integer multiplication on the inputs.
     public override void PerformLogic()
     {
         int carryIn = this.InputAt(0).Values[0].GetAsInt();
-        int a = 0;
-        int b = 0;
+        long a = 0;
+        long b = 0;
 
         if (!this.MultiBit)
         {
             // Get a, index 1 -> (bits+1)
             for (int i = 0; i < this.Bits; i++)
             {
-                a += this.InputAt(i).Values[0].GetAsInt() * (int)Math.Pow(2, i);
+                a += this.InputAt(i).Values[0].GetAsLong() * (long)Math.Pow(2, i);
             }
             // Get b
             for (int i = this.Bits; i < this.Bits * 2; i++)
             {
-                b += this.InputAt(i).Values[0].GetAsInt() * (int)Math.Pow(2, i - this.Bits);
+                b += this.InputAt(i).Values[0].GetAsLong() * (long)Math.Pow(2, i - this.Bits);
             }
         }
         else
         {
-            a = this.InputAt(0).Values.GetAsInt();
-            b = this.InputAt(1).Values.GetAsInt();
+            a = this.InputAt(0).Values.GetAsLong();
+            b = this.InputAt(1).Values.GetAsLong();
         }
 
-        int product = (a * b) % (int)Math.Pow(2, this.Bits * 2);
+        long product = (a * b) % (long)Math.Pow(2, this.Bits * 2);
 
         if (!this.MultiBit)
         {

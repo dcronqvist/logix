@@ -421,6 +421,11 @@ public static class Util
         return value == LogicValue.HIGH ? 1 : 0;
     }
 
+    public static long GetAsLong(this LogicValue value)
+    {
+        return value == LogicValue.HIGH ? 1L : 0L;
+    }
+
     public static int GetAsInt(this IEnumerable<LogicValue> values)
     {
         int sum = 0;
@@ -428,6 +433,18 @@ public static class Util
         foreach (LogicValue value in values)
         {
             sum += value.GetAsInt() << i;
+            i += 1;
+        }
+        return sum;
+    }
+
+    public static long GetAsLong(this IEnumerable<LogicValue> values)
+    {
+        long sum = 0;
+        int i = 0;
+        foreach (LogicValue value in values)
+        {
+            sum += value.GetAsLong() << i;
             i += 1;
         }
         return sum;
@@ -453,6 +470,16 @@ public static class Util
             i += 1;
         }
         return bytes;
+    }
+
+    public static List<LogicValue> GetAsLogicValues(this long value, int bits)
+    {
+        List<LogicValue> values = new List<LogicValue>();
+        for (int i = 0; i < bits; i++)
+        {
+            values.Add((value & (1L << i)) == 0 ? LogicValue.LOW : LogicValue.HIGH);
+        }
+        return values;
     }
 
     public static List<LogicValue> GetAsLogicValues(this int value, int bits)

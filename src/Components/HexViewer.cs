@@ -11,7 +11,7 @@ public enum HexViewerMode
 
 public class HexViewer : Component
 {
-    private uint value;
+    private ulong value;
     private string hexString;
     public override string Text => this.hexString;
     public override Vector2 Size
@@ -45,7 +45,7 @@ In a normal configuration, the most significant bit will be the one at the botto
         hexString = "";
     }
 
-    public string GetHexadecimalStringWithMode(uint value, HexViewerMode mode, int bits)
+    public string GetHexadecimalStringWithMode(ulong value, HexViewerMode mode, int bits)
     {
         switch (mode)
         {
@@ -53,16 +53,16 @@ In a normal configuration, the most significant bit will be the one at the botto
                 return value.ToString("X" + bits / 4);
             case HexViewerMode.TwosComplement:
                 // Convert from two's complement representation to hexadecima
-                if (value >= (1 << (bits - 1)))
+                if (value >= (1UL << (bits - 1)))
                 {
-                    return "-" + (-value - (1 << bits)).ToString("X" + bits / 4).TrimStart('F', 'E');
+                    return "-" + (-((long)value) - (1L << (bits))).ToString("X" + bits / 4).Substring((16 - bits / 4), bits / 4);
                 }
                 return ((value)).ToString("X" + bits / 4);
             case HexViewerMode.OnesComplement:
                 // Convert from one's complement representation to hexadecima
-                if (value >= (1 << (bits - 1)))
+                if (value >= (1UL << (bits - 1)))
                 {
-                    return "-" + (-value - 1).ToString("X" + bits / 4).TrimStart('F', 'E');
+                    return "-" + (-((long)value) - 1).ToString("X" + bits / 4).Substring((16 - bits / 4), bits / 4);
                 }
                 return ((value)).ToString("X" + bits / 4);
             default:
@@ -80,7 +80,7 @@ In a normal configuration, the most significant bit will be the one at the botto
 
             for (int i = 0; i < ci.Bits; i++)
             {
-                value += ci.Values[i] == LogicValue.HIGH ? (1u << (i)) : 0u;
+                value += ci.Values[i] == LogicValue.HIGH ? (1UL << (i)) : 0UL;
             }
 
             this.hexString = this.GetHexadecimalStringWithMode(value, this.Mode, ci.Bits);
@@ -89,21 +89,18 @@ In a normal configuration, the most significant bit will be the one at the botto
         {
             for (int i = 0; i < this.Inputs.Count; i++)
             {
-                value += this.InputAt(i).Values[0] == LogicValue.HIGH ? (1u << (i)) : 0u;
+                value += this.InputAt(i).Values[0] == LogicValue.HIGH ? (1UL << (i)) : 0UL;
             }
             this.hexString = this.GetHexadecimalStringWithMode(value, this.Mode, this.Inputs.Count);
         }
     }
 
-    public override void OnSingleSelectedSubmitUI()
+    public override void SubmitContextPopup(Editor.Editor editor)
     {
-        ImGui.Begin("HexViewer", ImGuiWindowFlags.AlwaysAutoResize);
-
         int mode = (int)this.Mode;
         ImGui.Combo("Mode", ref mode, "Binary\0One's Complement\0Two's Complement\0");
         this.Mode = (HexViewerMode)mode;
-
-        ImGui.End();
+        base.SubmitContextPopup(editor);
     }
 
     public override void Render(Vector2 mousePosInWorld)

@@ -12,6 +12,7 @@ public class Simulator
     public float UpdatesPerFrame => 1f / this.SimulationSpeed;
     public bool Simulating { get; set; } = true;
     private float currentSimCounter = 0f;
+    public Action<Component, Exception> OnComponentCausedError { get; set; }
 
     public Simulator()
     {
@@ -25,13 +26,23 @@ public class Simulator
     {
         bool oldSimulate = this.Simulating;
         this.Simulating = true;
-        foreach (Component component in this.Components)
+        for (int i = this.Components.Count - 1; i >= 0; i--)
         {
-            component.Update(mousePosInWorld, this);
+            Component component = this.Components[i];
+
+            try
+            {
+                component.Update(mousePosInWorld, this);
+            }
+            catch (Exception e)
+            {
+                OnComponentCausedError?.Invoke(component, e);
+            }
         }
 
-        foreach (Wire wire in this.Wires)
+        for (int i = this.Wires.Count - 1; i >= 0; i--)
         {
+            Wire wire = this.Wires[i];
             wire.Update(mousePosInWorld, this);
         }
         this.Simulating = oldSimulate;
@@ -135,6 +146,10 @@ public class Simulator
             this.DeleteWire(toDelete[i]);
         }
         this.Components.Remove(c);
+        if (this.SelectedComponents.Contains(c))
+        {
+            this.SelectedComponents.Remove(c);
+        }
     }
 
     public void AddWires(List<Wire> wires)
@@ -156,6 +171,12 @@ public class Simulator
         wire.To.RemoveInputWire(wire.ToIndex);
 
         this.Wires.Remove(wire);
+
+        List<(Wire, int)> selected = this.SelectedWirePoints.Where((w, i) => w.Item1 == wire).ToList();
+        foreach ((Wire w, int i) in selected)
+        {
+            this.SelectedWirePoints.Remove((w, i));
+        }
     }
 
     public Component? GetComponentFromWorldPos(Vector2 posInWorld)
@@ -298,8 +319,9 @@ public class Simulator
 
     public void DeleteSelection()
     {
-        foreach (Component c in this.SelectedComponents)
+        for (int i = this.SelectedComponents.Count - 1; i >= 0; i--)
         {
+            Component c = this.SelectedComponents[i];
             this.DeleteComponent(c);
         }
         this.ClearSelection();

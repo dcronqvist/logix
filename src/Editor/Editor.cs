@@ -153,6 +153,11 @@ public class Editor : Application
         this.editorCamera = new Camera2D(windowSize / 2.0f, Vector2.Zero, 0f, 1f);
 
         simulator = new Simulator();
+        simulator.OnComponentCausedError = (Component c, Exception e) =>
+        {
+            base.ModalError($"Component with ID {c.uniqueID} caused an error: {e.Message}\nThe component will be removed.", ModalButtonsType.OK);
+            this.simulator.DeleteComponent(c);
+        };
 
         Util.OpenSans = Raylib.LoadFontEx($"{Directory.GetCurrentDirectory()}/assets/opensans-bold.ttf", 100, Enumerable.Range(0, 1000).ToArray(), 1000);
         Raylib.SetTextureFilter(Util.OpenSans.texture, TextureFilter.TEXTURE_FILTER_TRILINEAR);
