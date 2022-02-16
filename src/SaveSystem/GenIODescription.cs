@@ -19,15 +19,15 @@ public class GenIODescription : ComponentDescription
                 break;
 
             case ComponentType.HexViewer:
-                bool multibit = this.Inputs.Count == 1;
+                bool multibit = this.Inputs.Any(i => i.Bits > 1);
 
                 if (multibit)
                 {
-                    c = new HexViewer(this.Inputs[0].Bits, true, this.Position);
+                    c = new HexViewer(this.Inputs[1].Bits, true, true, this.Position);
                 }
                 else
                 {
-                    c = new HexViewer(this.Inputs.Count, false, this.Position);
+                    c = new HexViewer(this.Inputs.Count - 2, false, true, this.Position);
                 }
                 break;
 

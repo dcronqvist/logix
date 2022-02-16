@@ -39,10 +39,14 @@ When configured as multibit, the most significant bit will be the leftmost bit, 
 In a normal configuration, the most significant bit will be the one at the bottom, and the least significant bit will be the one at the top.
 ";
     public HexViewerMode Mode { get; set; } = HexViewerMode.Binary;
+    public bool IncludesRepBits { get; set; }
+    public bool Multibit { get; set; }
 
-    public HexViewer(int bits, bool multibit, Vector2 position) : base(multibit ? Util.Listify(bits) : Util.NValues(1, bits), Util.EmptyList<int>(), position)
+    public HexViewer(int bits, bool multibit, bool includeRepresentationBits, Vector2 position) : base(multibit ? (includeRepresentationBits ? Util.Listify(2, bits) : Util.Listify(bits)) : (includeRepresentationBits ? Util.NValues(1, 2 + bits) : Util.NValues(1, bits)), Util.EmptyList<int>(), position)
     {
         hexString = "";
+        this.IncludesRepBits = includeRepresentationBits;
+        this.Multibit = multibit;
     }
 
     public string GetHexadecimalStringWithMode(ulong value, HexViewerMode mode, int bits)
@@ -66,7 +70,7 @@ In a normal configuration, the most significant bit will be the one at the botto
                 }
                 return ((value)).ToString("X" + bits / 4);
             default:
-                return "";
+                return "-";
         }
     }
 
@@ -74,20 +78,33 @@ In a normal configuration, the most significant bit will be the one at the botto
     {
         this.value = 0;
 
-        if (this.Inputs.Count == 1)
+        HexViewerMode mode;
+
+        if (this.Multibit)
         {
-            ComponentInput ci = this.InputAt(0);
+            byte modeValue = this.InputAt(0).Values.GetAsByte();
+            mode = (HexViewerMode)modeValue;
+            this.Mode = mode;
+
+            int inputBit = (this.IncludesRepBits ? 1 : 0);
+
+            ComponentInput ci = this.InputAt(inputBit);
 
             for (int i = 0; i < ci.Bits; i++)
             {
                 value += ci.Values[i] == LogicValue.HIGH ? (1UL << (i)) : 0UL;
             }
 
-            this.hexString = this.GetHexadecimalStringWithMode(value, this.Mode, ci.Bits);
+            this.hexString = this.GetHexadecimalStringWithMode(value, mode, ci.Bits);
         }
         else
         {
-            for (int i = 0; i < this.Inputs.Count; i++)
+            byte modeValue = this.GetLogicValuesFromSingleBitInputs(0, 1).GetAsByte();
+            mode = (HexViewerMode)modeValue;
+            this.Mode = mode;
+
+            int inputBit = (this.IncludesRepBits ? 2 : 0);
+            for (int i = inputBit; i < this.Inputs.Count; i++)
             {
                 value += this.InputAt(i).Values[0] == LogicValue.HIGH ? (1UL << (i)) : 0UL;
             }
@@ -99,7 +116,6 @@ In a normal configuration, the most significant bit will be the one at the botto
     {
         int mode = (int)this.Mode;
         ImGui.Combo("Mode", ref mode, "Binary\0One's Complement\0Two's Complement\0");
-        this.Mode = (HexViewerMode)mode;
         base.SubmitContextPopup(editor);
     }
 
@@ -112,13 +128,13 @@ In a normal configuration, the most significant bit will be the one at the botto
 
     public override ComponentDescription ToDescription()
     {
-        if (this.Inputs.Count != 1)
+        if (!this.Multibit)
         {
             return new GenIODescription(this.Position, this.Rotation, Util.NValues(new IODescription(1), this.Inputs.Count), Util.EmptyList<IODescription>(), ComponentType.HexViewer);
         }
         else
         {
-            return new GenIODescription(this.Position, this.Rotation, Util.Listify(new IODescription(this.Inputs[0].Bits)), Util.EmptyList<IODescription>(), ComponentType.HexViewer);
+            return new GenIODescription(this.Position, this.Rotation, Util.Listify(new IODescription(this.Inputs[0].Bits), new IODescription(this.Inputs[1].Bits)), Util.EmptyList<IODescription>(), ComponentType.HexViewer);
         }
     }
 

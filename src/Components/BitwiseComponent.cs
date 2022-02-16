@@ -51,7 +51,7 @@ Performs bitwise gate operations on the input bits.
     public override void SubmitContextPopup(Editor.Editor editor)
     {
         ImGui.SetNextItemWidth(80);
-        string[] types = new string[] { "AND", "NAND", "OR", "NOR", "XOR" };
+        string[] types = new string[] { "AND", "NAND", "OR", "NOR", "XOR", "XNOR" };
         int curr = types.ToList().IndexOf(this.gateLogic.GetLogicText());
         ImGui.Combo("Logic Type", ref curr, types, types.Length);
         this.gateLogic = Util.GetGateLogicFromName(types[curr]);

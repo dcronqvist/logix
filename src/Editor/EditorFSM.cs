@@ -2,7 +2,7 @@ using LogiX.Components;
 
 namespace LogiX.Editor;
 
-public class EditorFSM : FSM<Editor>
+public class EditorFSM : FSM<Editor, int>
 {
     public EditorFSM() : base()
     {
@@ -15,11 +15,11 @@ public class EditorFSM : FSM<Editor>
         this.AddNewState(new StateRectangleSelecting());
         this.AddNewState(new StateMeasuringSteps());
 
-        this.SetState<StateNone>();
+        this.SetState<StateNone>(null, 0);
     }
 }
 
-public class StateNone : State<Editor>
+public class StateNone : State<Editor, int>
 {
     public override void Update(Editor editor)
     {
@@ -28,18 +28,18 @@ public class StateNone : State<Editor>
             if (Raylib.IsKeyPressed(KeyboardKey.KEY_SPACE) || Raylib.IsMouseButtonPressed(MouseButton.MOUSE_MIDDLE_BUTTON))
             {
                 // TODO: Goto StateMovingCamera
-                this.GoToState<StateMovingCamera>();
+                this.GoToState<StateMovingCamera>(0);
                 return;
             }
 
             if (editor.hoveredInput != null)
             {
-                this.GoToState<StateHoveringInput>();
+                this.GoToState<StateHoveringInput>(0);
             }
 
             if (editor.hoveredOutput != null)
             {
-                this.GoToState<StateHoveringOutput>();
+                this.GoToState<StateHoveringOutput>(0);
             }
         }
 
@@ -50,7 +50,7 @@ public class StateNone : State<Editor>
             if (w != null && editor.simulator.SelectedWirePoints.Contains((w, wpi)) && Raylib.IsMouseButtonPressed(MouseButton.MOUSE_LEFT_BUTTON))
             {
                 editor.simulator.ClearSelection();
-                this.GoToState<StateMovingSelection>();
+                this.GoToState<StateMovingSelection>(0);
                 return;
             }
 
@@ -62,7 +62,7 @@ public class StateNone : State<Editor>
                     editor.simulator.ClearSelection();
                 }
                 editor.simulator.SelectWirePoint(w, wpi);
-                this.GoToState<StateMovingSelection>();
+                this.GoToState<StateMovingSelection>(0);
                 return;
             }
 
@@ -70,14 +70,14 @@ public class StateNone : State<Editor>
             {
                 editor.simulator.SelectedWirePoints.Clear();
                 editor.recSelectFirstCorner = UserInput.GetMousePositionInWorld(editor.editorCamera);
-                this.GoToState<StateRectangleSelecting>();
+                this.GoToState<StateRectangleSelecting>(0);
                 return;
             }
 
 
             if (editor.hoveredComponent != null && editor.simulator.IsComponentSelected(editor.hoveredComponent) && Raylib.IsMouseButtonPressed(MouseButton.MOUSE_LEFT_BUTTON))
             {
-                this.GoToState<StateMovingSelection>();
+                this.GoToState<StateMovingSelection>(0);
             }
             else if (editor.hoveredComponent != null && !editor.simulator.IsComponentSelected(editor.hoveredComponent) && Raylib.IsMouseButtonPressed(MouseButton.MOUSE_LEFT_BUTTON) && Raylib.IsKeyDown(KeyboardKey.KEY_LEFT_SHIFT))
             {
@@ -89,7 +89,7 @@ public class StateNone : State<Editor>
                 editor.simulator.ClearSelection();
                 editor.simulator.SelectedWirePoints.Clear();
                 editor.simulator.SelectComponent(editor.hoveredComponent);
-                this.GoToState<StateMovingSelection>();
+                this.GoToState<StateMovingSelection>(0);
             }
 
 
@@ -97,13 +97,13 @@ public class StateNone : State<Editor>
             {
                 editor.simulator.ClearSelection();
                 editor.recSelectFirstCorner = UserInput.GetMousePositionInWorld(editor.editorCamera);
-                this.GoToState<StateRectangleSelecting>();
+                this.GoToState<StateRectangleSelecting>(0);
             }
         }
     }
 }
 
-public class StateMeasuringSteps : State<Editor>
+public class StateMeasuringSteps : State<Editor, int>
 {
     public override void Update(Editor editor)
     {
@@ -122,7 +122,7 @@ public class StateMeasuringSteps : State<Editor>
 
                 int steps = fromComponent.GetMaxStepsToOtherComponent(toComponent);
                 editor.Modal("Measured steps", "Max steps: " + steps, ModalButtonsType.OK);
-                this.GoToState<StateNone>();
+                this.GoToState<StateNone>(0);
             }
         }
     }
@@ -138,7 +138,7 @@ public class StateMeasuringSteps : State<Editor>
     }
 }
 
-public class StateMovingCamera : State<Editor>
+public class StateMovingCamera : State<Editor, int>
 {
     public override void Update(Editor editor)
     {
@@ -149,14 +149,14 @@ public class StateMovingCamera : State<Editor>
         {
             if (Raylib.IsKeyReleased(KeyboardKey.KEY_SPACE) || Raylib.IsMouseButtonReleased(MouseButton.MOUSE_MIDDLE_BUTTON))
             {
-                this.GoToState<StateNone>();
+                this.GoToState<StateNone>(0);
                 return;
             }
         }
     }
 }
 
-public class StateHoveringInput : State<Editor>
+public class StateHoveringInput : State<Editor, int>
 {
     public override void Update(Editor editor)
     {
@@ -172,12 +172,12 @@ public class StateHoveringInput : State<Editor>
         if (editor.hoveredInput == null)
         {
             // Go back to None
-            this.GoToState<StateNone>();
+            this.GoToState<StateNone>(0);
         }
     }
 }
 
-public class StateHoveringOutput : State<Editor>
+public class StateHoveringOutput : State<Editor, int>
 {
     public override void Update(Editor editor)
     {
@@ -187,18 +187,18 @@ public class StateHoveringOutput : State<Editor>
         {
             // TODO: Goto output-to-input
             editor.connectFrom = hoveredOutput;
-            this.GoToState<StateOutputToInput>();
+            this.GoToState<StateOutputToInput>(0);
         }
 
         if (hoveredOutput == null)
         {
             // Go back to None
-            this.GoToState<StateNone>();
+            this.GoToState<StateNone>(0);
         }
     }
 }
 
-public class StateOutputToInput : State<Editor>
+public class StateOutputToInput : State<Editor, int>
 {
     public override void Update(Editor editor)
     {
@@ -213,22 +213,24 @@ public class StateOutputToInput : State<Editor>
                 return;
             }
 
-            Wire wire = new Wire(connectFrom.Bits, hoveredInput.OnComponent, hoveredInput.OnComponentIndex, connectFrom!.OnComponent, connectFrom!.OnComponentIndex);
-            if (hoveredInput.SetSignal(wire))
-            {
-                connectFrom.AddOutputWire(wire);
-                editor.simulator.AddWire(wire);
-            }
+            // Wire wire = new Wire(connectFrom.Bits, hoveredInput.OnComponent, hoveredInput.OnComponentIndex, connectFrom!.OnComponent, connectFrom!.OnComponentIndex);
+            // if (hoveredInput.SetSignal(wire))
+            // {
+            //     connectFrom.AddOutputWire(wire);
+            //     editor.simulator.AddWire(wire);
+            // }
+            ConnectWireCommand cwc = new ConnectWireCommand(connectFrom, hoveredInput);
+            editor.Execute(cwc, editor);
 
             editor.connectFrom = null;
 
-            this.GoToState<StateNone>();
+            this.GoToState<StateNone>(0);
             return;
         }
 
         if (!ImGui.GetIO().WantCaptureKeyboard && Raylib.IsKeyPressed(KeyboardKey.KEY_ESCAPE))
         {
-            this.GoToState<StateNone>();
+            this.GoToState<StateNone>(0);
         }
     }
 
@@ -280,21 +282,36 @@ public class StateOutputToInput : State<Editor>
     }
 }
 
-public class StateMovingSelection : State<Editor>
+public class StateMovingSelection : State<Editor, int>
 {
+    Vector2 startPos;
+    bool doCommand = false;
+
+    public override void OnEnter(Editor editor, int arg)
+    {
+        startPos = UserInput.GetMousePositionInWorld(editor.editorCamera);
+        doCommand = arg == 1 ? false : true;
+    }
+
     public override void Update(Editor editor)
     {
         editor.simulator.MoveSelection(editor.editorCamera);
 
         if (Raylib.IsMouseButtonReleased(MouseButton.MOUSE_LEFT_BUTTON))
         {
-            this.GoToState<StateNone>();
+            if (doCommand)
+            {
+                Vector2 endPos = UserInput.GetMousePositionInWorld(editor.editorCamera);
+                MovedSelectionCommand msc = new MovedSelectionCommand(editor.simulator.SelectedComponents.Copy(), editor.simulator.SelectedWirePoints.Copy(), (endPos - startPos));
+                editor.Execute(msc, editor, doExecute: false);
+            }
+            this.GoToState<StateNone>(0);
             return;
         }
     }
 }
 
-public class StateRectangleSelecting : State<Editor>
+public class StateRectangleSelecting : State<Editor, int>
 {
     public override void Update(Editor editor)
     {
@@ -306,7 +323,7 @@ public class StateRectangleSelecting : State<Editor>
 
         if (Raylib.IsMouseButtonReleased(MouseButton.MOUSE_LEFT_BUTTON))
         {
-            this.GoToState<StateNone>();
+            this.GoToState<StateNone>(0);
         }
     }
 

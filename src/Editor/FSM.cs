@@ -1,9 +1,10 @@
 namespace LogiX.Editor;
 
-public abstract class State<TUpdate>
+public abstract class State<TUpdate, TOnEnter>
 {
-    public FSM<TUpdate>? fsm_;
+    public FSM<TUpdate, TOnEnter>? fsm_;
     private Type? transitionTo;
+    public TOnEnter onEnterArg;
 
     public State()
     {
@@ -13,10 +14,12 @@ public abstract class State<TUpdate>
     public abstract void Update(TUpdate arg);
     public virtual void Render(TUpdate arg) { }
     public virtual void SubmitUI(TUpdate arg) { }
+    public virtual void OnEnter(TUpdate updateArg, TOnEnter arg) { }
 
-    public void GoToState<TState>() where TState : State<TUpdate>
+    public void GoToState<TState>(TOnEnter arg) where TState : State<TUpdate, TOnEnter>
     {
         this.transitionTo = typeof(TState);
+        this.onEnterArg = arg;
     }
 
     public bool WantsTransition(out Type? goTo)
@@ -35,31 +38,32 @@ public abstract class State<TUpdate>
     }
 }
 
-public class FSM<TUpdate>
+public class FSM<TUpdate, TOnEnter>
 {
-    public State<TUpdate>? CurrentState { get; set; }
-    public List<State<TUpdate>> States { get; set; }
+    public State<TUpdate, TOnEnter>? CurrentState { get; set; }
+    public List<State<TUpdate, TOnEnter>> States { get; set; }
 
     public FSM()
     {
-        this.States = new List<State<TUpdate>>();
+        this.States = new List<State<TUpdate, TOnEnter>>();
     }
 
-    public void SetState<TState>() where TState : State<TUpdate>
+    public void SetState<TState>(TUpdate updateArg, TOnEnter gotoArg) where TState : State<TUpdate, TOnEnter>
     {
         this.CurrentState = this.GetState(typeof(TState));
+        this.CurrentState?.OnEnter(updateArg, gotoArg);
     }
 
-    public FSM<TUpdate> AddNewState(State<TUpdate> s)
+    public FSM<TUpdate, TOnEnter> AddNewState(State<TUpdate, TOnEnter> s)
     {
         s.fsm_ = this;
         this.States.Add(s);
         return this;
     }
 
-    public State<TUpdate>? GetState(Type type)
+    public State<TUpdate, TOnEnter>? GetState(Type type)
     {
-        foreach (State<TUpdate> s in this.States)
+        foreach (State<TUpdate, TOnEnter> s in this.States)
         {
             if (s.GetType() == type)
             {
@@ -79,10 +83,11 @@ public class FSM<TUpdate>
             {
                 if (goTo != null)
                 {
-                    State<TUpdate>? newState = this.GetState(goTo);
+                    State<TUpdate, TOnEnter>? newState = this.GetState(goTo);
                     if (newState != null)
                     {
                         this.CurrentState = newState;
+                        this.CurrentState.OnEnter(arg, this.CurrentState.onEnterArg);
                     }
                 }
             }

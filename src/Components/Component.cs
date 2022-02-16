@@ -88,6 +88,16 @@ public abstract class Component
         this.Rotation = 0;
     }
 
+    public List<LogicValue> GetLogicValuesFromSingleBitInputs(params int[] inputIndices)
+    {
+        List<LogicValue> values = new List<LogicValue>();
+        foreach (int i in inputIndices)
+        {
+            values.Add(this.Inputs[i].Values[0]);
+        }
+        return values;
+    }
+
     public virtual int GetMaxStepsToOtherComponent(Component other)
     {
         if (other == this)

@@ -11,6 +11,7 @@ public class CCPUBitwise : IUISubmitter<bool, Editor.Editor>
         "OR",
         "NOR",
         "XOR",
+        "XNOR",
     };
 
     public CCPUBitwise()

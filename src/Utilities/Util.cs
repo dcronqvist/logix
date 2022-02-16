@@ -177,6 +177,8 @@ public static class Util
                 return new NORLogic();
             case "XOR":
                 return new XORLogic();
+            case "XNOR":
+                return new XNORLogic();
             case "NOT":
                 return new NOTLogic();
         }
@@ -654,5 +656,15 @@ public static class Util
         }
 
         return orderedComponents;
+    }
+
+    public static List<T> Copy<T>(this List<T> list)
+    {
+        List<T> copy = new List<T>();
+        foreach (T item in list)
+        {
+            copy.Add(item);
+        }
+        return copy;
     }
 }

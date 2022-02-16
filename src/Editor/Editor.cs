@@ -5,7 +5,7 @@ using LogiX.SaveSystem;
 
 namespace LogiX.Editor;
 
-public class Editor : Application
+public class Editor : Application<Editor>
 {
     // Editor states
     public Camera2D editorCamera;
@@ -13,7 +13,7 @@ public class Editor : Application
     public Simulator simulator;
     public Project loadedProject;
     Component contextMenuComponent;
-    EditorFSM fsm;
+    public EditorFSM fsm;
     Dictionary<string, Tuple<Func<Component>, IUISubmitter<bool, Editor>?>> componentCreationContexts;
     Dictionary<string, List<string>> componentCategories;
     Modal currentModal;
@@ -35,7 +35,7 @@ public class Editor : Application
     public Vector2 recSelectFirstCorner;
 
     public ComponentOutput? connectFrom;
-    CircuitDescription? copiedCircuit;
+    public CircuitDescription? copiedCircuit;
 
     // UI VARIABLES
     int newComponentBits;
@@ -71,6 +71,7 @@ public class Editor : Application
             new ORLogic(),
             new NORLogic(),
             new XORLogic(),
+            new XNORLogic(),
             new NOTLogic()
         };
 
@@ -201,7 +202,6 @@ public class Editor : Application
             this.SetProject(this.loadedProject);
 
         }, this.primaryKeyMod, KeyboardKey.KEY_S));
-
         AddNewMainMenuItem("File", "New Project", new EditorAction((editor) => true, (editor) => false, (Editor editor, out string error) =>
         {
             // Should maybe save current project before?
@@ -209,7 +209,6 @@ public class Editor : Application
             error = "";
             return true;
         }));
-
         AddNewMainMenuItem("File", "Open Project", new EditorAction((editor) => true, (editor) => false, (Editor editor, out string error) =>
         {
             this.SelectFile(Util.FileDialogStartDir, (file) =>
@@ -221,7 +220,6 @@ public class Editor : Application
             }, Project.EXTENSION);
             error = ""; return true;
         }, this.primaryKeyMod, KeyboardKey.KEY_O));
-
         AddNewMainMenuItem("File", "Include IC File", new EditorAction((editor) => true, (editor) => false, (Editor editor, out string error) =>
         {
             this.SelectFile(Util.FileDialogStartDir, (file) =>
@@ -239,7 +237,6 @@ public class Editor : Application
             }, ICDescription.EXTENSION);
             error = ""; return true;
         }, this.primaryKeyMod, KeyboardKey.KEY_I, KeyboardKey.KEY_F));
-
         AddNewMainMenuItem("File", "Include IC Collection", new EditorAction((editor) => true, (editor) => false, (Editor editor, out string error) =>
         {
             this.SelectFile(Util.FileDialogStartDir, (file) =>
@@ -249,7 +246,6 @@ public class Editor : Application
             }, ICCollection.EXTENSION);
             error = ""; return true;
         }, this.primaryKeyMod, KeyboardKey.KEY_I, KeyboardKey.KEY_C));
-
         AddNewMainMenuItem("File", "Settings", new EditorAction((editor) => !editor.EditorWindowOfTypeOpen<SettingsWindow>(), (editor) => false, (Editor editor, out string error) =>
         {
             this.OpenEditorWindow(new SettingsWindow());
@@ -258,8 +254,10 @@ public class Editor : Application
 
         AddNewMainMenuItem("Edit", "Copy", new EditorAction((editor) => simulator.SelectedComponents.Count > 0, (editor) => false, (Editor editor, out string error) => { MMCopy(); error = ""; return true; }, this.primaryKeyMod, KeyboardKey.KEY_C));
         AddNewMainMenuItem("Edit", "Paste", new EditorAction((editor) => this.copiedCircuit != null, (editor) => false, (Editor editor, out string error) => { MMPaste(); error = ""; return true; }, this.primaryKeyMod, KeyboardKey.KEY_V));
+        AddNewMainMenuItem("Edit", "Undo", new EditorAction((editor) => true, (editor) => false, (Editor editor, out string error) => { base.Undo(this); error = ""; return true; }, this.primaryKeyMod, KeyboardKey.KEY_Z));
+        AddNewMainMenuItem("Edit", "Redo", new EditorAction((editor) => true, (editor) => false, (Editor editor, out string error) => { base.Redo(this); error = ""; return true; }, this.primaryKeyMod, KeyboardKey.KEY_Y));
         AddNewMainMenuItem("Edit", "Select All", new EditorAction((editor) => true, (editor) => false, (Editor editor, out string error) => { simulator.SelectAllComponents(); error = ""; return true; }, this.primaryKeyMod, KeyboardKey.KEY_A));
-        AddNewMainMenuItem("Edit", "Delete Selection", new EditorAction((editor) => simulator.SelectedComponents.Count > 0, (editor) => false, (Editor editor, out string error) => { simulator.DeleteSelection(); error = ""; return true; }, KeyboardKey.KEY_BACKSPACE));
+        AddNewMainMenuItem("Edit", "Delete Selection", new EditorAction((editor) => simulator.SelectedComponents.Count > 0, (editor) => false, (Editor editor, out string error) => { base.Execute(new DeleteSelectionCommand(), this); error = ""; return true; }, KeyboardKey.KEY_BACKSPACE));
         AddNewMainMenuItem("Tools", "Horizontally Align", new EditorAction((editor) => simulator.SelectedComponents.Count > 0 || simulator.SelectedWirePoints.Count > 0, (editor) => false, (Editor editor, out string error) =>
         {
             List<Component> selected = simulator.SelectedComponents;
@@ -340,7 +338,7 @@ public class Editor : Application
         }, KeyboardKey.KEY_LEFT));
         AddNewMainMenuItem("Tools", "Measure Steps", new EditorAction((editor) => simulator.SelectedComponents.Count == 1, (editor) => false, (Editor editor, out string error) =>
         {
-            this.fsm.SetState<StateMeasuringSteps>();
+            this.fsm.SetState<StateMeasuringSteps>(this, 0);
             error = "";
             return true;
         }, this.primaryKeyMod, KeyboardKey.KEY_M));
@@ -406,9 +404,9 @@ public class Editor : Application
         {
             return new Lamp(ib, UserInput.GetMousePositionInWorld(editorCamera));
         }));
-        this.AddNewComponentCreationContext("I/O", "Hex Viewer", () => { return new HexViewer(4, false, UserInput.GetMousePositionInWorld(editorCamera)); }, new CCPUSimple(true, true, false, false, (ib, im, _, _) =>
+        this.AddNewComponentCreationContext("I/O", "Hex Viewer", () => { return new HexViewer(4, false, true, UserInput.GetMousePositionInWorld(editorCamera)); }, new CCPUSimple(true, true, false, false, (ib, im, _, _) =>
         {
-            return new HexViewer(ib, im, UserInput.GetMousePositionInWorld(editorCamera));
+            return new HexViewer(ib, im, true, UserInput.GetMousePositionInWorld(editorCamera));
         }));
         this.AddNewComponentCreationContext("I/O", "ROM", () => { return new ROM(false, 4, false, 4, UserInput.GetMousePositionInWorld(editorCamera)); }, new CCPUSimple(true, true, true, true, (ib, im, ob, om) =>
         {
@@ -557,7 +555,9 @@ public class Editor : Application
                     if (ImGui.IsItemClicked())
                     {
                         // Use default creator to create new component
-                        this.NewComponent(context.Item1());
+                        Component c = context.Item1();
+                        NewComponentCommand ncc = new NewComponentCommand(c, c.Position);
+                        base.Execute(ncc, this);
                     }
 
                     // If a IUISubmitter was supplied, then we want to show
@@ -594,7 +594,8 @@ public class Editor : Application
     {
         try
         {
-            copiedCircuit = new CircuitDescription(simulator.SelectedComponents);
+            CopyCircuitCommand ccc = new CopyCircuitCommand(this.copiedCircuit, new CircuitDescription(simulator.SelectedComponents));
+            base.Execute(ccc, this);
         }
         catch (Exception e)
         {
@@ -614,24 +615,8 @@ public class Editor : Application
     {
         try
         {
-            (List<Component> comps, List<Wire> wires) = cd.CreateComponentsAndWires(pos, preserveIDs);
-            simulator.AddComponents(comps);
-            simulator.AddWires(wires);
-
-            simulator.ClearSelection();
-            simulator.SelectedWirePoints.Clear();
-
-            foreach (Component c in comps)
-            {
-                simulator.SelectComponent(c);
-            }
-            foreach (Wire w in wires)
-            {
-                for (int i = 0; i < w.IntermediatePoints.Count; i++)
-                {
-                    simulator.SelectWirePoint(w, i);
-                }
-            }
+            PasteClipboardCommand pcc = new PasteClipboardCommand(cd, pos, preserveIDs);
+            base.Execute(pcc, this);
         }
         catch (Exception e)
         {
@@ -786,6 +771,21 @@ public class Editor : Application
 
         ImGui.EndMainMenuBar();
 
+        ImGui.Begin("Editor Actions");
+        ImGui.Text("Current Command: " + this.CurrentCommandIndex);
+        for (int i = 0; i < this.Commands.Count; i++)
+        {
+            if (i <= this.CurrentCommandIndex)
+            {
+                ImGui.Text(this.Commands[i].ToString());
+            }
+            else
+            {
+                ImGui.TextDisabled(this.Commands[i].ToString());
+            }
+        }
+        ImGui.End();
+
         // COMPONENTS WINDOW
 
         ImGui.PushStyleVar(ImGuiStyleVar.WindowRounding, 0f);
@@ -906,7 +906,6 @@ public class Editor : Application
         simulator.ClearSelection();
         simulator.SelectedWirePoints.Clear();
         simulator.SelectComponent(comp);
-        this.fsm.SetState<StateMovingSelection>();
     }
 
     public override void Update()
