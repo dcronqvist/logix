@@ -258,42 +258,20 @@ public class Editor : Application<Editor>
         AddNewMainMenuItem("Edit", "Redo", new EditorAction((editor) => true, (editor) => false, (Editor editor, out string error) => { base.Redo(this); error = ""; return true; }, this.primaryKeyMod, KeyboardKey.KEY_Y));
         AddNewMainMenuItem("Edit", "Select All", new EditorAction((editor) => true, (editor) => false, (Editor editor, out string error) => { simulator.SelectAllComponents(); error = ""; return true; }, this.primaryKeyMod, KeyboardKey.KEY_A));
         AddNewMainMenuItem("Edit", "Delete Selection", new EditorAction((editor) => simulator.SelectedComponents.Count > 0, (editor) => false, (Editor editor, out string error) => { base.Execute(new DeleteSelectionCommand(), this); error = ""; return true; }, KeyboardKey.KEY_BACKSPACE));
-        AddNewMainMenuItem("Tools", "Horizontally Align", new EditorAction((editor) => simulator.SelectedComponents.Count > 0 || simulator.SelectedWirePoints.Count > 0, (editor) => false, (Editor editor, out string error) =>
+        AddNewMainMenuItem("Tools", "Horizontally Align", new EditorAction((editor) => simulator.SelectedComponents.Count > 0, (editor) => false, (Editor editor, out string error) =>
         {
-            List<Component> selected = simulator.SelectedComponents;
-            Vector2 middle = Util.GetMiddleOfListOfVectors(selected.Select(c => c.Position).ToList());
-            foreach (Component c in selected)
-            {
-                c.Position = new Vector2(middle.X, c.Position.Y);
-            }
+            List<Component> selected = simulator.SelectedComponents.Copy();
+            HorizontallyAlignCommand hac = new HorizontallyAlignCommand(selected);
+            base.Execute(hac, this);
             error = "";
-
-            List<(Wire, int)> selectedWirePoints = simulator.SelectedWirePoints;
-            middle = Util.GetMiddleOfListOfVectors(selectedWirePoints.Select(w => w.Item1.IntermediatePoints[w.Item2]).ToList());
-            foreach ((Wire w, int i) in selectedWirePoints)
-            {
-                w.IntermediatePoints[i] = new Vector2(middle.X, w.IntermediatePoints[i].Y);
-            }
-
             return true;
         }));
-        AddNewMainMenuItem("Tools", "Vertically Align", new EditorAction((editor) => simulator.SelectedComponents.Count > 0 || simulator.SelectedWirePoints.Count > 0, (editor) => false, (Editor editor, out string error) =>
+        AddNewMainMenuItem("Tools", "Vertically Align", new EditorAction((editor) => simulator.SelectedComponents.Count > 0, (editor) => false, (Editor editor, out string error) =>
         {
-            List<Component> selected = simulator.SelectedComponents;
-            Vector2 middle = Util.GetMiddleOfListOfVectors(selected.Select(c => c.Position).ToList());
-            foreach (Component c in selected)
-            {
-                c.Position = new Vector2(c.Position.X, middle.Y);
-            }
+            List<Component> selected = simulator.SelectedComponents.Copy();
+            VerticallyAlignCommand vac = new VerticallyAlignCommand(selected);
+            base.Execute(vac, this);
             error = "";
-
-            List<(Wire, int)> selectedWirePoints = simulator.SelectedWirePoints;
-            middle = Util.GetMiddleOfListOfVectors(selectedWirePoints.Select(w => w.Item1.IntermediatePoints[w.Item2]).ToList());
-            foreach ((Wire w, int i) in selectedWirePoints)
-            {
-                w.IntermediatePoints[i] = new Vector2(w.IntermediatePoints[i].X, middle.Y);
-            }
-
             return true;
         }));
         AddNewMainMenuItem("Tools", "Automatically Name Selected IOs", new EditorAction((editor) => simulator.SelectedComponents.Count > 0 && (simulator.SelectedComponents.All(x => x is Switch) || simulator.SelectedComponents.All(x => x is Lamp)), (editor) => false, (Editor editor, out string error) =>
@@ -318,21 +296,17 @@ public class Editor : Application<Editor>
         }, this.primaryKeyMod, KeyboardKey.KEY_N));
         AddNewMainMenuItem("Tools", "Rotate Clockwise", new EditorAction((editor) => simulator.SelectedComponents.Count > 0, (editor) => false, (Editor editor, out string error) =>
         {
-            List<Component> selected = simulator.SelectedComponents;
-            foreach (Component c in selected)
-            {
-                c.RotateRight();
-            }
+            List<Component> selected = simulator.SelectedComponents.Copy();
+            RotateCWCommand rcc = new RotateCWCommand(selected);
+            base.Execute(rcc, this);
             error = "";
             return true;
         }, KeyboardKey.KEY_RIGHT));
         AddNewMainMenuItem("Tools", "Rotate Counterclockwise", new EditorAction((editor) => simulator.SelectedComponents.Count > 0, (editor) => false, (Editor editor, out string error) =>
         {
-            List<Component> selected = simulator.SelectedComponents;
-            foreach (Component c in selected)
-            {
-                c.RotateLeft();
-            }
+            List<Component> selected = simulator.SelectedComponents.Copy();
+            RotateCCWCommand rcc = new RotateCCWCommand(selected);
+            base.Execute(rcc, this);
             error = "";
             return true;
         }, KeyboardKey.KEY_LEFT));

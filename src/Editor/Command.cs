@@ -228,3 +228,129 @@ public class ConnectWireCommand : Command<Editor>
         this.ci.OnComponent.RemoveInputWire(this.ci.OnComponentIndex);
     }
 }
+
+public class HorizontallyAlignCommand : Command<Editor>
+{
+    List<(Component, Vector2)> componentsAndOriginal;
+
+    public HorizontallyAlignCommand(List<Component> components)
+    {
+        componentsAndOriginal = components.Select(x => (x, x.Position)).ToList();
+    }
+
+    public override void Execute(Editor arg)
+    {
+        Vector2 middle = Util.GetMiddleOfListOfVectors(this.componentsAndOriginal.Select(c => c.Item2).ToList());
+        foreach (Component c in this.componentsAndOriginal.Select(x => x.Item1))
+        {
+            c.Position = new Vector2(middle.X, c.Position.Y);
+        }
+    }
+
+    public override string ToString()
+    {
+        return "Horizontally aligned selection";
+    }
+
+    public override void Undo(Editor arg)
+    {
+        foreach ((Component c, Vector2 orig) in this.componentsAndOriginal)
+        {
+            c.Position = orig;
+        }
+    }
+}
+
+public class VerticallyAlignCommand : Command<Editor>
+{
+    List<(Component, Vector2)> componentsAndOriginal;
+
+    public VerticallyAlignCommand(List<Component> components)
+    {
+        componentsAndOriginal = components.Select(x => (x, x.Position)).ToList();
+    }
+
+    public override void Execute(Editor arg)
+    {
+        Vector2 middle = Util.GetMiddleOfListOfVectors(this.componentsAndOriginal.Select(c => c.Item2).ToList());
+        foreach (Component c in this.componentsAndOriginal.Select(x => x.Item1))
+        {
+            c.Position = new Vector2(c.Position.X, middle.Y);
+        }
+    }
+
+    public override string ToString()
+    {
+        return "Vertically aligned selection";
+    }
+
+    public override void Undo(Editor arg)
+    {
+        foreach ((Component c, Vector2 orig) in this.componentsAndOriginal)
+        {
+            c.Position = orig;
+        }
+    }
+}
+
+public class RotateCWCommand : Command<Editor>
+{
+    List<Component> components;
+
+    public RotateCWCommand(List<Component> components)
+    {
+        this.components = components;
+    }
+
+    public override void Execute(Editor arg)
+    {
+        foreach (Component c in this.components)
+        {
+            c.RotateRight();
+        }
+    }
+
+    public override string ToString()
+    {
+        return "Rotated selection clockwise";
+    }
+
+    public override void Undo(Editor arg)
+    {
+        foreach (Component c in this.components)
+        {
+            c.RotateLeft();
+        }
+    }
+}
+
+public class RotateCCWCommand : Command<Editor>
+{
+    List<Component> components;
+
+    public RotateCCWCommand(List<Component> components)
+    {
+        this.components = components;
+    }
+
+    public override void Execute(Editor arg)
+    {
+        foreach (Component c in this.components)
+        {
+            c.RotateLeft();
+        }
+    }
+
+    public override string ToString()
+    {
+        return "Rotated selection clockwise";
+    }
+
+    public override void Undo(Editor arg)
+    {
+        foreach (Component c in this.components)
+        {
+            c.RotateRight();
+        }
+    }
+}
