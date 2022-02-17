@@ -354,3 +354,100 @@ public class RotateCCWCommand : Command<Editor>
         }
     }
 }
+
+public class AddIntermediatePointCommand : Command<Editor>
+{
+    Wire wire;
+    int index;
+    Vector2 position;
+    List<Vector2> previousIntermediatePoints;
+
+    public AddIntermediatePointCommand(Wire wire, int index, Vector2 position)
+    {
+        this.wire = wire;
+        this.index = index;
+        this.position = position;
+        this.previousIntermediatePoints = wire.IntermediatePoints.Copy();
+    }
+
+    public override void Execute(Editor arg)
+    {
+        wire.IntermediatePoints.Insert(index + 1, this.position);
+        arg.simulator.SelectedWirePoints.Clear();
+        arg.simulator.SelectedWirePoints.Add((wire, index + 1));
+    }
+
+    public override string ToString()
+    {
+        return "Added intermediate point to wire";
+    }
+
+    public override void Undo(Editor arg)
+    {
+        if (arg.simulator.SelectedWirePoints.Contains((wire, index)))
+        {
+            arg.simulator.SelectedWirePoints.Remove((wire, index));
+        }
+
+        // Check if any of the following intermediate points on this wire is in the selected wire points.
+        // If any are, then decrement their index to fit in the new list.
+        for (int i = index; i < wire.IntermediatePoints.Count; i++)
+        {
+            if (arg.simulator.SelectedWirePoints.Contains((wire, i)))
+            {
+                arg.simulator.SelectedWirePoints.Remove((wire, i));
+                arg.simulator.SelectedWirePoints.Add((wire, i - 1));
+            }
+        }
+
+        wire.IntermediatePoints.Remove(position);
+    }
+}
+
+public class DeleteIntermediatePointCommand : Command<Editor>
+{
+    Wire wire;
+    int index;
+    Vector2 position;
+
+    public DeleteIntermediatePointCommand(Wire wire, int index, Vector2 position)
+    {
+        this.wire = wire;
+        this.index = index;
+        this.position = position;
+    }
+
+    public override void Execute(Editor arg)
+    {
+        if (arg.simulator.SelectedWirePoints.Contains((wire, index)))
+        {
+            arg.simulator.SelectedWirePoints.Remove((wire, index));
+        }
+
+        // Check if any of the following intermediate points on this wire is in the selected wire points.
+        // If any are, then decrement their index to fit in the new list.
+        for (int i = index; i < wire.IntermediatePoints.Count; i++)
+        {
+            if (arg.simulator.SelectedWirePoints.Contains((wire, i)))
+            {
+                arg.simulator.SelectedWirePoints.Remove((wire, i));
+                arg.simulator.SelectedWirePoints.Add((wire, i - 1));
+            }
+        }
+
+        wire.IntermediatePoints.Remove(position);
+    }
+
+    public override string ToString()
+    {
+        return "Deleted intermediate point to wire";
+    }
+
+    public override void Undo(Editor arg)
+    {
+        wire.IntermediatePoints.Insert(index + 1, this.position);
+        arg.simulator.SelectedWirePoints.Clear();
+        arg.simulator.SelectedWirePoints.Add((wire, index + 1));
+
+    }
+}

@@ -15,6 +15,7 @@ public static class Util
     public static string EnvironmentPath = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) + @"/LogiX";
     public static string FileDialogStartDir = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
     public static List<Plugin> Plugins { get; set; }
+    public static Editor.Editor Editor { get; set; }
 
     public static Dictionary<string, ImFontPtr> ImGuiFonts { get; set; }
 
@@ -666,5 +667,10 @@ public static class Util
             copy.Add(item);
         }
         return copy;
+    }
+
+    public static void ExecuteCommandInEditor(Command<Editor.Editor> command)
+    {
+        Editor.Execute(command, Editor);
     }
 }

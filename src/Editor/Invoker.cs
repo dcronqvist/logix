@@ -11,6 +11,12 @@ public abstract class Invoker<TArg>
         this.CurrentCommandIndex = -1;
     }
 
+    public void ResetInvoker()
+    {
+        this.Commands.Clear();
+        this.CurrentCommandIndex = -1;
+    }
+
     public void Execute(Command<TArg> command, TArg arg, bool doExecute = true)
     {
         if (this.CurrentCommandIndex < this.Commands.Count - 1)

@@ -137,11 +137,15 @@ public class Wire
     {
         if (Raylib.IsMouseButtonPressed(MouseButton.MOUSE_LEFT_BUTTON) && this.IsPositionOnWire(mousePosInWorld, out Vector2 lStart, out Vector2 lEnd))
         {
+            // Command for adding intermediate point
+
             // If mouse is on wire, update intermediate points.
             int index = this.IntermediatePoints.IndexOf(lStart);
-            this.IntermediatePoints.Insert(index + 1, mousePosInWorld);
-            simulator.SelectedWirePoints.Clear();
-            simulator.SelectedWirePoints.Add((this, index + 1));
+            // this.IntermediatePoints.Insert(index + 1, mousePosInWorld);
+            // simulator.SelectedWirePoints.Clear();
+            // simulator.SelectedWirePoints.Add((this, index + 1));
+            AddIntermediatePointCommand aipc = new AddIntermediatePointCommand(this, index, mousePosInWorld);
+            Util.ExecuteCommandInEditor(aipc);
         }
 
         if (Raylib.IsMouseButtonPressed(MouseButton.MOUSE_RIGHT_BUTTON) && this.IsPositionOnIntermediatePoint(mousePosInWorld, out Vector2 point))

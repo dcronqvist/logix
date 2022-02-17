@@ -140,6 +140,7 @@ public class Editor : Application<Editor>
             }
 
             Raylib.SetWindowTitle("LogiX - " + proj.GetFileName());
+            this.ResetInvoker();
         }
         catch (Exception e)
         {
@@ -161,6 +162,7 @@ public class Editor : Application<Editor>
         };
 
         Util.OpenSans = Raylib.LoadFontEx($"{Directory.GetCurrentDirectory()}/assets/opensans-bold.ttf", 100, Enumerable.Range(0, 1000).ToArray(), 1000);
+        Util.Editor = this;
         Raylib.SetTextureFilter(Util.OpenSans.texture, TextureFilter.TEXTURE_FILTER_TRILINEAR);
 
         this.fsm = new EditorFSM();

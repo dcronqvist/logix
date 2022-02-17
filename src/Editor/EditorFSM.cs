@@ -50,7 +50,7 @@ public class StateNone : State<Editor, int>
             if (w != null && editor.simulator.SelectedWirePoints.Contains((w, wpi)) && Raylib.IsMouseButtonPressed(MouseButton.MOUSE_LEFT_BUTTON))
             {
                 editor.simulator.ClearSelection();
-                this.GoToState<StateMovingSelection>(0);
+                this.GoToState<StateMovingSelection>(1);
                 return;
             }
 
@@ -62,7 +62,7 @@ public class StateNone : State<Editor, int>
                     editor.simulator.ClearSelection();
                 }
                 editor.simulator.SelectWirePoint(w, wpi);
-                this.GoToState<StateMovingSelection>(0);
+                this.GoToState<StateMovingSelection>(1);
                 return;
             }
 
@@ -213,12 +213,6 @@ public class StateOutputToInput : State<Editor, int>
                 return;
             }
 
-            // Wire wire = new Wire(connectFrom.Bits, hoveredInput.OnComponent, hoveredInput.OnComponentIndex, connectFrom!.OnComponent, connectFrom!.OnComponentIndex);
-            // if (hoveredInput.SetSignal(wire))
-            // {
-            //     connectFrom.AddOutputWire(wire);
-            //     editor.simulator.AddWire(wire);
-            // }
             ConnectWireCommand cwc = new ConnectWireCommand(connectFrom, hoveredInput);
             editor.Execute(cwc, editor);
 
