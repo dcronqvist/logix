@@ -37,7 +37,8 @@ public class CCPUMemory : IUISubmitter<bool, Editor.Editor>
         if (ImGui.IsItemClicked())
         {
             MemoryComponent mc = new MemoryComponent(this.addressBits, this.addressMultibit, this.dataBits, this.dataMultibit, UserInput.GetMousePositionInWorld(editor.editorCamera));
-            editor.NewComponent(mc);
+            NewComponentCommand ncc = new NewComponentCommand(mc, UserInput.GetMousePositionInWorld(editor.editorCamera));
+            editor.Execute(ncc, editor);
             return true;
         }
         return false;

@@ -29,7 +29,7 @@ class ComponentConverter : JsonConverter<ComponentDescription>
             case ComponentType.Button:
                 return document.Deserialize<GenIODescription>(jso);
             case ComponentType.HexViewer:
-                return document.Deserialize<GenIODescription>(jso);
+                return document.Deserialize<HexViewerDescription>(jso);
             case ComponentType.Switch:
                 return document.Deserialize<SLDescription>(jso);
             case ComponentType.Lamp:
@@ -84,7 +84,7 @@ class ComponentConverter : JsonConverter<ComponentDescription>
                 writer.WriteRawValue(JsonSerializer.Serialize<GenIODescription>((GenIODescription)value, jso));
                 break;
             case ComponentType.HexViewer:
-                writer.WriteRawValue(JsonSerializer.Serialize<GenIODescription>((GenIODescription)value, jso));
+                writer.WriteRawValue(JsonSerializer.Serialize<HexViewerDescription>((HexViewerDescription)value, jso));
                 break;
             case ComponentType.Switch:
                 writer.WriteRawValue(JsonSerializer.Serialize<SLDescription>((SLDescription)value, jso));

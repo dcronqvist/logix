@@ -56,7 +56,8 @@ public class CCPUSimple : IUISubmitter<bool, Editor.Editor>
         if (ImGui.IsItemClicked())
         {
             Component c = createComponent(this.selectedInputBits, this.selectedInputMultibit, this.selectedOutputBits, this.selectedOutputMultibit);
-            editor.NewComponent(c);
+            NewComponentCommand ncc = new NewComponentCommand(c, UserInput.GetMousePositionInWorld(editor.editorCamera));
+            editor.Execute(ncc, editor);
             return true;
         }
         return false;

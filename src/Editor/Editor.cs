@@ -380,10 +380,10 @@ public class Editor : Application<Editor>
         {
             return new Lamp(ib, UserInput.GetMousePositionInWorld(editorCamera));
         }));
-        this.AddNewComponentCreationContext("I/O", "Hex Viewer", () => { return new HexViewer(4, false, true, UserInput.GetMousePositionInWorld(editorCamera)); }, new CCPUSimple(true, true, false, false, (ib, im, _, _) =>
+        this.AddNewComponentCreationContext("I/O", "Hex Viewer", () => { return new HexViewer(4, false, false, UserInput.GetMousePositionInWorld(editorCamera)); }, new CCPUSimple(true, true, false, true, (ib, im, _, include) =>
         {
-            return new HexViewer(ib, im, true, UserInput.GetMousePositionInWorld(editorCamera));
-        }));
+            return new HexViewer(ib, im, include, UserInput.GetMousePositionInWorld(editorCamera));
+        }, outputMultibitString: "Include Representation bits"));
         this.AddNewComponentCreationContext("I/O", "ROM", () => { return new ROM(false, 4, false, 4, UserInput.GetMousePositionInWorld(editorCamera)); }, new CCPUSimple(true, true, true, true, (ib, im, ob, om) =>
         {
             return new ROM(im, ib, om, ob, UserInput.GetMousePositionInWorld(editorCamera));

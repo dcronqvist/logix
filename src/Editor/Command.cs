@@ -25,7 +25,7 @@ public class NewComponentCommand : Command<Editor>
     public override void Execute(Editor arg)
     {
         arg.NewComponent(component);
-        arg.fsm.SetState<StateMovingSelection>(arg, 1);
+        arg.fsm.SetState<StateMovingSelection>(arg, 0);
     }
 
     public override void Redo(Editor arg)
@@ -172,6 +172,8 @@ public class DeleteSelectionCommand : Command<Editor>
 
     public override void Execute(Editor arg)
     {
+        // TODO: MAKE SURE THAT WIRES THAT WERE DELETED ALSO REAPPEAR WHEN
+        // REDOING THIS COMMAND
         components = arg.simulator.SelectedComponents.Copy();
         arg.simulator.DeleteSelection();
     }

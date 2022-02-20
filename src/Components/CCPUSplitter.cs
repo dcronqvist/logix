@@ -35,7 +35,8 @@ public class CCPUSplitter : IUISubmitter<bool, Editor.Editor>
         if (ImGui.IsItemClicked())
         {
             Component c = new Splitter(this.bits, this.bits, multiToSingle, !multiToSingle, UserInput.GetMousePositionInWorld(editor.editorCamera));
-            editor.NewComponent(c);
+            NewComponentCommand ncc = new NewComponentCommand(c, UserInput.GetMousePositionInWorld(editor.editorCamera));
+            editor.Execute(ncc, editor);
             return true;
         }
         return false;
