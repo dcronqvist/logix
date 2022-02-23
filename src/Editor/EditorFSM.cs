@@ -4,327 +4,269 @@ namespace LogiX.Editor;
 
 public class EditorFSM : FSM<Editor, int>
 {
-    public EditorFSM() : base()
+    public EditorFSM()
     {
-        this.AddNewState(new StateNone());
-        this.AddNewState(new StateMovingCamera());
-        this.AddNewState(new StateHoveringInput());
-        this.AddNewState(new StateHoveringOutput());
-        this.AddNewState(new StateOutputToInput());
-        this.AddNewState(new StateMovingSelection());
-        this.AddNewState(new StateRectangleSelecting());
-        this.AddNewState(new StateMeasuringSteps());
+        this.AddNewState(new ESNone());
+        this.AddNewState(new ESMovingSelection());
+        this.AddNewState(new ESRectangleSelecting());
+        this.AddNewState(new ESHoveringIO());
+        this.AddNewState(new ESConnectIOToOther());
 
-        this.SetState<StateNone>(null, 0);
+        this.SetState<ESNone>(null, 0);
     }
 }
 
-public class StateNone : State<Editor, int>
+public class ESNone : State<Editor, int>
 {
-    public override void Update(Editor editor)
+    public override void Update(Editor arg)
     {
         if (!ImGui.GetIO().WantCaptureMouse && !ImGui.GetIO().WantCaptureKeyboard)
         {
-            if (Raylib.IsKeyPressed(KeyboardKey.KEY_SPACE) || Raylib.IsMouseButtonPressed(MouseButton.MOUSE_MIDDLE_BUTTON))
+            if (Raylib.IsKeyDown(KeyboardKey.KEY_SPACE) || Raylib.IsMouseButtonDown(MouseButton.MOUSE_MIDDLE_BUTTON))
             {
-                // TODO: Goto StateMovingCamera
-                this.GoToState<StateMovingCamera>(0);
-                return;
+                arg.camera.target -= UserInput.GetMouseDelta(arg.camera);
             }
 
-            if (editor.hoveredInput != null)
+            float zoomSpeed = 1.15f;
+            if (Raylib.GetMouseWheelMove() > 0)
             {
-                this.GoToState<StateHoveringInput>(0);
+                arg.camera.zoom = zoomSpeed * arg.camera.zoom;
             }
-
-            if (editor.hoveredOutput != null)
+            if (Raylib.GetMouseWheelMove() < 0)
             {
-                this.GoToState<StateHoveringOutput>(0);
+                arg.camera.zoom = (1f / zoomSpeed) * arg.camera.zoom;
+            }
+            arg.camera.zoom = MathF.Min(MathF.Max(arg.camera.zoom, 0.1f), 4f);
+
+            if (arg.Simulator.TryGetIOFromWorldPosition(arg.GetWorldMousePos(), out (IO, int)? io))
+            {
+                this.GoToState<ESHoveringIO>(0);
             }
         }
 
         if (!ImGui.GetIO().WantCaptureMouse)
         {
-            (Wire? w, int wpi) = editor.simulator.GetWireAndPointFromWorldPos(UserInput.GetMousePositionInWorld(editor.editorCamera));
-
-            if (w != null && editor.simulator.SelectedWirePoints.Contains((w, wpi)) && Raylib.IsMouseButtonPressed(MouseButton.MOUSE_LEFT_BUTTON))
+            if (Raylib.IsMouseButtonPressed(MouseButton.MOUSE_LEFT_BUTTON))
             {
-                editor.simulator.ClearSelection();
-                this.GoToState<StateMovingSelection>(1);
-                return;
-            }
-
-            if (w != null && wpi >= 0 && Raylib.IsMouseButtonPressed(MouseButton.MOUSE_LEFT_BUTTON))
-            {
-                if (!Raylib.IsKeyDown(KeyboardKey.KEY_LEFT_SHIFT))
+                // PRESSING DOWN LEFT MOUSE BUTTON
+                if (arg.Simulator.TryGetComponentFromWorldPosition(arg.GetWorldMousePos(), out Component? comp))
                 {
-                    editor.simulator.SelectedWirePoints.Clear();
-                    editor.simulator.ClearSelection();
+                    // PRESSED DOWN ON A COMPONENT
+
+                    if (arg.Simulator.IsComponentSelected(comp))
+                    {
+                        // IF ALREADY SELECTED, GO TO MOVESELECTION STATE
+                        this.GoToState<ESMovingSelection>(1);
+                    }
+                    else
+                    {
+                        // IF NOT SELECTED, SELECT THIS AND CLEAR THE PREVIOUS SELECTION, GO TO MOVESELECTION STATE
+                        arg.Simulator.Selection.Clear();
+                        arg.Simulator.SelectComponent(comp);
+                        this.GoToState<ESMovingSelection>(1);
+                    }
                 }
-                editor.simulator.SelectWirePoint(w, wpi);
-                this.GoToState<StateMovingSelection>(1);
-                return;
-            }
-
-            if (w == null && editor.hoveredComponent == null && Raylib.IsMouseButtonPressed(MouseButton.MOUSE_LEFT_BUTTON))
-            {
-                editor.simulator.SelectedWirePoints.Clear();
-                editor.recSelectFirstCorner = UserInput.GetMousePositionInWorld(editor.editorCamera);
-                this.GoToState<StateRectangleSelecting>(0);
-                return;
-            }
-
-
-            if (editor.hoveredComponent != null && editor.simulator.IsComponentSelected(editor.hoveredComponent) && Raylib.IsMouseButtonPressed(MouseButton.MOUSE_LEFT_BUTTON))
-            {
-                this.GoToState<StateMovingSelection>(0);
-            }
-            else if (editor.hoveredComponent != null && !editor.simulator.IsComponentSelected(editor.hoveredComponent) && Raylib.IsMouseButtonPressed(MouseButton.MOUSE_LEFT_BUTTON) && Raylib.IsKeyDown(KeyboardKey.KEY_LEFT_SHIFT))
-            {
-                editor.simulator.SelectComponent(editor.hoveredComponent);
-                //this.GoToState<StateMovingSelection>();
-            }
-            else if (editor.hoveredComponent != null && !editor.simulator.IsComponentSelected(editor.hoveredComponent) && Raylib.IsMouseButtonPressed(MouseButton.MOUSE_LEFT_BUTTON))
-            {
-                editor.simulator.ClearSelection();
-                editor.simulator.SelectedWirePoints.Clear();
-                editor.simulator.SelectComponent(editor.hoveredComponent);
-                this.GoToState<StateMovingSelection>(0);
-            }
-
-
-            if (editor.hoveredComponent == null && Raylib.IsMouseButtonPressed(MouseButton.MOUSE_LEFT_BUTTON))
-            {
-                editor.simulator.ClearSelection();
-                editor.recSelectFirstCorner = UserInput.GetMousePositionInWorld(editor.editorCamera);
-                this.GoToState<StateRectangleSelecting>(0);
-            }
-        }
-    }
-}
-
-public class StateMeasuringSteps : State<Editor, int>
-{
-    public override void Update(Editor editor)
-    {
-        if (!ImGui.GetIO().WantCaptureMouse)
-        {
-            if (editor.hoveredComponent != null && !editor.simulator.IsComponentSelected(editor.hoveredComponent) && Raylib.IsMouseButtonPressed(MouseButton.MOUSE_LEFT_BUTTON))
-            {
-                editor.simulator.SelectComponent(editor.hoveredComponent);
-            }
-
-            Component fromComponent = editor.simulator.SelectedComponents[0];
-
-            if (editor.simulator.SelectedComponents.Count == 2)
-            {
-                Component toComponent = editor.simulator.SelectedComponents[1];
-
-                int steps = fromComponent.GetMaxStepsToOtherComponent(toComponent);
-                editor.Modal("Measured steps", "Max steps: " + steps, ModalButtonsType.OK);
-                this.GoToState<StateNone>(0);
-            }
-        }
-    }
-
-    public override void Render(Editor editor)
-    {
-
-    }
-
-    public override void SubmitUI(Editor editor)
-    {
-
-    }
-}
-
-public class StateMovingCamera : State<Editor, int>
-{
-    public override void Update(Editor editor)
-    {
-        Vector2 mouseDelta = UserInput.GetMouseDelta(editor.editorCamera);
-        editor.editorCamera.target = editor.editorCamera.target - mouseDelta;
-
-        if (!ImGui.GetIO().WantCaptureMouse && !ImGui.GetIO().WantCaptureKeyboard)
-        {
-            if (Raylib.IsKeyReleased(KeyboardKey.KEY_SPACE) || Raylib.IsMouseButtonReleased(MouseButton.MOUSE_MIDDLE_BUTTON))
-            {
-                this.GoToState<StateNone>(0);
-                return;
-            }
-        }
-    }
-}
-
-public class StateHoveringInput : State<Editor, int>
-{
-    public override void Update(Editor editor)
-    {
-        if (!ImGui.GetIO().WantCaptureMouse && editor.hoveredInput != null && Raylib.IsMouseButtonPressed(MouseButton.MOUSE_RIGHT_BUTTON))
-        {
-            if (editor.hoveredInput.HasSignal())
-            {
-                editor.simulator.DeleteWire(editor.hoveredInput.Signal);
-                editor.hoveredInput.RemoveSignal();
-            }
-        }
-
-        if (editor.hoveredInput == null)
-        {
-            // Go back to None
-            this.GoToState<StateNone>(0);
-        }
-    }
-}
-
-public class StateHoveringOutput : State<Editor, int>
-{
-    public override void Update(Editor editor)
-    {
-        ComponentOutput? hoveredOutput = editor.hoveredOutput;
-
-        if (!ImGui.GetIO().WantCaptureMouse && hoveredOutput != null && Raylib.IsMouseButtonPressed(MouseButton.MOUSE_LEFT_BUTTON))
-        {
-            // TODO: Goto output-to-input
-            editor.connectFrom = hoveredOutput;
-            this.GoToState<StateOutputToInput>(0);
-        }
-
-        if (hoveredOutput == null)
-        {
-            // Go back to None
-            this.GoToState<StateNone>(0);
-        }
-    }
-}
-
-public class StateOutputToInput : State<Editor, int>
-{
-    public override void Update(Editor editor)
-    {
-        if (!ImGui.GetIO().WantCaptureMouse && editor.connectFrom != null && editor.hoveredInput != null && Raylib.IsMouseButtonPressed(MouseButton.MOUSE_LEFT_BUTTON))
-        {
-            // Create wire.
-            ComponentOutput? connectFrom = editor.connectFrom;
-            ComponentInput? hoveredInput = editor.hoveredInput;
-
-            if (hoveredInput.HasSignal() || hoveredInput.Bits != connectFrom.Bits)
-            {
-                return;
-            }
-
-            ConnectWireCommand cwc = new ConnectWireCommand(connectFrom, hoveredInput);
-            editor.Execute(cwc, editor);
-
-            editor.connectFrom = null;
-
-            this.GoToState<StateNone>(0);
-            return;
-        }
-
-        if (!ImGui.GetIO().WantCaptureKeyboard && Raylib.IsKeyPressed(KeyboardKey.KEY_ESCAPE))
-        {
-            this.GoToState<StateNone>(0);
-        }
-    }
-
-    public override void Render(Editor editor)
-    {
-        ComponentOutput? connectFrom = editor.connectFrom;
-        if (connectFrom != null)
-        {
-            Color color = Util.InterpolateColors(Color.WHITE, Color.BLUE, connectFrom.GetHighFraction());
-
-            if (editor.hoveredInput != null)
-            {
-                if (editor.hoveredInput.HasSignal() || editor.hoveredInput.Bits != connectFrom.Bits)
+                else if (arg.Simulator.TryGetFreeWireNodeFromPosition(arg.GetWorldMousePos(), out WireNode? comesFrom, out WireNode? wireNode))
                 {
-                    color = new Color(255, 97, 97, 255);
+                    // PRESSED DOWN ON A WIRE NODE, SELECT WIRE NODE AND GO TO MOVE SELECTION STATE
+                    if (wireNode.CanBeMoved())
+                    {
+                        arg.Simulator.Selection.Clear();
+                        arg.Simulator.Selection.Add(wireNode);
+                        this.GoToState<ESMovingSelection>(1);
+                    }
+                }
+                else if (arg.Simulator.TryGetWireNodeFromPosition(arg.GetWorldMousePos(), out WireNode? from, out WireNode? to, out Wire? wire))
+                {
+                    // PRESSED DOWN ON A WIRE, CLEAR SELECTION AND CREATE FREE WIRE NODE WHERE CLICKED, SELECT NEWLY CREATED WIRENODE AS WELL
+                    arg.Simulator.Selection.Clear();
+                    FreeWireNode fwn = from.InsertFreeNode(arg.GetWorldMousePos(), to);
+                    arg.Simulator.Selection.Add(fwn);
+                    this.GoToState<ESMovingSelection>(1);
+                }
+                else
+                {
+                    // NOT PRESSING DOWN ON A COMPONENT - TODO: MIGHT BE PRESSING DOWN ON WIRES
+                    // GO TO RECTANGLE SELECTING
+                    this.GoToState<ESRectangleSelecting>(0);
                 }
             }
 
-            if (editor.hoveredOutput != null)
+            if (Raylib.IsMouseButtonPressed(MouseButton.MOUSE_RIGHT_BUTTON))
             {
-                color = new Color(255, 97, 97, 255);
+                if (arg.Simulator.TryGetWireNodeFromPosition(arg.GetWorldMousePos(), out WireNode? from, out WireNode? to, out Wire? wire))
+                {
+                    // PRESSED DOWN ON A WIRE
+                    if (Raylib.IsMouseButtonPressed(MouseButton.MOUSE_RIGHT_BUTTON))
+                    {
+                        // REMOVE THE TO NODE
+                        List<WireNode> removedWireNodes = from.RemoveNode(to, out List<IO> iosToRemove);
+                        foreach (IO i in iosToRemove)
+                        {
+                            wire.DisconnectIO(i);
+                        }
+                        foreach (WireNode wn in removedWireNodes)
+                        {
+                            if (arg.Simulator.IsSelected(wn))
+                            {
+                                arg.Simulator.Selection.Remove(wn);
+                            }
+                        }
+                    }
+                }
+                else if (arg.Simulator.TryGetFreeWireNodeFromPosition(arg.GetWorldMousePos(), out WireNode? comesFrom, out WireNode? wireNode))
+                {
+                    // REMOVE THE RIGHT CLICKED FREE WIRE NODE
+                    comesFrom.Next.Remove(wireNode);
+                    comesFrom.Next.AddRange(wireNode.Next);
+                }
             }
-
-            Raylib.DrawLineEx(connectFrom.Position, UserInput.GetMousePositionInWorld(editor.editorCamera), 6, Color.BLACK);
-            Raylib.DrawLineEx(connectFrom.Position, UserInput.GetMousePositionInWorld(editor.editorCamera), 4, color);
         }
     }
 
-    public override void SubmitUI(Editor editor)
+    public override void Render(Editor arg)
     {
-        if (editor.hoveredInput != null && editor.connectFrom != null)
+        if (arg.Simulator.TryGetWireNodeFromPosition(arg.GetWorldMousePos(), out WireNode wireNodeFrom, out WireNode wireNodeTo, out Wire wire))
         {
-            ComponentInput? hoveredInput = editor.hoveredInput;
-            if (hoveredInput.HasSignal())
-            {
-                Util.Tooltip("Already connected");
-            }
-
-            if (editor.hoveredInput.Bits != editor.connectFrom.Bits)
-            {
-                Util.Tooltip("Different bit widths");
-            }
-        }
-
-        if (editor.hoveredOutput != null && editor.connectFrom != null && editor.hoveredOutput != editor.connectFrom)
-        {
-            Util.Tooltip("Cannot connect to output");
+            Raylib.DrawLineV(wireNodeFrom.GetPosition(), wireNodeTo.GetPosition(), Color.BLUE);
         }
     }
 }
 
-public class StateMovingSelection : State<Editor, int>
+public class ESMovingSelection : State<Editor, int>
 {
     Vector2 startPos;
-    bool doCommand = false;
+    bool willDoCommand;
 
-    public override void OnEnter(Editor editor, int arg)
+    public override void OnEnter(Editor updateArg, int arg)
     {
-        startPos = UserInput.GetMousePositionInWorld(editor.editorCamera);
-        doCommand = arg == 1 ? false : true;
+        this.startPos = updateArg.GetWorldMousePos();
+        this.willDoCommand = arg == 1;
     }
 
-    public override void Update(Editor editor)
+    public override void Update(Editor arg)
     {
-        editor.simulator.MoveSelection(editor.editorCamera);
+        arg.Simulator.MoveSelection(UserInput.GetMouseDelta(arg.camera));
 
         if (Raylib.IsMouseButtonReleased(MouseButton.MOUSE_LEFT_BUTTON))
         {
-            if (doCommand)
+            Vector2 endPos = arg.GetWorldMousePos();
+
+            if (this.willDoCommand)
             {
-                Vector2 endPos = UserInput.GetMousePositionInWorld(editor.editorCamera);
-                MovedSelectionCommand msc = new MovedSelectionCommand(editor.simulator.SelectedComponents.Copy(), editor.simulator.SelectedWirePoints.Copy(), (endPos - startPos));
-                editor.Execute(msc, editor, doExecute: false);
+                CommandMovedSelection cms = new CommandMovedSelection(arg.Simulator.Selection.Copy(), endPos - startPos);
+                arg.Execute(cms, arg);
             }
-            this.GoToState<StateNone>(0);
-            return;
+
+            this.GoToState<ESNone>(0);
         }
     }
 }
 
-public class StateRectangleSelecting : State<Editor, int>
+public class ESRectangleSelecting : State<Editor, int>
 {
-    public override void Update(Editor editor)
-    {
-        Rectangle rec = Util.CreateRecFromTwoCorners(editor.recSelectFirstCorner, UserInput.GetMousePositionInWorld(editor.editorCamera));
-        editor.simulator.ClearSelection();
-        editor.simulator.SelectedWirePoints.Clear();
-        editor.simulator.SelectComponentsInRectangle(rec);
-        editor.simulator.SelectWirePointsInRectangle(rec);
+    Vector2 startPos;
 
+    public override void OnEnter(Editor updateArg, int arg)
+    {
+        this.startPos = updateArg.GetWorldMousePos();
+    }
+
+    public override void Update(Editor arg)
+    {
+        arg.Simulator.Selection.Clear();
+        arg.Simulator.SelectInRect(Util.CreateRecFromTwoCorners(startPos, arg.GetWorldMousePos()));
         if (Raylib.IsMouseButtonReleased(MouseButton.MOUSE_LEFT_BUTTON))
         {
-            this.GoToState<StateNone>(0);
+            this.GoToState<ESNone>(0);
         }
     }
 
-    public override void Render(Editor editor)
+    public override void Render(Editor arg)
     {
-        Vector2 mousePosInWorld = UserInput.GetMousePositionInWorld(editor.editorCamera);
-        Raylib.DrawRectangleLinesEx(Util.CreateRecFromTwoCorners(editor.recSelectFirstCorner, mousePosInWorld), 2, Color.BLUE.Opacity(0.3f));
-        Raylib.DrawRectangleRec(Util.CreateRecFromTwoCorners(editor.recSelectFirstCorner, mousePosInWorld), Color.BLUE.Opacity(0.3f));
+        Raylib.DrawRectangleLinesEx(Util.CreateRecFromTwoCorners(startPos, arg.GetWorldMousePos()).Inflate(2), 2, Color.BLUE.Opacity(0.5f));
+        Raylib.DrawRectangleRec(Util.CreateRecFromTwoCorners(startPos, arg.GetWorldMousePos()), Color.BLUE.Opacity(0.3f));
+    }
+}
+
+public class ESHoveringIO : State<Editor, int>
+{
+    public override void Update(Editor arg)
+    {
+        if (arg.Simulator.TryGetIOFromWorldPosition(arg.GetWorldMousePos(), out (IO, int)? io))
+        {
+            if (Raylib.IsMouseButtonPressed(MouseButton.MOUSE_LEFT_BUTTON))
+            {
+                arg.FirstClickedIO = io.Value.Item1;
+                // GO TO STATE IO->CONNECT
+                // LEFT PRESSED ON IO, WE ARE PERFORMING SOME KIND OF CONNECTIONTHINGY HERE
+                // EITHER WE HAVE TWO OPTIONS
+                // 1. CONNECT DIRECTLY TO ANOTHER IO -> NEW WIRE MUST BE CREATED BETWEEN THESE
+                // 2. CONNECT TO AN EXISTING WIRE -> WE MUST CONNECT THIS IO TO THE WIRE AND ADD AN IOWIREPOINT TO THAT WIRE WHICH POINTS TO THIS IO
+                this.GoToState<ESConnectIOToOther>(0);
+            }
+        }
+        else
+        {
+            this.GoToState<ESNone>(0);
+        }
+    }
+}
+
+public class ESConnectIOToOther : State<Editor, int>
+{
+    public override void Update(Editor arg)
+    {
+
+    }
+
+    public override void SubmitUI(Editor arg)
+    {
+        if (Raylib.IsKeyPressed(KeyboardKey.KEY_ESCAPE) && !ImGui.GetIO().WantCaptureKeyboard)
+        {
+            this.GoToState<ESNone>(0);
+        }
+
+        if (arg.Simulator.TryGetIOFromWorldPosition(arg.GetWorldMousePos(), out (IO, int)? io))
+        {
+            // HOVERING IO AGAIN, MAKE SURE IT IS NOT THE SAME
+
+            if (io.Value.Item1 == arg.FirstClickedIO)
+            {
+                Util.Tooltip("Cannot connect to self");
+                return;
+            }
+
+            // IF WE GET TO HERE WE KNOW THAT WE ARE HOVERING OTHER IO AND IT IS NOT THE SAME AS THE FIRST
+
+            if (Raylib.IsMouseButtonPressed(MouseButton.MOUSE_LEFT_BUTTON))
+            {
+                Wire wire = new Wire(arg.FirstClickedIO);
+                wire.ConnectIO(io.Value.Item1);
+                wire.RootWireNode.AddIONode(io.Value.Item1);
+
+                arg.Simulator.AddWire(wire);
+
+                this.GoToState<ESNone>(0);
+            }
+        }
+
+        if (arg.Simulator.TryGetWireNodeFromPosition(arg.GetWorldMousePos(), out WireNode? from, out WireNode? to, out Wire? w))
+        {
+            if (Raylib.IsMouseButtonPressed(MouseButton.MOUSE_LEFT_BUTTON))
+            {
+                Vector2 pos = arg.GetWorldMousePos();
+                FreeWireNode fwn = from.InsertFreeNode(pos, to);
+
+                fwn.AddIONode(arg.FirstClickedIO);
+                w.ConnectIO(arg.FirstClickedIO);
+                this.GoToState<ESNone>(0);
+            }
+        }
+    }
+
+    public override void Render(Editor arg)
+    {
+        Raylib.DrawLineV(arg.FirstClickedIO.OnComponent.GetIOPosition(arg.FirstClickedIO), arg.GetWorldMousePos(), Color.BLUE);
     }
 }

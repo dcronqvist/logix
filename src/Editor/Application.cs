@@ -1,5 +1,3 @@
-using LogiX.SaveSystem;
-
 namespace LogiX.Editor;
 
 public enum ModalButtonsType
@@ -77,6 +75,8 @@ public abstract class Application<TArg> : Invoker<TArg>
         Util.ImGuiFonts = fontsPtrs;
 
         LoadContent();
+        Util.OpenSans = Raylib.LoadFontEx($"{Directory.GetCurrentDirectory()}/assets/opensans-bold.ttf", 100, Enumerable.Range(0, 1000).ToArray(), 1000);
+        Raylib.SetTextureFilter(Util.OpenSans.texture, TextureFilter.TEXTURE_FILTER_TRILINEAR);
 
         // Main application loop
         while (!Raylib.WindowShouldClose())
@@ -139,6 +139,15 @@ public abstract class Application<TArg> : Invoker<TArg>
         igc.Dispose();
         Raylib.CloseWindow();
         this.OnClose();
+    }
+
+    public KeyboardKey GetPrimaryMod()
+    {
+#if OSX
+        return KeyboardKey.KEY_LEFT_SUPER;
+#else
+        return KeyboardKey.KEY_LEFT_CONTROL;
+#endif
     }
 
     public void Modal(string modalTitle, string modalMessage, ModalButtonsType type = ModalButtonsType.OK, Action<ModalResult>? onResult = null)

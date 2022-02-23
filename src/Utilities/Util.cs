@@ -1,11 +1,11 @@
 using System.Text;
 using LogiX.Components;
-using LogiX.SaveSystem;
 using LogiX.GateAlgebra;
 using Antlr4.Runtime.Tree;
 using Antlr4.Runtime;
 using Markdig;
 using Markdig.Syntax;
+using LogiX.SaveSystem;
 
 namespace LogiX;
 
@@ -14,7 +14,6 @@ public static class Util
     public static Font OpenSans { get; set; }
     public static string EnvironmentPath = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) + @"/LogiX";
     public static string FileDialogStartDir = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
-    public static List<Plugin> Plugins { get; set; }
     public static Editor.Editor Editor { get; set; }
 
     public static Dictionary<string, ImFontPtr> ImGuiFonts { get; set; }
@@ -170,18 +169,18 @@ public static class Util
         {
             case "AND":
                 return new ANDLogic();
-            case "NAND":
-                return new NANDLogic();
-            case "OR":
-                return new ORLogic();
-            case "NOR":
-                return new NORLogic();
-            case "XOR":
-                return new XORLogic();
-            case "XNOR":
-                return new XNORLogic();
-            case "NOT":
-                return new NOTLogic();
+                // case "NAND":
+                //     return new NANDLogic();
+                // case "OR":
+                //     return new ORLogic();
+                // case "NOR":
+                //     return new NORLogic();
+                // case "XOR":
+                //     return new XORLogic();
+                // case "XNOR":
+                //     return new XNORLogic();
+                // case "NOT":
+                //     return new NOTLogic();
         }
 
         return null;
@@ -314,60 +313,60 @@ public static class Util
         return values;
     }
 
-    public static Component CreateComponentWithPluginIdentifier(string identifier, Vector2 position, int rotation, CustomComponentData data)
-    {
-        foreach (Plugin p in Plugins)
-        {
-            foreach (KeyValuePair<string, CustomDescription> cd in p.customComponents)
-            {
-                if (cd.Key == identifier)
-                {
-                    return p.CreateComponent(identifier, position, rotation, data);
-                }
-            }
-        }
-        return null;
-    }
+    // public static Component CreateComponentWithPluginIdentifier(string identifier, Vector2 position, int rotation, CustomComponentData data)
+    // {
+    //     foreach (Plugin p in Plugins)
+    //     {
+    //         foreach (KeyValuePair<string, CustomDescription> cd in p.customComponents)
+    //         {
+    //             if (cd.Key == identifier)
+    //             {
+    //                 return p.CreateComponent(identifier, position, rotation, data);
+    //             }
+    //         }
+    //     }
+    //     return null;
+    // }
 
-    public static List<(string, string)> GetMissingPluginsFromDescriptions(List<CustomDescription> descriptions)
-    {
-        List<(string, string)> missingPlugins = new List<(string, string)>();
-        foreach (CustomDescription cd in descriptions)
-        {
-            if (!Plugins.Any(p => p.customComponents.ContainsKey(cd.ComponentIdentifier)))
-            {
-                missingPlugins.Add((cd.Plugin + ", v" + cd.PluginVersion, "Component " + cd.ComponentIdentifier + " is from the plugin " + cd.Plugin + " but that plugin is not installed."));
-            }
-            else
-            {
-                // Now check that the plugin version is the same as the description version
-                Plugin p = Plugins.First(p => p.customComponents.ContainsKey(cd.ComponentIdentifier));
-                if (p.version != cd.PluginVersion)
-                {
-                    missingPlugins.Add((p.name + ", v" + p.version, "Component uses version " + cd.PluginVersion + " but the installed version is " + p.version + ". \nTo load the circuit, you need to install version " + cd.PluginVersion));
-                }
-            }
-        }
-        return missingPlugins;
-    }
+    // public static List<(string, string)> GetMissingPluginsFromDescriptions(List<CustomDescription> descriptions)
+    // {
+    //     List<(string, string)> missingPlugins = new List<(string, string)>();
+    //     foreach (CustomDescription cd in descriptions)
+    //     {
+    //         if (!Plugins.Any(p => p.customComponents.ContainsKey(cd.ComponentIdentifier)))
+    //         {
+    //             missingPlugins.Add((cd.Plugin + ", v" + cd.PluginVersion, "Component " + cd.ComponentIdentifier + " is from the plugin " + cd.Plugin + " but that plugin is not installed."));
+    //         }
+    //         else
+    //         {
+    //             // Now check that the plugin version is the same as the description version
+    //             Plugin p = Plugins.First(p => p.customComponents.ContainsKey(cd.ComponentIdentifier));
+    //             if (p.version != cd.PluginVersion)
+    //             {
+    //                 missingPlugins.Add((p.name + ", v" + p.version, "Component uses version " + cd.PluginVersion + " but the installed version is " + p.version + ". \nTo load the circuit, you need to install version " + cd.PluginVersion));
+    //             }
+    //         }
+    //     }
+    //     return missingPlugins;
+    // }
 
-    public static Plugin GetPluginWithComponent(string componentIdentifier)
-    {
-        foreach (Plugin p in Plugins)
-        {
-            if (p.customComponents.ContainsKey(componentIdentifier))
-            {
-                return p;
-            }
-        }
-        return null;
-    }
+    // public static Plugin GetPluginWithComponent(string componentIdentifier)
+    // {
+    //     foreach (Plugin p in Plugins)
+    //     {
+    //         if (p.customComponents.ContainsKey(componentIdentifier))
+    //         {
+    //             return p;
+    //         }
+    //     }
+    //     return null;
+    // }
 
-    public static Type GetCustomDataTypeOfCustomComponent(string componentIdentifier)
-    {
-        Plugin p = GetPluginWithComponent(componentIdentifier);
-        return p.customComponentTypes[componentIdentifier].Item3;
-    }
+    // public static Type GetCustomDataTypeOfCustomComponent(string componentIdentifier)
+    // {
+    //     Plugin p = GetPluginWithComponent(componentIdentifier);
+    //     return p.customComponentTypes[componentIdentifier].Item3;
+    // }
 
     public static string GetPathAsRelative(string path)
     {
@@ -515,62 +514,62 @@ public static class Util
         }
     }
 
-    public static List<Action<Editor.Editor, Component>> GetAdditionalComponentContexts(Type component)
-    {
-        if (Plugins == null)
-            return new List<Action<Editor.Editor, Component>>();
+    // public static List<Action<Editor.Editor, Component>> GetAdditionalComponentContexts(Type component)
+    // {
+    //     if (Plugins == null)
+    //         return new List<Action<Editor.Editor, Component>>();
 
-        List<Action<Editor.Editor, Component>> actions = new List<Action<Editor.Editor, Component>>();
-        foreach (Plugin p in Plugins)
-        {
-            actions = actions.Concat(p.GetComponentAdditionalContexts(component)).ToList();
-        }
-        return actions;
-    }
+    //     List<Action<Editor.Editor, Component>> actions = new List<Action<Editor.Editor, Component>>();
+    //     foreach (Plugin p in Plugins)
+    //     {
+    //         actions = actions.Concat(p.GetComponentAdditionalContexts(component)).ToList();
+    //     }
+    //     return actions;
+    // }
 
-    public static ICDescription? CreateICDescriptionFromGateAlgebra(string icName, string gateAlgebra)
-    {
-        GateAlgebraLexer mgl = new GateAlgebraLexer(CharStreams.fromString(gateAlgebra));
-        GateAlgebraParser mgp = new GateAlgebraParser(new CommonTokenStream(mgl));
-        mgp.BuildParseTree = true;
-        IParseTree tree = mgp.component();
-        VisitorCreateCircuit vcc = new VisitorCreateCircuit();
-        CircuitDescription cd = vcc.Visit(tree);
-        List<List<string>> inputOrder = cd.GetSwitches().Select(x => new List<string>() { x.ID }).ToList();
-        List<List<string>> outputOrder = cd.GetLamps().Select(x => new List<string>() { x.ID }).ToList();
-        ICDescription icd = new ICDescription(icName, System.Numerics.Vector2.Zero, 0, cd, inputOrder, outputOrder);
-        return icd;
-    }
+    // public static ICDescription? CreateICDescriptionFromGateAlgebra(string icName, string gateAlgebra)
+    // {
+    //     GateAlgebraLexer mgl = new GateAlgebraLexer(CharStreams.fromString(gateAlgebra));
+    //     GateAlgebraParser mgp = new GateAlgebraParser(new CommonTokenStream(mgl));
+    //     mgp.BuildParseTree = true;
+    //     IParseTree tree = mgp.component();
+    //     VisitorCreateCircuit vcc = new VisitorCreateCircuit();
+    //     CircuitDescription cd = vcc.Visit(tree);
+    //     List<List<string>> inputOrder = cd.GetSwitches().Select(x => new List<string>() { x.ID }).ToList();
+    //     List<List<string>> outputOrder = cd.GetLamps().Select(x => new List<string>() { x.ID }).ToList();
+    //     ICDescription icd = new ICDescription(icName, System.Numerics.Vector2.Zero, 0, cd, inputOrder, outputOrder);
+    //     return icd;
+    // }
 
-    public static bool TryValidateGateAlgebra(string gateAlgebra, out string error)
-    {
-        using (StringWriter sw = new StringWriter())
-        {
-            try
-            {
-                GateAlgebraLexer mgl = new GateAlgebraLexer(CharStreams.fromString(gateAlgebra));
-                GateAlgebraParser mgp = new GateAlgebraParser(new CommonTokenStream(mgl), sw, sw);
-                mgp.BuildParseTree = true;
+    // public static bool TryValidateGateAlgebra(string gateAlgebra, out string error)
+    // {
+    //     using (StringWriter sw = new StringWriter())
+    //     {
+    //         try
+    //         {
+    //             GateAlgebraLexer mgl = new GateAlgebraLexer(CharStreams.fromString(gateAlgebra));
+    //             GateAlgebraParser mgp = new GateAlgebraParser(new CommonTokenStream(mgl), sw, sw);
+    //             mgp.BuildParseTree = true;
 
-                if (mgp.component() == null)
-                {
-                    error = sw.ToString();
-                    return false;
-                }
+    //             if (mgp.component() == null)
+    //             {
+    //                 error = sw.ToString();
+    //                 return false;
+    //             }
 
-                IParseTree tree = mgp.component();
-                VisitorCreateCircuit vcc = new VisitorCreateCircuit();
-                CircuitDescription cd = vcc.Visit(tree);
-                error = "";
-                return true;
-            }
-            catch (Exception e)
-            {
-                error = sw.ToString();
-                return false;
-            }
-        }
-    }
+    //             IParseTree tree = mgp.component();
+    //             VisitorCreateCircuit vcc = new VisitorCreateCircuit();
+    //             CircuitDescription cd = vcc.Visit(tree);
+    //             error = "";
+    //             return true;
+    //         }
+    //         catch (Exception e)
+    //         {
+    //             error = sw.ToString();
+    //             return false;
+    //         }
+    //     }
+    // }
 
     public static void WithFont(string fontName, Action action)
     {
@@ -614,50 +613,77 @@ public static class Util
         igmr.Render(md);
     }
 
-    public static List<Component> TopologicallyOrder(List<Component> components)
+    public static Vector2 RotateAround(this Vector2 v, Vector2 pivot, float angle)
     {
-        List<Component> orderedComponents = new List<Component>();
-        List<Component> unorderedComponents = new List<Component>();
-        foreach (Component component in components)
-        {
-            if (component.Inputs.Count == 0)
-            {
-                orderedComponents.Add(component);
-            }
-            else
-            {
-                unorderedComponents.Add(component);
-            }
-        }
-
-        while (unorderedComponents.Count > 0)
-        {
-            List<Component> nextUnorderedComponents = new List<Component>();
-            foreach (Component component in unorderedComponents)
-            {
-                bool allInputsOrdered = true;
-                foreach (Component input in component.Inputs.Select(x => x.Signal.From))
-                {
-                    if (!orderedComponents.Contains(input))
-                    {
-                        allInputsOrdered = false;
-                        break;
-                    }
-                }
-                if (allInputsOrdered)
-                {
-                    orderedComponents.Add(component);
-                }
-                else
-                {
-                    nextUnorderedComponents.Add(component);
-                }
-            }
-            unorderedComponents = nextUnorderedComponents;
-        }
-
-        return orderedComponents;
+        Vector2 dir = v - pivot;
+        return new Vector2(dir.X * MathF.Cos(angle) + dir.Y * MathF.Sin(angle),
+                           -dir.X * MathF.Sin(angle) + dir.Y * MathF.Cos(angle)) + pivot;
     }
+
+    public static string GetComponentTypeAsString(this ComponentType type)
+    {
+        return type.ToString().Split("_").Select(x => x.ToLower()).Select(x => x.First().ToString().ToUpper() + x.Substring(1)).Aggregate((x, y) => x + " " + y);
+    }
+
+    public static void RenderTextRotated(Vector2 position, Font font, int fontSize, int spacing, string text, float rotation, Color color)
+    {
+        Rlgl.rlPushMatrix();
+        Rlgl.rlTranslatef(position.X, position.Y, 0);
+        Rlgl.rlRotatef(rotation, 0, 0, 1);
+        Raylib.DrawTextEx(font, text, Vector2.Zero, fontSize, spacing, color);
+        Rlgl.rlPopMatrix();
+    }
+
+    public static Rectangle Inflate(this Rectangle rec, float amount)
+    {
+        Rectangle r = new Rectangle(rec.x - amount, rec.y - amount, rec.width + amount * 2, rec.height + amount * 2);
+        return r;
+    }
+
+    // public static List<Component> TopologicallyOrder(List<Component> components)
+    // {
+    //     List<Component> orderedComponents = new List<Component>();
+    //     List<Component> unorderedComponents = new List<Component>();
+    //     foreach (Component component in components)
+    //     {
+    //         if (component.Inputs.Count == 0)
+    //         {
+    //             orderedComponents.Add(component);
+    //         }
+    //         else
+    //         {
+    //             unorderedComponents.Add(component);
+    //         }
+    //     }
+
+    //     while (unorderedComponents.Count > 0)
+    //     {
+    //         List<Component> nextUnorderedComponents = new List<Component>();
+    //         foreach (Component component in unorderedComponents)
+    //         {
+    //             bool allInputsOrdered = true;
+    //             foreach (Component input in component.Inputs.Select(x => x.Signal.From))
+    //             {
+    //                 if (!orderedComponents.Contains(input))
+    //                 {
+    //                     allInputsOrdered = false;
+    //                     break;
+    //                 }
+    //             }
+    //             if (allInputsOrdered)
+    //             {
+    //                 orderedComponents.Add(component);
+    //             }
+    //             else
+    //             {
+    //                 nextUnorderedComponents.Add(component);
+    //             }
+    //         }
+    //         unorderedComponents = nextUnorderedComponents;
+    //     }
+
+    //     return orderedComponents;
+    // }
 
     public static List<T> Copy<T>(this List<T> list)
     {
@@ -669,8 +695,203 @@ public static class Util
         return copy;
     }
 
-    public static void ExecuteCommandInEditor(Command<Editor.Editor> command)
+    //     public static void ExecuteCommandInEditor(Command<Editor.Editor> command)
+    //     {
+    //         Editor.Execute(command, Editor);
+    //     }
+
+    public static bool SameAs(this LogicValue[] values, LogicValue[] other)
     {
-        Editor.Execute(command, Editor);
+        for (int i = 0; i < values.Length; i++)
+        {
+            if (values[i] != other[i])
+            {
+                return false;
+            }
+        }
+        return true;
     }
+
+    public static float GetMaxWidthOfStrings(Font font, int fontSize, int spacing, string[] strings)
+    {
+        float maxWidth = 0;
+        foreach (string s in strings)
+        {
+            float width = Raylib.MeasureTextEx(font, s, fontSize, spacing).X;
+            if (width > maxWidth)
+            {
+                maxWidth = width;
+            }
+        }
+        return maxWidth;
+    }
+
+    public static ComponentSide GetRotatedComponentSide(ComponentSide side, int rotation)
+    {
+        if (side == ComponentSide.LEFT)
+        {
+            switch (rotation)
+            {
+                case 0:
+                    return ComponentSide.LEFT;
+                case 1:
+                    return ComponentSide.TOP;
+                case 2:
+                    return ComponentSide.RIGHT;
+                case 3:
+                    return ComponentSide.BOTTOM;
+            }
+        }
+        else if (side == ComponentSide.TOP)
+        {
+            switch (rotation)
+            {
+                case 0:
+                    return ComponentSide.TOP;
+                case 1:
+                    return ComponentSide.RIGHT;
+                case 2:
+                    return ComponentSide.BOTTOM;
+                case 3:
+                    return ComponentSide.LEFT;
+            }
+        }
+        else if (side == ComponentSide.RIGHT)
+        {
+            switch (rotation)
+            {
+                case 0:
+                    return ComponentSide.RIGHT;
+                case 1:
+                    return ComponentSide.BOTTOM;
+                case 2:
+                    return ComponentSide.LEFT;
+                case 3:
+                    return ComponentSide.TOP;
+            }
+        }
+        else if (side == ComponentSide.BOTTOM)
+        {
+            switch (rotation)
+            {
+                case 0:
+                    return ComponentSide.BOTTOM;
+                case 1:
+                    return ComponentSide.LEFT;
+                case 2:
+                    return ComponentSide.TOP;
+                case 3:
+                    return ComponentSide.RIGHT;
+            }
+        }
+
+        return side;
+    }
+
+    //     public static LogiX.NewComponent.LogicValue[] AND(this LogiX.NewComponent.LogicValue[] values, LogiX.NewComponent.LogicValue[] other)
+    //     {
+    //         LogiX.NewComponent.LogicValue[] and = new LogiX.NewComponent.LogicValue[values.Length];
+    //         for (int i = 0; i < values.Length; i++)
+    //         {
+    //             switch (values[i])
+    //             {
+    //                 case LogiX.NewComponent.LogicValue.LOW:
+    //                     and[i] = LogiX.NewComponent.LogicValue.LOW;
+    //                     break;
+    //                 case LogiX.NewComponent.LogicValue.HIGH:
+    //                     if (other[i] == LogiX.NewComponent.LogicValue.HIGH)
+    //                     {
+    //                         and[i] = LogiX.NewComponent.LogicValue.HIGH;
+    //                     }
+    //                     else
+    //                     {
+    //                         and[i] = LogiX.NewComponent.LogicValue.LOW;
+    //                     }
+    //                     break;
+    //             }
+    //         }
+    //         return and;
+    //     }
+
+    //     public static LogiX.NewComponent.LogicValue[] OR(this LogiX.NewComponent.LogicValue[] values, LogiX.NewComponent.LogicValue[] other)
+    //     {
+    //         LogiX.NewComponent.LogicValue[] or = new LogiX.NewComponent.LogicValue[values.Length];
+    //         for (int i = 0; i < values.Length; i++)
+    //         {
+    //             switch (values[i])
+    //             {
+    //                 case LogiX.NewComponent.LogicValue.LOW:
+    //                     if (other[i] == LogiX.NewComponent.LogicValue.HIGH)
+    //                     {
+    //                         or[i] = LogiX.NewComponent.LogicValue.HIGH;
+    //                     }
+    //                     else
+    //                     {
+    //                         or[i] = LogiX.NewComponent.LogicValue.LOW;
+    //                     }
+    //                     break;
+    //                 case LogiX.NewComponent.LogicValue.HIGH:
+    //                     or[i] = LogiX.NewComponent.LogicValue.HIGH;
+    //                     break;
+    //             }
+    //         }
+    //         return or;
+    //     }
+
+    //     public static LogiX.NewComponent.LogicValue[] XOR(this LogiX.NewComponent.LogicValue[] values, LogiX.NewComponent.LogicValue[] other)
+    //     {
+    //         LogiX.NewComponent.LogicValue[] xor = new LogiX.NewComponent.LogicValue[values.Length];
+    //         for (int i = 0; i < values.Length; i++)
+    //         {
+    //             switch (values[i])
+    //             {
+    //                 case LogiX.NewComponent.LogicValue.LOW:
+    //                     if (other[i] == LogiX.NewComponent.LogicValue.HIGH)
+    //                     {
+    //                         xor[i] = LogiX.NewComponent.LogicValue.HIGH;
+    //                     }
+    //                     else
+    //                     {
+    //                         xor[i] = LogiX.NewComponent.LogicValue.LOW;
+    //                     }
+    //                     break;
+    //                 case LogiX.NewComponent.LogicValue.HIGH:
+    //                     if (other[i] == LogiX.NewComponent.LogicValue.HIGH)
+    //                     {
+    //                         xor[i] = LogiX.NewComponent.LogicValue.LOW;
+    //                     }
+    //                     else
+    //                     {
+    //                         xor[i] = LogiX.NewComponent.LogicValue.HIGH;
+    //                     }
+    //                     break;
+    //             }
+    //         }
+    //         return xor;
+    //     }
+
+    //     public static LogiX.NewComponent.LogicValue[] NOR(this LogiX.NewComponent.LogicValue[] values, LogiX.NewComponent.LogicValue[] other)
+    //     {
+    //         LogiX.NewComponent.LogicValue[] nor = new LogiX.NewComponent.LogicValue[values.Length];
+    //         for (int i = 0; i < values.Length; i++)
+    //         {
+    //             switch (values[i])
+    //             {
+    //                 case LogiX.NewComponent.LogicValue.LOW:
+    //                     if (other[i] == LogiX.NewComponent.LogicValue.HIGH)
+    //                     {
+    //                         nor[i] = LogiX.NewComponent.LogicValue.LOW;
+    //                     }
+    //                     else
+    //                     {
+    //                         nor[i] = LogiX.NewComponent.LogicValue.HIGH;
+    //                     }
+    //                     break;
+    //                 case LogiX.NewComponent.LogicValue.HIGH:
+    //                     nor[i] = LogiX.NewComponent.LogicValue.LOW;
+    //                     break;
+    //             }
+    //         }
+    //         return nor;
+    //     }
 }

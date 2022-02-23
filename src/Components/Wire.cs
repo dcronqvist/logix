@@ -1,239 +1,394 @@
-using LogiX.SaveSystem;
-using LogiX.Editor;
+using System.Diagnostics.CodeAnalysis;
 
 namespace LogiX.Components;
 
-public class Wire
+public enum WireStatus
 {
-    public int Bits { get; private set; }
-    public List<LogicValue> Values { get; private set; }
+    NORMAL,
+    ERROR,
+    CONFLICT,
+    DIFF_BITWIDTH,
+    UNKNOWN,
+}
 
-    public Component To { get; private set; }
-    public int ToIndex { get; private set; }
-    public Component From { get; private set; }
-    public int FromIndex { get; private set; }
+public abstract class WireNode : ISelectable
+{
+    public List<WireNode> Next { get; set; }
 
-    public List<Vector2> IntermediatePoints { get; set; }
-
-    public Wire(int bits, Component to, int toIndex, Component from, int fromIndex)
+    public WireNode()
     {
-        this.Bits = bits;
-        this.Values = Util.NValues(LogicValue.LOW, bits);
-        this.To = to;
-        this.From = from;
-        this.ToIndex = toIndex;
-        this.FromIndex = fromIndex;
-        this.IntermediatePoints = new List<Vector2>();
+        this.Next = new List<WireNode>();
     }
 
-    public void SetValues(IEnumerable<LogicValue> values)
+    public abstract Vector2 GetPosition();
+    public abstract bool CanBeMoved();
+
+    private WireNode AddWireNode(WireNode wn)
     {
-        if (values.Count() != this.Bits)
+        this.Next.Add(wn);
+        return wn;
+    }
+
+
+    public IOWireNode AddIONode(IO io)
+    {
+        IOWireNode iown = new IOWireNode(io);
+        this.AddWireNode(iown);
+        return iown;
+    }
+
+    public FreeWireNode InsertFreeNode(Vector2 position, WireNode between)
+    {
+        FreeWireNode fwn = new FreeWireNode(position);
+        this.Next.Add(fwn);
+        this.Next.Remove(between);
+
+        //fwn.Next = between.Next.Copy();
+        fwn.Next.Add(between);
+        return fwn;
+    }
+
+    public List<WireNode> RemoveNode(WireNode node, out List<IO> iosToRemove)
+    {
+        List<WireNode> allRemovedNodes = new List<WireNode>();
+        iosToRemove = new List<IO>();
+
+        allRemovedNodes.Add(node);
+
+        if (node is IOWireNode)
         {
-            throw new ArgumentException("The number of values does not match the number of bits.");
+            IOWireNode iw = (IOWireNode)node;
+            iosToRemove.Add(iw.IO);
         }
 
-        this.Values = new List<LogicValue>(values);
-    }
-
-    public void SetAllValues(LogicValue value)
-    {
-        this.Values = Enumerable.Repeat(value, this.Bits).ToList();
-    }
-
-    public float GetHighFraction()
-    {
-        int highCount = 0;
-
-        foreach (LogicValue value in this.Values)
+        foreach (WireNode n in node.Next.Copy())
         {
-            if (value == LogicValue.HIGH)
-            {
-                highCount++;
-            }
+            allRemovedNodes.AddRange(node.RemoveNode(n, out List<IO> ios));
+            iosToRemove.AddRange(ios);
         }
 
-        return (float)highCount / (float)this.Bits;
+        this.Next.Remove(node);
+        return allRemovedNodes;
     }
 
-    public bool IsPositionOnWire(Vector2 pos, out Vector2 lStart, out Vector2 lEnd)
+    public FreeWireNode AddFreeNode(Vector2 position)
     {
-        float width = 4f;
+        FreeWireNode fwn = new FreeWireNode(position);
+        this.AddWireNode(fwn);
+        return fwn;
+    }
 
-        bool posIsOnOutput = this.From.IsPositionOnOutput(this.FromIndex, pos);
-        bool posIsOnInput = this.To.IsPositionOnInput(this.ToIndex, pos);
-        bool posIsOnIO = posIsOnOutput || posIsOnInput;
-
-        // Get distance to line describing wire, if less than width, then on wire
-        if (this.IntermediatePoints.Count == 0)
+    public bool RemoveIONode(IO io)
+    {
+        foreach (WireNode wn in this.Next)
         {
-            // Single line, should be easy.
-            Vector2 lineStart = this.From.GetOutputLinePositions(this.FromIndex).Item1;
-            Vector2 lineEnd = this.To.GetInputLinePositions(this.ToIndex).Item1;
-
-            if (!Raylib.CheckCollisionPointRec(pos, Util.CreateRecFromTwoCorners(lineStart.Vector2Towards(5, lineEnd), lineEnd.Vector2Towards(5, lineStart), width / 2)))
+            if (wn is IOWireNode)
             {
-                lStart = lEnd = Vector2.Zero;
-                return false;
-            }
-
-            float distance = Util.DistanceToLine(lineEnd, lineStart, pos);
-            if (distance < width)
-            {
-                lStart = lineStart;
-                lEnd = lineEnd;
-                return true && !this.IsPositionOnIntermediatePoint(pos, out Vector2 iPoint) && !posIsOnIO;
-            }
-        }
-        else
-        {
-            // Multiple lines, need to check each line.
-            Vector2 start = this.From.GetOutputLinePositions(this.FromIndex).Item1;
-            Vector2 end = this.To.GetInputLinePositions(this.ToIndex).Item1;
-
-            List<Vector2> linePoints = IntermediatePoints.Concat(new List<Vector2>() { end }).ToList();
-            Vector2 previousPos = start;
-            for (int i = 0; i < linePoints.Count; i++)
-            {
-                Rectangle rec = Util.CreateRecFromTwoCorners(previousPos.Vector2Towards(5, linePoints[i]), linePoints[i].Vector2Towards(5, previousPos), width / 2);
-                if (Raylib.CheckCollisionPointRec(pos, rec))
+                IOWireNode iown = (IOWireNode)wn;
+                if (iown.IO == io)
                 {
-                    if (Util.DistanceToLine(previousPos, linePoints[i], pos) < width)
-                    {
-                        lStart = previousPos;
-                        lEnd = linePoints[i];
-                        return true && !this.IsPositionOnIntermediatePoint(pos, out Vector2 iPoint) && !posIsOnIO;
-                    }
+                    this.Next.Remove(wn);
+                    return true;
                 }
-                previousPos = linePoints[i];
             }
-        }
-
-        lStart = Vector2.Zero;
-        lEnd = Vector2.Zero;
-        return false;
-    }
-
-    public bool IsPositionOnIntermediatePoint(Vector2 pos, out Vector2 point)
-    {
-        foreach (Vector2 p in this.IntermediatePoints)
-        {
-            if ((p - pos).Length() < 5)
+            if (wn.RemoveIONode(io))
             {
-                point = p;
                 return true;
             }
         }
-        point = Vector2.Zero;
+
         return false;
     }
 
-    public void Update(Vector2 mousePosInWorld, Simulator simulator)
-    {
+    public abstract void RenderSelected();
+    public abstract void Move(Vector2 delta);
+}
 
+public class IOWireNode : WireNode
+{
+    public IO IO { get; set; }
+
+    public IOWireNode(IO io)
+    {
+        this.IO = io;
     }
 
-    public void Interact(Vector2 mousePosInWorld, Simulator simulator)
+    public override Vector2 GetPosition()
     {
-        if (Raylib.IsMouseButtonPressed(MouseButton.MOUSE_LEFT_BUTTON) && this.IsPositionOnWire(mousePosInWorld, out Vector2 lStart, out Vector2 lEnd))
-        {
-            // Command for adding intermediate point
+        return this.IO.OnComponent.GetIOPosition(this.IO); // TODO: Implement stuff to get position of IO
+    }
 
-            // If mouse is on wire, update intermediate points.
-            int index = this.IntermediatePoints.IndexOf(lStart);
-            // this.IntermediatePoints.Insert(index + 1, mousePosInWorld);
-            // simulator.SelectedWirePoints.Clear();
-            // simulator.SelectedWirePoints.Add((this, index + 1));
-            AddIntermediatePointCommand aipc = new AddIntermediatePointCommand(this, index, mousePosInWorld);
-            Util.ExecuteCommandInEditor(aipc);
+    public override bool CanBeMoved()
+    {
+        return false;
+    }
+
+    public override void RenderSelected()
+    {
+        // DO NOTHING
+    }
+
+    public override void Move(Vector2 delta)
+    {
+        // DO NOTHING
+        return;
+    }
+}
+
+public class FreeWireNode : WireNode
+{
+    public Vector2 Position { get; set; }
+
+    public FreeWireNode(Vector2 position)
+    {
+        this.Position = position;
+    }
+
+    public override Vector2 GetPosition()
+    {
+        return this.Position;
+    }
+
+    public override bool CanBeMoved()
+    {
+        return true;
+    }
+
+    public override void RenderSelected()
+    {
+        Raylib.DrawCircleV(this.GetPosition(), 6f, Color.ORANGE);
+    }
+
+    public override void Move(Vector2 delta)
+    {
+        this.Position += delta;
+    }
+}
+
+public class Wire
+{
+    public List<IO> IOs { get; private set; }
+    public WireStatus Status { get; set; }
+    public WireNode RootWireNode { get; set; }
+
+    public Wire(IO initialIO)
+    {
+        this.IOs = new List<IO>();
+        this.IOs.Add(initialIO);
+        this.RootWireNode = new IOWireNode(initialIO);
+        initialIO.Wire = this;
+    }
+
+    public void ConnectIO(IO io)
+    {
+        this.IOs.Add(io);
+    }
+
+    public void DisconnectIO(IO io)
+    {
+        //io.SetValues(Util.NValues(LogicValue.UNKNOWN, io.BitWidth).ToArray());
+        io.Wire = null;
+        this.IOs.Remove(io);
+    }
+
+    public bool AllIOsSameBitWidth(out int bitWidth)
+    {
+        bitWidth = this.IOs[0].BitWidth;
+        foreach (IO io in this.IOs)
+        {
+            if (io.BitWidth != bitWidth)
+            {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    public bool IsConnectedTo(IO io)
+    {
+        return this.IOs.Contains(io);
+    }
+
+    public List<WireNode> GetAllWireNodes(WireNode root)
+    {
+        List<WireNode> nodes = new List<WireNode>();
+        if (!nodes.Contains(root))
+            nodes.Add(root);
+        foreach (WireNode wn in root.Next)
+        {
+            nodes.AddRange(this.GetAllWireNodes(wn));
+        }
+        return nodes;
+    }
+
+    public List<WireNode> GetAllWireNodes()
+    {
+        return this.GetAllWireNodes(this.RootWireNode);
+    }
+
+    public bool AllIOsUnknown() => this.IOs.All(io => io.HasUnknown());
+
+    public bool AnyIOPushing() => this.IOs.Any(io => io.IsPushing());
+
+    public bool IOsAgree(IO[] ios, int bitWidth, out LogicValue[] agreedValues)
+    {
+        LogicValue[] valuesToAgreeOn = ios[0].PushedValues;
+        LogicValue[] conjunction = valuesToAgreeOn;
+        for (int i = 1; i < ios.Length; i++)
+        {
+            for (int j = 0; j < bitWidth; j++)
+            {
+                if (ios[i].PushedValues[j] != valuesToAgreeOn[j])
+                {
+                    conjunction[j] = LogicValue.ERROR;
+                }
+                else
+                {
+                    conjunction[j] = valuesToAgreeOn[j];
+                }
+            }
         }
 
-        if (Raylib.IsMouseButtonPressed(MouseButton.MOUSE_RIGHT_BUTTON) && this.IsPositionOnIntermediatePoint(mousePosInWorld, out Vector2 point))
+        agreedValues = conjunction;
+        return conjunction.SameAs(valuesToAgreeOn);
+    }
+
+    public void Propagate()
+    {
+        if (this.TryGetValuesToPropagate(out LogicValue[]? values))
         {
-            // If mouse is on wire, remove intermediate point
-            int index = this.IntermediatePoints.IndexOf(point);
-            if (simulator.SelectedWirePoints.Contains((this, index)))
+            foreach (IO io in this.IOs)
             {
-                simulator.SelectedWirePoints.Remove((this, index));
+                io.SetValues(values);
             }
-            // Check if any of the following intermediate points on this wire is in the selected wire points.
-            // If any are, then decrement their index to fit in the new list.
-            for (int i = index; i < this.IntermediatePoints.Count; i++)
+        }
+    }
+
+    public bool TryGetValuesToPropagate([NotNullWhen(true)] out LogicValue[]? values)
+    {
+        if (!this.AllIOsSameBitWidth(out int bitWidth))
+        {
+            this.Status = WireStatus.DIFF_BITWIDTH;
+            values = null;
+            return false;
+        }
+
+        if (this.AllIOsUnknown() && !this.AnyIOPushing())
+        {
+            this.Status = WireStatus.UNKNOWN;
+            values = Util.NValues(LogicValue.UNKNOWN, bitWidth).ToArray();
+            return true;
+        }
+
+        if (!this.AnyIOPushing())
+        {
+            this.Status = WireStatus.UNKNOWN;
+            values = Util.NValues(LogicValue.UNKNOWN, bitWidth).ToArray();
+            return true;
+        }
+
+        IO[] pushingIOs = this.IOs.Where(io => io.IsPushing()).ToArray();
+        if (!this.IOsAgree(pushingIOs, bitWidth, out LogicValue[] agreedValues))
+        {
+            this.Status = WireStatus.CONFLICT;
+        }
+
+        this.Status = WireStatus.NORMAL;
+        values = agreedValues;
+        return true;
+    }
+
+    public void RenderWireNodes(WireNode root)
+    {
+        float wireThickness = 5f;
+        //float wireNodeRadius = 10f;
+
+        Color color = this.IOs[0].GetColor();
+
+        Vector2 pos = root.GetPosition();
+
+
+        foreach (WireNode wn in root.Next)
+        {
+            Vector2 otherPos = wn.GetPosition();
+
+            Raylib.DrawLineEx(pos, otherPos, wireThickness + 2f, Color.BLACK);
+            Raylib.DrawLineEx(pos, otherPos, wireThickness, color);
+
+            Raylib.DrawLineV(pos, otherPos, color);
+            this.RenderWireNodes(wn);
+        }
+        if (root is FreeWireNode)
+        {
+            Raylib.DrawCircleV(pos, 6f, Color.BLACK);
+            Raylib.DrawCircleV(pos, 5, color);
+        }
+    }
+
+    private bool TryGetWireNode(WireNode root, Vector2 position, [NotNullWhen(true)] out WireNode? wireNodeFrom, [NotNullWhen(true)] out WireNode? wireNodeTo)
+    {
+        float wireThickness = 5f;
+
+        foreach (WireNode wn in root.Next)
+        {
+            Vector2 start = root.GetPosition();
+            Vector2 end = wn.GetPosition();
+
+            Rectangle rec = Util.CreateRecFromTwoCorners(start.Vector2Towards(5, end), end.Vector2Towards(5, start), wireThickness / 2);
+            if (Raylib.CheckCollisionPointRec(position, rec))
             {
-                if (simulator.SelectedWirePoints.Contains((this, i)))
+                float distance = Util.DistanceToLine(start, end, position);
+                if (distance <= wireThickness / 2)
                 {
-                    simulator.SelectedWirePoints.Remove((this, i));
-                    simulator.SelectedWirePoints.Add((this, i - 1));
+                    wireNodeFrom = root;
+                    wireNodeTo = wn;
+                    return true;
                 }
             }
 
-            this.IntermediatePoints.Remove(point);
+            if (this.TryGetWireNode(wn, position, out wireNodeFrom, out wireNodeTo))
+            {
+                return true;
+            }
         }
+
+        wireNodeFrom = null;
+        wireNodeTo = null;
+        return false;
     }
 
-    public void AddIntermediatePoint(Vector2 pos)
+    private bool TryGetFreeWireNodeFromPosition(WireNode root, Vector2 position, out WireNode? from, out WireNode? wireNode)
     {
-        this.IntermediatePoints.Add(pos);
+        foreach (WireNode wn in root.Next)
+        {
+            if ((wn.GetPosition() - position).Length() < 5)
+            {
+                wireNode = wn;
+                from = root;
+                return true;
+            }
+            if (this.TryGetFreeWireNodeFromPosition(wn, position, out from, out wireNode))
+            {
+                return true;
+            }
+        }
+        from = null;
+        wireNode = null;
+        return false;
     }
 
-    public (Vector2, Vector2) GetAdjacentPositionsToIntermediate(Vector2 point)
+    public bool TryGetFreeWireNodeFromPosition(Vector2 position, out WireNode? from, out WireNode? wireNode)
     {
-        int index = this.IntermediatePoints.IndexOf(point);
-        if (index == 0)
-        {
-            return (this.From.GetOutputPosition(this.FromIndex), this.IntermediatePoints.Count > 1 ? this.IntermediatePoints[1] : this.To.GetInputPosition(this.ToIndex));
-        }
-        else if (index == this.IntermediatePoints.Count - 1)
-        {
-            return (this.IntermediatePoints.Count > 1 ? this.IntermediatePoints[this.IntermediatePoints.Count - 2] : this.From.GetOutputPosition(this.FromIndex), this.To.GetInputPosition(this.ToIndex));
-        }
-        else
-        {
-            return (this.IntermediatePoints[index - 1], this.IntermediatePoints[index + 1]);
-        }
+        return this.TryGetFreeWireNodeFromPosition(this.RootWireNode, position, out from, out wireNode);
     }
 
-    public void Render(Vector2 mousePosInWorld)
+    public bool TryGetWireNode(Vector2 position, [NotNullWhen(true)] out WireNode? wireNodeFrom, [NotNullWhen(true)] out WireNode? wireNodeTo)
     {
-        Vector2 fromPos = this.From.GetOutputLinePositions(this.FromIndex).Item1;
-        Vector2 toPos = this.To.GetInputLinePositions(this.ToIndex).Item1;
-        float width = 4f;
-        Color color = Util.InterpolateColors(Color.WHITE, Color.BLUE, this.GetHighFraction());
-
-        List<Vector2> linePoints = IntermediatePoints.Concat(new List<Vector2>() { toPos }).ToList();
-        Vector2 previousPos = fromPos;
-        for (int i = 0; i < linePoints.Count; i++)
-        {
-            Raylib.DrawLineEx(previousPos, linePoints[i], width + 2f, Color.BLACK);
-            Raylib.DrawLineEx(previousPos, linePoints[i], width, color);
-            Rectangle rec = Util.CreateRecFromTwoCorners(previousPos.Vector2Towards(5, linePoints[i]), linePoints[i].Vector2Towards(5, previousPos), width / 2);
-            //Raylib.DrawRectangleRec(rec, Color.BLUE.Opacity(0.3f));
-            previousPos = linePoints[i];
-        }
-
-        if (this.IsPositionOnWire(mousePosInWorld, out Vector2 lStart, out Vector2 lEnd))
-        {
-            Raylib.DrawLineEx(lStart, lEnd, width + 2f, Color.ORANGE);
-            Raylib.DrawLineEx(lStart, lEnd, width, color);
-        }
-
-        for (int i = 0; i < linePoints.Count - 1; i++)
-        {
-            Raylib.DrawCircleV(linePoints[i], width + 1f, Color.BLACK);
-            Raylib.DrawCircleV(linePoints[i], width, color);
-        }
-
-        if (this.IsPositionOnIntermediatePoint(mousePosInWorld, out Vector2 point))
-        {
-            Raylib.DrawCircleV(point, width, Color.ORANGE);
-        }
+        return this.TryGetWireNode(this.RootWireNode, position, out wireNodeFrom, out wireNodeTo);
     }
 
-    public void RenderSelected()
+    public void Render()
     {
-        Vector2 fromPos = this.From.GetOutputLinePositions(this.FromIndex).Item1;
-        Vector2 toPos = this.To.GetInputLinePositions(this.ToIndex).Item1;
-        //Raylib.DrawLineEx(fromPos, toPos, 6f, Color.ORANGE);
-        //Raylib.DrawLineEx(fromPos, toPos, 4, Util.InterpolateColors(Color.WHITE, Color.BLUE, this.GetHighFraction()));
+        this.RenderWireNodes(this.RootWireNode);
     }
 }

@@ -2,566 +2,252 @@ using LogiX.SaveSystem;
 
 namespace LogiX.Components;
 
-public abstract class Component
+public abstract class Component : ISelectable
 {
-    // Logic
-    public List<ComponentInput> Inputs { get; private set; }
-    public List<ComponentOutput> Outputs { get; private set; }
-
-    // Visual stuff, position etc.
+    public List<(IO, IOConfig)> IOs { get; private set; }
+    public ComponentType Type { get; private set; }
     public Vector2 Position { get; set; }
+    public int Rotation { get; set; }
+
+    public string UniqueID { get; set; }
+    public Vector2 MiddleOfComponent => this.Position + this.Size / 2f;
     public virtual Vector2 Size
     {
         get
         {
-            float maxIOs = Math.Max(this.Inputs.Count, this.Outputs.Count);
+            int IOsOnLeft = this.FilterIOsOnConfig(x => x.Side == ComponentSide.LEFT).Count();
+            int IOsOnRight = this.FilterIOsOnConfig(x => x.Side == ComponentSide.RIGHT).Count();
+            int IOsOnTop = this.FilterIOsOnConfig(x => x.Side == ComponentSide.TOP).Count();
+            int IOsOnBottom = this.FilterIOsOnConfig(x => x.Side == ComponentSide.BOTTOM).Count();
 
-            float ioWidth = this.DrawIOIdentifiers ? GetMaxIOIDWidth() : 0;
-            float textWidth = Raylib.MeasureTextEx(Util.OpenSans, this.Text, 18, 1).X;
+            int maxIOsWidth = Math.Max(IOsOnTop, IOsOnBottom);
+            int maxIOsHeight = Math.Max(IOsOnLeft, IOsOnRight);
 
-            return new Vector2(ioWidth * 2f + textWidth + 20f, maxIOs * 25f);
-        }
-    }
-    public Vector2 RotatedSize
-    {
-        get
-        {
+            float minHeight = Raylib.MeasureTextEx(Util.OpenSans, this.Text, this.TextSize, 0).Y;
+            float minWidth = Raylib.MeasureTextEx(Util.OpenSans, this.Text, this.TextSize, 0).X;
+
+            // Guaranteed to only contain non-null strings
+            string[] ioIdentifiers = this.IOs.Select(x => x.Item2.Identifier!).Where(x => x != null).ToArray();
+            float maxIOIdentifierWidth = Util.GetMaxWidthOfStrings(Util.OpenSans, this.TextSize / 2, 0, ioIdentifiers);
+
+            float width = Math.Max(minWidth, maxIOsWidth * (this.IORadius * 2 + this.IODistBetween) - this.IODistBetween) + (maxIOIdentifierWidth > 0 ? maxIOIdentifierWidth + this.PaddingWidth : 0);
+            float height = Math.Max(minHeight, maxIOsHeight * (this.IORadius * 2 + this.IODistBetween) - this.IODistBetween);
+
+            Vector2 size = new Vector2(width + this.PaddingWidth * 2, height + this.PaddingHeight * 2);
+
             if (this.Rotation == 1 || this.Rotation == 3)
             {
-                return new Vector2(this.Size.Y, this.Size.X);
+                return new Vector2(size.Y, size.X);
             }
-            else
-            {
-                return this.Size;
-            }
+
+            return size;
         }
     }
-    public Rectangle Box
+    public virtual string Text => this.Type.GetComponentTypeAsString();
+    public virtual float IODistToComp => 5f;
+    public virtual float IODistBetween => 4f;
+    public virtual float IORadius => 7f;
+    public virtual float PaddingWidth => 7;
+    public virtual float PaddingHeight => 0;
+    public virtual int TextSize => 18;
+
+    public Component(Vector2 position, ComponentType type)
     {
-        get
-        {
-            return new Rectangle(this.Position.X - this.RotatedSize.X / 2f, this.Position.Y - this.RotatedSize.Y / 2f, this.RotatedSize.X, this.RotatedSize.Y);
-        }
-    }
-    public virtual Color BodyColor
-    {
-        get
-        {
-            return Color.WHITE;
-        }
-    }
-    public virtual string Text => "Component";
-    public virtual bool TextVisible => true;
-    public virtual bool DrawIOIdentifiers => false;
-    public virtual bool DrawBoxNormal => true;
-    public virtual bool HasContextMenu => this.AdditionalUISubmitters.Count > 0 || this.Documentation != null;
-    public virtual string? Documentation => null;
-
-    public List<Action<Editor.Editor, Component>> AdditionalUISubmitters { get; set; }
-
-    public string uniqueID;
-
-    public int Rotation { get; set; }
-
-    public Component(IEnumerable<int> bitsPerInput, IEnumerable<int> bitsPerOutput, Vector2 position)
-    {
+        this.Type = type;
         this.Position = position;
-        this.AdditionalUISubmitters = Util.GetAdditionalComponentContexts(this.GetType());
-
-        // Creating inputs
-        this.Inputs = new List<ComponentInput>();
-        for (int i = 0; i < bitsPerInput.Count(); i++)
-        {
-            ComponentInput ci = new ComponentInput(bitsPerInput.ElementAt(i), $"{i}", this, i);
-            this.Inputs.Add(ci);
-        }
-
-        // Creating outputs
-        this.Outputs = new List<ComponentOutput>();
-        for (int i = 0; i < bitsPerOutput.Count(); i++)
-        {
-            ComponentOutput ci = new ComponentOutput(bitsPerOutput.ElementAt(i), $"{i}", this, i);
-            this.Outputs.Add(ci);
-        }
-
-        this.uniqueID = Guid.NewGuid().ToString();
-        this.Rotation = 0;
+        this.UniqueID = Guid.NewGuid().ToString();
+        this.IOs = new List<(IO, IOConfig)>();
     }
 
-    public List<LogicValue> GetLogicValuesFromSingleBitInputs(params int[] inputIndices)
+    public void SetRotation(int rotation)
     {
-        List<LogicValue> values = new List<LogicValue>();
-        foreach (int i in inputIndices)
-        {
-            values.Add(this.Inputs[i].Values[0]);
-        }
-        return values;
+        this.Rotation = rotation;
     }
 
-    public virtual int GetMaxStepsToOtherComponent(Component other)
+    public virtual Rectangle GetRectangle()
     {
-        if (other == this)
-        {
-            return 1;
-        }
-        else
-        {
-            int maxSteps = 0;
-            foreach (ComponentOutput co in this.Outputs)
-            {
-                foreach (Wire w in co.Signals)
-                {
-                    int steps = w.To.GetMaxStepsToOtherComponent(other);
-                    maxSteps = Math.Max(maxSteps, steps);
-                }
-
-            }
-            return maxSteps + 1;
-        }
+        return new Rectangle(this.Position.X, this.Position.Y, this.Size.X, this.Size.Y);
     }
 
-    internal void AddAdditionalUISubmitter(Action action)
+    private List<IO> FilterIOsOnConfig(Func<IOConfig, bool> filter)
     {
-        //this.AdditionalUISubmitters.Add(action);
+        return this.IOs.Where(x => filter(x.Item2)).Select(io => io.Item1).ToList();
     }
 
-    public Component SetPosition(Vector2 pos)
+    protected void AddIO(int bitWidth, IOConfig config)
     {
-        this.Position = pos;
-        return this;
+        this.IOs.Add((new IO(bitWidth, this), config));
     }
 
-    public void SetUniqueID(string id)
+    public int GetIndexOfIO(IO io)
     {
-        this.uniqueID = id;
+        return this.IOs.FindIndex(x => x.Item1 == io);
     }
 
-    public float GetMaxIOIDWidth()
+    public IO GetIO(int index)
     {
-        float max = 0f;
-
-        foreach (ComponentInput ci in this.Inputs)
-        {
-            Vector2 measure = Raylib.MeasureTextEx(Util.OpenSans, ci.Identifier, 14, 1);
-            max = MathF.Max(max, measure.X);
-        }
-
-        foreach (ComponentOutput co in this.Outputs)
-        {
-            Vector2 measure = Raylib.MeasureTextEx(Util.OpenSans, co.Identifier, 14, 1);
-            max = MathF.Max(max, measure.X);
-        }
-
-        return max;
-    }
-
-    public void SetInputWire(int index, Wire wire)
-    {
-        this.Inputs[index].SetSignal(wire);
-    }
-
-    public void RemoveInputWire(int index)
-    {
-        this.Inputs[index].RemoveSignal();
-    }
-
-    public void AddOutputWire(int index, Wire wire)
-    {
-        this.Outputs[index].AddOutputWire(wire);
-    }
-
-    public void RemoveOutputWire(int index, Wire wire)
-    {
-        ComponentOutput co = this.Outputs[index];
-        for (int i = 0; i < co.Signals.Count; i++)
-        {
-            if (wire == co.Signals[i])
-            {
-                co.RemoveOutputSignal(i);
-                return;
-            }
-        }
-    }
-
-    public ComponentInput InputAt(int index)
-    {
-        return this.Inputs[index];
-    }
-
-    public ComponentOutput OutputAt(int index)
-    {
-        return this.Outputs[index];
-    }
-
-    public void UpdateInputs()
-    {
-        for (int i = 0; i < this.Inputs.Count; i++)
-        {
-            this.Inputs[i].GetSignalValue();
-        }
-    }
-
-    public void UpdateOutputs()
-    {
-        for (int i = 0; i < this.Outputs.Count; i++)
-        {
-            this.Outputs[i].SetSignals();
-        }
-    }
-
-    public virtual void Update(Vector2 mousePosInWorld, Simulator simulator)
-    {
-        this.UpdateInputs();
-        this.PerformLogic();
-        this.UpdateOutputs();
+        return this.IOs[index].Item1;
     }
 
     public abstract void PerformLogic();
 
-    public Vector2 GetInputPosition(int index)
+    public Vector2 GetIOPosition(IO io)
     {
-        float dist = 25f;
-        float len = 10f;
-        int inputs = this.Inputs.Count;
+        return GetIOPosition(io, out Vector2 posAtComp);
+    }
 
-        // Left to right
-        if (this.Rotation == 0)
+    public Vector2 GetIOPosition(IO io, out Vector2 posAtComponent)
+    {
+        IOConfig config = this.IOs.First(x => x.Item1 == io).Item2; // Get IOConfig for this IO
+        List<IO> iosOnSameSide = this.FilterIOsOnConfig(x => x.Side == config.Side); // Get all IOs on the same side as this IO
+        int indexOfIO = iosOnSameSide.IndexOf(io); // Get index of this IO
+
+        float xLeft = this.Position.X;
+        float xRight = this.Position.X + this.Size.X;
+        float yTop = this.Position.Y;
+        float yBottom = this.Position.Y + this.Size.Y;
+
+        float height = this.Size.Y;
+        float width = this.Size.X;
+
+        // CONSTANTS DESCRIBING WHERE IOS SHOULD BE RELATIVE TO THE COMPONENT
+        float distanceToComp = this.IODistToComp;
+        float distanceBetweenIOs = this.IODistBetween;
+        float radius = this.IORadius;
+
+        float realDistBetweenIOs = radius * 2 + distanceBetweenIOs;
+        float totalDistanceByIOs = realDistBetweenIOs * (iosOnSameSide.Count - 1);
+
+        ComponentSide side = Util.GetRotatedComponentSide(config.Side, this.Rotation);
+
+        // Calculate position of IO
+        if (side == ComponentSide.LEFT)
         {
-            float x = this.Position.X - this.RotatedSize.X / 2f;
-            float y = this.Position.Y - ((inputs - 1) * dist) / 2;
-            return new Vector2(x - len, y + (index * dist));
+            // LEFT
+            posAtComponent = new Vector2(xLeft, yTop + height / 2 - totalDistanceByIOs / 2 + indexOfIO * realDistBetweenIOs);
+            return new Vector2(xLeft - distanceToComp - radius, yTop + height / 2 - totalDistanceByIOs / 2 + indexOfIO * realDistBetweenIOs);
         }
-        else if (this.Rotation == 1)
+        else if (side == ComponentSide.TOP)
         {
-            // Top to bottom
-            float x = this.Position.X + ((inputs - 1) * dist) / 2;
-            float y = this.Position.Y - this.RotatedSize.Y / 2f;
-            return new Vector2(x - (index * dist), y - len);
+            // TOP
+            posAtComponent = new Vector2(xLeft + width / 2 - totalDistanceByIOs / 2 + indexOfIO * realDistBetweenIOs, yTop);
+            return new Vector2(xLeft + width / 2 - totalDistanceByIOs / 2 + indexOfIO * realDistBetweenIOs, yTop - distanceToComp - radius);
         }
-        else if (this.Rotation == 2)
+        else if (side == ComponentSide.RIGHT)
         {
-            // Right to left
-            float x = this.Position.X + this.RotatedSize.X / 2f;
-            float y = this.Position.Y + ((inputs - 1) * dist) / 2;
-            return new Vector2(x + len, y - (index * dist));
+            // RIGHT
+            posAtComponent = new Vector2(xRight, yTop + height / 2 - totalDistanceByIOs / 2 + indexOfIO * realDistBetweenIOs);
+            return new Vector2(xRight + distanceToComp + radius, yTop + height / 2 - totalDistanceByIOs / 2 + indexOfIO * realDistBetweenIOs);
         }
-        else if (this.Rotation == 3)
+        else if (side == ComponentSide.BOTTOM)
         {
-            // Bottom to top
-            float x = this.Position.X - ((inputs - 1) * dist) / 2;
-            float y = this.Position.Y + this.RotatedSize.Y / 2f;
-            return new Vector2(x + (index * dist), y + len);
+            // BOTTOM
+            posAtComponent = new Vector2(xLeft + width / 2 - totalDistanceByIOs / 2 + indexOfIO * realDistBetweenIOs, yBottom);
+            return new Vector2(xLeft + width / 2 - totalDistanceByIOs / 2 + indexOfIO * realDistBetweenIOs, yBottom + distanceToComp + radius);
         }
 
+        posAtComponent = Vector2.Zero;
         return Vector2.Zero;
     }
 
-    public Vector2 GetOutputPosition(int index)
+    public virtual void RenderRectangle()
     {
-        float dist = 25f;
-        float len = 10f;
-        int outputs = this.Outputs.Count;
-
-        // Left to right
-        if (this.Rotation == 0)
-        {
-            float x = this.Position.X + this.RotatedSize.X / 2f;
-            float y = this.Position.Y - ((outputs - 1) * dist) / 2;
-            return new Vector2(x + len, y + (index * dist));
-        }
-        else if (this.Rotation == 1)
-        {
-            // Top to bottom
-            float x = this.Position.X + ((outputs - 1) * dist) / 2;
-            float y = this.Position.Y + this.RotatedSize.Y / 2f;
-            return new Vector2(x - (index * dist), y + len);
-        }
-        else if (this.Rotation == 2)
-        {
-            // Right to left
-            float x = this.Position.X - this.RotatedSize.X / 2f;
-            float y = this.Position.Y + ((outputs - 1) * dist) / 2;
-            return new Vector2(x - len, y - (index * dist));
-        }
-        else if (this.Rotation == 3)
-        {
-            // Bottom to top
-            float x = this.Position.X + ((outputs - 1) * dist) / 2;
-            float y = this.Position.Y - this.RotatedSize.Y / 2f;
-            return new Vector2(x - (index * dist), y - len);
-        }
-
-        return Vector2.Zero;
+        Rectangle rect = this.GetRectangle();
+        Raylib.DrawRectangleRec(rect.Inflate(1), Color.DARKGRAY);
+        Raylib.DrawRectangleRec(rect, Color.WHITE);
     }
 
-    public bool TryGetInputFromPosition(Vector2 position, out ComponentInput? input)
+    public virtual void RenderText()
     {
-        foreach (ComponentInput ci in this.Inputs)
+        Vector2 textMeasure = Raylib.MeasureTextEx(Util.OpenSans, this.Text, this.TextSize, 0);
+        Vector2 pos = this.MiddleOfComponent - textMeasure / 2f;
+        Util.RenderTextRotated(pos.RotateAround(this.MiddleOfComponent, -(this.Rotation % 2) * MathF.PI / 2f), Util.OpenSans, this.TextSize, 0, this.Text, (this.Rotation * 90f) % 180f, Color.BLACK);
+    }
+
+    public virtual void RenderIOs()
+    {
+        foreach ((IO io, IOConfig conf) in this.IOs)
         {
-            if (Raylib.CheckCollisionPointCircle(position, ci.Position, 7f))
+            Vector2 ioPos = this.GetIOPosition(io, out Vector2 posAtComp);
+            Raylib.DrawLineEx(posAtComp, ioPos, 2f, Color.BLACK);
+            Raylib.DrawCircleV(ioPos, this.IORadius + 1f, Color.BLACK);
+            Raylib.DrawCircleV(ioPos, this.IORadius, io.GetColor());
+        }
+    }
+
+    private void RenderIOIdentifiers()
+    {
+        foreach ((IO io, IOConfig conf) in this.IOs)
+        {
+            Vector2 ioPos = this.GetIOPosition(io, out Vector2 posAtComp);
+            if (conf.Identifier != null)
             {
-                input = ci;
-                return true;
-            }
-        }
-        input = null;
-        return false;
-    }
+                Vector2 measure = Raylib.MeasureTextEx(Util.OpenSans, conf.Identifier, this.TextSize / 2, 0);
+                Vector2 textPos = posAtComp;
 
-    public bool TryGetOutputFromPosition(Vector2 position, out ComponentOutput? output)
-    {
-        foreach (ComponentOutput co in this.Outputs)
-        {
-            if (Raylib.CheckCollisionPointCircle(position, co.Position, 7f))
-            {
-                output = co;
-                return true;
-            }
-        }
-        output = null;
-        return false;
-    }
+                ComponentSide side = Util.GetRotatedComponentSide(conf.Side, this.Rotation);
 
-    public Tuple<Vector2, Vector2> GetInputLinePositions(int index)
-    {
-        Vector2 startPos = this.GetInputPosition(index);
-        Vector2 endPos = startPos;
-        switch (this.Rotation)
-        {
-            case 0:
-                endPos += new Vector2(10, 0);
-                break;
-            case 1:
-                endPos += new Vector2(0, 10);
-                break;
-            case 2:
-                endPos += new Vector2(-10, 0);
-                break;
-            case 3:
-                endPos += new Vector2(0, -10);
-                break;
-        }
-        return Tuple.Create<Vector2, Vector2>(startPos, endPos);
-    }
-
-    public Tuple<Vector2, Vector2> GetOutputLinePositions(int index)
-    {
-        Vector2 startPos = this.GetOutputPosition(index);
-        Vector2 endPos = startPos;
-        switch (this.Rotation)
-        {
-            case 0:
-                endPos += new Vector2(-10, 0);
-                break;
-            case 1:
-                endPos += new Vector2(0, -10);
-                break;
-            case 2:
-                endPos += new Vector2(10, 0);
-                break;
-            case 3:
-                endPos += new Vector2(0, 10);
-                break;
-        }
-        return Tuple.Create<Vector2, Vector2>(startPos, endPos);
-    }
-
-    public virtual void RenderBox()
-    {
-        if (this.DrawBoxNormal)
-        {
-            Raylib.DrawRectanglePro(this.Box, Vector2.Zero, 0f, this.BodyColor);
-            Raylib.DrawRectangleLinesEx(this.Box, 1, Color.BLACK);
-        }
-    }
-
-    public bool IsPositionOnInput(int index, Vector2 pos)
-    {
-        return (GetInputPosition(index) - pos).Length() < 7f;
-    }
-
-    public bool IsPositionOnOutput(int index, Vector2 pos)
-    {
-        return (GetOutputPosition(index) - pos).Length() < 7f;
-    }
-
-    public virtual void RenderIOs(Vector2 mousePosInWorld)
-    {
-        int ioWidth = 7;
-
-        for (int i = 0; i < this.Inputs.Count; i++)
-        {
-            (Vector2 start, Vector2 end) = GetInputLinePositions(i);
-            Color color = Util.InterpolateColors(Color.WHITE, Color.BLUE, this.Inputs[i].GetHighFraction());
-
-            if ((mousePosInWorld - start).Length() < ioWidth)
-            {
-                color = Color.ORANGE;
-            }
-
-            Raylib.DrawLineEx(start, end, 4f, Color.GRAY);
-            Raylib.DrawCircleV(start, ioWidth + 1f, Color.BLACK);
-            Raylib.DrawCircleV(start, ioWidth, color);
-
-            int bits = this.InputAt(i).Bits;
-
-            if (bits > 1)
-            {
-                // Draw text displaying amount of bits
-                Vector2 measure = Raylib.MeasureTextEx(Util.OpenSans, bits.ToString(), 13, 0);
-                Raylib.DrawTextEx(Util.OpenSans, $"{bits}", start - measure / 2f, 13, 0f, Color.BLACK);
-            }
-
-            if (this.DrawIOIdentifiers)
-            {
-                Vector2 measure = Raylib.MeasureTextEx(Util.OpenSans, this.Inputs[i].Identifier, 13, 0);
-                if (this.Rotation == 1 || this.Rotation == 3)
+                if (side == ComponentSide.LEFT)
                 {
-                    this.RenderTextRotated(end + new Vector2(measure.Y / 2f, 5 - (this.Rotation == 3 ? 10 + measure.X : 0)), Util.OpenSans, 13, 0, this.Inputs[i].Identifier, 90f, Color.BLACK);
+                    textPos = posAtComp + new Vector2(2, -measure.Y / 2);
                 }
-                else
+                else if (side == ComponentSide.RIGHT)
                 {
-                    Raylib.DrawTextEx(Util.OpenSans, this.Inputs[i].Identifier, end + new Vector2(5 - (this.Rotation == 2 ? 10 + measure.X : 0), measure.Y / -2f), 13, 0f, Color.BLACK);
+                    textPos = posAtComp + new Vector2(-2 - measure.X, -measure.Y / 2);
                 }
-            }
-        }
-
-        for (int i = 0; i < this.Outputs.Count; i++)
-        {
-            (Vector2 start, Vector2 end) = GetOutputLinePositions(i);
-            Color color = Util.InterpolateColors(Color.WHITE, Color.BLUE, this.Outputs[i].GetHighFraction());
-
-            if ((mousePosInWorld - start).Length() < ioWidth)
-            {
-                color = Color.ORANGE;
-            }
-
-            Raylib.DrawLineEx(start, end, 4f, Color.GRAY);
-            Raylib.DrawCircleV(start, ioWidth + 1f, Color.BLACK);
-            Raylib.DrawCircleV(start, ioWidth, color);
-
-            int bits = this.OutputAt(i).Bits;
-
-            if (bits > 1)
-            {
-                // Draw text displaying amount of bits
-                Vector2 measure = Raylib.MeasureTextEx(Util.OpenSans, bits.ToString(), 13, 0);
-                Raylib.DrawTextEx(Util.OpenSans, $"{bits}", start - measure / 2f, 13, 0f, Color.BLACK);
-            }
-
-            if (this.DrawIOIdentifiers)
-            {
-                Vector2 measure = Raylib.MeasureTextEx(Util.OpenSans, this.Outputs[i].Identifier, 13, 0);
-                if (this.Rotation == 1 || this.Rotation == 3)
+                else if (side == ComponentSide.TOP)
                 {
-                    this.RenderTextRotated(end + new Vector2(measure.Y / 2f, 5 + (this.Rotation == 3 ? 0 : -measure.X - 10)), Util.OpenSans, 13, 0, this.Outputs[i].Identifier, 90f, Color.BLACK);
+                    textPos = posAtComp + new Vector2(measure.Y / 2, 2);
                 }
-                else
+                else if (side == ComponentSide.BOTTOM)
                 {
-                    Raylib.DrawTextEx(Util.OpenSans, this.Outputs[i].Identifier, end - new Vector2(5 + (this.Rotation == 2 ? -10 : measure.X), measure.Y / 2f), 13, 0f, Color.BLACK);
+                    textPos = posAtComp + new Vector2(measure.Y / 2, -measure.X - 2);
                 }
+                Util.RenderTextRotated(textPos, Util.OpenSans, this.TextSize / 2, 0, conf.Identifier, (this.Rotation * 90f) % 180f, Color.BLACK);
             }
         }
     }
 
-    public void RotateRight()
+    public virtual void Render()
     {
-        this.Rotation = (this.Rotation + 1) % 4;
+        this.RenderIOs();
+        this.RenderRectangle();
+        this.RenderText();
+        this.RenderIOIdentifiers();
     }
 
-    public void RotateLeft()
+    public void UpdateLogic()
     {
-        this.Rotation = (this.Rotation + 3) % 4;
-    }
+        this.PerformLogic();
 
-    public void RenderTextRotated(Vector2 position, Font font, int fontSize, int spacing, string text, float rotation, Color color)
-    {
-        Rlgl.rlPushMatrix();
-        Rlgl.rlTranslatef(position.X, position.Y, 0);
-        Rlgl.rlRotatef(rotation, 0, 0, 1);
-        Raylib.DrawTextEx(font, text, Vector2.Zero, fontSize, spacing, color);
-        Rlgl.rlPopMatrix();
-    }
-
-    public virtual void RenderComponentText(Vector2 mousePosInWorld, int fontSize, bool alwaysHorizontalText = false)
-    {
-        if (this.TextVisible)
+        foreach ((IO io, IOConfig conf) in this.IOs)
         {
-            Vector2 middleOfBox = new Vector2(this.Box.x, this.Box.y) + new Vector2(this.Box.width / 2f, this.Box.height / 2f);
-            Vector2 textSize = Raylib.MeasureTextEx(Util.OpenSans, this.Text, fontSize, 1);
-            Vector2 flippedSize = new Vector2(-textSize.Y, textSize.X);
-
-            if ((this.Rotation == 1 || this.Rotation == 3) && !alwaysHorizontalText)
+            if (io.IsPushing())
             {
-                // On its side, render text vertically
-                Rlgl.rlPushMatrix();
-                Vector2 pos = middleOfBox - flippedSize / 2f;
-                Rlgl.rlTranslatef(pos.X, pos.Y, 0);
-                Rlgl.rlRotatef(90f, 0, 0, 1);
-                //
-                Raylib.DrawTextEx(Util.OpenSans, this.Text, Vector2.Zero, fontSize, 1, Color.BLACK);
-                Rlgl.rlPopMatrix();
+                if (io.Wire == null)
+                {
+                    io.SetValues(io.PushedValues);
+                }
             }
             else
             {
-                // Straight, render normally
-                Raylib.DrawTextEx(Util.OpenSans, this.Text, middleOfBox - textSize / 2f, fontSize, 1, Color.BLACK);
+                if (io.Wire == null)
+                {
+                    io.SetValues(Util.NValues(LogicValue.UNKNOWN, io.BitWidth).ToArray());
+                }
             }
         }
     }
 
-    public virtual void Render(Vector2 mousePosInWorld)
+    public virtual void Interact(Editor.Editor editor) { }
+
+    public void RenderSelected()
     {
-        RenderBox();
-        RenderIOs(mousePosInWorld);
-        this.RenderComponentText(mousePosInWorld, 18);
+        Raylib.DrawRectangleLinesEx(this.GetRectangle().Inflate(2), 2, Color.ORANGE);
     }
 
-    // Is called between Update and Render
-    public virtual void Interact(Vector2 mousePosInWorld, Simulator simulator)
+    public void Move(Vector2 delta)
     {
-
+        this.Position += delta;
     }
-
-    public virtual void OnSingleSelectedSubmitUI()
-    {
-
-    }
-
-    public virtual void SubmitContextPopup(LogiX.Editor.Editor editor)
-    {
-        foreach (Action<Editor.Editor, Component> a in this.AdditionalUISubmitters)
-        {
-            a(editor, this);
-        }
-
-        if (this.Documentation != null)
-        {
-            if (ImGui.Button("Show Help"))
-            {
-                editor.currentComponentDocumentation = this;
-            }
-        }
-    }
-
-    public virtual void RenderSelected()
-    {
-        int offset = 4;
-        Raylib.DrawRectangleLinesEx(new Rectangle(this.Box.x - offset, this.Box.y - offset, this.Box.width + offset * 2, this.Box.height + offset * 2), 4, Color.ORANGE);
-
-        // Render all wires from inputs and outputs in orange as well
-        foreach (ComponentInput cio in this.Inputs)
-        {
-            cio.Signal?.RenderSelected();
-        }
-
-        foreach (ComponentOutput cio in this.Outputs)
-        {
-            cio.Signals.ForEach(x => x.RenderSelected());
-        }
-    }
-
-    public abstract Dictionary<string, int> GetGateAmount();
-
-    public abstract ComponentDescription ToDescription();
 }

@@ -86,8 +86,9 @@ public class FSM<TUpdate, TOnEnter>
                     State<TUpdate, TOnEnter>? newState = this.GetState(goTo);
                     if (newState != null)
                     {
+                        TOnEnter onEnter = this.CurrentState.onEnterArg;
                         this.CurrentState = newState;
-                        this.CurrentState.OnEnter(arg, this.CurrentState.onEnterArg);
+                        this.CurrentState.OnEnter(arg, onEnter);
                     }
                 }
             }
