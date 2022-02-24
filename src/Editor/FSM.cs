@@ -2,6 +2,7 @@ namespace LogiX.Editor;
 
 public abstract class State<TUpdate, TOnEnter>
 {
+    public abstract bool ForcesSameTab { get; }
     public FSM<TUpdate, TOnEnter>? fsm_;
     private Type? transitionTo;
     public TOnEnter onEnterArg;

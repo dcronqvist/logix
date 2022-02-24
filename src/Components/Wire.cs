@@ -156,7 +156,7 @@ public class FreeWireNode : WireNode
 
     public override void RenderSelected()
     {
-        Raylib.DrawCircleV(this.GetPosition(), 6f, Color.ORANGE);
+        Raylib.DrawCircleV(this.GetPosition(), 8f, Color.ORANGE);
     }
 
     public override void Move(Vector2 delta)

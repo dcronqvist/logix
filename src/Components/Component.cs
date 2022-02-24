@@ -243,7 +243,8 @@ public abstract class Component : ISelectable
 
     public void RenderSelected()
     {
-        Raylib.DrawRectangleLinesEx(this.GetRectangle().Inflate(2), 2, Color.ORANGE);
+        Rectangle r = this.GetRectangle();
+        Raylib.DrawRectangleRec(r.Inflate(3), Color.ORANGE);
     }
 
     public void Move(Vector2 delta)

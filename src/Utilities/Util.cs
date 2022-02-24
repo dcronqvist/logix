@@ -514,6 +514,16 @@ public static class Util
         }
     }
 
+    public static Vector2 FlipVertically(this Vector2 v)
+    {
+        return new Vector2(v.X, -v.Y);
+    }
+
+    public static Vector2 Round(this Vector2 v)
+    {
+        return new Vector2(MathF.Round(v.X), MathF.Round(v.Y));
+    }
+
     // public static List<Action<Editor.Editor, Component>> GetAdditionalComponentContexts(Type component)
     // {
     //     if (Plugins == null)
@@ -589,7 +599,7 @@ public static class Util
             ImGui.EndTooltip();
             if (ImGui.IsMouseClicked(ImGuiMouseButton.Left))
             {
-                Raylib.OpenURL(url);
+                //Raylib.OpenURL((sbyte*)url);
             }
         }
     }

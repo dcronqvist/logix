@@ -191,6 +191,11 @@ public class Simulator
 
     public void Render()
     {
+        foreach (ISelectable selectable in this.Selection)
+        {
+            selectable.RenderSelected();
+        }
+
         foreach (Wire wire in this.AllWires)
         {
             wire.Render();
@@ -199,11 +204,6 @@ public class Simulator
         foreach (Component component in this.AllComponents)
         {
             component.Render();
-        }
-
-        foreach (ISelectable selectable in this.Selection)
-        {
-            selectable.RenderSelected();
         }
     }
 

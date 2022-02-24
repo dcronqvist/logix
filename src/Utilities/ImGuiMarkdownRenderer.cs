@@ -108,7 +108,7 @@ public class LinkRenderer : MarkdownObjectRenderer<ImGuiMarkdownRenderer, LinkIn
         renderer.Render(obj.FirstChild);
         if (ImGui.IsItemClicked())
         {
-            Raylib.OpenURL(obj.Url);
+            //Raylib.OpenURL(obj.Url);
         }
         ImGui.PopStyleColor();
         if (ImGui.IsItemHovered())

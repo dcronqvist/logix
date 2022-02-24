@@ -24,7 +24,12 @@ public static class UserInput
     {
         int windowWidth = Raylib.GetScreenWidth();
         int windowHeight = Raylib.GetScreenHeight();
-        Vector2 viewSize = new Vector2(windowWidth / cam.zoom, windowHeight / cam.zoom);
+        return GetViewSize(new Vector2(windowWidth, windowHeight), cam);
+    }
+
+    public static Vector2 GetViewSize(Vector2 windowSize, Camera2D cam)
+    {
+        Vector2 viewSize = new Vector2(windowSize.X / cam.zoom, windowSize.Y / cam.zoom);
         return viewSize;
     }
 
@@ -33,11 +38,16 @@ public static class UserInput
         return currentMousePos;
     }
 
-    public static Vector2 GetMousePositionInWorld(Camera2D cam)
+    public static Vector2 GetMousePositionInWorld(Camera2D cam, Vector2? worldSize = null, Vector2? topLeftOffset = null)
     {
         Vector2 viewSize = GetViewSize(cam);
+        Vector2 offset = Vector2.Zero;
+        if (topLeftOffset != null)
+        {
+            offset = topLeftOffset.Value;
+        }
         Vector2 topLeft = new Vector2(cam.target.X - viewSize.X / 2.0F, cam.target.Y - viewSize.Y / 2.0F);
-        return new Vector2(topLeft.X + currentMousePos.X / cam.zoom, topLeft.Y + currentMousePos.Y / cam.zoom);
+        return new Vector2(topLeft.X + (currentMousePos.X - offset.X) / cam.zoom, topLeft.Y + (currentMousePos.Y - offset.Y) / cam.zoom);
     }
 
     public static bool KeyComboPressed(KeyboardKey hold, KeyboardKey press)

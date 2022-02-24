@@ -18,23 +18,25 @@ public class EditorFSM : FSM<Editor, int>
 
 public class ESNone : State<Editor, int>
 {
+    public override bool ForcesSameTab => false;
+
     public override void Update(Editor arg)
     {
-        if (!ImGui.GetIO().WantCaptureMouse && !ImGui.GetIO().WantCaptureKeyboard)
+        if (arg.IsMouseInWorld && !ImGui.GetIO().WantCaptureKeyboard)
         {
             if (Raylib.IsKeyDown(KeyboardKey.KEY_SPACE) || Raylib.IsMouseButtonDown(MouseButton.MOUSE_MIDDLE_BUTTON))
             {
-                arg.camera.target -= UserInput.GetMouseDelta(arg.camera);
+                arg.CurrentTab.MoveCamera(-UserInput.GetMouseDelta(arg.camera));
             }
 
             float zoomSpeed = 1.15f;
             if (Raylib.GetMouseWheelMove() > 0)
             {
-                arg.camera.zoom = zoomSpeed * arg.camera.zoom;
+                arg.CurrentTab.ZoomCamera(zoomSpeed);
             }
             if (Raylib.GetMouseWheelMove() < 0)
             {
-                arg.camera.zoom = (1f / zoomSpeed) * arg.camera.zoom;
+                arg.CurrentTab.ZoomCamera(1f / zoomSpeed);
             }
             arg.camera.zoom = MathF.Min(MathF.Max(arg.camera.zoom, 0.1f), 4f);
 
@@ -44,7 +46,7 @@ public class ESNone : State<Editor, int>
             }
         }
 
-        if (!ImGui.GetIO().WantCaptureMouse)
+        if (arg.IsMouseInWorld)
         {
             if (Raylib.IsMouseButtonPressed(MouseButton.MOUSE_LEFT_BUTTON))
             {
@@ -138,6 +140,8 @@ public class ESMovingSelection : State<Editor, int>
     Vector2 startPos;
     bool willDoCommand;
 
+    public override bool ForcesSameTab => true;
+
     public override void OnEnter(Editor updateArg, int arg)
     {
         this.startPos = updateArg.GetWorldMousePos();
@@ -167,6 +171,8 @@ public class ESRectangleSelecting : State<Editor, int>
 {
     Vector2 startPos;
 
+    public override bool ForcesSameTab => true;
+
     public override void OnEnter(Editor updateArg, int arg)
     {
         this.startPos = updateArg.GetWorldMousePos();
@@ -191,6 +197,8 @@ public class ESRectangleSelecting : State<Editor, int>
 
 public class ESHoveringIO : State<Editor, int>
 {
+    public override bool ForcesSameTab => false;
+
     public override void Update(Editor arg)
     {
         if (arg.Simulator.TryGetIOFromWorldPosition(arg.GetWorldMousePos(), out (IO, int)? io))
@@ -215,6 +223,8 @@ public class ESHoveringIO : State<Editor, int>
 
 public class ESConnectIOToOther : State<Editor, int>
 {
+    public override bool ForcesSameTab => true;
+
     public override void Update(Editor arg)
     {
 

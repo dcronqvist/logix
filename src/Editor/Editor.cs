@@ -6,13 +6,22 @@ namespace LogiX.Editor;
 
 public class Editor : Application<Editor>
 {
+    // EDITOR LAYOUT VARIABLES
+    public int SidebarWidth { get; set; } = 170;
+    public int MainMenuBarHeight { get; set; } = 22;
+    public int CircuitTabBarHeight { get; set; } = 38;
+
     // EDITOR STUFF
     public Camera2D camera;
-
-    public Simulator Simulator { get; set; }
     public List<ComponentCreationContext> ComponentCreationContexts { get; set; }
     public List<(string, List<ComponentCreationContext>)> ComponentCreationContextCategories { get; set; }
-    public EditorFSM FSM { get; set; }
+    public bool IsMouseInWorld { get; set; }
+
+    public Dictionary<string, EditorTab> EditorTabs { get; set; }
+    public string CurrentEditorTab { get; set; }
+    public EditorTab CurrentTab => this.EditorTabs[this.CurrentEditorTab];
+    public Simulator Simulator => this.CurrentTab.Simulator;
+    public EditorFSM FSM => this.CurrentTab.FSM;
 
     // TEMPORARY VARIABLES FOR CONNECTIONS
     public IO FirstClickedIO { get; set; }
@@ -22,11 +31,10 @@ public class Editor : Application<Editor>
 
     public Editor()
     {
-        this.Simulator = new Simulator();
         this.ComponentCreationContexts = new List<ComponentCreationContext>();
         this.ComponentCreationContextCategories = new List<(string, List<ComponentCreationContext>)>();
-        this.FSM = new EditorFSM();
         this.EditorWindows = new List<EditorWindow>();
+        this.EditorTabs = new Dictionary<string, EditorTab>();
     }
 
     public override void Initialize()
@@ -76,6 +84,8 @@ public class Editor : Application<Editor>
 
     public Vector2 GetWorldMousePos()
     {
+        this.camera.target = this.CurrentTab.CameraTarget;
+        this.camera.zoom = this.CurrentTab.CameraZoom;
         return UserInput.GetMousePositionInWorld(this.camera);
     }
 
@@ -84,7 +94,7 @@ public class Editor : Application<Editor>
         this.camera = new Camera2D(base.WindowSize / 2f, Vector2.Zero, 0f, 1f);
         Util.Editor = this;
 
-        // COMPONENT CREATION CONTEXTS
+        this.OpenEditorTab(new EditorTab("Circuit"));
     }
 
     public void AddNewComponentCreationContext(ComponentCreationContext ccc)
@@ -93,6 +103,12 @@ public class Editor : Application<Editor>
 
         // GROUP BY CATEGORIES
         this.ComponentCreationContextCategories = this.ComponentCreationContexts.GroupBy(ccc => ccc.Category).Select(group => (group.Key, group.ToList())).ToList();
+    }
+
+    public void OpenEditorTab(EditorTab tab)
+    {
+        this.EditorTabs.Add(tab.Name, tab);
+        this.CurrentEditorTab = tab.Name;
     }
 
     public void SubmitComponentCreations()
@@ -151,14 +167,59 @@ public class Editor : Application<Editor>
         // SIDEBAR WINDOW
         ImGui.PushStyleVar(ImGuiStyleVar.WindowRounding, 0f);
         ImGui.SetNextWindowPos(new Vector2(0, 22), ImGuiCond.Always);
-        float sidebarWidth = 170;
-        ImGui.SetNextWindowSize(new Vector2(sidebarWidth, base.WindowSize.Y - 19), ImGuiCond.Always);
+        ImGui.SetNextWindowSize(new Vector2(this.SidebarWidth, base.WindowSize.Y - (this.MainMenuBarHeight - 2)), ImGuiCond.Always);
         ImGui.Begin("Components", ImGuiWindowFlags.NoResize | ImGuiWindowFlags.AlwaysVerticalScrollbar | ImGuiWindowFlags.NoNavInputs | ImGuiWindowFlags.NoCollapse | ImGuiWindowFlags.NoTitleBar | ImGuiWindowFlags.NoMove | ImGuiWindowFlags.NoSavedSettings);
         ImGui.PopStyleVar();
         this.SubmitComponentCreations();
         ImGui.End();
 
-        ImGui.Begin("COMMANDS", ImGuiWindowFlags.NoNavFocus | ImGuiWindowFlags.NoNav);
+        Vector2 windowSize = this.WindowSize;
+        ImGuiWindowFlags flags = ImGuiWindowFlags.NoResize | ImGuiWindowFlags.NoMove | ImGuiWindowFlags.NoCollapse | ImGuiWindowFlags.NoTitleBar | ImGuiWindowFlags.NoSavedSettings | ImGuiWindowFlags.NoNav | ImGuiWindowFlags.NoNavFocus | ImGuiWindowFlags.NoBringToFrontOnFocus | ImGuiWindowFlags.NoDocking;
+        ImGui.PushStyleVar(ImGuiStyleVar.WindowRounding, 0f);
+        ImGui.SetNextWindowPos(new Vector2(this.SidebarWidth, this.MainMenuBarHeight), ImGuiCond.Always);
+        ImGui.SetNextWindowSize(new Vector2(windowSize.X - this.SidebarWidth, this.CircuitTabBarHeight), ImGuiCond.Always);
+
+        ImGui.Begin("Main Dockspace", flags);
+        ImGui.PopStyleVar();
+
+        ImGui.BeginTabBar("Tabs", ImGuiTabBarFlags.None);
+
+        foreach (KeyValuePair<string, EditorTab> kvp in this.EditorTabs)
+        {
+            bool open = true;
+
+            if (this.FSM.CurrentState.ForcesSameTab && kvp.Key != this.CurrentEditorTab)
+            {
+                ImGui.PushStyleVar(ImGuiStyleVar.Alpha, 0.5f);
+            }
+
+            if (ImGui.BeginTabItem(kvp.Key.PadRight(15), ref open, ImGuiTabItemFlags.None))
+            {
+                this.CurrentEditorTab = kvp.Key;
+                ImGui.EndTabItem();
+            }
+
+            if (this.FSM.CurrentState.ForcesSameTab && kvp.Key != this.CurrentEditorTab)
+            {
+                ImGui.PopStyleVar();
+            }
+
+        }
+
+        ImGui.EndTabBar();
+
+        ImGui.End();
+
+        ImGui.Begin("COMMANDS", ImGuiWindowFlags.NoNav);
+        ImGui.SameLine();
+        ImGui.Text(this.IsMouseInWorld ? "Mouse in world" : "Mouse not in world");
+        ImGui.Text(ImGui.GetIO().WantCaptureKeyboard ? "Keyboard wanted" : "Keyboard not wanted");
+        ImGui.Text("Zoom: " + this.camera.zoom.ToString());
+        ImGui.Text("STATE: " + this.FSM.CurrentState.ToString());
+        ImGui.Text("MOUSEINWORLD: " + this.GetWorldMousePos().ToString());
+        ImGui.Text("MOUSEINWINDOW: " + UserInput.GetMousePositionInWindow().ToString());
+        ImGui.Text("WINDOW: " + this.WindowSize.ToString());
+
         if (ImGui.Button("Undo"))
         {
             base.Undo(this);
@@ -167,6 +228,11 @@ public class Editor : Application<Editor>
         if (ImGui.Button("Redo"))
         {
             base.Redo(this);
+        }
+        ImGui.SameLine();
+        if (ImGui.Button("NEW"))
+        {
+            this.OpenEditorTab(new EditorTab(this.EditorTabs.Count.ToString()));
         }
         for (int i = 0; i < base.Commands.Count; i++)
         {
@@ -183,8 +249,8 @@ public class Editor : Application<Editor>
         }
         ImGui.End();
 
-        this.FSM.SubmitUI(this);
-        ImGui.Text(this.FSM.CurrentState.GetType().Name);
+        this.EditorTabs[this.CurrentEditorTab].SubmitUI(this);
+        this.IsMouseInWorld = Raylib.CheckCollisionPointRec(UserInput.GetMousePositionInWindow(), Util.CreateRecFromTwoCorners(new Vector2(this.SidebarWidth, this.MainMenuBarHeight + this.CircuitTabBarHeight), this.WindowSize)) && !ImGui.GetIO().WantCaptureKeyboard;
     }
 
     public void NewComponent(Component c, bool absolutePosition = false)
@@ -203,8 +269,8 @@ public class Editor : Application<Editor>
         // Get camera's position and the size of the current view
         // This depends on the zoom of the camera. Dividing by the
         // zoom gives a correct representation of the actual visible view.
-        Vector2 camPos = this.camera.target;
         Vector2 viewSize = UserInput.GetViewSize(this.camera);
+        Vector2 camPos = this.camera.target;
 
         int pixelsInBetweenLines = 250;
 
@@ -231,22 +297,28 @@ public class Editor : Application<Editor>
     public override void Update()
     {
         // UPDATE SIMULATION HERE
-        this.Simulator.Interact(this);
-        this.Simulator.PerformLogic();
-        this.FSM.Update(this);
+        this.EditorTabs[this.CurrentEditorTab].Update(this);
     }
 
-    public override void Render()
+    public unsafe override void Render()
     {
+        this.camera.target = this.CurrentTab.CameraTarget;
+        this.camera.zoom = this.CurrentTab.CameraZoom;
+
         Raylib.BeginMode2D(this.camera);
         Raylib.ClearBackground(Settings.GetSettingValue<Color>("editorBackgroundColor"));
         DrawGrid();
+        Raylib.DrawCircleV(this.GetWorldMousePos(), 5f, Color.RED);
 
         // RENDER SIMULATION HERE
-        this.Simulator.Render();
-        this.FSM.Render(this);
-
+        this.EditorTabs[this.CurrentEditorTab].Render(this);
         Raylib.EndMode2D();
+
+        Rectangle rTop = Util.CreateRecFromTwoCorners(Vector2.Zero, new Vector2(this.WindowSize.X, this.MainMenuBarHeight + this.CircuitTabBarHeight));
+        Rectangle rLeft = Util.CreateRecFromTwoCorners(Vector2.Zero, new Vector2(this.SidebarWidth, this.WindowSize.Y));
+        Raylib.DrawRectangleRec(rTop, Color.GRAY);
+        Raylib.DrawRectangleRec(rLeft, Color.GRAY);
+
     }
 
     public override void OnClose()
