@@ -20,33 +20,39 @@ public abstract class Component : ISelectable
             int IOsOnTop = this.FilterIOsOnConfig(x => x.Side == ComponentSide.TOP).Count();
             int IOsOnBottom = this.FilterIOsOnConfig(x => x.Side == ComponentSide.BOTTOM).Count();
 
-            int maxIOsWidth = Math.Max(IOsOnTop, IOsOnBottom);
-            int maxIOsHeight = Math.Max(IOsOnLeft, IOsOnRight);
+            int maxIOsWidth = Math.Max(IOsOnTop, IOsOnBottom) + 1;
+            int maxIOsHeight = Math.Max(IOsOnLeft, IOsOnRight) + 1;
 
-            float minHeight = Raylib.MeasureTextEx(Util.OpenSans, this.Text, this.TextSize, 0).Y;
-            float minWidth = Raylib.MeasureTextEx(Util.OpenSans, this.Text, this.TextSize, 0).X;
+            float textHeight = this.Text.MeasureText(this.TextSize).Y;
+            float textWidth = this.Text.MeasureText(this.TextSize).X;
 
             // Guaranteed to only contain non-null strings
             string[] ioIdentifiers = this.IOs.Select(x => x.Item2.Identifier!).Where(x => x != null).ToArray();
             float maxIOIdentifierWidth = Util.GetMaxWidthOfStrings(Util.OpenSans, this.TextSize / 2, 0, ioIdentifiers);
 
-            float width = Math.Max(minWidth, maxIOsWidth * (this.IORadius * 2 + this.IODistBetween) - this.IODistBetween) + (maxIOIdentifierWidth > 0 ? maxIOIdentifierWidth + this.PaddingWidth : 0);
-            float height = Math.Max(minHeight, maxIOsHeight * (this.IORadius * 2 + this.IODistBetween) - this.IODistBetween);
+            float widthFromIOs = MathF.Max(maxIOsWidth * Util.GridSizeX, maxIOIdentifierWidth + textWidth);
+            float heightFromIOs = MathF.Max(maxIOsHeight * Util.GridSizeY, textHeight);
+
+            //float width = Math.Max(minWidth, maxIOsWidth * (this.IORadius * 2 + this.IODistBetween) - this.IODistBetween) + (maxIOIdentifierWidth > 0 ? maxIOIdentifierWidth + this.PaddingWidth : 0);
+            //float height = Math.Max(minHeight, maxIOsHeight * (this.IORadius * 2 + this.IODistBetween) - this.IODistBetween);
+
+            float width = widthFromIOs;
+            float height = heightFromIOs;
 
             Vector2 size = new Vector2(width + this.PaddingWidth * 2, height + this.PaddingHeight * 2);
 
             if (this.Rotation == 1 || this.Rotation == 3)
             {
-                return new Vector2(size.Y, size.X);
+                return new Vector2(size.Y, size.X).SnapToGrid();
             }
 
-            return size;
+            return size.SnapToGrid();
         }
     }
     public virtual string Text => this.Type.GetComponentTypeAsString();
     public virtual float IODistToComp => 5f;
     public virtual float IODistBetween => 4f;
-    public virtual float IORadius => 7f;
+    public virtual float IORadius => 3f;
     public virtual float PaddingWidth => 7;
     public virtual float PaddingHeight => 0;
     public virtual int TextSize => 18;
@@ -100,7 +106,7 @@ public abstract class Component : ISelectable
     {
         IOConfig config = this.IOs.First(x => x.Item1 == io).Item2; // Get IOConfig for this IO
         List<IO> iosOnSameSide = this.FilterIOsOnConfig(x => x.Side == config.Side); // Get all IOs on the same side as this IO
-        int indexOfIO = iosOnSameSide.IndexOf(io); // Get index of this IO
+        int indexOfIO = iosOnSameSide.IndexOf(io) + 1; // Get index of this IO
 
         float xLeft = this.Position.X;
         float xRight = this.Position.X + this.Size.X;
@@ -110,40 +116,32 @@ public abstract class Component : ISelectable
         float height = this.Size.Y;
         float width = this.Size.X;
 
-        // CONSTANTS DESCRIBING WHERE IOS SHOULD BE RELATIVE TO THE COMPONENT
-        float distanceToComp = this.IODistToComp;
-        float distanceBetweenIOs = this.IODistBetween;
-        float radius = this.IORadius;
-
-        float realDistBetweenIOs = radius * 2 + distanceBetweenIOs;
-        float totalDistanceByIOs = realDistBetweenIOs * (iosOnSameSide.Count - 1);
-
         ComponentSide side = Util.GetRotatedComponentSide(config.Side, this.Rotation);
 
         // Calculate position of IO
         if (side == ComponentSide.LEFT)
         {
             // LEFT
-            posAtComponent = new Vector2(xLeft, yTop + height / 2 - totalDistanceByIOs / 2 + indexOfIO * realDistBetweenIOs);
-            return new Vector2(xLeft - distanceToComp - radius, yTop + height / 2 - totalDistanceByIOs / 2 + indexOfIO * realDistBetweenIOs);
+            posAtComponent = new Vector2(xLeft, yTop + indexOfIO * Util.GridSizeY);
+            return new Vector2(xLeft - Util.GridSizeX, yTop + indexOfIO * Util.GridSizeY);
         }
         else if (side == ComponentSide.TOP)
         {
             // TOP
-            posAtComponent = new Vector2(xLeft + width / 2 - totalDistanceByIOs / 2 + indexOfIO * realDistBetweenIOs, yTop);
-            return new Vector2(xLeft + width / 2 - totalDistanceByIOs / 2 + indexOfIO * realDistBetweenIOs, yTop - distanceToComp - radius);
+            posAtComponent = new Vector2(xLeft + indexOfIO * Util.GridSizeX, yTop);
+            return new Vector2(xLeft + indexOfIO * Util.GridSizeX, yTop - Util.GridSizeY);
         }
         else if (side == ComponentSide.RIGHT)
         {
             // RIGHT
-            posAtComponent = new Vector2(xRight, yTop + height / 2 - totalDistanceByIOs / 2 + indexOfIO * realDistBetweenIOs);
-            return new Vector2(xRight + distanceToComp + radius, yTop + height / 2 - totalDistanceByIOs / 2 + indexOfIO * realDistBetweenIOs);
+            posAtComponent = new Vector2(xRight, yTop + indexOfIO * Util.GridSizeY);
+            return new Vector2(xRight + Util.GridSizeX, yTop + indexOfIO * Util.GridSizeY);
         }
         else if (side == ComponentSide.BOTTOM)
         {
             // BOTTOM
-            posAtComponent = new Vector2(xLeft + width / 2 - totalDistanceByIOs / 2 + indexOfIO * realDistBetweenIOs, yBottom);
-            return new Vector2(xLeft + width / 2 - totalDistanceByIOs / 2 + indexOfIO * realDistBetweenIOs, yBottom + distanceToComp + radius);
+            posAtComponent = new Vector2(xLeft + indexOfIO * Util.GridSizeX, yBottom);
+            return new Vector2(xLeft + indexOfIO * Util.GridSizeX, yBottom + Util.GridSizeY);
         }
 
         posAtComponent = Vector2.Zero;
@@ -153,8 +151,8 @@ public abstract class Component : ISelectable
     public virtual void RenderRectangle()
     {
         Rectangle rect = this.GetRectangle();
-        Raylib.DrawRectangleRec(rect.Inflate(1), Color.DARKGRAY);
-        Raylib.DrawRectangleRec(rect, Color.WHITE);
+        Raylib.DrawRectangleRec(rect, Color.DARKGRAY);
+        Raylib.DrawRectangleRec(rect.Inflate(-1), Color.WHITE);
     }
 
     public virtual void RenderText()
@@ -250,5 +248,10 @@ public abstract class Component : ISelectable
     public void Move(Vector2 delta)
     {
         this.Position += delta;
+    }
+
+    public bool IsPositionOn(Vector2 position)
+    {
+        return Raylib.CheckCollisionPointRec(position, this.GetRectangle());
     }
 }

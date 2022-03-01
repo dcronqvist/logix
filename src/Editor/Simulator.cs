@@ -63,7 +63,7 @@ public class Simulator
         }
     }
 
-    public void SelectComponent(Component c)
+    public void Select(ISelectable c)
     {
         if (!this.Selection.Contains(c))
             this.Selection.Add(c);
@@ -75,20 +75,37 @@ public class Simulator
         {
             if (Raylib.CheckCollisionRecs(rec, c.GetRectangle()))
             {
-                this.SelectComponent(c);
+                this.Select(c);
             }
         }
 
-        foreach (Wire w in this.AllWires)
+        foreach (Wire wire in this.AllWires)
         {
-            foreach (WireNode wn in w.GetAllWireNodes())
+            List<WireNode> wireNodes = wire.Root!.CollectChildrenRecursively();
+
+            foreach (WireNode wn in wireNodes)
             {
-                if (Raylib.CheckCollisionCircleRec(wn.GetPosition(), 5f, rec))
+                if (wn.Parent != null)
                 {
-                    this.Selection.Add(wn);
+                    if (Raylib.CheckCollisionCircleRec(wn.GetPosition(), 5, rec))
+                    {
+                        this.Select(wn);
+                    }
                 }
             }
         }
+    }
+
+    public bool IsPositionOnSelected(Vector2 position)
+    {
+        foreach (ISelectable selectable in this.Selection)
+        {
+            if (selectable.IsPositionOn(position))
+            {
+                return true;
+            }
+        }
+        return false;
     }
 
     public void DeselectComponent(Component c)
@@ -140,37 +157,6 @@ public class Simulator
         return false;
     }
 
-    public bool TryGetWireNodeFromPosition(Vector2 position, [NotNullWhen(true)] out WireNode? wireNodeFrom, [NotNullWhen(true)] out WireNode? wireNodeTo, [NotNullWhen(true)] out Wire? wire)
-    {
-        foreach (Wire w in this.AllWires)
-        {
-            if (w.TryGetWireNode(position, out wireNodeFrom, out wireNodeTo))
-            {
-                wire = w;
-                return true;
-            }
-        }
-
-        wire = null;
-        wireNodeFrom = null;
-        wireNodeTo = null;
-        return false;
-    }
-
-    public bool TryGetFreeWireNodeFromPosition(Vector2 position, out WireNode? from, out WireNode? wireNode)
-    {
-        foreach (Wire w in this.AllWires)
-        {
-            if (w.TryGetFreeWireNodeFromPosition(position, out from, out wireNode))
-            {
-                return true;
-            }
-        }
-        from = null;
-        wireNode = null;
-        return false;
-    }
-
     public void RemoveWire(Wire wire)
     {
         this.AllWires.Remove(wire);
@@ -205,6 +191,32 @@ public class Simulator
         {
             component.Render();
         }
+    }
+
+    public bool TryGetChildWireNodeFromPosition(Vector2 position, [NotNullWhen(true)] out WireNode? node)
+    {
+        foreach (Wire wire in this.AllWires)
+        {
+            if (wire.TryGetChildWireNodeFromPosition(position, out node))
+            {
+                return true;
+            }
+        }
+        node = null;
+        return false;
+    }
+
+    public bool TryGetJunctionWireNodeFromPosition(Vector2 position, [NotNullWhen(true)] out JunctionWireNode? node)
+    {
+        foreach (Wire wire in this.AllWires)
+        {
+            if (wire.TryGetJunctionWireNodeFromPosition(position, out node))
+            {
+                return true;
+            }
+        }
+        node = null;
+        return false;
     }
 
     public void Interact(Editor editor)

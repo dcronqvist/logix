@@ -26,8 +26,11 @@ public class Editor : Application<Editor>
     // TEMPORARY VARIABLES FOR CONNECTIONS
     public IO FirstClickedIO { get; set; }
 
-    // KEY COMBINATIONS
+    // WINDOW AND UI
     public List<EditorWindow> EditorWindows { get; set; }
+    public Func<bool> CurrentContextMenu { get; set; }
+    public string? ContextMenuID { get; set; }
+    public Vector2 MouseStartPos { get; set; }
 
     public Editor()
     {
@@ -249,6 +252,30 @@ public class Editor : Application<Editor>
         }
         ImGui.End();
 
+        if (this.ContextMenuID != null)
+        {
+            ImGui.OpenPopup("###" + this.ContextMenuID);
+
+            if (ImGui.BeginPopup("###" + this.ContextMenuID, ImGuiWindowFlags.NoMove))
+            {
+                if (!this.CurrentContextMenu())
+                {
+                    this.ContextMenuID = null;
+                    ImGui.CloseCurrentPopup();
+                }
+
+                // Vector2 popupSize = ImGui.GetWindowSize();
+                // Rectangle rec = new Rectangle(this.MouseStartPos.X, this.MouseStartPos.Y, popupSize.X, popupSize.Y).Inflate(10);
+                // if (!rec.ContainsVector2(UserInput.GetMousePositionInWindow()))
+                // {
+                //     this.ContextMenuID = null;
+                //     ImGui.CloseCurrentPopup();
+                // }
+
+                ImGui.EndPopup();
+            }
+        }
+
         this.EditorTabs[this.CurrentEditorTab].SubmitUI(this);
         this.IsMouseInWorld = Raylib.CheckCollisionPointRec(UserInput.GetMousePositionInWindow(), Util.CreateRecFromTwoCorners(new Vector2(this.SidebarWidth, this.MainMenuBarHeight + this.CircuitTabBarHeight), this.WindowSize)) && !ImGui.GetIO().WantCaptureKeyboard;
     }
@@ -259,9 +286,10 @@ public class Editor : Application<Editor>
         {
             c.Position -= c.Size / 2f;
         }
+        c.Position = c.Position.SnapToGrid();
         this.Simulator.Selection.Clear();
         this.Simulator.AddComponent(c);
-        this.Simulator.SelectComponent(c);
+        this.Simulator.Select(c);
     }
 
     public void DrawGrid()
@@ -272,7 +300,7 @@ public class Editor : Application<Editor>
         Vector2 viewSize = UserInput.GetViewSize(this.camera);
         Vector2 camPos = this.camera.target;
 
-        int pixelsInBetweenLines = 250;
+        int pixelsInBetweenLines = Util.GridSizeX;
 
         // Draw vertical lines
         for (int i = (int)((camPos.X - viewSize.X / 2.0F) / pixelsInBetweenLines); i < ((camPos.X + viewSize.X / 2.0F) / pixelsInBetweenLines); i++)
@@ -281,7 +309,7 @@ public class Editor : Application<Editor>
             int lineYstart = (int)(camPos.Y - viewSize.Y / 2.0F);
             int lineYend = (int)(camPos.Y + viewSize.Y / 2.0F);
 
-            Raylib.DrawLine(lineX, lineYstart, lineX, lineYend, Color.DARKGRAY);
+            Raylib.DrawLine(lineX, lineYstart, lineX, lineYend, Color.DARKGRAY.Opacity(0.1f));
         }
 
         // Draw horizontal lines
@@ -290,7 +318,7 @@ public class Editor : Application<Editor>
             int lineY = i * pixelsInBetweenLines;
             int lineXstart = (int)(camPos.X - viewSize.X / 2.0F);
             int lineXend = (int)(camPos.X + viewSize.X / 2.0F);
-            Raylib.DrawLine(lineXstart, lineY, lineXend, lineY, Color.DARKGRAY);
+            Raylib.DrawLine(lineXstart, lineY, lineXend, lineY, Color.DARKGRAY.Opacity(0.1f));
         }
     }
 
@@ -308,7 +336,6 @@ public class Editor : Application<Editor>
         Raylib.BeginMode2D(this.camera);
         Raylib.ClearBackground(Settings.GetSettingValue<Color>("editorBackgroundColor"));
         DrawGrid();
-        Raylib.DrawCircleV(this.GetWorldMousePos(), 5f, Color.RED);
 
         // RENDER SIMULATION HERE
         this.EditorTabs[this.CurrentEditorTab].Render(this);
@@ -324,5 +351,12 @@ public class Editor : Application<Editor>
     public override void OnClose()
     {
 
+    }
+
+    public void OpenContextMenu(string id, Func<bool> submit)
+    {
+        this.CurrentContextMenu = submit;
+        this.ContextMenuID = id;
+        this.MouseStartPos = UserInput.GetMousePositionInWindow();
     }
 }

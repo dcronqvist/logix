@@ -15,6 +15,8 @@ public static class Util
     public static string EnvironmentPath = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) + @"/LogiX";
     public static string FileDialogStartDir = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
     public static Editor.Editor Editor { get; set; }
+    public static int GridSizeX { get; set; } = 10;
+    public static int GridSizeY { get; set; } = 10;
 
     public static Dictionary<string, ImFontPtr> ImGuiFonts { get; set; }
 
@@ -648,6 +650,62 @@ public static class Util
     {
         Rectangle r = new Rectangle(rec.x - amount, rec.y - amount, rec.width + amount * 2, rec.height + amount * 2);
         return r;
+    }
+
+    public static Vector2 SnapToGrid(this Vector2 v)
+    {
+        return SnapToGrid(v, Util.GridSizeX, Util.GridSizeY);
+    }
+
+    public static Vector2 SnapToGrid(this Vector2 v, int gridX, int gridY)
+    {
+        return new Vector2(MathF.Round(v.X / gridX) * gridX, MathF.Round(v.Y / gridY) * gridY);
+    }
+
+    public static bool ContainsVector2(this Rectangle rec, Vector2 v)
+    {
+        return Raylib.CheckCollisionPointRec(v, rec);
+    }
+
+    public static Vector2 MeasureText(this string s, int fontSize)
+    {
+        return MeasureText(s, Util.OpenSans, fontSize);
+    }
+
+    public static Vector2 MeasureText(this string s, Font font, int fontSize)
+    {
+        return Raylib.MeasureTextEx(font, s, fontSize, 0);
+    }
+
+    public static float Min(params float[] values)
+    {
+        return values.Min();
+    }
+
+    public static float Max(params float[] values)
+    {
+        return values.Max();
+    }
+
+    public static bool CheckIfLinesIntersect(Vector2 start1, Vector2 end1, Vector2 start2, Vector2 end2)
+    {
+        bool firstHorizontal = start1.Y == end1.Y;
+        bool secondHorizontal = start2.Y == end2.Y;
+
+        if (firstHorizontal && secondHorizontal)
+        {
+            return false;
+        }
+
+        Rectangle r1 = Util.CreateRecFromTwoCorners(start1, end1, 1);
+        Rectangle r2 = Util.CreateRecFromTwoCorners(start2, end2, 1);
+
+        return Raylib.CheckCollisionRecs(r1, r2);
+    }
+
+    public static bool ContainsLine(this Rectangle rec, Vector2 start, Vector2 end)
+    {
+        return Raylib.CheckCollisionRecs(Util.CreateRecFromTwoCorners(start, end, 1), rec);
     }
 
     // public static List<Component> TopologicallyOrder(List<Component> components)

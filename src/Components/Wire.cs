@@ -13,133 +13,166 @@ public enum WireStatus
 
 public abstract class WireNode : ISelectable
 {
-    public List<WireNode> Next { get; set; }
+    public List<WireNode> Children { get; set; }
+    public WireNode? Parent { get; set; }
+    public Wire Wire { get; set; }
 
-    public WireNode()
+    public WireNode(Wire wire, WireNode? parent)
     {
-        this.Next = new List<WireNode>();
+        this.Wire = wire;
+        this.Children = new List<WireNode>();
+        this.Parent = parent;
     }
 
-    public abstract Vector2 GetPosition();
-    public abstract bool CanBeMoved();
-
-    private WireNode AddWireNode(WireNode wn)
+    public bool IsHorizontalTo(WireNode other)
     {
-        this.Next.Add(wn);
-        return wn;
+        return this.GetPosition().Y == other.GetPosition().Y;
     }
 
-
-    public IOWireNode AddIONode(IO io)
+    public bool IsVerticalTo(WireNode other)
     {
-        IOWireNode iown = new IOWireNode(io);
-        this.AddWireNode(iown);
-        return iown;
+        return this.GetPosition().X == other.GetPosition().X;
     }
 
-    public FreeWireNode InsertFreeNode(Vector2 position, WireNode between)
+    public bool TryFindChildIOWireNode(IO io, [NotNullWhen(true)] out IOWireNode? node)
     {
-        FreeWireNode fwn = new FreeWireNode(position);
-        this.Next.Add(fwn);
-        this.Next.Remove(between);
-
-        //fwn.Next = between.Next.Copy();
-        fwn.Next.Add(between);
-        return fwn;
-    }
-
-    public List<WireNode> RemoveNode(WireNode node, out List<IO> iosToRemove)
-    {
-        List<WireNode> allRemovedNodes = new List<WireNode>();
-        iosToRemove = new List<IO>();
-
-        allRemovedNodes.Add(node);
-
-        if (node is IOWireNode)
+        if (this is IOWireNode ioNode && ioNode.IO == io)
         {
-            IOWireNode iw = (IOWireNode)node;
-            iosToRemove.Add(iw.IO);
+            node = ioNode;
+            return true;
         }
 
-        foreach (WireNode n in node.Next.Copy())
+        foreach (WireNode child in this.Children)
         {
-            allRemovedNodes.AddRange(node.RemoveNode(n, out List<IO> ios));
-            iosToRemove.AddRange(ios);
-        }
-
-        this.Next.Remove(node);
-        return allRemovedNodes;
-    }
-
-    public FreeWireNode AddFreeNode(Vector2 position)
-    {
-        FreeWireNode fwn = new FreeWireNode(position);
-        this.AddWireNode(fwn);
-        return fwn;
-    }
-
-    public bool RemoveIONode(IO io)
-    {
-        foreach (WireNode wn in this.Next)
-        {
-            if (wn is IOWireNode)
+            if (child is IOWireNode iowire && iowire.IO == io)
             {
-                IOWireNode iown = (IOWireNode)wn;
-                if (iown.IO == io)
-                {
-                    this.Next.Remove(wn);
-                    return true;
-                }
+                node = iowire;
+                return true;
             }
-            if (wn.RemoveIONode(io))
+
+            if (child.TryFindChildIOWireNode(io, out node))
+            {
+                return true;
+            }
+        }
+        node = null;
+        return false;
+    }
+
+    public void AddChild(WireNode child)
+    {
+        this.Children.Add(child);
+    }
+
+    public WireNode AddIOWireNode(IO io)
+    {
+        IOWireNode iwn = new IOWireNode(this.Wire, this, io);
+        this.AddChild(iwn);
+        return iwn;
+    }
+
+    public WireNode AddJunctionWireNode(Vector2 position)
+    {
+        JunctionWireNode jwn = new JunctionWireNode(this.Wire, this, position);
+        this.AddChild(jwn);
+        return jwn;
+    }
+
+    public void RenderSelected()
+    {
+        //Raylib.DrawLineEx(this.Parent!.GetPosition(), this.GetPosition(), 8, Color.ORANGE);
+        Raylib.DrawCircleV(this.GetPosition(), 4.5f, Color.ORANGE);
+    }
+
+    public bool IsPositionOnAnyDirectChildWire(Vector2 position, [NotNullWhen(true)] out WireNode? directChild)
+    {
+        float wireThickness = 3f;
+
+        foreach (WireNode child in this.Children)
+        {
+            Rectangle r = Util.CreateRecFromTwoCorners(this.GetPosition(), child.GetPosition(), wireThickness / 2);
+            if (r.ContainsVector2(position) && Util.DistanceToLine(this.GetPosition(), child.GetPosition(), position) < wireThickness)
+            {
+                directChild = child;
+                return true;
+            }
+        }
+
+        directChild = null;
+        return false;
+    }
+
+    public List<WireNode> CollectChildrenRecursively()
+    {
+        List<WireNode> children = new List<WireNode>();
+        foreach (WireNode child in this.Children)
+        {
+            children.Add(child);
+            children.AddRange(child.CollectChildrenRecursively());
+        }
+        return children;
+    }
+
+    public bool TryGetChildWireNodeFromPosition(Vector2 position, [NotNullWhen(true)] out WireNode? node)
+    {
+        if (this.IsPositionOnAnyDirectChildWire(position, out node))
+        {
+            return true;
+        }
+
+        foreach (WireNode child in this.Children)
+        {
+            if (child.TryGetChildWireNodeFromPosition(position, out node))
             {
                 return true;
             }
         }
 
+        node = null;
         return false;
     }
 
-    public abstract void RenderSelected();
+    public WireNode DisconnectChild(WireNode child)
+    {
+        this.Children.Remove(child);
+        return child;
+    }
+
+    public abstract Vector2 GetPosition();
+
     public abstract void Move(Vector2 delta);
+
+    public bool IsPositionOn(Vector2 position)
+    {
+        return (this.GetPosition() - position).Length() < 5;
+    }
 }
 
 public class IOWireNode : WireNode
 {
     public IO IO { get; set; }
 
-    public IOWireNode(IO io)
+    public IOWireNode(Wire wire, WireNode? parent, IO io) : base(wire, parent)
     {
         this.IO = io;
     }
 
     public override Vector2 GetPosition()
     {
-        return this.IO.OnComponent.GetIOPosition(this.IO); // TODO: Implement stuff to get position of IO
-    }
-
-    public override bool CanBeMoved()
-    {
-        return false;
-    }
-
-    public override void RenderSelected()
-    {
-        // DO NOTHING
+        return this.IO.GetPosition();
     }
 
     public override void Move(Vector2 delta)
     {
         // DO NOTHING
-        return;
     }
 }
 
-public class FreeWireNode : WireNode
+public class JunctionWireNode : WireNode
 {
     public Vector2 Position { get; set; }
 
-    public FreeWireNode(Vector2 position)
+    public JunctionWireNode(Wire wire, WireNode? parent, Vector2 position) : base(wire, parent)
     {
         this.Position = position;
     }
@@ -149,19 +182,38 @@ public class FreeWireNode : WireNode
         return this.Position;
     }
 
-    public override bool CanBeMoved()
-    {
-        return true;
-    }
-
-    public override void RenderSelected()
-    {
-        Raylib.DrawCircleV(this.GetPosition(), 8f, Color.ORANGE);
-    }
-
     public override void Move(Vector2 delta)
     {
         this.Position += delta;
+
+        // IF ANY DIRECT CHILD IS AN IOWIRENODE, OR ANY PARENT IS ONE, IF MOVED ONTO THE SAME
+        // POSITION AS THAT PARENT OR CHILD, MERGE THESE TWO NODES
+
+        if (this.Parent.GetPosition() == this.Position)
+        {
+            // MERGE WITH PARENT
+            this.Parent.Children.Remove(this);
+
+            foreach (IOWireNode child in this.Children)
+            {
+                child.Parent = this.Parent;
+                this.Parent.AddChild(child);
+            }
+        }
+
+        foreach (WireNode child in this.Children)
+        {
+            if (child.GetPosition() == this.Position)
+            {
+                // MERGE WITH CHILD
+                child.Parent = this.Parent;
+                this.Children.Remove(child);
+                this.Parent.AddChild(child);
+                this.Parent.Children.Remove(this);
+
+                break;
+            }
+        }
     }
 }
 
@@ -169,19 +221,31 @@ public class Wire
 {
     public List<IO> IOs { get; private set; }
     public WireStatus Status { get; set; }
-    public WireNode RootWireNode { get; set; }
+    public WireNode? Root { get; set; }
+
+    public Wire()
+    {
+        this.IOs = new List<IO>();
+        this.Root = null;
+    }
 
     public Wire(IO initialIO)
     {
         this.IOs = new List<IO>();
         this.IOs.Add(initialIO);
-        this.RootWireNode = new IOWireNode(initialIO);
+        this.Root = new IOWireNode(this, null, initialIO);
         initialIO.Wire = this;
+    }
+
+    public int GetWireNodeLength()
+    {
+        return this.Root!.CollectChildrenRecursively().Count + 1;
     }
 
     public void ConnectIO(IO io)
     {
         this.IOs.Add(io);
+        io.Wire = this;
     }
 
     public void DisconnectIO(IO io)
@@ -207,23 +271,6 @@ public class Wire
     public bool IsConnectedTo(IO io)
     {
         return this.IOs.Contains(io);
-    }
-
-    public List<WireNode> GetAllWireNodes(WireNode root)
-    {
-        List<WireNode> nodes = new List<WireNode>();
-        if (!nodes.Contains(root))
-            nodes.Add(root);
-        foreach (WireNode wn in root.Next)
-        {
-            nodes.AddRange(this.GetAllWireNodes(wn));
-        }
-        return nodes;
-    }
-
-    public List<WireNode> GetAllWireNodes()
-    {
-        return this.GetAllWireNodes(this.RootWireNode);
     }
 
     public bool AllIOsUnknown() => this.IOs.All(io => io.HasUnknown());
@@ -300,95 +347,62 @@ public class Wire
 
     public void RenderWireNodes(WireNode root)
     {
-        float wireThickness = 5f;
-        //float wireNodeRadius = 10f;
+        Vector2 start = root.GetPosition();
 
-        Color color = this.IOs[0].GetColor();
+        Color color = this.IOs.Count > 0 ? this.IOs[0].GetColor() : Color.GRAY;
 
-        Vector2 pos = root.GetPosition();
-
-
-        foreach (WireNode wn in root.Next)
+        foreach (WireNode child in root.Children)
         {
-            Vector2 otherPos = wn.GetPosition();
-
-            Raylib.DrawLineEx(pos, otherPos, wireThickness + 2f, Color.BLACK);
-            Raylib.DrawLineEx(pos, otherPos, wireThickness, color);
-
-            Raylib.DrawLineV(pos, otherPos, color);
-            this.RenderWireNodes(wn);
+            Vector2 end = child.GetPosition();
+            Raylib.DrawLineEx(start, end, 5f, Color.BLACK);
+            Raylib.DrawLineEx(start, end, 3f, color);
+            this.RenderWireNodes(child);
         }
-        if (root is FreeWireNode)
+
+        if (root is JunctionWireNode)
         {
-            Raylib.DrawCircleV(pos, 6f, Color.BLACK);
-            Raylib.DrawCircleV(pos, 5, color);
+            float rad = 2f;
+            Raylib.DrawCircleV(start, rad + 1f, Color.BLACK);
+            Raylib.DrawCircleV(start, rad, color);
         }
     }
 
-    private bool TryGetWireNode(WireNode root, Vector2 position, [NotNullWhen(true)] out WireNode? wireNodeFrom, [NotNullWhen(true)] out WireNode? wireNodeTo)
+    public bool TryGetChildWireNodeFromPosition(Vector2 position, [NotNullWhen(true)] out WireNode? node)
     {
-        float wireThickness = 5f;
-
-        foreach (WireNode wn in root.Next)
+        if (this.Root != null)
         {
-            Vector2 start = root.GetPosition();
-            Vector2 end = wn.GetPosition();
-
-            Rectangle rec = Util.CreateRecFromTwoCorners(start.Vector2Towards(5, end), end.Vector2Towards(5, start), wireThickness / 2);
-            if (Raylib.CheckCollisionPointRec(position, rec))
+            if (this.Root.TryGetChildWireNodeFromPosition(position, out node))
             {
-                float distance = Util.DistanceToLine(start, end, position);
-                if (distance <= wireThickness / 2)
+                return true;
+            }
+        }
+
+        node = null;
+        return false;
+    }
+
+    public bool TryGetJunctionWireNodeFromPosition(Vector2 position, [NotNullWhen(true)] out JunctionWireNode? node)
+    {
+        List<WireNode> nodes = this.Root.CollectChildrenRecursively();
+
+        foreach (WireNode child in nodes)
+        {
+            if (child is JunctionWireNode junction)
+            {
+                if (junction.IsPositionOn(position))
                 {
-                    wireNodeFrom = root;
-                    wireNodeTo = wn;
+                    node = junction;
                     return true;
                 }
             }
-
-            if (this.TryGetWireNode(wn, position, out wireNodeFrom, out wireNodeTo))
-            {
-                return true;
-            }
         }
-
-        wireNodeFrom = null;
-        wireNodeTo = null;
+        node = null;
         return false;
-    }
-
-    private bool TryGetFreeWireNodeFromPosition(WireNode root, Vector2 position, out WireNode? from, out WireNode? wireNode)
-    {
-        foreach (WireNode wn in root.Next)
-        {
-            if ((wn.GetPosition() - position).Length() < 5)
-            {
-                wireNode = wn;
-                from = root;
-                return true;
-            }
-            if (this.TryGetFreeWireNodeFromPosition(wn, position, out from, out wireNode))
-            {
-                return true;
-            }
-        }
-        from = null;
-        wireNode = null;
-        return false;
-    }
-
-    public bool TryGetFreeWireNodeFromPosition(Vector2 position, out WireNode? from, out WireNode? wireNode)
-    {
-        return this.TryGetFreeWireNodeFromPosition(this.RootWireNode, position, out from, out wireNode);
-    }
-
-    public bool TryGetWireNode(Vector2 position, [NotNullWhen(true)] out WireNode? wireNodeFrom, [NotNullWhen(true)] out WireNode? wireNodeTo)
-    {
-        return this.TryGetWireNode(this.RootWireNode, position, out wireNodeFrom, out wireNodeTo);
     }
 
     public void Render()
     {
-        this.RenderWireNodes(this.RootWireNode);
+        if (this.Root != null)
+            this.RenderWireNodes(this.Root);
     }
 }

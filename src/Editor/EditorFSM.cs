@@ -11,6 +11,7 @@ public class EditorFSM : FSM<Editor, int>
         this.AddNewState(new ESRectangleSelecting());
         this.AddNewState(new ESHoveringIO());
         this.AddNewState(new ESConnectIOToOther());
+        this.AddNewState(new CreateWireFromIO());
 
         this.SetState<ESNone>(null, 0);
     }
@@ -51,41 +52,42 @@ public class ESNone : State<Editor, int>
             if (Raylib.IsMouseButtonPressed(MouseButton.MOUSE_LEFT_BUTTON))
             {
                 // PRESSING DOWN LEFT MOUSE BUTTON
-                if (arg.Simulator.TryGetComponentFromWorldPosition(arg.GetWorldMousePos(), out Component? comp))
+                if (arg.Simulator.IsPositionOnSelected(arg.GetWorldMousePos()))
                 {
-                    // PRESSED DOWN ON A COMPONENT
-
-                    if (arg.Simulator.IsComponentSelected(comp))
-                    {
-                        // IF ALREADY SELECTED, GO TO MOVESELECTION STATE
-                        this.GoToState<ESMovingSelection>(1);
-                    }
-                    else
-                    {
-                        // IF NOT SELECTED, SELECT THIS AND CLEAR THE PREVIOUS SELECTION, GO TO MOVESELECTION STATE
-                        arg.Simulator.Selection.Clear();
-                        arg.Simulator.SelectComponent(comp);
-                        this.GoToState<ESMovingSelection>(1);
-                    }
-                }
-                else if (arg.Simulator.TryGetFreeWireNodeFromPosition(arg.GetWorldMousePos(), out WireNode? comesFrom, out WireNode? wireNode))
-                {
-                    // PRESSED DOWN ON A WIRE NODE, SELECT WIRE NODE AND GO TO MOVE SELECTION STATE
-                    if (wireNode.CanBeMoved())
-                    {
-                        arg.Simulator.Selection.Clear();
-                        arg.Simulator.Selection.Add(wireNode);
-                        this.GoToState<ESMovingSelection>(1);
-                    }
-                }
-                else if (arg.Simulator.TryGetWireNodeFromPosition(arg.GetWorldMousePos(), out WireNode? from, out WireNode? to, out Wire? wire))
-                {
-                    // PRESSED DOWN ON A WIRE, CLEAR SELECTION AND CREATE FREE WIRE NODE WHERE CLICKED, SELECT NEWLY CREATED WIRENODE AS WELL
-                    arg.Simulator.Selection.Clear();
-                    FreeWireNode fwn = from.InsertFreeNode(arg.GetWorldMousePos(), to);
-                    arg.Simulator.Selection.Add(fwn);
+                    // PRESSED DOWN ON SOMETHING THAT IS ALREADY SELECTED
                     this.GoToState<ESMovingSelection>(1);
                 }
+                else if (arg.Simulator.TryGetComponentFromWorldPosition(arg.GetWorldMousePos(), out Component? comp))
+                {
+                    // IF NOT SELECTED, SELECT THIS AND CLEAR THE PREVIOUS SELECTION, GO TO MOVESELECTION STATE
+                    arg.Simulator.Selection.Clear();
+                    arg.Simulator.Select(comp);
+                    this.GoToState<ESMovingSelection>(1);
+                }
+                else if (arg.Simulator.TryGetJunctionWireNodeFromPosition(arg.GetWorldMousePos(), out JunctionWireNode? node))
+                {
+                    arg.Simulator.Selection.Clear();
+                    arg.Simulator.Select(node);
+                    this.GoToState<ESMovingSelection>(1);
+                }
+                // else if (arg.Simulator.TryGetFreeWireNodeFromPosition(arg.GetWorldMousePos(), out WireNode? comesFrom, out WireNode? wireNode))
+                // {
+                //     // PRESSED DOWN ON A WIRE NODE, SELECT WIRE NODE AND GO TO MOVE SELECTION STATE
+                //     if (wireNode.CanBeMoved())
+                //     {
+                //         arg.Simulator.Selection.Clear();
+                //         arg.Simulator.Selection.Add(wireNode);
+                //         this.GoToState<ESMovingSelection>(1);
+                //     }
+                // }
+                // else if (arg.Simulator.TryGetWireNodeFromPosition(arg.GetWorldMousePos(), out WireNode? from, out WireNode? to, out Wire? wire))
+                // {
+                //     // PRESSED DOWN ON A WIRE, CLEAR SELECTION AND CREATE FREE WIRE NODE WHERE CLICKED, SELECT NEWLY CREATED WIRENODE AS WELL
+                //     arg.Simulator.Selection.Clear();
+                //     FreeWireNode fwn = from.InsertFreeNode(arg.GetWorldMousePos(), to);
+                //     //arg.Simulator.Selection.Add(fwn);
+                //     //this.GoToState<ESMovingSelection>(1);
+                // }
                 else
                 {
                     // NOT PRESSING DOWN ON A COMPONENT - TODO: MIGHT BE PRESSING DOWN ON WIRES
@@ -96,41 +98,68 @@ public class ESNone : State<Editor, int>
 
             if (Raylib.IsMouseButtonPressed(MouseButton.MOUSE_RIGHT_BUTTON))
             {
-                if (arg.Simulator.TryGetWireNodeFromPosition(arg.GetWorldMousePos(), out WireNode? from, out WireNode? to, out Wire? wire))
+                // if (arg.Simulator.TryGetWireNodeFromPosition(arg.GetWorldMousePos(), out WireNode? from, out WireNode? to, out Wire? wire))
+                // {
+                //     // PRESSED DOWN ON A WIRE
+                //     if (Raylib.IsMouseButtonPressed(MouseButton.MOUSE_RIGHT_BUTTON))
+                //     {
+                //         // REMOVE THE TO NODE
+                //         List<WireNode> removedWireNodes = from.RemoveNode(to, out List<IO> iosToRemove);
+                //         foreach (IO i in iosToRemove)
+                //         {
+                //             wire.DisconnectIO(i);
+                //         }
+                //         foreach (WireNode wn in removedWireNodes)
+                //         {
+                //             if (arg.Simulator.IsSelected(wn))
+                //             {
+                //                 arg.Simulator.Selection.Remove(wn);
+                //             }
+                //         }
+                //     }
+                // }
+                // else if (arg.Simulator.TryGetFreeWireNodeFromPosition(arg.GetWorldMousePos(), out WireNode? comesFrom, out WireNode? wireNode))
+                // {
+                //     // REMOVE THE RIGHT CLICKED FREE WIRE NODE
+                //     comesFrom.Next.Remove(wireNode);
+                //     comesFrom.Next.AddRange(wireNode.Next);
+                // }
+            }
+        }
+    }
+
+    public override void SubmitUI(Editor arg)
+    {
+        if (arg.Simulator.TryGetChildWireNodeFromPosition(arg.GetWorldMousePos(), out WireNode? node))
+        {
+            Util.Tooltip(node.Wire.GetWireNodeLength().ToString());
+
+            if (Raylib.IsMouseButtonPressed(MouseButton.MOUSE_BUTTON_RIGHT))
+            {
+                arg.OpenContextMenu("test", () =>
                 {
-                    // PRESSED DOWN ON A WIRE
-                    if (Raylib.IsMouseButtonPressed(MouseButton.MOUSE_RIGHT_BUTTON))
+                    if (ImGui.MenuItem("Delete"))
                     {
-                        // REMOVE THE TO NODE
-                        List<WireNode> removedWireNodes = from.RemoveNode(to, out List<IO> iosToRemove);
-                        foreach (IO i in iosToRemove)
+                        arg.Simulator.RemoveWire(node.Wire);
+
+                        foreach (IO io in node.Wire.IOs)
                         {
-                            wire.DisconnectIO(i);
+                            io.Wire = null;
                         }
-                        foreach (WireNode wn in removedWireNodes)
-                        {
-                            if (arg.Simulator.IsSelected(wn))
-                            {
-                                arg.Simulator.Selection.Remove(wn);
-                            }
-                        }
+                        return false;
                     }
-                }
-                else if (arg.Simulator.TryGetFreeWireNodeFromPosition(arg.GetWorldMousePos(), out WireNode? comesFrom, out WireNode? wireNode))
-                {
-                    // REMOVE THE RIGHT CLICKED FREE WIRE NODE
-                    comesFrom.Next.Remove(wireNode);
-                    comesFrom.Next.AddRange(wireNode.Next);
-                }
+
+                    return true;
+                });
             }
         }
     }
 
     public override void Render(Editor arg)
     {
-        if (arg.Simulator.TryGetWireNodeFromPosition(arg.GetWorldMousePos(), out WireNode wireNodeFrom, out WireNode wireNodeTo, out Wire wire))
+        if (arg.Simulator.TryGetChildWireNodeFromPosition(arg.GetWorldMousePos(), out WireNode? node))
         {
-            Raylib.DrawLineV(wireNodeFrom.GetPosition(), wireNodeTo.GetPosition(), Color.BLUE);
+            Raylib.DrawLineV(node.Parent!.GetPosition(), node.GetPosition(), Color.BLUE);
         }
     }
 }
@@ -144,13 +173,17 @@ public class ESMovingSelection : State<Editor, int>
 
     public override void OnEnter(Editor updateArg, int arg)
     {
-        this.startPos = updateArg.GetWorldMousePos();
+        this.startPos = updateArg.GetWorldMousePos().SnapToGrid();
         this.willDoCommand = arg == 1;
     }
 
     public override void Update(Editor arg)
     {
-        arg.Simulator.MoveSelection(UserInput.GetMouseDelta(arg.camera));
+        if (MathF.Abs((arg.GetWorldMousePos().SnapToGrid() - startPos).X) > 0 || MathF.Abs((arg.GetWorldMousePos().SnapToGrid() - startPos).Y) > 0)
+        {
+            arg.Simulator.MoveSelection(arg.GetWorldMousePos().SnapToGrid() - startPos);
+            startPos = arg.GetWorldMousePos().SnapToGrid();
+        }
 
         if (Raylib.IsMouseButtonReleased(MouseButton.MOUSE_LEFT_BUTTON))
         {
@@ -211,12 +244,155 @@ public class ESHoveringIO : State<Editor, int>
                 // EITHER WE HAVE TWO OPTIONS
                 // 1. CONNECT DIRECTLY TO ANOTHER IO -> NEW WIRE MUST BE CREATED BETWEEN THESE
                 // 2. CONNECT TO AN EXISTING WIRE -> WE MUST CONNECT THIS IO TO THE WIRE AND ADD AN IOWIREPOINT TO THAT WIRE WHICH POINTS TO THIS IO
-                this.GoToState<ESConnectIOToOther>(0);
+                this.GoToState<CreateWireFromIO>(0);
             }
         }
         else
         {
             this.GoToState<ESNone>(0);
+        }
+    }
+}
+
+public class CreateWireFromIO : State<Editor, int>
+{
+    public override bool ForcesSameTab => true;
+
+    public Vector2 determinedDirection;
+    Vector2 corner;
+    Vector2 endPoint;
+
+    public override void OnEnter(Editor updateArg, int arg)
+    {
+        this.determinedDirection = Vector2.Zero;
+        base.OnEnter(updateArg, arg);
+    }
+
+    public override void Render(Editor arg)
+    {
+        Vector2 ioPos = arg.FirstClickedIO.OnComponent.GetIOPosition(arg.FirstClickedIO);
+        Vector2 mousePos = arg.GetWorldMousePos().SnapToGrid();
+
+        if ((mousePos - ioPos).Length() > arg.FirstClickedIO.OnComponent.IORadius && this.determinedDirection == Vector2.Zero)
+        {
+            this.determinedDirection = Vector2.Normalize(mousePos - ioPos);
+            this.determinedDirection = Util.GetClosestPoint(this.determinedDirection, new Vector2(1, 0), new Vector2(0, 1), new Vector2(-1, 0), new Vector2(0, -1));
+        }
+
+        endPoint = mousePos;
+
+        if (arg.Simulator.TryGetJunctionWireNodeFromPosition(arg.GetWorldMousePos(), out JunctionWireNode? node))
+        {
+            endPoint = node.GetPosition();
+        }
+
+        if (MathF.Abs(this.determinedDirection.X) == 1)
+        {
+            corner = new Vector2(endPoint.X, ioPos.Y);
+
+            if (this.determinedDirection.X == 1f)
+            {
+                if (endPoint.X <= ioPos.X)
+                {
+                    this.determinedDirection = Vector2.Zero;
+                }
+            }
+            else
+            {
+                if (endPoint.X >= ioPos.X)
+                {
+                    this.determinedDirection = Vector2.Zero;
+                }
+            }
+        }
+        else
+        {
+            corner = new Vector2(ioPos.X, endPoint.Y);
+
+            if (this.determinedDirection.Y == 1f)
+            {
+                if (endPoint.Y <= ioPos.Y)
+                {
+                    this.determinedDirection = Vector2.Zero;
+                }
+            }
+            else
+            {
+                if (endPoint.Y >= ioPos.Y)
+                {
+                    this.determinedDirection = Vector2.Zero;
+                }
+            }
+        }
+
+        if (this.determinedDirection != Vector2.Zero)
+        {
+            Raylib.DrawLineEx(ioPos, corner, 2f, Color.BLACK);
+            Raylib.DrawLineEx(corner, endPoint, 2f, Color.BLACK);
+        }
+
+        base.Render(arg);
+    }
+
+    public override void SubmitUI(Editor arg)
+    {
+        base.SubmitUI(arg);
+    }
+
+    public override void Update(Editor arg)
+    {
+        if (Raylib.IsKeyPressed(KeyboardKey.KEY_ESCAPE))
+        {
+            this.GoToState<ESNone>(0);
+        }
+
+        if (Raylib.IsMouseButtonPressed(MouseButton.MOUSE_BUTTON_LEFT))
+        {
+            // CHECK IF WE ARE PRESSING ON SOMETHING (IO OR OTHER WIRE)
+
+            if (arg.Simulator.TryGetChildWireNodeFromPosition(arg.GetWorldMousePos(), out WireNode? node))
+            {
+                // CONNECTING TO WIRE
+
+            }
+            else if (arg.Simulator.TryGetIOFromWorldPosition(arg.GetWorldMousePos(), out (IO, int)? io))
+            {
+                // CONNECTING TO OTHER IO
+                IO startIO = arg.FirstClickedIO;
+                IO endIO = io.Value.Item1;
+
+                Wire wire = new Wire(startIO);
+                wire.ConnectIO(endIO);
+
+                WireNode junction = wire.Root!.AddJunctionWireNode(this.corner);
+                junction.AddIOWireNode(endIO);
+
+                arg.Simulator.AddWire(wire);
+                this.GoToState<ESNone>(0);
+                return;
+            }
+
+            if (arg.Simulator.TryGetJunctionWireNodeFromPosition(arg.GetWorldMousePos(), out JunctionWireNode? junc))
+            {
+                // CONNECTING TO JUNCTION
+
+                WireNode corn = junc.AddJunctionWireNode(this.corner);
+                corn.AddIOWireNode(arg.FirstClickedIO);
+                junc.Wire.ConnectIO(arg.FirstClickedIO);
+
+                this.GoToState<ESNone>(0);
+            }
+            else
+            {
+                // HERE WE ARE PRESSING ON NOTHING
+
+                // CREATE NEW JUNCTION WIRE NODE
+                Wire wire = new Wire(arg.FirstClickedIO);
+                WireNode fwn = wire.Root.AddJunctionWireNode(this.corner);
+                fwn.AddJunctionWireNode(arg.GetWorldMousePos().SnapToGrid());
+                arg.Simulator.AddWire(wire);
+                this.GoToState<ESNone>(0);
+            }
         }
     }
 }
@@ -249,30 +425,30 @@ public class ESConnectIOToOther : State<Editor, int>
 
             // IF WE GET TO HERE WE KNOW THAT WE ARE HOVERING OTHER IO AND IT IS NOT THE SAME AS THE FIRST
 
-            if (Raylib.IsMouseButtonPressed(MouseButton.MOUSE_LEFT_BUTTON))
-            {
-                Wire wire = new Wire(arg.FirstClickedIO);
-                wire.ConnectIO(io.Value.Item1);
-                wire.RootWireNode.AddIONode(io.Value.Item1);
+            // if (Raylib.IsMouseButtonPressed(MouseButton.MOUSE_LEFT_BUTTON))
+            // {
+            //     Wire wire = new Wire(arg.FirstClickedIO);
+            //     wire.ConnectIO(io.Value.Item1);
+            //     wire.RootWireNode.AddIONode(io.Value.Item1);
 
-                arg.Simulator.AddWire(wire);
+            //     arg.Simulator.AddWire(wire);
 
-                this.GoToState<ESNone>(0);
-            }
+            //     this.GoToState<ESNone>(0);
+            // }
         }
 
-        if (arg.Simulator.TryGetWireNodeFromPosition(arg.GetWorldMousePos(), out WireNode? from, out WireNode? to, out Wire? w))
-        {
-            if (Raylib.IsMouseButtonPressed(MouseButton.MOUSE_LEFT_BUTTON))
-            {
-                Vector2 pos = arg.GetWorldMousePos();
-                FreeWireNode fwn = from.InsertFreeNode(pos, to);
+        // if (arg.Simulator.TryGetWireNodeFromPosition(arg.GetWorldMousePos(), out WireNode? from, out WireNode? to, out Wire? w))
+        // {
+        //     if (Raylib.IsMouseButtonPressed(MouseButton.MOUSE_LEFT_BUTTON))
+        //     {
+        //         Vector2 pos = arg.GetWorldMousePos();
+        //         FreeWireNode fwn = from.InsertFreeNode(pos, to);
 
-                fwn.AddIONode(arg.FirstClickedIO);
-                w.ConnectIO(arg.FirstClickedIO);
-                this.GoToState<ESNone>(0);
-            }
-        }
+        //         fwn.AddIONode(arg.FirstClickedIO);
+        //         w.ConnectIO(arg.FirstClickedIO);
+        //         this.GoToState<ESNone>(0);
+        //     }
+        // }
     }
 
     public override void Render(Editor arg)

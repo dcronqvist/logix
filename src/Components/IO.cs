@@ -24,6 +24,45 @@ public class IO
         }
     }
 
+    public Vector2 GetPosition()
+    {
+        return this.OnComponent.GetIOPosition(this);
+    }
+
+    public JunctionWireNode? GetAdjacentJunctionWireNode()
+    {
+        IOWireNode? ioWireNode = this.GetIOWireNode();
+
+        if (ioWireNode == null)
+        {
+            return null;
+        }
+
+        if (ioWireNode.Parent == null)
+        {
+            // IF PARENT IS NULL, THEN THIS IS THE ROOT NODE, SO WE MUST GET CHILD NODE
+            return ioWireNode.Children[0] as JunctionWireNode;
+        }
+        else
+        {
+            // IF PARENT IS NOT NULL, THEN THIS IS A CHILD NODE, SO WE MUST GET PARENT NODE
+            return ioWireNode.Parent as JunctionWireNode;
+        }
+    }
+
+    public IOWireNode? GetIOWireNode()
+    {
+        if (this.Wire == null)
+        {
+            return null;
+        }
+        if (this.Wire.Root!.TryFindChildIOWireNode(this, out IOWireNode? ioWireNode))
+        {
+            return ioWireNode;
+        }
+        return null;
+    }
+
     public void PushError()
     {
         this.PushedValues = Util.NValues(LogicValue.ERROR, this.BitWidth).ToArray();
