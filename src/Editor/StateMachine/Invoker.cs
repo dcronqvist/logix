@@ -1,4 +1,6 @@
-namespace LogiX.Editor;
+using LogiX.Editor.Commands;
+
+namespace LogiX.Editor.StateMachine;
 
 public abstract class Invoker<TArg>
 {

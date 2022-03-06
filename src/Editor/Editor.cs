@@ -1,6 +1,8 @@
 using System.Diagnostics.CodeAnalysis;
 using System.Text;
 using LogiX.Components;
+using LogiX.Editor.Commands;
+using LogiX.Editor.StateMachine;
 
 namespace LogiX.Editor;
 
@@ -25,6 +27,7 @@ public class Editor : Application<Editor>
 
     // TEMPORARY VARIABLES FOR CONNECTIONS
     public IO FirstClickedIO { get; set; }
+    public WireNode FirstClickedWireNode { get; set; }
 
     // WINDOW AND UI
     public List<EditorWindow> EditorWindows { get; set; }
@@ -264,13 +267,13 @@ public class Editor : Application<Editor>
                     ImGui.CloseCurrentPopup();
                 }
 
-                // Vector2 popupSize = ImGui.GetWindowSize();
-                // Rectangle rec = new Rectangle(this.MouseStartPos.X, this.MouseStartPos.Y, popupSize.X, popupSize.Y).Inflate(10);
-                // if (!rec.ContainsVector2(UserInput.GetMousePositionInWindow()))
-                // {
-                //     this.ContextMenuID = null;
-                //     ImGui.CloseCurrentPopup();
-                // }
+                Vector2 popupSize = ImGui.GetWindowSize();
+                Rectangle rec = new Rectangle(this.MouseStartPos.X, this.MouseStartPos.Y, popupSize.X, popupSize.Y).Inflate(25);
+                if (!rec.ContainsVector2(UserInput.GetMousePositionInWindow()))
+                {
+                    this.ContextMenuID = null;
+                    ImGui.CloseCurrentPopup();
+                }
 
                 ImGui.EndPopup();
             }

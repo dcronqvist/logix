@@ -23,7 +23,8 @@ public class Simulator
 
     public void AddWire(Wire wire)
     {
-        this.AllWires.Add(wire);
+        if (!this.AllWires.Contains(wire))
+            this.AllWires.Add(wire);
     }
 
     public void RemoveComponent(Component component, bool disconnectIOs = true)
@@ -159,7 +160,17 @@ public class Simulator
 
     public void RemoveWire(Wire wire)
     {
+        wire.DisconnectAllIOs();
+
         this.AllWires.Remove(wire);
+
+        foreach (WireNode n in wire.GetAllWireNodes())
+        {
+            if (this.Selection.Contains(n))
+            {
+                this.Selection.Remove(n);
+            }
+        }
     }
 
     public void PerformLogic()

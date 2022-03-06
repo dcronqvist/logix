@@ -1,3 +1,5 @@
+using LogiX.Editor.StateMachine;
+
 namespace LogiX.Editor;
 
 public enum ModalButtonsType

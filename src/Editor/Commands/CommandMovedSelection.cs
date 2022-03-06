@@ -1,46 +1,8 @@
 using LogiX.Components;
 using LogiX.SaveSystem;
 
-namespace LogiX.Editor;
+namespace LogiX.Editor.Commands;
 
-public abstract class Command<TArg>
-{
-    public abstract void Execute(TArg arg);
-    public abstract void Undo(TArg arg);
-    public virtual void Redo(TArg arg) { Execute(arg); }
-
-    public override abstract string ToString();
-}
-
-public class CommandNewComponent : Command<Editor>
-{
-    Component c;
-
-    public CommandNewComponent(Component c)
-    {
-        this.c = c;
-    }
-
-    public override void Execute(Editor arg)
-    {
-        arg.NewComponent(c);
-    }
-
-    public override void Redo(Editor arg)
-    {
-        arg.NewComponent(c, true);
-    }
-
-    public override string ToString()
-    {
-        return "Created new " + c.Text + " component";
-    }
-
-    public override void Undo(Editor arg)
-    {
-        arg.Simulator.RemoveComponent(c);
-    }
-}
 
 public class CommandMovedSelection : Command<Editor>
 {

@@ -1,3 +1,5 @@
+using LogiX.Editor.StateMachine;
+
 namespace LogiX.Editor;
 
 public class EditorTab
@@ -29,6 +31,23 @@ public class EditorTab
 
     public void Update(Editor editor)
     {
+        if (Raylib.IsKeyDown(KeyboardKey.KEY_SPACE) || Raylib.IsMouseButtonDown(MouseButton.MOUSE_MIDDLE_BUTTON))
+        {
+            this.MoveCamera(-UserInput.GetMouseDelta(editor.camera));
+        }
+
+        float zoomSpeed = 1.15f;
+        if (Raylib.GetMouseWheelMove() > 0)
+        {
+            this.ZoomCamera(zoomSpeed);
+        }
+        if (Raylib.GetMouseWheelMove() < 0)
+        {
+            this.ZoomCamera(1f / zoomSpeed);
+        }
+        editor.camera.zoom = MathF.Min(MathF.Max(editor.camera.zoom, 0.1f), 4f);
+
+
         this.Simulator.Interact(editor);
         this.Simulator.PerformLogic();
         this.FSM.Update(editor);

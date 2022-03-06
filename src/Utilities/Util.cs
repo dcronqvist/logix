@@ -526,6 +526,23 @@ public static class Util
         return new Vector2(MathF.Round(v.X), MathF.Round(v.Y));
     }
 
+    public static List<T> Append<T>(this List<T> list, T item)
+    {
+        list.Add(item);
+        return list;
+    }
+
+    public static List<T> Prepend<T>(this List<T> list, T item)
+    {
+        list.Insert(0, item);
+        return list;
+    }
+
+    public static string ToStringPretty<T>(this IEnumerable<T> list)
+    {
+        return "[" + string.Join(", ", list.Select(x => x.ToString())) + "]";
+    }
+
     // public static List<Action<Editor.Editor, Component>> GetAdditionalComponentContexts(Type component)
     // {
     //     if (Plugins == null)

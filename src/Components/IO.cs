@@ -7,6 +7,7 @@ public class IO
     public LogicValue[] PushedValues { get; private set; }
     public Component OnComponent { get; }
     public Wire? Wire { get; set; }
+    public IOWireNode? WireNode { get; set; }
 
     public IO(int bitWidth, Component onComponent)
     {
@@ -48,6 +49,14 @@ public class IO
             // IF PARENT IS NOT NULL, THEN THIS IS A CHILD NODE, SO WE MUST GET PARENT NODE
             return ioWireNode.Parent as JunctionWireNode;
         }
+    }
+
+    public bool TryGetIOWireNode(out IOWireNode? ioWireNode)
+    {
+        IOWireNode? ioNode = this.GetIOWireNode();
+
+        ioWireNode = ioNode;
+        return ioNode != null;
     }
 
     public IOWireNode? GetIOWireNode()
