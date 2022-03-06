@@ -6,9 +6,9 @@ public class ESRectangleSelecting : State<Editor, int>
 
     public override bool ForcesSameTab => true;
 
-    public override void OnEnter(Editor updateArg, int arg)
+    public override void OnEnter(Editor? updateArg, int arg)
     {
-        this.startPos = updateArg.GetWorldMousePos();
+        this.startPos = updateArg!.GetWorldMousePos();
     }
 
     public override void Update(Editor arg)

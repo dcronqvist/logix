@@ -5,11 +5,11 @@ namespace LogiX.Editor.StateMachine;
 public class ESHoveringWire : State<Editor, int>
 {
     public override bool ForcesSameTab => true;
-    public WireNode node;
+    public WireNode? node;
 
-    public override void OnEnter(Editor updateArg, int arg)
+    public override void OnEnter(Editor? updateArg, int arg)
     {
-        updateArg.Simulator.TryGetChildWireNodeFromPosition(updateArg.GetWorldMousePos(), out node);
+        updateArg!.Simulator.TryGetChildWireNodeFromPosition(updateArg.GetWorldMousePos(), out node);
     }
 
     public override void Update(Editor arg)
@@ -31,7 +31,7 @@ public class ESHoveringWire : State<Editor, int>
 
                 arg.OpenContextMenu("test", () =>
                 {
-                    ImGui.Text($"Wire {arg.Simulator.AllWires.IndexOf(node.Wire)}");
+                    ImGui.Text($"Wire {arg.Simulator.AllWires.IndexOf(node!.Wire)}");
                     ImGui.Text($"{node.Wire.IOs.Count} IOs");
                     foreach (IO io in node.Wire.IOs)
                     {
@@ -43,7 +43,7 @@ public class ESHoveringWire : State<Editor, int>
                     {
                         // CommandDeleteWireSegment deleteWireSegment = new CommandDeleteWireSegment(node);
                         // arg.Execute(deleteWireSegment, arg);
-                        node.Parent.DisconnectFrom(node, out Wire? newWire, out Wire? wireToDelete);
+                        node!.Parent!.DisconnectFrom(node, out Wire? newWire, out Wire? wireToDelete);
 
                         if (newWire != null)
                             arg.Simulator.AddWire(newWire);
@@ -61,7 +61,7 @@ public class ESHoveringWire : State<Editor, int>
                         Wire wire = node.Wire;
 
                         WireNode n = wire.GetWireNodeByDescriptor(descriptor);
-                        n.Parent.InsertBetween(new JunctionWireNode(n.Wire, null, clickedMousePos), n);
+                        n.Parent!.InsertBetween(new JunctionWireNode(n.Wire, null, clickedMousePos), n);
 
                         //node.Parent.InsertBetween(new JunctionWireNode(node.Wire, null, clickedMousePos), node);
 

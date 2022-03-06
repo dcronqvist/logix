@@ -10,7 +10,7 @@ public class FSM<TUpdate, TOnEnter>
         this.States = new List<State<TUpdate, TOnEnter>>();
     }
 
-    public void SetState<TState>(TUpdate updateArg, TOnEnter gotoArg) where TState : State<TUpdate, TOnEnter>
+    public void SetState<TState>(TUpdate? updateArg, TOnEnter gotoArg) where TState : State<TUpdate, TOnEnter>
     {
         this.CurrentState = this.GetState(typeof(TState));
         this.CurrentState?.OnEnter(updateArg, gotoArg);
@@ -50,7 +50,7 @@ public class FSM<TUpdate, TOnEnter>
                         State<TUpdate, TOnEnter>? newState = this.GetState(goTo);
                         if (newState != null)
                         {
-                            TOnEnter onEnter = s.onEnterArg;
+                            TOnEnter? onEnter = s.onEnterArg;
                             this.CurrentState = newState;
                             this.CurrentState.OnEnter(arg, onEnter);
                         }

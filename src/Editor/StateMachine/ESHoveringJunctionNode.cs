@@ -5,16 +5,16 @@ namespace LogiX.Editor.StateMachine;
 public class ESHoveringJunctionNode : State<Editor, int>
 {
     public override bool ForcesSameTab => true;
-    public JunctionWireNode node;
+    public JunctionWireNode? node;
 
-    public override void OnEnter(Editor updateArg, int arg)
+    public override void OnEnter(Editor? updateArg, int arg)
     {
-        updateArg.Simulator.TryGetJunctionWireNodeFromPosition(updateArg.GetWorldMousePos(), out node);
+        updateArg!.Simulator.TryGetJunctionWireNodeFromPosition(updateArg.GetWorldMousePos(), out node);
     }
 
     public override void Update(Editor arg)
     {
-        if (!arg.Simulator.TryGetJunctionWireNodeFromPosition(arg.GetWorldMousePos(), out JunctionWireNode jwn))
+        if (!arg.Simulator.TryGetJunctionWireNodeFromPosition(arg.GetWorldMousePos(), out JunctionWireNode? jwn))
         {
             this.GoToState<ESNone>(0);
             return;
@@ -25,7 +25,7 @@ public class ESHoveringJunctionNode : State<Editor, int>
             if (!arg.Simulator.IsPositionOnSelected(arg.GetWorldMousePos()))
             {
                 arg.Simulator.Selection.Clear();
-                arg.Simulator.Select(node);
+                arg.Simulator.Select(node!);
             }
             this.GoToState<ESMovingSelection>(1);
             return;
@@ -38,7 +38,7 @@ public class ESHoveringJunctionNode : State<Editor, int>
         {
             arg.OpenContextMenu("test", () =>
             {
-                ImGui.Text(node.GetLocationDescriptor().ToStringPretty());
+                ImGui.Text(node!.GetLocationDescriptor().ToStringPretty());
                 ImGui.Separator();
                 if (ImGui.MenuItem("Create Wire"))
                 {
@@ -48,8 +48,6 @@ public class ESHoveringJunctionNode : State<Editor, int>
                 }
                 if (ImGui.MenuItem("Delete Junction"))
                 {
-                    // CommandDeleteWireJunction deleteWireJunction = new CommandDeleteWireJunction(node);
-                    // arg.Execute(deleteWireJunction, arg);
                     node.RemoveOnlyNode(out Wire? wireToDelete);
                     if (wireToDelete != null)
                     {

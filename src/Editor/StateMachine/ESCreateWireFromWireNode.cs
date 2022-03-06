@@ -10,7 +10,7 @@ public class ESCreateWireFromWireNode : State<Editor, int>
     Vector2 corner;
     Vector2 endPoint;
 
-    public override void OnEnter(Editor updateArg, int arg)
+    public override void OnEnter(Editor? updateArg, int arg)
     {
         this.determinedDirection = Vector2.Zero;
         base.OnEnter(updateArg, arg);
@@ -187,7 +187,7 @@ public class ESCreateWireFromWireNode : State<Editor, int>
                 {
                     WireNode start = arg.FirstClickedWireNode;
                     JunctionWireNode jwn = new JunctionWireNode(node.Wire, null, arg.GetWorldMousePos().SnapToGrid());
-                    node.Parent.InsertBetween(jwn, node);
+                    node!.Parent!.InsertBetween(jwn, node);
 
                     start.ConnectTo(jwn, out Wire? wireToDelete);
                     if (wireToDelete != null)

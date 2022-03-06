@@ -1,3 +1,5 @@
+using System.Diagnostics.CodeAnalysis;
+
 namespace LogiX.Components;
 
 public class IO
@@ -51,7 +53,7 @@ public class IO
         }
     }
 
-    public bool TryGetIOWireNode(out IOWireNode? ioWireNode)
+    public bool TryGetIOWireNode([NotNullWhen(true)] out IOWireNode? ioWireNode)
     {
         IOWireNode? ioNode = this.GetIOWireNode();
 

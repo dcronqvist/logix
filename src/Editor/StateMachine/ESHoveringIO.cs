@@ -34,13 +34,13 @@ public class ESHoveringIO : State<Editor, int>
                 arg.OpenContextMenu("IO", () =>
                 {
                     ImGui.Text($"IO on {io.Value.Item1.OnComponent.Text}");
-                    ImGui.Text($"Connected to wire {arg.Simulator.AllWires.IndexOf(io.Value.Item1.Wire)}");
+                    ImGui.Text($"Connected to wire {arg.Simulator.AllWires.IndexOf(io.Value.Item1.Wire!)}");
 
                     ImGui.Separator();
 
                     if (ImGui.MenuItem("Make Root"))
                     {
-                        io.Value.Item1.GetIOWireNode().MakeRoot();
+                        io.Value.Item1.GetIOWireNode()!.MakeRoot();
                     }
 
                     return true;

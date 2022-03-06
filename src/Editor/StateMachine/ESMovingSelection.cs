@@ -10,9 +10,9 @@ public class ESMovingSelection : State<Editor, int>
 
     public override bool ForcesSameTab => true;
 
-    public override void OnEnter(Editor updateArg, int arg)
+    public override void OnEnter(Editor? updateArg, int arg)
     {
-        this.startPos = updateArg.GetWorldMousePos().SnapToGrid();
+        this.startPos = updateArg!.GetWorldMousePos().SnapToGrid();
         this.originalStartPos = this.startPos;
         this.willDoCommand = arg == 1;
     }
