@@ -9,5 +9,8 @@ public abstract class Command<TArg>
     public abstract void Undo(TArg arg);
     public virtual void Redo(TArg arg) { Execute(arg); }
 
-    public override abstract string ToString();
+    public virtual string ToString()
+    {
+        return $"{GetType().Name}";
+    }
 }

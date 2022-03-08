@@ -267,11 +267,12 @@ public abstract class WireNode : ISelectable
             this.Children.First().MakeRoot();
         }
         wireToDelete = null;
-        // I AM CHILD NODE, REMOVE ME FROM PARENT AND ADD MY CHILDREN
+        // I AM CHILD NODE, REMOVE ME FROM PARENT AND ADD MY CHILDREN AND CLEAR MY CHILDREN
 
         List<WireNode> children = this.Children;
         this.Parent.Children.Remove(this);
         children.ForEach(c => this.Parent.AddChild(c));
+        this.Children.Clear();
 
         WireNode newRoot = this.Parent.RecursivelyGetParent();
         if (newRoot.Children.Count == 0)
@@ -450,11 +451,12 @@ public abstract class WireNode : ISelectable
     {
         other.MakeRoot();
         this.AddChild(other);
+        this.MakeRoot();
 
         // Since we are getting our own parent recursively, we are deleting the wire
         // of the other wire node
         wireToDelete = other.Wire;
-        return this.RecursivelyGetParent();
+        return this;
     }
 
     private WireNode ConnectToDiffWireThisRoot(WireNode other, out Wire wireToDelete)
@@ -512,8 +514,9 @@ public abstract class WireNode : ISelectable
     {
         this.Children.Remove(other);
         this.Wire.DisconnectIO(other.IO);
+        //other.Parent = null;
 
-        return (this, null);
+        return (this, other);
     }
 
     private (WireNode, WireNode?) DisconnectFromThisIO(WireNode other)
@@ -525,7 +528,7 @@ public abstract class WireNode : ISelectable
     private (WireNode, WireNode?) DisconnectFromNoChildren(WireNode other)
     {
         this.Children.Remove(other);
-        return (this, null);
+        return (this, other);
     }
 }
 

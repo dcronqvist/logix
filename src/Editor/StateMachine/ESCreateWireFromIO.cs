@@ -1,4 +1,5 @@
 using LogiX.Components;
+using LogiX.Editor.Commands;
 
 namespace LogiX.Editor.StateMachine;
 
@@ -132,23 +133,26 @@ public class ESCreateWireFromIO : State<Editor, int>
                 // CommandConnectIOToIO connectIOToIO = new CommandConnectIOToIO(arg.FirstClickedIO, io.Value.Item1, this.corner);
                 // arg.Execute(connectIOToIO, arg);
 
-                Wire wire = new Wire();
-                WireNode start = new IOWireNode(wire, null, arg.FirstClickedIO);
-                WireNode end = new IOWireNode(wire, null, io.Value.Item1);
+                // Wire wire = new Wire();
+                // WireNode start = new IOWireNode(wire, null, arg.FirstClickedIO);
+                // WireNode end = new IOWireNode(wire, null, io.Value.Item1);
 
-                start.ConnectTo(end, out Wire? wireToDelete);
-                if (wireToDelete != null)
-                {
-                    arg.Simulator.RemoveWire(wireToDelete);
-                }
+                // start.ConnectTo(end, out Wire? wireToDelete);
+                // if (wireToDelete != null)
+                // {
+                //     arg.Simulator.RemoveWire(wireToDelete);
+                // }
 
-                if (this.IsCornerNeeded())
-                {
-                    WireNode newJunctionWireNode = new JunctionWireNode(wire, null, this.corner);
-                    start.InsertBetween(newJunctionWireNode, end);
-                }
+                // if (this.IsCornerNeeded())
+                // {
+                //     WireNode newJunctionWireNode = new JunctionWireNode(wire, null, this.corner);
+                //     start.InsertBetween(newJunctionWireNode, end);
+                // }
 
-                arg.Simulator.AddWire(wire);
+                // arg.Simulator.AddWire(wire);
+
+                CommandConnectIOToIO connectIOToIO = new CommandConnectIOToIO(arg.FirstClickedIO, io.Value.Item1, this.corner);
+                arg.Execute(connectIOToIO, arg);
 
                 this.GoToState<ESNone>(0);
                 return;

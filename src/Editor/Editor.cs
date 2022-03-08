@@ -225,6 +225,7 @@ public class Editor : Application<Editor>
         ImGui.Text("MOUSEINWORLD: " + this.GetWorldMousePos().ToString());
         ImGui.Text("MOUSEINWINDOW: " + UserInput.GetMousePositionInWindow().ToString());
         ImGui.Text("WINDOW: " + this.WindowSize.ToString());
+        ImGui.Text("AMOUNT OF WIRES: " + this.Simulator.AllWires.Count);
 
         if (ImGui.Button("Undo"))
         {

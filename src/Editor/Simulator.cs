@@ -24,7 +24,10 @@ public class Simulator
     public void AddWire(Wire wire)
     {
         if (!this.AllWires.Contains(wire))
+        {
             this.AllWires.Add(wire);
+        }
+
     }
 
     public void RemoveComponent(Component component, bool disconnectIOs = true)

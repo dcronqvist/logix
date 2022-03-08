@@ -1,4 +1,5 @@
 using LogiX.Components;
+using LogiX.Editor.Commands;
 
 namespace LogiX.Editor.StateMachine;
 
@@ -41,35 +42,23 @@ public class ESHoveringWire : State<Editor, int>
                     ImGui.Separator();
                     if (ImGui.MenuItem("Delete Segment"))
                     {
-                        // CommandDeleteWireSegment deleteWireSegment = new CommandDeleteWireSegment(node);
-                        // arg.Execute(deleteWireSegment, arg);
-                        node!.Parent!.DisconnectFrom(node, out Wire? newWire, out Wire? wireToDelete);
-
-                        if (newWire != null)
-                            arg.Simulator.AddWire(newWire);
-
-                        if (wireToDelete != null)
-                            arg.Simulator.RemoveWire(wireToDelete);
+                        CommandDeleteWireSegment cdws = new CommandDeleteWireSegment(node);
+                        arg.Execute(cdws, arg);
 
                         return false;
                     }
                     if (ImGui.MenuItem("Add Junction"))
                     {
-                        // CommandAddWireJunction addWireJunction = new CommandAddWireJunction(node, clickedMousePos);
-                        // arg.Execute(addWireJunction, arg);
-                        List<int> descriptor = node.GetLocationDescriptor();
-                        Wire wire = node.Wire;
-
-                        WireNode n = wire.GetWireNodeByDescriptor(descriptor);
-                        n.Parent!.InsertBetween(new JunctionWireNode(n.Wire, null, clickedMousePos), n);
-
-                        //node.Parent.InsertBetween(new JunctionWireNode(node.Wire, null, clickedMousePos), node);
+                        CommandAddJunction caj = new CommandAddJunction(node, clickedMousePos);
+                        arg.Execute(caj, arg);
 
                         return false;
                     }
                     if (ImGui.MenuItem("Delete Wire"))
                     {
-                        arg.Simulator.RemoveWire(node.Wire);
+                        CommandDeleteWire cdw = new CommandDeleteWire(node.Wire);
+                        arg.Execute(cdw, arg);
+                        return false;
                     }
 
                     return true;
