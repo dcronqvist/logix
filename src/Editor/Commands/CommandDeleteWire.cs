@@ -4,16 +4,21 @@ namespace LogiX.Editor.Commands;
 
 public class CommandDeleteWire : Command<Editor>
 {
-    public Wire wire;
+    public Vector2 wireAtPosition;
 
-    public CommandDeleteWire(Wire wire)
+    public Wire deletedWire;
+
+    public CommandDeleteWire(Vector2 wireAtPosition)
     {
-        this.wire = wire;
+        this.wireAtPosition = wireAtPosition;
     }
 
     public override void Execute(Editor arg)
     {
-        arg.Simulator.RemoveWire(this.wire);
+        Wire wire = Util.GetWireFromPos(arg.Simulator, wireAtPosition);
+        this.deletedWire = wire;
+        wire.DisconnectAllIOs();
+        arg.Simulator.RemoveWire(wire);
     }
 
     public override string ToString()
@@ -23,9 +28,7 @@ public class CommandDeleteWire : Command<Editor>
 
     public override void Undo(Editor arg)
     {
-        arg.Simulator.AddWire(this.wire);
-
-        List<IO> ios = this.wire.Root.RecursivelyGetAllConnectedIOs();
-        ios.ForEach(io => this.wire.ConnectIO(io));
+        arg.Simulator.AddWire(deletedWire);
+        deletedWire.UpdateIOs();
     }
 }

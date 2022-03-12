@@ -2,43 +2,46 @@ using LogiX.Components;
 
 namespace LogiX.Editor.Commands;
 
-public class CommandConnectIOToIO : Command<Editor>
+public class CommandConnectIOToNothing : Command<Editor>
 {
     public IO startIO;
-    public IO endIO;
+    public Vector2 endPos;
     public Vector2 corner;
 
-    public CommandConnectIOToIO(IO start, IO end, Vector2 corner)
+    public CommandConnectIOToNothing(IO start, Vector2 endPos, Vector2 corner)
     {
         this.startIO = start;
-        this.endIO = end;
+        this.endPos = endPos;
         this.corner = corner;
     }
 
     public bool IsCornerNeeded()
     {
-        return corner.X != endIO.GetPosition().X || corner.Y != endIO.GetPosition().Y;
+        return corner.X != endPos.X || corner.Y != endPos.Y;
     }
 
     public override void Execute(Editor arg)
     {
-        Wire newWire = new Wire();
-        WireNode startNode = newWire.CreateIOWireNode(this.startIO);
-        WireNode endNode = newWire.CreateIOWireNode(this.endIO);
+        Wire wire = new Wire();
+
+        WireNode startNode = wire.CreateIOWireNode(this.startIO);
+        WireNode endNode = wire.CreateJunctionWireNode(this.endPos);
 
         if (IsCornerNeeded())
         {
-            WireNode cornerNode = newWire.CreateJunctionWireNode(this.corner);
-            newWire.AddNode(cornerNode);
-            newWire.ConnectNodes(startNode, newWire, cornerNode);
-            newWire.ConnectNodes(cornerNode, newWire, endNode);
+            // INCLUDE CORNER
+            WireNode cornerNode = wire.CreateJunctionWireNode(this.corner);
+            wire.AddNode(cornerNode);
+            wire.ConnectNodes(startNode, wire, cornerNode);
+            wire.ConnectNodes(cornerNode, wire, endNode);
         }
         else
         {
-            newWire.ConnectNodes(startNode, newWire, endNode);
+            // NO CORNER
+            wire.ConnectNodes(startNode, wire, endNode);
         }
 
-        arg.Simulator.AddWire(newWire);
+        arg.Simulator.AddWire(wire);
     }
 
     public override void Undo(Editor arg)
@@ -46,7 +49,7 @@ public class CommandConnectIOToIO : Command<Editor>
         WireNode startNode = Util.GetIOWireNodeFromPos(arg.Simulator, this.startIO.GetPosition(), out Wire startWire);
         startWire.RemoveNode(startNode);
 
-        WireNode endNode = Util.GetIOWireNodeFromPos(arg.Simulator, this.endIO.GetPosition(), out Wire endWire);
+        WireNode endNode = Util.GetJunctionWireNodeFromPos(arg.Simulator, this.endPos, out Wire endWire);
         endWire.RemoveNode(endNode);
 
         if (IsCornerNeeded())

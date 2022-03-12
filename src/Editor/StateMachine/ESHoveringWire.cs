@@ -1,26 +1,28 @@
 using LogiX.Components;
 using LogiX.Editor.Commands;
+using QuikGraph;
 
 namespace LogiX.Editor.StateMachine;
 
 public class ESHoveringWire : State<Editor, int>
 {
     public override bool ForcesSameTab => true;
-    public WireNode? node;
+    public Edge<WireNode>? edge;
+    public Wire? wire;
 
     public override void OnEnter(Editor? updateArg, int arg)
     {
-        updateArg!.Simulator.TryGetChildWireNodeFromPosition(updateArg.GetWorldMousePos(), out node);
+        updateArg!.Simulator.TryGetEdgeFromPosition(updateArg.GetWorldMousePos(), out edge, out wire);
     }
 
     public override void Update(Editor arg)
     {
-        if (arg.Simulator.TryGetJunctionWireNodeFromPosition(arg.GetWorldMousePos(), out JunctionWireNode? jwn))
+        if (arg.Simulator.TryGetJunctionFromPosition(arg.GetWorldMousePos(), out JunctionWireNode? jwn, out Wire? nodeOnWire))
         {
             this.GoToState<ESHoveringJunctionNode>(0);
         }
 
-        if (!arg.Simulator.TryGetChildWireNodeFromPosition(arg.GetWorldMousePos(), out WireNode? n))
+        if (!arg.Simulator.TryGetEdgeFromPosition(arg.GetWorldMousePos(), out Edge<WireNode>? e, out Wire? w))
         {
             this.GoToState<ESNone>(0);
         }
@@ -32,9 +34,9 @@ public class ESHoveringWire : State<Editor, int>
 
                 arg.OpenContextMenu("test", () =>
                 {
-                    ImGui.Text($"Wire {arg.Simulator.AllWires.IndexOf(node!.Wire)}");
-                    ImGui.Text($"{node.Wire.IOs.Count} IOs");
-                    foreach (IO io in node.Wire.IOs)
+                    ImGui.Text($"Wire {arg.Simulator.AllWires.IndexOf(this.wire!)}");
+                    ImGui.Text($"{this.wire!.IOs.Count} IOs");
+                    foreach (IO io in this.wire!.IOs)
                     {
                         ImGui.Text($"{io.OnComponent.Text}");
                     }
@@ -42,21 +44,21 @@ public class ESHoveringWire : State<Editor, int>
                     ImGui.Separator();
                     if (ImGui.MenuItem("Delete Segment"))
                     {
-                        CommandDeleteWireSegment cdws = new CommandDeleteWireSegment(node);
+                        CommandDeleteWireSegment cdws = new CommandDeleteWireSegment(clickedMousePos);
                         arg.Execute(cdws, arg);
 
                         return false;
                     }
                     if (ImGui.MenuItem("Add Junction"))
                     {
-                        CommandAddJunction caj = new CommandAddJunction(node, clickedMousePos);
-                        arg.Execute(caj, arg);
+                        // CommandAddJunction caj = new CommandAddJunction(node, clickedMousePos);
+                        // arg.Execute(caj, arg);
 
                         return false;
                     }
                     if (ImGui.MenuItem("Delete Wire"))
                     {
-                        CommandDeleteWire cdw = new CommandDeleteWire(node.Wire);
+                        CommandDeleteWire cdw = new CommandDeleteWire(clickedMousePos);
                         arg.Execute(cdw, arg);
                         return false;
                     }
@@ -69,9 +71,6 @@ public class ESHoveringWire : State<Editor, int>
 
     public override void Render(Editor arg)
     {
-        if (arg.Simulator.TryGetChildWireNodeFromPosition(arg.GetWorldMousePos(), out WireNode? node))
-        {
-            Raylib.DrawLineV(node.Parent!.GetPosition(), node.GetPosition(), Color.BLUE);
-        }
+        Raylib.DrawLineV(this.edge!.Source.GetPosition(), this.edge!.Target.GetPosition(), Color.BLUE);
     }
 }

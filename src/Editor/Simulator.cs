@@ -1,4 +1,5 @@
 using LogiX.Components;
+using QuikGraph;
 using System.Diagnostics.CodeAnalysis;
 
 namespace LogiX.Editor;
@@ -27,7 +28,6 @@ public class Simulator
         {
             this.AllWires.Add(wire);
         }
-
     }
 
     public void RemoveComponent(Component component, bool disconnectIOs = true)
@@ -41,6 +41,8 @@ public class Simulator
 
         if (disconnectIOs)
         {
+            List<Wire> toDelete = new List<Wire>();
+
             foreach (Wire w in this.AllWires)
             {
                 foreach (IO io in component.IOs.Select(x => x.Item1))
@@ -52,9 +54,14 @@ public class Simulator
 
                     if (w.IOs.Count == 0)
                     {
-                        this.AllWires.Remove(w);
+                        toDelete.Add(w);
                     }
                 }
+            }
+
+            foreach (Wire w in toDelete)
+            {
+                this.AllWires.Remove(w);
             }
         }
     }
@@ -85,11 +92,11 @@ public class Simulator
 
         foreach (Wire wire in this.AllWires)
         {
-            List<WireNode> wireNodes = wire.Root!.CollectChildrenRecursively();
+            List<WireNode> wireNodes = wire.Graph.Vertices.ToList();
 
             foreach (WireNode wn in wireNodes)
             {
-                if (wn.Parent != null)
+                if (wn is JunctionWireNode)
                 {
                     if (Raylib.CheckCollisionCircleRec(wn.GetPosition(), 5, rec))
                     {
@@ -161,19 +168,53 @@ public class Simulator
         return false;
     }
 
+    public bool TryGetIOWireNodeFromWorldPosition(Vector2 position, [NotNullWhen(true)] out IOWireNode? node, [NotNullWhen(true)] out Wire? wire)
+    {
+        foreach (Wire w in this.AllWires)
+        {
+            if (w.TryGetIOWireNodeFromPosition(position, out node))
+            {
+                wire = w;
+                return true;
+            }
+        }
+
+        wire = null;
+        node = null;
+        return false;
+    }
+
+    public bool TryGetWireNodeFromWorldPosition(Vector2 position, [NotNullWhen(true)] out WireNode? node, [NotNullWhen(true)] out Wire? wire)
+    {
+        if (this.TryGetIOWireNodeFromWorldPosition(position, out IOWireNode? iowireNode, out wire))
+        {
+            node = iowireNode;
+            return true;
+        }
+        else if (this.TryGetJunctionFromPosition(position, out JunctionWireNode? junctionWireNode, out wire))
+        {
+            node = junctionWireNode;
+            return true;
+        }
+
+        node = null;
+        wire = null;
+        return false;
+    }
+
     public void RemoveWire(Wire wire)
     {
-        wire.DisconnectAllIOs();
+        // wire.DisconnectAllIOs();
 
         this.AllWires.Remove(wire);
 
-        foreach (WireNode n in wire.GetAllWireNodes())
-        {
-            if (this.Selection.Contains(n))
-            {
-                this.Selection.Remove(n);
-            }
-        }
+        // foreach (WireNode n in wire.Graph.Vertices)
+        // {
+        //     if (this.Selection.Contains(n))
+        //     {
+        //         this.Selection.Remove(n);
+        //     }
+        // }
     }
 
     public void PerformLogic()
@@ -207,29 +248,35 @@ public class Simulator
         }
     }
 
-    public bool TryGetChildWireNodeFromPosition(Vector2 position, [NotNullWhen(true)] out WireNode? node)
+    public bool TryGetJunctionFromPosition(Vector2 position, [NotNullWhen(true)] out JunctionWireNode? node, [NotNullWhen(true)] out Wire? nodeOnWire)
     {
         foreach (Wire wire in this.AllWires)
         {
-            if (wire.TryGetChildWireNodeFromPosition(position, out node))
+            if (wire.TryGetJunctionFromPosition(position, out node))
             {
+                nodeOnWire = wire;
                 return true;
             }
         }
+
+        nodeOnWire = null;
         node = null;
         return false;
     }
 
-    public bool TryGetJunctionWireNodeFromPosition(Vector2 position, [NotNullWhen(true)] out JunctionWireNode? node)
+    public bool TryGetEdgeFromPosition(Vector2 position, [NotNullWhen(true)] out Edge<WireNode>? edge, [NotNullWhen(true)] out Wire? nodeOnWire)
     {
         foreach (Wire wire in this.AllWires)
         {
-            if (wire.TryGetJunctionWireNodeFromPosition(position, out node))
+            if (wire.TryGetEdgeFromPosition(position, out edge))
             {
+                nodeOnWire = wire;
                 return true;
             }
         }
-        node = null;
+
+        nodeOnWire = null;
+        edge = null;
         return false;
     }
 

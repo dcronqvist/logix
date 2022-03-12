@@ -28,6 +28,7 @@ public class Editor : Application<Editor>
     // TEMPORARY VARIABLES FOR CONNECTIONS
     public IO FirstClickedIO { get; set; }
     public WireNode FirstClickedWireNode { get; set; }
+    public Wire FirstClickedWire { get; set; }
 
     // WINDOW AND UI
     public List<EditorWindow> EditorWindows { get; set; }

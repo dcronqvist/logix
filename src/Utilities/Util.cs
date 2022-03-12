@@ -6,6 +6,11 @@ using Antlr4.Runtime;
 using Markdig;
 using Markdig.Syntax;
 using LogiX.SaveSystem;
+using QuikGraph;
+using QuikGraph.Algorithms.ConnectedComponents;
+using System.Diagnostics.CodeAnalysis;
+
+using WireGraph = QuikGraph.UndirectedGraph<LogiX.Components.WireNode, QuikGraph.Edge<LogiX.Components.WireNode>>;
 
 namespace LogiX;
 
@@ -873,110 +878,107 @@ public static class Util
         return side;
     }
 
-    //     public static LogiX.NewComponent.LogicValue[] AND(this LogiX.NewComponent.LogicValue[] values, LogiX.NewComponent.LogicValue[] other)
-    //     {
-    //         LogiX.NewComponent.LogicValue[] and = new LogiX.NewComponent.LogicValue[values.Length];
-    //         for (int i = 0; i < values.Length; i++)
-    //         {
-    //             switch (values[i])
-    //             {
-    //                 case LogiX.NewComponent.LogicValue.LOW:
-    //                     and[i] = LogiX.NewComponent.LogicValue.LOW;
-    //                     break;
-    //                 case LogiX.NewComponent.LogicValue.HIGH:
-    //                     if (other[i] == LogiX.NewComponent.LogicValue.HIGH)
-    //                     {
-    //                         and[i] = LogiX.NewComponent.LogicValue.HIGH;
-    //                     }
-    //                     else
-    //                     {
-    //                         and[i] = LogiX.NewComponent.LogicValue.LOW;
-    //                     }
-    //                     break;
-    //             }
-    //         }
-    //         return and;
-    //     }
+    public static WireGraph ConnectVertices(WireGraph sourceGraph, WireNode source, WireGraph targetGraph, WireNode target, out bool deleteTargetGraph)
+    {
+        if (sourceGraph == targetGraph)
+        {
+            // THE SAME GRAPH, JUST ADD AN EDGE
+            sourceGraph.AddEdge(new Edge<WireNode>(source, target));
+            deleteTargetGraph = false;
+        }
+        else
+        {
+            // NOT THE SAME GRAPH, MUST ADD ALL VERTICES AND EDGES OF TARGET GRAPH INTO SOURCE
+            sourceGraph.AddVertexRange(targetGraph.Vertices);
+            sourceGraph.AddEdgeRange(targetGraph.Edges);
+            sourceGraph.AddEdge(new Edge<WireNode>(source, target));
+            deleteTargetGraph = true;
+        }
 
-    //     public static LogiX.NewComponent.LogicValue[] OR(this LogiX.NewComponent.LogicValue[] values, LogiX.NewComponent.LogicValue[] other)
-    //     {
-    //         LogiX.NewComponent.LogicValue[] or = new LogiX.NewComponent.LogicValue[values.Length];
-    //         for (int i = 0; i < values.Length; i++)
-    //         {
-    //             switch (values[i])
-    //             {
-    //                 case LogiX.NewComponent.LogicValue.LOW:
-    //                     if (other[i] == LogiX.NewComponent.LogicValue.HIGH)
-    //                     {
-    //                         or[i] = LogiX.NewComponent.LogicValue.HIGH;
-    //                     }
-    //                     else
-    //                     {
-    //                         or[i] = LogiX.NewComponent.LogicValue.LOW;
-    //                     }
-    //                     break;
-    //                 case LogiX.NewComponent.LogicValue.HIGH:
-    //                     or[i] = LogiX.NewComponent.LogicValue.HIGH;
-    //                     break;
-    //             }
-    //         }
-    //         return or;
-    //     }
+        return sourceGraph;
+    }
 
-    //     public static LogiX.NewComponent.LogicValue[] XOR(this LogiX.NewComponent.LogicValue[] values, LogiX.NewComponent.LogicValue[] other)
-    //     {
-    //         LogiX.NewComponent.LogicValue[] xor = new LogiX.NewComponent.LogicValue[values.Length];
-    //         for (int i = 0; i < values.Length; i++)
-    //         {
-    //             switch (values[i])
-    //             {
-    //                 case LogiX.NewComponent.LogicValue.LOW:
-    //                     if (other[i] == LogiX.NewComponent.LogicValue.HIGH)
-    //                     {
-    //                         xor[i] = LogiX.NewComponent.LogicValue.HIGH;
-    //                     }
-    //                     else
-    //                     {
-    //                         xor[i] = LogiX.NewComponent.LogicValue.LOW;
-    //                     }
-    //                     break;
-    //                 case LogiX.NewComponent.LogicValue.HIGH:
-    //                     if (other[i] == LogiX.NewComponent.LogicValue.HIGH)
-    //                     {
-    //                         xor[i] = LogiX.NewComponent.LogicValue.LOW;
-    //                     }
-    //                     else
-    //                     {
-    //                         xor[i] = LogiX.NewComponent.LogicValue.HIGH;
-    //                     }
-    //                     break;
-    //             }
-    //         }
-    //         return xor;
-    //     }
+    public static bool DisconnectVertices(ref WireGraph graph, WireNode source, WireNode target, [NotNullWhen(true)] out WireGraph? newGraph)
+    {
+        // MUST REMOVE EDGE
+        // CHECK IF IT CREATED MORE THAN 1 CONNECTED COMPONENT
+        // IF IT DID, THEN WE MUST CREATE A NEW GRAPH WITH ONE 
+        // OF THESE COMPONENTS
 
-    //     public static LogiX.NewComponent.LogicValue[] NOR(this LogiX.NewComponent.LogicValue[] values, LogiX.NewComponent.LogicValue[] other)
-    //     {
-    //         LogiX.NewComponent.LogicValue[] nor = new LogiX.NewComponent.LogicValue[values.Length];
-    //         for (int i = 0; i < values.Length; i++)
-    //         {
-    //             switch (values[i])
-    //             {
-    //                 case LogiX.NewComponent.LogicValue.LOW:
-    //                     if (other[i] == LogiX.NewComponent.LogicValue.HIGH)
-    //                     {
-    //                         nor[i] = LogiX.NewComponent.LogicValue.LOW;
-    //                     }
-    //                     else
-    //                     {
-    //                         nor[i] = LogiX.NewComponent.LogicValue.HIGH;
-    //                     }
-    //                     break;
-    //                 case LogiX.NewComponent.LogicValue.HIGH:
-    //                     nor[i] = LogiX.NewComponent.LogicValue.LOW;
-    //                     break;
-    //             }
-    //         }
-    //         return nor;
-    //     }
+        graph.RemoveEdgeIf(x => x.Source == source && x.Target == target);
+
+        ConnectedComponentsAlgorithm<WireNode, Edge<WireNode>> connComp = new ConnectedComponentsAlgorithm<WireNode, Edge<WireNode>>(graph);
+        connComp.Compute();
+
+        int components = connComp.ComponentCount;
+
+        if (components > 1)
+        {
+            // CREATE NEW GRAPH WITH ONE OF THE COMPONENTS
+            newGraph = new WireGraph();
+
+            foreach (KeyValuePair<WireNode, int> kvp in connComp.Components)
+            {
+                if (kvp.Value == 1)
+                {
+                    if (graph.AdjacentDegree(kvp.Key) > 0)
+                        newGraph.AddVertex(kvp.Key);
+                }
+            }
+
+            foreach (KeyValuePair<WireNode, int> kvp in connComp.Components)
+            {
+                if (kvp.Value == 1)
+                {
+                    newGraph.AddEdgeRange(graph.AdjacentEdges(kvp.Key));
+                    graph.RemoveVertex(kvp.Key);
+                }
+            }
+
+            return true;
+        }
+        else
+        {
+            // DID NOT CREATE ANOTHER CONNECTED COMPONENT, SO NO NEW GRAPH
+            newGraph = null;
+            return false;
+        }
+    }
+
+    public static JunctionWireNode GetJunctionWireNodeFromPos(Simulator simulator, Vector2 position, out Wire wire)
+    {
+        simulator.TryGetJunctionFromPosition(position, out JunctionWireNode? junction, out wire!);
+        return junction!;
+    }
+
+    public static IOWireNode GetIOWireNodeFromPos(Simulator simulator, Vector2 position, out Wire wire)
+    {
+        simulator.TryGetIOWireNodeFromWorldPosition(position, out IOWireNode? io, out wire!);
+        return io!;
+    }
+
+    public static Edge<WireNode> GetEdgeFromPos(Simulator simulator, Vector2 position, out Wire wire)
+    {
+        simulator.TryGetEdgeFromPosition(position, out Edge<WireNode>? edge, out wire!);
+        return edge!;
+    }
+
+    public static WireNode GetWireNodeFromPos(Simulator simulator, Vector2 position, out Wire wire)
+    {
+        simulator.TryGetWireNodeFromWorldPosition(position, out WireNode? node, out wire!);
+        return node!;
+    }
+
+    public static Wire GetWireFromPos(Simulator simulator, Vector2 position)
+    {
+        if (simulator.TryGetWireNodeFromWorldPosition(position, out WireNode? node, out Wire? wire))
+        {
+            return wire;
+        }
+        else
+        {
+            simulator.TryGetEdgeFromPosition(position, out Edge<WireNode>? edge, out wire);
+            return wire!;
+        }
+    }
 }

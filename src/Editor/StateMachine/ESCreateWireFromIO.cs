@@ -1,5 +1,6 @@
 using LogiX.Components;
 using LogiX.Editor.Commands;
+using QuikGraph;
 
 namespace LogiX.Editor.StateMachine;
 
@@ -35,7 +36,7 @@ public class ESCreateWireFromIO : State<Editor, int>
 
         endPoint = mousePos;
 
-        if (arg.Simulator.TryGetJunctionWireNodeFromPosition(mousePos, out JunctionWireNode? node))
+        if (arg.Simulator.TryGetJunctionFromPosition(mousePos, out JunctionWireNode? node, out Wire? w))
         {
             endPoint = node.GetPosition();
         }
@@ -104,25 +105,11 @@ public class ESCreateWireFromIO : State<Editor, int>
         {
             // CHECK IF WE ARE PRESSING ON SOMETHING (IO OR OTHER WIRE)
             Vector2 mousePos = arg.GetWorldMousePos().SnapToGrid();
-            if (arg.Simulator.TryGetJunctionWireNodeFromPosition(mousePos, out JunctionWireNode? junc))
+            if (arg.Simulator.TryGetJunctionFromPosition(mousePos, out JunctionWireNode? junc, out Wire? w))
             {
                 // CONNECTING TO JUNCTION
-                Wire wire = new Wire();
-                WireNode start = new IOWireNode(wire, null, arg.FirstClickedIO);
-                WireNode end = junc;
-
-                start.ConnectTo(end, out Wire? wireToDelete);
-                if (wireToDelete != null)
-                {
-                    arg.Simulator.RemoveWire(wireToDelete);
-                }
-
-                if (this.IsCornerNeeded())
-                {
-                    start.InsertBetween(new JunctionWireNode(wire, null, this.corner), end);
-                }
-
-                arg.Simulator.AddWire(wire);
+                CommandConnectIOToJunction cmd = new CommandConnectIOToJunction(arg.FirstClickedIO, mousePos, this.corner);
+                arg.Execute(cmd, arg);
 
                 this.GoToState<ESNone>(0);
                 return;
@@ -130,56 +117,17 @@ public class ESCreateWireFromIO : State<Editor, int>
             else if (arg.Simulator.TryGetIOFromWorldPosition(mousePos, out (IO, int)? io))
             {
                 // CONNECTING TO OTHER IO
-                // CommandConnectIOToIO connectIOToIO = new CommandConnectIOToIO(arg.FirstClickedIO, io.Value.Item1, this.corner);
-                // arg.Execute(connectIOToIO, arg);
-
-                // Wire wire = new Wire();
-                // WireNode start = new IOWireNode(wire, null, arg.FirstClickedIO);
-                // WireNode end = new IOWireNode(wire, null, io.Value.Item1);
-
-                // start.ConnectTo(end, out Wire? wireToDelete);
-                // if (wireToDelete != null)
-                // {
-                //     arg.Simulator.RemoveWire(wireToDelete);
-                // }
-
-                // if (this.IsCornerNeeded())
-                // {
-                //     WireNode newJunctionWireNode = new JunctionWireNode(wire, null, this.corner);
-                //     start.InsertBetween(newJunctionWireNode, end);
-                // }
-
-                // arg.Simulator.AddWire(wire);
-
                 CommandConnectIOToIO connectIOToIO = new CommandConnectIOToIO(arg.FirstClickedIO, io.Value.Item1, this.corner);
                 arg.Execute(connectIOToIO, arg);
 
                 this.GoToState<ESNone>(0);
                 return;
             }
-            else if (arg.Simulator.TryGetChildWireNodeFromPosition(mousePos, out WireNode? node))
+            else if (arg.Simulator.TryGetEdgeFromPosition(mousePos, out Edge<WireNode>? edge, out Wire? wi))
             {
                 // CONNECTING TO WIRE
-                JunctionWireNode jwn = new JunctionWireNode(node.Wire, null, mousePos);
-                node!.Parent!.InsertBetween(jwn, node);
-
-                Wire wire = new Wire();
-                WireNode start = new IOWireNode(wire, null, arg.FirstClickedIO);
-                WireNode end = jwn;
-
-                start.ConnectTo(end, out Wire? wireToDelete);
-                if (wireToDelete != null)
-                {
-                    arg.Simulator.RemoveWire(wireToDelete);
-                }
-
-                if (this.IsCornerNeeded())
-                {
-                    JunctionWireNode newJunctionWireNode = new JunctionWireNode(wire, null, this.corner);
-                    start.InsertBetween(newJunctionWireNode, end);
-                }
-
-                arg.Simulator.AddWire(wire);
+                CommandConnectIOToWire cmd = new CommandConnectIOToWire(arg.FirstClickedIO, mousePos, this.corner);
+                arg.Execute(cmd, arg);
 
                 this.GoToState<ESNone>(0);
                 return;
@@ -187,25 +135,8 @@ public class ESCreateWireFromIO : State<Editor, int>
             else
             {
                 // HERE WE ARE PRESSING ON NOTHING
-                // CommandConnectIOToNothing connectIOToNothing = new CommandConnectIOToNothing(arg.FirstClickedIO, this.corner, mousePos);
-                // arg.Execute(connectIOToNothing, arg);
-
-                Wire wire = new Wire();
-                WireNode start = new IOWireNode(wire, null, arg.FirstClickedIO);
-                WireNode end = new JunctionWireNode(wire, null, mousePos);
-
-                start.ConnectTo(end, out Wire? wireToDelete);
-                if (wireToDelete != null)
-                {
-                    arg.Simulator.RemoveWire(wireToDelete);
-                }
-
-                if (this.IsCornerNeeded())
-                {
-                    start.InsertBetween(new JunctionWireNode(wire, null, this.corner), end);
-                }
-
-                arg.Simulator.AddWire(wire);
+                CommandConnectIOToNothing connectIOToNothing = new CommandConnectIOToNothing(arg.FirstClickedIO, mousePos, this.corner);
+                arg.Execute(connectIOToNothing, arg);
 
                 this.GoToState<ESNone>(0);
             }

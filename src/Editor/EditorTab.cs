@@ -47,10 +47,9 @@ public class EditorTab
         }
         editor.camera.zoom = MathF.Min(MathF.Max(editor.camera.zoom, 0.1f), 4f);
 
-
+        this.FSM.Update(editor);
         this.Simulator.Interact(editor);
         this.Simulator.PerformLogic();
-        this.FSM.Update(editor);
     }
 
     public void SubmitUI(Editor editor)

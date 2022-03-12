@@ -1,4 +1,5 @@
 using LogiX.Components;
+using QuikGraph;
 
 namespace LogiX.Editor.StateMachine;
 
@@ -14,11 +15,11 @@ public class ESNone : State<Editor, int>
             {
                 this.GoToState<ESHoveringIO>(0);
             }
-            else if (arg.Simulator.TryGetJunctionWireNodeFromPosition(arg.GetWorldMousePos(), out JunctionWireNode? jwn))
+            else if (arg.Simulator.TryGetJunctionFromPosition(arg.GetWorldMousePos(), out JunctionWireNode? jwn, out Wire? nodeOnWire))
             {
                 this.GoToState<ESHoveringJunctionNode>(0);
             }
-            else if (arg.Simulator.TryGetChildWireNodeFromPosition(arg.GetWorldMousePos(), out WireNode? node))
+            else if (arg.Simulator.TryGetEdgeFromPosition(arg.GetWorldMousePos(), out Edge<WireNode>? edge, out Wire? edgeOnWire))
             {
                 this.GoToState<ESHoveringWire>(0);
             }

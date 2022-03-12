@@ -10,12 +10,12 @@ public class CommandAddJunction : Command<Editor>
     public CommandAddJunction(WireNode childNode, Vector2 position)
     {
         this.childNode = childNode;
-        this.createdNode = new JunctionWireNode(childNode.Wire, null, position);
+        //this.createdNode = new JunctionWireNode(childNode.Wire, null, position);
     }
 
     public override void Execute(Editor arg)
     {
-        this.childNode.Parent!.InsertBetween(createdNode, this.childNode);
+        //this.childNode.Parent!.InsertBetween(createdNode, this.childNode);
     }
 
     public override string ToString()
@@ -25,7 +25,7 @@ public class CommandAddJunction : Command<Editor>
 
     public override void Undo(Editor arg)
     {
-        this.createdNode.RemoveOnlyNode(out Wire? wireToDelete);
+        //this.createdNode.RemoveOnlyNode(out Wire? wireToDelete);
 
         // Wont have to delete the wire.
     }

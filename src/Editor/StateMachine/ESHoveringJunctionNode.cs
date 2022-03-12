@@ -6,15 +6,16 @@ public class ESHoveringJunctionNode : State<Editor, int>
 {
     public override bool ForcesSameTab => true;
     public JunctionWireNode? node;
+    public Wire? wire;
 
     public override void OnEnter(Editor? updateArg, int arg)
     {
-        updateArg!.Simulator.TryGetJunctionWireNodeFromPosition(updateArg.GetWorldMousePos(), out node);
+        updateArg!.Simulator.TryGetJunctionFromPosition(updateArg.GetWorldMousePos(), out node, out wire);
     }
 
     public override void Update(Editor arg)
     {
-        if (!arg.Simulator.TryGetJunctionWireNodeFromPosition(arg.GetWorldMousePos(), out JunctionWireNode? jwn))
+        if (!arg.Simulator.TryGetJunctionFromPosition(arg.GetWorldMousePos(), out JunctionWireNode? jwn, out Wire? w))
         {
             this.GoToState<ESNone>(0);
             return;
@@ -38,29 +39,29 @@ public class ESHoveringJunctionNode : State<Editor, int>
         {
             arg.OpenContextMenu("test", () =>
             {
-                ImGui.Text(node!.GetLocationDescriptor().ToStringPretty());
                 ImGui.Separator();
                 if (ImGui.MenuItem("Create Wire"))
                 {
                     arg.FirstClickedWireNode = node;
+                    arg.FirstClickedWire = wire;
                     this.GoToState<ESCreateWireFromWireNode>(0);
                     return false;
                 }
-                if (ImGui.MenuItem("Delete Junction"))
-                {
-                    node.RemoveOnlyNode(out Wire? wireToDelete);
-                    if (wireToDelete != null)
-                    {
-                        arg.Simulator.RemoveWire(wireToDelete);
-                    }
+                // if (ImGui.MenuItem("Delete Junction"))
+                // {
+                //     node.RemoveOnlyNode(out Wire? wireToDelete);
+                //     if (wireToDelete != null)
+                //     {
+                //         arg.Simulator.RemoveWire(wireToDelete);
+                //     }
 
-                    return false;
-                }
-                if (ImGui.MenuItem("Make Root"))
-                {
-                    node.MakeRoot();
-                    return false;
-                }
+                //     return false;
+                // }
+                // if (ImGui.MenuItem("Make Root"))
+                // {
+                //     node.MakeRoot();
+                //     return false;
+                // }
 
                 return true;
             });

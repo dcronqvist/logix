@@ -6,12 +6,14 @@ namespace LogiX.Editor.Commands;
 
 public class CommandMovedSelection : Command<Editor>
 {
-    List<ISelectable> selection;
+    List<Component> selectedComponents;
+    List<Vector2> selectedWireNodes;
     Vector2 delta;
 
     public CommandMovedSelection(List<ISelectable> selection, Vector2 delta)
     {
-        this.selection = selection;
+        this.selectedComponents = selection.Where(x => x is Component).Cast<Component>().ToList();
+        this.selectedWireNodes = selection.Where(x => x is WireNode).Cast<WireNode>().Select(x => x.GetPosition() - delta).ToList();
         this.delta = delta;
     }
 
@@ -22,9 +24,15 @@ public class CommandMovedSelection : Command<Editor>
 
     public override void Redo(Editor arg)
     {
-        foreach (ISelectable sel in this.selection)
+        foreach (Component component in this.selectedComponents)
         {
-            sel.Move(this.delta);
+            component.Move(this.delta);
+        }
+
+        foreach (Vector2 wireNodePos in this.selectedWireNodes)
+        {
+            WireNode wn = Util.GetWireNodeFromPos(arg.Simulator, wireNodePos, out Wire wire);
+            wn.Move(this.delta);
         }
     }
 
@@ -35,9 +43,15 @@ public class CommandMovedSelection : Command<Editor>
 
     public override void Undo(Editor arg)
     {
-        foreach (ISelectable sel in this.selection)
+        foreach (Component component in this.selectedComponents)
         {
-            sel.Move(-this.delta);
+            component.Move(-this.delta);
+        }
+
+        foreach (Vector2 wireNodePos in this.selectedWireNodes)
+        {
+            WireNode wn = Util.GetWireNodeFromPos(arg.Simulator, wireNodePos + delta, out Wire wire);
+            wn.Move(-this.delta);
         }
     }
 }

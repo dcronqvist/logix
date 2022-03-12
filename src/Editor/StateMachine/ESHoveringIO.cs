@@ -12,16 +12,16 @@ public class ESHoveringIO : State<Editor, int>
         {
             if (Raylib.IsMouseButtonPressed(MouseButton.MOUSE_LEFT_BUTTON))
             {
-                if (io.Value.Item1.TryGetIOWireNode(out IOWireNode? ioWireNode))
-                {
-                    arg.FirstClickedWireNode = ioWireNode;
-                    this.GoToState<ESCreateWireFromWireNode>(0);
-                }
-                else
-                {
-                    arg.FirstClickedIO = io.Value.Item1;
-                    this.GoToState<ESCreateWireFromIO>(0);
-                }
+                // if (io.Value.Item1.TryGetIOWireNode(out IOWireNode? ioWireNode))
+                // {
+                //     arg.FirstClickedWireNode = ioWireNode;
+                //     this.GoToState<ESCreateWireFromWireNode>(0);
+                // }
+                // else
+                // {
+                arg.FirstClickedIO = io.Value.Item1;
+                this.GoToState<ESCreateWireFromIO>(0);
+                // }
 
                 // GO TO STATE IO->CONNECT
                 // LEFT PRESSED ON IO, WE ARE PERFORMING SOME KIND OF CONNECTIONTHINGY HERE
@@ -37,11 +37,6 @@ public class ESHoveringIO : State<Editor, int>
                     ImGui.Text($"Connected to wire {arg.Simulator.AllWires.IndexOf(io.Value.Item1.Wire!)}");
 
                     ImGui.Separator();
-
-                    if (ImGui.MenuItem("Make Root"))
-                    {
-                        io.Value.Item1.GetIOWireNode()!.MakeRoot();
-                    }
 
                     return true;
                 });
