@@ -51,8 +51,8 @@ public class ESHoveringWire : State<Editor, int>
                     }
                     if (ImGui.MenuItem("Add Junction"))
                     {
-                        // CommandAddJunction caj = new CommandAddJunction(node, clickedMousePos);
-                        // arg.Execute(caj, arg);
+                        CommandAddJunction caj = new CommandAddJunction(edge.Source.GetPosition(), edge.Target.GetPosition(), clickedMousePos);
+                        arg.Execute(caj, arg);
 
                         return false;
                     }

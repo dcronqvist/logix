@@ -12,22 +12,16 @@ public class ESHoveringIO : State<Editor, int>
         {
             if (Raylib.IsMouseButtonPressed(MouseButton.MOUSE_LEFT_BUTTON))
             {
-                // if (io.Value.Item1.TryGetIOWireNode(out IOWireNode? ioWireNode))
-                // {
-                //     arg.FirstClickedWireNode = ioWireNode;
-                //     this.GoToState<ESCreateWireFromWireNode>(0);
-                // }
-                // else
-                // {
-                arg.FirstClickedIO = io.Value.Item1;
-                this.GoToState<ESCreateWireFromIO>(0);
-                // }
-
-                // GO TO STATE IO->CONNECT
-                // LEFT PRESSED ON IO, WE ARE PERFORMING SOME KIND OF CONNECTIONTHINGY HERE
-                // EITHER WE HAVE TWO OPTIONS
-                // 1. CONNECT DIRECTLY TO ANOTHER IO -> NEW WIRE MUST BE CREATED BETWEEN THESE
-                // 2. CONNECT TO AN EXISTING WIRE -> WE MUST CONNECT THIS IO TO THE WIRE AND ADD AN IOWIREPOINT TO THAT WIRE WHICH POINTS TO THIS IO
+                if (io.Value.Item1.TryGetIOWireNode(out IOWireNode? iow))
+                {
+                    arg.FirstClickedWireNode = iow;
+                    this.GoToState<ESCreateWireFromWireNode>(0);
+                }
+                else
+                {
+                    arg.FirstClickedIO = io.Value.Item1;
+                    this.GoToState<ESCreateWireFromIO>(0);
+                }
             }
             if (Raylib.IsMouseButtonPressed(MouseButton.MOUSE_RIGHT_BUTTON))
             {

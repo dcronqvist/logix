@@ -1,4 +1,6 @@
 using LogiX.Components;
+using LogiX.Editor.Commands;
+using QuikGraph;
 
 namespace LogiX.Editor.StateMachine;
 
@@ -37,6 +39,8 @@ public class ESHoveringJunctionNode : State<Editor, int>
     {
         if (Raylib.IsMouseButtonPressed(MouseButton.MOUSE_BUTTON_RIGHT))
         {
+            Vector2 clickedPos = arg.GetWorldMousePos().SnapToGrid();
+
             arg.OpenContextMenu("test", () =>
             {
                 ImGui.Separator();
@@ -47,21 +51,24 @@ public class ESHoveringJunctionNode : State<Editor, int>
                     this.GoToState<ESCreateWireFromWireNode>(0);
                     return false;
                 }
-                // if (ImGui.MenuItem("Delete Junction"))
-                // {
-                //     node.RemoveOnlyNode(out Wire? wireToDelete);
-                //     if (wireToDelete != null)
-                //     {
-                //         arg.Simulator.RemoveWire(wireToDelete);
-                //     }
 
-                //     return false;
-                // }
-                // if (ImGui.MenuItem("Make Root"))
-                // {
-                //     node.MakeRoot();
-                //     return false;
-                // }
+                if (ImGui.MenuItem("Delete Junction", "", false, wire?.Graph.AdjacentDegree(this.node!) == 2 || wire?.Graph.AdjacentDegree(this.node!) == 1))
+                {
+                    if (wire?.Graph.AdjacentDegree(this.node!) == 2)
+                    {
+                        CommandDeleteJunction cdj = new CommandDeleteJunction(clickedPos);
+                        arg.Execute(cdj, arg);
+                    }
+                    else
+                    {
+                        Edge<WireNode> edge = wire.Graph.AdjacentEdges(this.node!).First();
+                        CommandDeleteWireSegment cdws = new CommandDeleteWireSegment(edge.MiddleOfEdge());
+                        arg.Execute(cdws, arg);
+                    }
+
+
+                    return false;
+                }
 
                 return true;
             });

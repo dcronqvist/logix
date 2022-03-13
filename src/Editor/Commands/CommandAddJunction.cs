@@ -1,21 +1,28 @@
 using LogiX.Components;
+using QuikGraph;
 
 namespace LogiX.Editor.Commands;
 
 public class CommandAddJunction : Command<Editor>
 {
-    public WireNode childNode;
-    public WireNode createdNode;
+    public Vector2 position;
+    public Vector2 sourcePos;
+    public Vector2 targetPos;
 
-    public CommandAddJunction(WireNode childNode, Vector2 position)
+    public CommandAddJunction(Vector2 sourcePos, Vector2 targetPos, Vector2 position)
     {
-        this.childNode = childNode;
-        //this.createdNode = new JunctionWireNode(childNode.Wire, null, position);
+        this.position = position;
+        this.sourcePos = sourcePos;
+        this.targetPos = targetPos;
     }
 
     public override void Execute(Editor arg)
     {
-        //this.childNode.Parent!.InsertBetween(createdNode, this.childNode);
+        Edge<WireNode> edge = Util.GetEdgeFromPos(arg.Simulator, this.position, out Wire wire);
+        this.sourcePos = edge.Source.GetPosition();
+        this.targetPos = edge.Target.GetPosition();
+
+        wire.InsertNodeBetween(edge.Source, wire.CreateJunctionWireNode(this.position), edge.Target);
     }
 
     public override string ToString()
@@ -25,8 +32,13 @@ public class CommandAddJunction : Command<Editor>
 
     public override void Undo(Editor arg)
     {
-        //this.createdNode.RemoveOnlyNode(out Wire? wireToDelete);
+        WireNode source = Util.GetWireNodeFromPos(arg.Simulator, this.sourcePos, out Wire sourceWire);
+        WireNode target = Util.GetWireNodeFromPos(arg.Simulator, this.targetPos, out Wire targetWire);
 
-        // Wont have to delete the wire.
+        WireNode newJunc = Util.GetWireNodeFromPos(arg.Simulator, this.position, out Wire newJuncWire);
+
+        newJuncWire.RemoveNode(newJunc);
+
+        sourceWire.ConnectNodes(source, targetWire, target);
     }
 }

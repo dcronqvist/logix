@@ -981,4 +981,9 @@ public static class Util
             return wire!;
         }
     }
+
+    public static Vector2 MiddleOfEdge(this Edge<WireNode> edge)
+    {
+        return (edge.Source.GetPosition() + edge.Target.GetPosition()) / 2;
+    }
 }

@@ -26,6 +26,19 @@ public class IO
         }
     }
 
+    public bool TryGetIOWireNode(out IOWireNode? node)
+    {
+        if (this.Wire is not null)
+        {
+            if (this.Wire.TryGetIOWireNodeFromPosition(this.GetPosition(), out node))
+            {
+                return true;
+            }
+        }
+        node = null;
+        return false;
+    }
+
     public Vector2 GetPosition()
     {
         return this.OnComponent.GetIOPosition(this);

@@ -17,12 +17,15 @@ public class CommandConnectIOToJunction : Command<Editor>
 
     public bool IsCornerNeeded()
     {
-        return corner.X != this.junctionPosition.X || corner.Y != this.junctionPosition.Y;
+        bool cornerIsJunction = corner.X == this.junctionPosition.X && corner.Y == this.junctionPosition.Y;
+        bool startIOisCorner = startIO.GetPosition().X == this.corner.X && startIO.GetPosition().Y == this.corner.Y;
+
+        return !(cornerIsJunction || startIOisCorner);
     }
 
     public override void Execute(Editor arg)
     {
-        WireNode junctionNode = Util.GetJunctionWireNodeFromPos(arg.Simulator, this.junctionPosition, out Wire wire);
+        WireNode junctionNode = Util.GetWireNodeFromPos(arg.Simulator, this.junctionPosition, out Wire wire);
         WireNode startNode = wire.CreateIOWireNode(this.startIO);
 
         WireNode? cornerNode = this.IsCornerNeeded() ? wire.CreateJunctionWireNode(this.corner) : null;
@@ -45,12 +48,12 @@ public class CommandConnectIOToJunction : Command<Editor>
 
     public override void Undo(Editor arg)
     {
-        WireNode junctionNode = Util.GetJunctionWireNodeFromPos(arg.Simulator, this.junctionPosition, out Wire wire);
+        WireNode junctionNode = Util.GetWireNodeFromPos(arg.Simulator, this.junctionPosition, out Wire wire);
 
         if (this.IsCornerNeeded())
         {
             // CORNER IS INCLUDED
-            WireNode corner = Util.GetJunctionWireNodeFromPos(arg.Simulator, this.corner, out Wire cornerWire);
+            WireNode corner = Util.GetWireNodeFromPos(arg.Simulator, this.corner, out Wire cornerWire);
             cornerWire.RemoveNode(corner);
         }
 

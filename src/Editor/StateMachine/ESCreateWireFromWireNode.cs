@@ -141,58 +141,23 @@ public class ESCreateWireFromWireNode : State<Editor, int>
                 this.GoToState<ESNone>(0);
                 return;
             }
-            // else if (arg.Simulator.TryGetChildWireNodeFromPosition(arg.GetWorldMousePos().SnapToGrid(), out WireNode? node))
-            // {
-            //     // CONNECTING TO WIRE
-            //     // if (node.Wire != arg.FirstClickedWireNode.Wire)
-            //     // {
-            //     //     WireNode start = arg.FirstClickedWireNode;
-            //     //     JunctionWireNode jwn = new JunctionWireNode(node.Wire, null, arg.GetWorldMousePos().SnapToGrid());
-            //     //     node!.Parent!.InsertBetween(jwn, node);
+            else if (arg.Simulator.TryGetEdgeFromPosition(arg.GetWorldMousePos().SnapToGrid(), out Edge<WireNode>? edge, out Wire? w))
+            {
+                // CONNECTING TO OTHER WIRE
+                CommandConnectJunctionToWire cw = new CommandConnectJunctionToWire(arg.FirstClickedWireNode.GetPosition(), arg.GetWorldMousePos().SnapToGrid(), this.corner);
+                arg.Execute(cw, arg);
 
-            //     //     start.ConnectTo(jwn, out Wire? wireToDelete);
-            //     //     if (wireToDelete != null)
-            //     //     {
-            //     //         arg.Simulator.RemoveWire(wireToDelete);
-            //     //     }
+                this.GoToState<ESNone>(0);
+                return;
+            }
+            else
+            {
+                // HERE WE ARE PRESSING ON NOTHING
+                CommandConnectJunctionToNothing connectWireToNothing = new CommandConnectJunctionToNothing(arg.FirstClickedWireNode.GetPosition(), arg.GetWorldMousePos().SnapToGrid(), this.corner);
+                arg.Execute(connectWireToNothing, arg);
 
-            //     //     if (this.IsCornerNeeded())
-            //     //     {
-            //     //         JunctionWireNode newJunctionWireNode = new JunctionWireNode(node.Wire, null, this.corner);
-            //     //         start.InsertBetween(newJunctionWireNode, jwn);
-            //     //     }
-
-            //     //     this.GoToState<ESNone>(0);
-            //     //     return;
-            //     // }
-            //     // else
-            //     // {
-            //     //     return;
-            //     // }
-            // }
-            // else
-            // {
-            //     // HERE WE ARE PRESSING ON NOTHING
-            //     // CommandConnectWireToNothing connectWireToNothing = new CommandConnectWireToNothing(arg.FirstClickedWireNode, this.corner, arg.GetWorldMousePos().SnapToGrid());
-            //     // arg.Execute(connectWireToNothing, arg);
-
-            //     // WireNode start = arg.FirstClickedWireNode;
-            //     // WireNode end = new JunctionWireNode(start.Wire, null, arg.GetWorldMousePos().SnapToGrid());
-
-            //     // start.ConnectTo(end, out Wire? wireToDelete);
-            //     // if (wireToDelete != null)
-            //     // {
-            //     //     arg.Simulator.RemoveWire(wireToDelete);
-            //     // }
-
-            //     // if (this.IsCornerNeeded())
-            //     // {
-            //     //     WireNode newJunctionWireNode = new JunctionWireNode(start.Wire, null, this.corner);
-            //     //     start.InsertBetween(newJunctionWireNode, end);
-            //     // }
-
-            //     this.GoToState<ESNone>(0);
-            // }
+                this.GoToState<ESNone>(0);
+            }
         }
     }
 }
