@@ -14,7 +14,7 @@ public class LogicGate : Component
     public int Bits { get; set; }
     public override string Text => this.Logic.GetLogicText();
 
-    public LogicGate(Vector2 position, int bits, IGateLogic logic) : base(position, ComponentType.LOGIC_GATE)
+    public LogicGate(Vector2 position, int bits, IGateLogic logic, string? uniqueID = null) : base(position, ComponentType.LOGIC_GATE, uniqueID)
     {
         this.Logic = logic;
         this.Bits = bits;
@@ -29,6 +29,11 @@ public class LogicGate : Component
     {
         LogicValue[] inputValues = this.IOs.Take(this.Bits).Select(io => io.Item1.Values[0]).ToArray();
         this.GetIO(this.IOs.Count - 1).PushValues(this.Logic.GetOutput(inputValues));
+    }
+
+    public override ComponentDescription ToDescription()
+    {
+        return new DescriptionGate(this.Position, this.Rotation, this.UniqueID, this.Bits, this.Logic.GetLogicText());
     }
 }
 

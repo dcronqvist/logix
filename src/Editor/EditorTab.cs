@@ -1,22 +1,53 @@
+using System.Diagnostics;
+using LogiX.Components;
+using LogiX.Editor.Commands;
 using LogiX.Editor.StateMachine;
+using LogiX.SaveSystem;
 
 namespace LogiX.Editor;
 
-public class EditorTab
+public class EditorTab : Invoker<Editor>
 {
     public Vector2 CameraTarget { get; set; }
     public float CameraZoom { get; set; }
     public string Name { get; set; }
     public Simulator Simulator { get; set; }
     public EditorFSM FSM { get; set; }
+    public int LastSavedCommandIndex { get; set; }
+    public Circuit Circuit { get; set; }
 
-    public EditorTab(string name)
+    public IntegratedComponent? ic;
+
+    public EditorTab(Circuit circuit)
     {
-        this.Name = name;
+        this.Name = circuit.Name;
         this.Simulator = new Simulator();
         this.FSM = new EditorFSM();
         this.CameraTarget = Vector2.Zero;
         this.CameraZoom = 1f;
+        this.LastSavedCommandIndex = this.CurrentCommandIndex;
+        this.Circuit = circuit;
+    }
+
+    public void OnEnter(Editor editor)
+    {
+
+    }
+
+    public void Save()
+    {
+        this.LastSavedCommandIndex = this.CurrentCommandIndex;
+        this.Circuit.Update(this.Simulator);
+    }
+
+    public bool HasChanges()
+    {
+        return this.LastSavedCommandIndex != this.CurrentCommandIndex;
+    }
+
+    public bool TryClose()
+    {
+        return !this.HasChanges();
     }
 
     public void MoveCamera(Vector2 delta)
@@ -55,6 +86,21 @@ public class EditorTab
     public void SubmitUI(Editor editor)
     {
         this.FSM.SubmitUI(editor);
+
+        if (this.Simulator.Selection.Count == 1 && this.Simulator.Selection[0] is Component comp)
+        {
+            comp.SubmitUIPropertyWindow();
+        }
+
+        ImGui.Begin("Dependencies");
+
+        List<string> dependencies = this.Circuit.GetDependencyCircuits();
+        foreach (string dep in dependencies)
+        {
+            ImGui.Text(dep);
+        }
+
+        ImGui.End();
     }
 
     public void Render(Editor editor)

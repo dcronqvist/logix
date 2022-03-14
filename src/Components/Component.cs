@@ -1,3 +1,4 @@
+using System.Reflection;
 using LogiX.SaveSystem;
 
 namespace LogiX.Components;
@@ -9,7 +10,9 @@ public abstract class Component : ISelectable
     public Vector2 Position { get; set; }
     public int Rotation { get; set; }
 
+    [ComponentProp("Unique ID", Editable = false)]
     public string UniqueID { get; set; }
+
     public Vector2 MiddleOfComponent => this.Position + this.Size / 2f;
     public virtual Vector2 Size
     {
@@ -49,6 +52,7 @@ public abstract class Component : ISelectable
             return size.SnapToGrid();
         }
     }
+    public virtual bool DisplayText => true;
     public virtual string Text => this.Type.GetComponentTypeAsString();
     public virtual float IODistToComp => 5f;
     public virtual float IODistBetween => 4f;
@@ -57,11 +61,11 @@ public abstract class Component : ISelectable
     public virtual float PaddingHeight => 0;
     public virtual int TextSize => 18;
 
-    public Component(Vector2 position, ComponentType type)
+    public Component(Vector2 position, ComponentType type, string? uniqueID = null)
     {
         this.Type = type;
         this.Position = position;
-        this.UniqueID = Guid.NewGuid().ToString();
+        this.UniqueID = uniqueID is null ? Guid.NewGuid().ToString() : uniqueID;
         this.IOs = new List<(IO, IOConfig)>();
     }
 
@@ -88,6 +92,12 @@ public abstract class Component : ISelectable
     public int GetIndexOfIO(IO io)
     {
         return this.IOs.FindIndex(x => x.Item1 == io);
+    }
+
+    public void UpdateIOConfig(IO io, IOConfig newConfig)
+    {
+        int index = this.GetIndexOfIO(io);
+        this.IOs[index] = (io, newConfig);
     }
 
     public IO GetIO(int index)
@@ -157,9 +167,12 @@ public abstract class Component : ISelectable
 
     public virtual void RenderText()
     {
-        Vector2 textMeasure = Raylib.MeasureTextEx(Util.OpenSans, this.Text, this.TextSize, 0);
-        Vector2 pos = this.MiddleOfComponent - textMeasure / 2f;
-        Util.RenderTextRotated(pos.RotateAround(this.MiddleOfComponent, -(this.Rotation % 2) * MathF.PI / 2f), Util.OpenSans, this.TextSize, 0, this.Text, (this.Rotation * 90f) % 180f, Color.BLACK);
+        if (this.DisplayText)
+        {
+            Vector2 textMeasure = Raylib.MeasureTextEx(Util.OpenSans, this.Text, this.TextSize, 0);
+            Vector2 pos = this.MiddleOfComponent - textMeasure / 2f;
+            Util.RenderTextRotated(pos.RotateAround(this.MiddleOfComponent, -(this.Rotation % 2) * MathF.PI / 2f), Util.OpenSans, this.TextSize, 0, this.Text, (this.Rotation * 90f) % 180f, Color.BLACK);
+        }
     }
 
     public virtual void RenderIOs()
@@ -216,6 +229,7 @@ public abstract class Component : ISelectable
 
     public void UpdateLogic()
     {
+        this.Rotation = this.Rotation % 4;
         this.PerformLogic();
 
         foreach ((IO io, IOConfig conf) in this.IOs)
@@ -250,8 +264,31 @@ public abstract class Component : ISelectable
         this.Position += delta;
     }
 
+    public void SubmitUIPropertyWindow()
+    {
+        Type thisType = this.GetType();
+
+        PropertyInfo[] props = thisType.GetProperties();
+
+        if (props.Where(prop => prop.GetCustomAttribute<ComponentPropAttribute>() is not null).Count() > 0)
+        {
+            ImGui.Begin($"Property Editor", ImGuiWindowFlags.AlwaysAutoResize | ImGuiWindowFlags.NoNav | ImGuiWindowFlags.NoNavFocus);
+            foreach (PropertyInfo prop in props)
+            {
+                ComponentPropAttribute? cpa = prop.GetCustomAttribute<ComponentPropAttribute>();
+                if (cpa is not null)
+                {
+                    cpa.SubmitForProperty(prop, this);
+                }
+            }
+        }
+        ImGui.End();
+    }
+
     public bool IsPositionOn(Vector2 position)
     {
         return Raylib.CheckCollisionPointRec(position, this.GetRectangle());
     }
+
+    public abstract ComponentDescription ToDescription();
 }

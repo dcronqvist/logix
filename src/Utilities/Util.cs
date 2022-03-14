@@ -176,14 +176,14 @@ public static class Util
         {
             case "AND":
                 return new ANDLogic();
-                // case "NAND":
-                //     return new NANDLogic();
-                // case "OR":
-                //     return new ORLogic();
-                // case "NOR":
-                //     return new NORLogic();
-                // case "XOR":
-                //     return new XORLogic();
+            // case "NAND":
+            //     return new NANDLogic();
+            case "OR":
+                return new ORLogic();
+            case "NOR":
+                return new NORLogic();
+            case "XOR":
+                return new XORLogic();
                 // case "XNOR":
                 //     return new XNORLogic();
                 // case "NOT":
@@ -318,6 +318,11 @@ public static class Util
         }
         values.Reverse();
         return values;
+    }
+
+    public static List<T> RemoveDuplicates<T>(this List<T> list)
+    {
+        return list.Distinct().ToList();
     }
 
     // public static Component CreateComponentWithPluginIdentifier(string identifier, Vector2 position, int rotation, CustomComponentData data)

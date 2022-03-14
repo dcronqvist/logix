@@ -17,6 +17,49 @@ public class Simulator
         this.Selection = new List<ISelectable>();
     }
 
+    public List<Switch> GetAllSwitches()
+    {
+        return AllComponents.Where(x => x is Switch).Cast<Switch>().ToList();
+    }
+
+    public List<Lamp> GetAllLamps()
+    {
+        return AllComponents.Where(x => x is Lamp).Cast<Lamp>().ToList();
+    }
+
+    public bool TryGetComponentByID(string id, [NotNullWhen(true)] out Component? comp)
+    {
+        comp = AllComponents.FirstOrDefault(x => x.UniqueID == id, null);
+        return comp != null;
+    }
+
+    public List<(int, IOConfig, string)> GetIOConfigs()
+    {
+        List<Switch> switches = GetAllSwitches();
+        List<Lamp> lamps = GetAllLamps();
+        List<(int, IOConfig, string)> ioConfigs = new List<(int, IOConfig, string)>();
+
+        foreach (Switch s in switches)
+        {
+            ioConfigs.Add((s.Bits, new IOConfig(s.Side, s.Identifier), s.UniqueID));
+        }
+
+        foreach (Lamp l in lamps)
+        {
+            ioConfigs.Add((l.Bits, new IOConfig(l.Side, l.Identifier), l.UniqueID));
+        }
+
+        return ioConfigs;
+    }
+
+    public void RotateSelection(int i)
+    {
+        foreach (Component item in Selection.Where(x => x is Component))
+        {
+            item.Rotation += i;
+        }
+    }
+
     public void AddComponent(Component component)
     {
         this.AllComponents.Add(component);
@@ -30,39 +73,13 @@ public class Simulator
         }
     }
 
-    public void RemoveComponent(Component component, bool disconnectIOs = true)
+    public void RemoveComponent(Component component)
     {
         this.AllComponents.Remove(component);
 
         if (this.Selection.Contains(component))
         {
             this.Selection.Remove(component);
-        }
-
-        if (disconnectIOs)
-        {
-            List<Wire> toDelete = new List<Wire>();
-
-            foreach (Wire w in this.AllWires)
-            {
-                foreach (IO io in component.IOs.Select(x => x.Item1))
-                {
-                    if (w.IsConnectedTo(io))
-                    {
-                        w.DisconnectIO(io);
-                    }
-
-                    if (w.IOs.Count == 0)
-                    {
-                        toDelete.Add(w);
-                    }
-                }
-            }
-
-            foreach (Wire w in toDelete)
-            {
-                this.AllWires.Remove(w);
-            }
         }
     }
 
@@ -286,5 +303,22 @@ public class Simulator
         {
             component.Interact(editor);
         }
+    }
+
+    public Simulator Copy()
+    {
+        Simulator copy = new Simulator();
+
+        foreach (Component component in this.AllComponents)
+        {
+            copy.AddComponent(component);
+        }
+
+        foreach (Wire wire in this.AllWires)
+        {
+            copy.AddWire(wire);
+        }
+
+        return copy;
     }
 }

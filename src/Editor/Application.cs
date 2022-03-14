@@ -17,7 +17,7 @@ public enum ModalResult
     No
 }
 
-public abstract class Application<TArg> : Invoker<TArg>
+public abstract class Application
 {
     public abstract void Initialize();
     public abstract void LoadContent();

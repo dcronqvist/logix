@@ -1,4 +1,5 @@
 using LogiX.Components;
+using LogiX.Editor.Commands;
 using QuikGraph;
 
 namespace LogiX.Editor.StateMachine;
@@ -53,6 +54,22 @@ public class ESNone : State<Editor, int>
             if (Raylib.IsMouseButtonPressed(MouseButton.MOUSE_RIGHT_BUTTON))
             {
 
+            }
+        }
+
+        if (arg.Simulator.Selection.Where(x => x is Component).Count() > 0)
+        {
+            if (Raylib.IsKeyPressed(KeyboardKey.KEY_BACKSPACE))
+            {
+                List<Component> comps = arg.Simulator.Selection.Where(x => x is Component).Cast<Component>().ToList();
+
+                List<Command<Editor>> commands = new List<Command<Editor>>();
+                foreach (Component c in comps)
+                {
+                    commands.Add(new CommandDeleteComponent(c));
+                }
+                MultiCommand<Editor> multiCommand = new MultiCommand<Editor>($"Deleted {comps.Count} Components", commands.ToArray());
+                arg.Execute(multiCommand);
             }
         }
     }

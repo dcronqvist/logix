@@ -2,7 +2,7 @@ using LogiX.SaveSystem;
 
 namespace LogiX.Components;
 
-public class Switch : Component
+public class Lamp : Component
 {
     public LogicValue[] Values { get; set; }
 
@@ -44,38 +44,15 @@ public class Switch : Component
     public override Vector2 Size => new Vector2(WIDTH_PER_BITS * this.Bits, WIDTH_PER_BITS);
     public override bool DisplayText => false;
 
-    public Switch(int bits, Vector2 position, string? uniqueID = null) : base(position, ComponentType.SWITCH, uniqueID)
+    public Lamp(int bits, Vector2 position, string? uniqueID = null) : base(position, ComponentType.LAMP, uniqueID)
     {
-        this.AddIO(bits, new IOConfig(ComponentSide.RIGHT));
+        this.AddIO(bits, new IOConfig(ComponentSide.LEFT));
         this.Bits = bits;
     }
 
     public override void PerformLogic()
     {
-        this.GetIO(0).PushValues(this.Values);
-    }
-
-    public void PushUnknown()
-    {
-        this.GetIO(0).PushValues(Util.NValues(LogicValue.UNKNOWN, this.Bits).ToArray());
-    }
-
-    public override void Interact(Editor.Editor editor)
-    {
-        Vector2 basePos = new Vector2(this.GetRectangle().x, this.GetRectangle().y);
-
-        for (int i = 0; i < this.Bits; i++)
-        {
-            if (Raylib.IsMouseButtonPressed(MouseButton.MOUSE_RIGHT_BUTTON))
-            {
-                Rectangle rec = new Rectangle(basePos.X + WIDTH_PER_BITS * i, basePos.Y, WIDTH_PER_BITS, WIDTH_PER_BITS).Inflate(-2);
-
-                if (Raylib.CheckCollisionPointRec(editor.GetWorldMousePos(), rec))
-                {
-                    this.Values[i] = this.Values[i] == LogicValue.LOW ? LogicValue.HIGH : LogicValue.LOW;
-                }
-            }
-        }
+        this.Values = this.GetIO(0).Values;
     }
 
     public override void Render()
@@ -94,6 +71,6 @@ public class Switch : Component
 
     public override ComponentDescription ToDescription()
     {
-        return new DescriptionSwitch(this.Position, this.Rotation, this.UniqueID, this.Bits, this.Identifier, this.Side);
+        return new DescriptionLamp(this.Position, this.Rotation, this.UniqueID, this.Bits, this.Identifier, this.Side);
     }
 }

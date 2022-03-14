@@ -3,10 +3,11 @@ using System.Text;
 using LogiX.Components;
 using LogiX.Editor.Commands;
 using LogiX.Editor.StateMachine;
+using LogiX.SaveSystem;
 
 namespace LogiX.Editor;
 
-public class Editor : Application<Editor>
+public class Editor : Application
 {
     // EDITOR LAYOUT VARIABLES
     public int SidebarWidth { get; set; } = 170;
@@ -20,7 +21,20 @@ public class Editor : Application<Editor>
     public bool IsMouseInWorld { get; set; }
 
     public Dictionary<string, EditorTab> EditorTabs { get; set; }
-    public string CurrentEditorTab { get; set; }
+
+    private string _currentEditorTab;
+    public string CurrentEditorTab
+    {
+        get => _currentEditorTab;
+        set
+        {
+            if (value != _currentEditorTab)
+            {
+                _currentEditorTab = value;
+                this.EditorTabs[value].OnEnter(this);
+            }
+        }
+    }
     public EditorTab CurrentTab => this.EditorTabs[this.CurrentEditorTab];
     public Simulator Simulator => this.CurrentTab.Simulator;
     public EditorFSM FSM => this.CurrentTab.FSM;
@@ -80,6 +94,26 @@ public class Editor : Application<Editor>
         return false;
     }
 
+    public void Execute(Command<Editor> command, bool doExecute = true)
+    {
+        this.Execute(command, this, doExecute);
+    }
+
+    public void Execute(Command<Editor> command, Editor editor, bool doExecute = true)
+    {
+        this.CurrentTab.Execute(command, editor, doExecute);
+    }
+
+    public void Undo()
+    {
+        this.CurrentTab.Undo(this);
+    }
+
+    public void Redo()
+    {
+        this.CurrentTab.Redo(this);
+    }
+
     public void OpenEditorWindow(EditorWindow window)
     {
         if (EditorWindowOfTypeOpen(window.GetType()))
@@ -101,7 +135,7 @@ public class Editor : Application<Editor>
         this.camera = new Camera2D(base.WindowSize / 2f, Vector2.Zero, 0f, 1f);
         Util.Editor = this;
 
-        this.OpenEditorTab(new EditorTab("Circuit"));
+        this.OpenEditorTab(new EditorTab(new Circuit("untitled-circuit")));
     }
 
     public void AddNewComponentCreationContext(ComponentCreationContext ccc)
@@ -124,14 +158,16 @@ public class Editor : Application<Editor>
         {
             if (ImGui.TreeNodeEx(category, ImGuiTreeNodeFlags.DefaultOpen | ImGuiTreeNodeFlags.NoTreePushOnOpen))
             {
-                foreach (ComponentCreationContext ccc in contexts)
+                for (int i = 0; i < contexts.Count; i++)
                 {
+                    ComponentCreationContext ccc = contexts[i];
+
                     Vector2 buttonSize = new Vector2(140, 25);
                     ImGui.Button(ccc.Name, buttonSize);
                     if (ImGui.IsItemClicked())
                     {
                         CommandNewComponent cnc = new CommandNewComponent(ccc.DefaultComponent());
-                        base.Execute(cnc, this);
+                        this.Execute(cnc, this);
                         this.FSM.SetState<ESMovingSelection>(this, 0);
                     }
 
@@ -142,7 +178,7 @@ public class Editor : Application<Editor>
                             if (ccc.PopupCreator.Create(this, out Component? component))
                             {
                                 CommandNewComponent cnc = new CommandNewComponent(component);
-                                base.Execute(cnc, this);
+                                this.Execute(cnc, this);
                                 this.FSM.SetState<ESMovingSelection>(this, 0);
                             }
                             ImGui.EndPopup();
@@ -161,13 +197,22 @@ public class Editor : Application<Editor>
         this.AddNewComponentCreationContext(new ComponentCreationContext("Logic Gates", "OR", () => new LogicGate(this.GetWorldMousePos(), 2, new ORLogic()), new CCPUGate(new ORLogic())));
         this.AddNewComponentCreationContext(new ComponentCreationContext("Logic Gates", "XOR", () => new LogicGate(this.GetWorldMousePos(), 2, new XORLogic()), new CCPUGate(new XORLogic())));
         this.AddNewComponentCreationContext(new ComponentCreationContext("Logic Gates", "NOR", () => new LogicGate(this.GetWorldMousePos(), 2, new NORLogic()), new CCPUGate(new NORLogic())));
-        this.AddNewComponentCreationContext(new ComponentCreationContext("I/O", "Switch", () => new Switch(this.GetWorldMousePos())));
+        this.AddNewComponentCreationContext(new ComponentCreationContext("I/O", "Switch", () => new Switch(1, this.GetWorldMousePos())));
+        this.AddNewComponentCreationContext(new ComponentCreationContext("I/O", "Lamp", () => new Lamp(1, this.GetWorldMousePos())));
 
         // MAIN MENU BAR
         ImGui.BeginMainMenuBar();
 
-        ImGui.MenuItem("File");
-        ImGui.MenuItem("Edit");
+        if (ImGui.MenuItem("Save"))
+        {
+            this.CurrentTab.Save();
+        }
+
+        if (ImGui.MenuItem("New Circuit"))
+        {
+            EditorTab tab = new EditorTab(new Circuit($"new-circuit-{this.EditorTabs.Count}"));
+            this.OpenEditorTab(tab);
+        }
 
         ImGui.EndMainMenuBar();
 
@@ -177,6 +222,10 @@ public class Editor : Application<Editor>
         ImGui.SetNextWindowSize(new Vector2(this.SidebarWidth, base.WindowSize.Y - (this.MainMenuBarHeight - 2)), ImGuiCond.Always);
         ImGui.Begin("Components", ImGuiWindowFlags.NoResize | ImGuiWindowFlags.AlwaysVerticalScrollbar | ImGuiWindowFlags.NoNavInputs | ImGuiWindowFlags.NoCollapse | ImGuiWindowFlags.NoTitleBar | ImGuiWindowFlags.NoMove | ImGuiWindowFlags.NoSavedSettings);
         ImGui.PopStyleVar();
+
+        // Here we should submit all custom circuits to the sidebar and
+        this.SubmitCircuitCreations();
+
         this.SubmitComponentCreations();
         ImGui.End();
 
@@ -189,7 +238,7 @@ public class Editor : Application<Editor>
         ImGui.Begin("Main Dockspace", flags);
         ImGui.PopStyleVar();
 
-        ImGui.BeginTabBar("Tabs", ImGuiTabBarFlags.None);
+        ImGui.BeginTabBar("Tabs", ImGuiTabBarFlags.None | ImGuiTabBarFlags.Reorderable | ImGuiTabBarFlags.AutoSelectNewTabs);
 
         foreach (KeyValuePair<string, EditorTab> kvp in this.EditorTabs)
         {
@@ -200,7 +249,7 @@ public class Editor : Application<Editor>
                 ImGui.PushStyleVar(ImGuiStyleVar.Alpha, 0.5f);
             }
 
-            if (ImGui.BeginTabItem(kvp.Key.PadRight(15), ref open, ImGuiTabItemFlags.None))
+            if (ImGui.BeginTabItem(kvp.Key, ref open, kvp.Value.HasChanges() ? ImGuiTabItemFlags.UnsavedDocument : ImGuiTabItemFlags.None))
             {
                 this.CurrentEditorTab = kvp.Key;
                 ImGui.EndTabItem();
@@ -209,6 +258,34 @@ public class Editor : Application<Editor>
             if (this.FSM.CurrentState.ForcesSameTab && kvp.Key != this.CurrentEditorTab)
             {
                 ImGui.PopStyleVar();
+            }
+
+            if (!open)
+            {
+                if (kvp.Value.TryClose())
+                {
+                    // TODO: Remove the tab
+                    this.EditorTabs.Remove(kvp.Key);
+                    if (this.CurrentEditorTab == kvp.Key)
+                    {
+                        this.CurrentEditorTab = this.EditorTabs.First().Key;
+                    }
+                }
+                else
+                {
+                    this.ModalError($"You have unsaved changes in '{kvp.Key}'. Closing the tab before\nsaving will discard all changes. Are you sure you want to close it?", ModalButtonsType.YesNo, (res) =>
+                    {
+                        if (res == ModalResult.Yes)
+                        {
+                            // TODO: Remove the tab with same code as above ^
+                            this.EditorTabs.Remove(kvp.Key);
+                            if (this.CurrentEditorTab == kvp.Key)
+                            {
+                                this.CurrentEditorTab = this.EditorTabs.First().Key;
+                            }
+                        }
+                    });
+                }
             }
 
         }
@@ -223,30 +300,29 @@ public class Editor : Application<Editor>
         ImGui.Text(ImGui.GetIO().WantCaptureKeyboard ? "Keyboard wanted" : "Keyboard not wanted");
         ImGui.Text("Zoom: " + this.camera.zoom.ToString());
         ImGui.Text("STATE: " + this.FSM.CurrentState.ToString());
-        ImGui.Text("MOUSEINWORLD: " + this.GetWorldMousePos().ToString());
-        ImGui.Text("MOUSEINWINDOW: " + UserInput.GetMousePositionInWindow().ToString());
-        ImGui.Text("WINDOW: " + this.WindowSize.ToString());
-        ImGui.Text("AMOUNT OF WIRES: " + this.Simulator.AllWires.Count);
+
+        List<(int, IOConfig, string)> ioConfigs = this.Simulator.GetIOConfigs();
+
+        foreach ((int i, IOConfig io, string id) in ioConfigs)
+        {
+            ImGui.Text($"IO {i} bits: {io.ToString()} ({id})");
+        }
 
         if (ImGui.Button("Undo"))
         {
-            base.Undo(this);
+            this.Undo();
         }
         ImGui.SameLine();
         if (ImGui.Button("Redo"))
         {
-            base.Redo(this);
+            this.Redo();
         }
         ImGui.SameLine();
-        if (ImGui.Button("NEW"))
+        for (int i = 0; i < this.CurrentTab.Commands.Count; i++)
         {
-            this.OpenEditorTab(new EditorTab(this.EditorTabs.Count.ToString()));
-        }
-        for (int i = 0; i < base.Commands.Count; i++)
-        {
-            Command<Editor> c = base.Commands[i];
+            Command<Editor> c = this.CurrentTab.Commands[i];
 
-            if (i > base.CurrentCommandIndex)
+            if (i > this.CurrentTab.CurrentCommandIndex)
             {
                 ImGui.TextDisabled(c.ToString());
             }
@@ -283,6 +359,28 @@ public class Editor : Application<Editor>
 
         this.EditorTabs[this.CurrentEditorTab].SubmitUI(this);
         this.IsMouseInWorld = Raylib.CheckCollisionPointRec(UserInput.GetMousePositionInWindow(), Util.CreateRecFromTwoCorners(new Vector2(this.SidebarWidth, this.MainMenuBarHeight + this.CircuitTabBarHeight), this.WindowSize)) && !ImGui.GetIO().WantCaptureKeyboard;
+        this.IsMouseInWorld = this.IsMouseInWorld && !ImGui.GetIO().WantCaptureMouse;
+    }
+
+    private void SubmitCircuitCreations()
+    {
+        foreach (KeyValuePair<string, EditorTab> tab in this.EditorTabs)
+        {
+
+            if (tab.Key != this.CurrentEditorTab)
+            {
+
+                Vector2 buttonSize = new Vector2(140, 25);
+                ImGui.Button(tab.Value.Name, buttonSize);
+                if (ImGui.IsItemClicked())
+                {
+                    Component c = new IntegratedComponent(this.GetWorldMousePos().SnapToGrid(), tab.Value.Circuit);
+                    CommandNewComponent cnc = new CommandNewComponent(c);
+                    this.Execute(cnc, this);
+                    this.FSM.SetState<ESMovingSelection>(this, 0);
+                }
+            }
+        }
     }
 
     public void NewComponent(Component c, bool absolutePosition = false)

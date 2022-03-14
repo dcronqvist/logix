@@ -5,7 +5,7 @@ namespace LogiX.Components;
 public class IO
 {
     public int BitWidth { get; set; }
-    public LogicValue[] Values { get; }
+    public LogicValue[] Values { get; private set; }
     public LogicValue[] PushedValues { get; private set; }
     public Component OnComponent { get; }
     public Wire? Wire { get; set; }
@@ -16,6 +16,23 @@ public class IO
         this.Values = new LogicValue[bitWidth];
         this.PushedValues = new LogicValue[bitWidth];
         this.OnComponent = onComponent;
+    }
+
+    public int GetIndexOnComponent()
+    {
+        return this.OnComponent.GetIndexOfIO(this);
+    }
+
+    public void UpdateBitWidth(int newWidth)
+    {
+        this.BitWidth = newWidth;
+        this.Values = new LogicValue[newWidth];
+        this.PushedValues = new LogicValue[newWidth];
+    }
+
+    public void UpdateConfig(IOConfig config)
+    {
+        this.OnComponent.UpdateIOConfig(this, config);
     }
 
     public void PushValues(params LogicValue[] values)
@@ -60,6 +77,11 @@ public class IO
         {
             this.Values[i] = values[i];
         }
+    }
+
+    public bool HasDiffBitWidth()
+    {
+        return this.Wire?.Status == WireStatus.DIFF_BITWIDTH;
     }
 
     public bool HasLogicValue(LogicValue value)
@@ -114,6 +136,11 @@ public class IO
 
     public Color GetColor()
     {
+        if (this.HasDiffBitWidth())
+        {
+            return Color.ORANGE;
+        }
+
         if (this.HasError())
         {
             return Color.RED;
@@ -130,7 +157,7 @@ public class IO
         }
         else
         {
-            return Util.InterpolateColors(Color.GREEN, Color.DARKGREEN, this.GetHighFraction());
+            return Util.InterpolateColors(Color.WHITE, Color.BLUE, this.GetHighFraction());
         }
     }
 }

@@ -31,8 +31,11 @@ public class ESMovingSelection : State<Editor, int>
 
             if (this.willDoCommand)
             {
-                CommandMovedSelection cms = new CommandMovedSelection(arg.Simulator.Selection.Copy(), endPos - this.originalStartPos);
-                arg.Execute(cms, arg);
+                if (endPos != this.originalStartPos)
+                {
+                    CommandMovedSelection cms = new CommandMovedSelection(arg.Simulator.Selection.Copy(), endPos - this.originalStartPos);
+                    arg.Execute(cms, arg);
+                }
             }
 
             this.GoToState<ESNone>(0);

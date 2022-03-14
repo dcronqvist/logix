@@ -2,6 +2,7 @@ using System.Diagnostics.CodeAnalysis;
 using QuikGraph;
 using QuikGraph.Algorithms.Search;
 using QuikGraph.Algorithms.ConnectedComponents;
+using LogiX.SaveSystem;
 
 namespace LogiX.Components;
 
@@ -134,9 +135,51 @@ public class Wire
         return true;
     }
 
-    public bool IsConnectedTo(IO io)
+    public bool IsConnectedTo(IO io, [NotNullWhen(true)] out IOWireNode? node)
     {
+        node = this.Graph.Vertices.FirstOrDefault(x => x is IOWireNode iow && iow.IO == io, null) as IOWireNode;
+
         return this.IOs.Contains(io);
+    }
+
+    public void ChangeIOWireNodeToJunction(IOWireNode node)
+    {
+        List<Edge<WireNode>> edges = this.Graph.AdjacentEdges(node).ToList();
+
+        foreach (Edge<WireNode> edge in edges)
+        {
+            this.Graph.RemoveEdge(edge);
+        }
+
+        this.Graph.RemoveVertex(node);
+        WireNode newJunc = this.CreateJunctionWireNode(node.GetPosition());
+
+        foreach (Edge<WireNode> edge in edges)
+        {
+            this.Graph.AddEdge(new Edge<WireNode>(edge.GetOtherVertex(node), newJunc));
+        }
+
+        this.UpdateIOs();
+    }
+
+    public void ChangeJunctionNodeToIONode(JunctionWireNode jwn, IO io)
+    {
+        List<Edge<WireNode>> edges = this.Graph.AdjacentEdges(jwn).ToList();
+
+        foreach (Edge<WireNode> edge in edges)
+        {
+            this.Graph.RemoveEdge(edge);
+        }
+
+        this.Graph.RemoveVertex(jwn);
+        IOWireNode newIO = this.CreateIOWireNode(io);
+
+        foreach (Edge<WireNode> edge in edges)
+        {
+            this.Graph.AddEdge(new Edge<WireNode>(edge.GetOtherVertex(jwn), newIO));
+        }
+
+        this.UpdateIOs();
     }
 
     public bool AllIOsUnknown() => this.IOs.All(io => io.HasUnknown());
@@ -221,6 +264,15 @@ public class Wire
     public void Render()
     {
         Color color = this.IOs.Count > 0 ? this.IOs[0].GetColor() : Color.GRAY;
+
+        if (this.Status == WireStatus.CONFLICT)
+        {
+            color = Color.RED;
+        }
+        else if (this.Status == WireStatus.DIFF_BITWIDTH)
+        {
+            color = Color.ORANGE;
+        }
 
         foreach (Edge<WireNode> edge in this.Graph.Edges)
         {
@@ -358,5 +410,37 @@ public class Wire
         this.Graph.RemoveEdgeIf(e => e.Source == source && e.Target == target);
         this.Graph.AddEdge(new Edge<WireNode>(source, insert));
         this.Graph.AddEdge(new Edge<WireNode>(insert, target));
+    }
+
+    public WireDescription ToDescription()
+    {
+        UndirectedGraph<Node, Edge<Node>> graph = new UndirectedGraph<Node, Edge<Node>>();
+
+        Dictionary<WireNode, Node> nodeMap = new Dictionary<WireNode, Node>();
+
+        foreach (WireNode vertex in this.Graph.Vertices)
+        {
+            if (vertex is IOWireNode iow)
+            {
+                Node newIONode = new Node() { IOIndex = iow.IO.GetIndexOnComponent(), Component = iow.IO.OnComponent.UniqueID };
+                nodeMap.Add(vertex, newIONode);
+                graph.AddVertex(newIONode);
+            }
+            else
+            {
+                Node newJuncNode = new Node() { Position = vertex.GetPosition() };
+                nodeMap.Add(vertex, newJuncNode);
+                graph.AddVertex(newJuncNode);
+            }
+        }
+
+        foreach (Edge<WireNode> edge in this.Graph.Edges)
+        {
+            Node source = nodeMap[edge.Source];
+            Node target = nodeMap[edge.Target];
+            graph.AddEdge(new Edge<Node>(source, target));
+        }
+
+        return new WireDescription(graph);
     }
 }

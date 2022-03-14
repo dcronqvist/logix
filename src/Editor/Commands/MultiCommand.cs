@@ -6,10 +6,12 @@ namespace LogiX.Editor.Commands;
 public class MultiCommand<T> : Command<T>
 {
     List<Command<T>> commands;
+    string description;
 
-    public MultiCommand(params Command<T>[] commands)
+    public MultiCommand(string description, params Command<T>[] commands)
     {
         this.commands = new List<Command<T>>(commands);
+        this.description = description;
     }
 
     public override void Execute(T arg)
@@ -26,5 +28,10 @@ public class MultiCommand<T> : Command<T>
         {
             this.commands[i].Undo(arg);
         }
+    }
+
+    public override string ToString()
+    {
+        return this.description;
     }
 }

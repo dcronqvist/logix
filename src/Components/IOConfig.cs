@@ -18,4 +18,9 @@ public class IOConfig
         this.Side = side;
         this.Identifier = identifier;
     }
+
+    public override string ToString()
+    {
+        return $"{this.Side} {this.Identifier}";
+    }
 }
