@@ -1,4 +1,5 @@
 using System.Reflection;
+using LogiX.Editor.Commands;
 using LogiX.SaveSystem;
 
 namespace LogiX.Components;
@@ -33,7 +34,7 @@ public abstract class Component : ISelectable
             string[] ioIdentifiers = this.IOs.Select(x => x.Item2.Identifier!).Where(x => x != null).ToArray();
             float maxIOIdentifierWidth = Util.GetMaxWidthOfStrings(Util.OpenSans, this.TextSize / 2, 0, ioIdentifiers);
 
-            float widthFromIOs = MathF.Max(maxIOsWidth * Util.GridSizeX, maxIOIdentifierWidth + textWidth);
+            float widthFromIOs = MathF.Max(maxIOsWidth * Util.GridSizeX, maxIOIdentifierWidth * 2 + textWidth);
             float heightFromIOs = MathF.Max(maxIOsHeight * Util.GridSizeY, textHeight);
 
             //float width = Math.Max(minWidth, maxIOsWidth * (this.IORadius * 2 + this.IODistBetween) - this.IODistBetween) + (maxIOIdentifierWidth > 0 ? maxIOIdentifierWidth + this.PaddingWidth : 0);
@@ -67,6 +68,16 @@ public abstract class Component : ISelectable
         this.Position = position;
         this.UniqueID = uniqueID is null ? Guid.NewGuid().ToString() : uniqueID;
         this.IOs = new List<(IO, IOConfig)>();
+    }
+
+    public void RotateRight()
+    {
+        this.Rotation = (this.Rotation + 1) % 4;
+    }
+
+    public void RotateLeft()
+    {
+        this.Rotation = (this.Rotation + 3) % 4;
     }
 
     public void SetRotation(int rotation)
@@ -183,6 +194,15 @@ public abstract class Component : ISelectable
             Raylib.DrawLineEx(posAtComp, ioPos, 2f, Color.BLACK);
             Raylib.DrawCircleV(ioPos, this.IORadius + 1f, Color.BLACK);
             Raylib.DrawCircleV(ioPos, this.IORadius, io.GetColor());
+
+            // Draw IO Bitwidth if it is something other than 1
+            int bitWidth = io.BitWidth;
+
+            if (bitWidth > 1)
+            {
+                Vector2 measure = Raylib.MeasureTextEx(Util.OpenSans, bitWidth.ToString(), this.IORadius * 2, 0);
+                Raylib.DrawTextEx(Util.OpenSans, bitWidth.ToString(), ioPos - measure / 2f, this.IORadius * 2, 0, Color.BLACK);
+            }
         }
     }
 
@@ -264,7 +284,7 @@ public abstract class Component : ISelectable
         this.Position += delta;
     }
 
-    public void SubmitUIPropertyWindow()
+    public void SubmitUIPropertyWindow(Editor.Editor editor)
     {
         Type thisType = this.GetType();
 
@@ -278,7 +298,10 @@ public abstract class Component : ISelectable
                 ComponentPropAttribute? cpa = prop.GetCustomAttribute<ComponentPropAttribute>();
                 if (cpa is not null)
                 {
-                    cpa.SubmitForProperty(prop, this);
+                    if (cpa.SubmitForProperty(prop, this, out CommandComponentPropChanged? cmd))
+                    {
+                        editor.Execute(cmd);
+                    }
                 }
             }
         }

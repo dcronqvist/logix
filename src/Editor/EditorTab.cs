@@ -21,23 +21,42 @@ public class EditorTab : Invoker<Editor>
     public EditorTab(Circuit circuit)
     {
         this.Name = circuit.Name;
-        this.Simulator = new Simulator();
         this.FSM = new EditorFSM();
         this.CameraTarget = Vector2.Zero;
         this.CameraZoom = 1f;
         this.LastSavedCommandIndex = this.CurrentCommandIndex;
         this.Circuit = circuit;
+        this.Simulator = circuit.GetSimulatorForCircuit();
     }
 
     public void OnEnter(Editor editor)
     {
+        List<CircuitDependency> dependencies = this.Circuit.GetDependencyCircuits();
 
+        foreach (EditorTab tab in editor.EditorTabs.Values)
+        {
+            // Check if tab's circuit is in our dependencies
+            CircuitDependency? dependency = dependencies.FirstOrDefault(d => d.CircuitID == tab.Circuit.UniqueID, null);
+
+            if (dependency is not null)
+            {
+                // IF so, check if that circuit is up to date
+                if (!tab.Circuit.MatchesDependency(dependency))
+                {
+                    // IF not, update the circuit
+                    List<IntegratedComponent> comps = this.Simulator.GetComponents<IntegratedComponent>(ic => ic.Circuit.UniqueID == dependency.CircuitID);
+                    comps.ForEach(ic => ic.UpdateCircuit(tab.Circuit));
+
+                    this.Circuit.UpdateDependency(dependency, tab.Circuit);
+                }
+            }
+        }
     }
 
     public void Save()
     {
         this.LastSavedCommandIndex = this.CurrentCommandIndex;
-        this.Circuit.Update(this.Simulator);
+        this.Circuit.Update(this.Simulator.AllComponents, this.Simulator.AllWires);
     }
 
     public bool HasChanges()
@@ -89,15 +108,22 @@ public class EditorTab : Invoker<Editor>
 
         if (this.Simulator.Selection.Count == 1 && this.Simulator.Selection[0] is Component comp)
         {
-            comp.SubmitUIPropertyWindow();
+            comp.SubmitUIPropertyWindow(editor);
         }
 
         ImGui.Begin("Dependencies");
 
-        List<string> dependencies = this.Circuit.GetDependencyCircuits();
-        foreach (string dep in dependencies)
+        ImGui.Text("This circuit has ID: " + this.Circuit.UniqueID + "\nUpdate: " + this.Circuit.UpdateID);
+        ImGui.Separator();
+
+        ImGui.Text("Deps:");
+
+        List<CircuitDependency> dependencies = this.Circuit.GetDependencyCircuits();
+        foreach (CircuitDependency dep in dependencies)
         {
-            ImGui.Text(dep);
+            ImGui.Text(dep.CircuitID);
+            ImGui.Text(dep.CircuitUpdateID);
+            ImGui.Separator();
         }
 
         ImGui.End();

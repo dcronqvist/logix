@@ -21,7 +21,6 @@ public class CommandDeleteComponent : Command<Editor>
 
         foreach (Wire wire in allWires)
         {
-
             foreach ((IO io, IOConfig ioc) in this.c.IOs)
             {
                 if (wire.IsConnectedTo(io, out IOWireNode? node))

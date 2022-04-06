@@ -10,6 +10,14 @@ public class Circuit
     public string UpdateID { get; set; }
     public string Name { get; set; }
 
+    [JsonConstructor]
+    public Circuit(string name, string uniqueID, string updateID)
+    {
+        this.Name = name;
+        this.UniqueID = uniqueID;
+        this.UpdateID = updateID;
+    }
+
     public Circuit(string name)
     {
         this.Name = name;
@@ -17,45 +25,67 @@ public class Circuit
         this.UpdateID = Guid.NewGuid().ToString();
     }
 
-    public Circuit(string name, Simulator simulator)
+    public Circuit(string name, List<Component> comps, List<Wire> wires)
     {
         this.Name = name;
-        this.Components = this.GatherComponents(simulator);
-        this.Wires = this.GatherWires(simulator);
+        this.Components = this.GatherComponents(comps);
+        this.Wires = this.GatherWires(wires);
         this.UniqueID = Guid.NewGuid().ToString();
         this.UpdateID = Guid.NewGuid().ToString();
     }
 
-    public void Update(Simulator simulator)
+    public void Update(List<Component> comps, List<Wire> wires)
     {
-        this.Components = this.GatherComponents(simulator);
-        this.Wires = this.GatherWires(simulator);
+        this.Components = this.GatherComponents(comps);
+        this.Wires = this.GatherWires(wires);
         this.UpdateID = Guid.NewGuid().ToString();
     }
 
-    public List<ComponentDescription> GatherComponents(Simulator simulator)
+    public List<ComponentDescription> GatherComponents(List<Component> comps)
     {
-        return simulator.AllComponents.Select(c => c.ToDescription()).ToList();
+        return comps.Select(c => c.ToDescription()).ToList();
     }
 
-    public List<WireDescription> GatherWires(Simulator simulator)
+    public List<WireDescription> GatherWires(List<Wire> wires)
     {
-        return simulator.AllWires.Select(w => w.ToDescription()).ToList();
+        return wires.Select(w => w.ToDescription()).ToList();
+    }
+
+    public (List<Component>, List<Wire>) GetComponentsAndWires()
+    {
+        return this.GetComponentsAndWires(Vector2.Zero);
+    }
+
+    public (List<Component>, List<Wire>) GetComponentsAndWires(Vector2 newMiddlePos)
+    {
+        List<Component> comps = new List<Component>();
+        List<Wire> wires = new List<Wire>();
+
+        if (this.Components is null)
+        {
+            return (comps, wires);
+        }
+
+        foreach (ComponentDescription desc in this.Components)
+        {
+            comps.Add(desc.ToComponent());
+        }
+
+        foreach (WireDescription desc in this.Wires)
+        {
+            wires.Add(desc.ToWire(comps));
+        }
+
+        return (comps, wires);
     }
 
     public Simulator GetSimulatorForCircuit()
     {
         Simulator simulator = new Simulator();
 
-        foreach (ComponentDescription compDesc in this.Components)
-        {
-            simulator.AddComponent(compDesc.ToComponent());
-        }
-
-        foreach (WireDescription wireDesc in this.Wires)
-        {
-            simulator.AddWire(wireDesc.ToWire(simulator.AllComponents));
-        }
+        (List<Component> comps, List<Wire> wires) = this.GetComponentsAndWires();
+        simulator.AllComponents = comps;
+        simulator.AllWires = wires;
 
         return simulator;
     }
@@ -66,23 +96,52 @@ public class Circuit
         return sim.GetIOConfigs();
     }
 
-    public List<string> GetDependencyCircuits()
+    public List<CircuitDependency> GetDependencyCircuits()
     {
         if (this.Components is null)
         {
-            return new List<string>();
+            return Util.EmptyList<CircuitDependency>();
         }
 
-        List<string> circuits = new List<string>();
+        List<CircuitDependency> circuits = new List<CircuitDependency>();
 
         foreach (ComponentDescription compDesc in this.Components)
         {
             if (compDesc is DescriptionIntegrated descIntegrated)
             {
-                circuits.Add(descIntegrated.Circuit.UniqueID);
+                circuits.Add(descIntegrated.Circuit.GetAsDependency());
             }
         }
 
         return circuits.RemoveDuplicates();
+    }
+
+    public bool MatchesDependency(CircuitDependency dependency)
+    {
+        return this.UniqueID == dependency.CircuitID && this.UpdateID == dependency.CircuitUpdateID;
+    }
+
+    public CircuitDependency GetAsDependency()
+    {
+        return new CircuitDependency()
+        {
+            CircuitID = this.UniqueID,
+            CircuitUpdateID = this.UpdateID
+        };
+    }
+
+    public void UpdateDependency(CircuitDependency dependency, Circuit circuit)
+    {
+        List<DescriptionIntegrated> descInt = this.Components.Where(x => x is DescriptionIntegrated di && di.Circuit.UniqueID == dependency.CircuitID).Cast<DescriptionIntegrated>().ToList();
+        descInt.ForEach(di => di.Circuit = circuit.Clone());
+    }
+
+    public Circuit Clone()
+    {
+        (List<Component> comps, List<Wire> wires) = this.GetComponentsAndWires();
+        Circuit newCirc = new Circuit(this.Name, comps, wires);
+        newCirc.UniqueID = this.UniqueID;
+        newCirc.UpdateID = this.UpdateID;
+        return newCirc;
     }
 }

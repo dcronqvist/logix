@@ -143,6 +143,22 @@ public static class Util
         }.GetValueOrDefault(key, key.ToString().Replace("KEY_", ""));
     }
 
+    public static string KeyComboString(params KeyboardKey[] keys)
+    {
+        StringBuilder sb = new StringBuilder();
+
+        foreach (KeyboardKey key in keys)
+        {
+            sb.Append(key.Pretty());
+            if (key != keys.Last())
+            {
+                sb.Append(" + ");
+            }
+        }
+
+        return sb.ToString();
+    }
+
     public static bool TryGetFileInfo(string filePath, out FileInfo info)
     {
         if (File.Exists(filePath))
@@ -176,18 +192,16 @@ public static class Util
         {
             case "AND":
                 return new ANDLogic();
-            // case "NAND":
-            //     return new NANDLogic();
+            case "NAND":
+                return new NANDLogic();
             case "OR":
                 return new ORLogic();
             case "NOR":
                 return new NORLogic();
             case "XOR":
                 return new XORLogic();
-                // case "XNOR":
-                //     return new XNORLogic();
-                // case "NOT":
-                //     return new NOTLogic();
+            case "XNOR":
+                return new XNORLogic();
         }
 
         return null;
@@ -323,6 +337,18 @@ public static class Util
     public static List<T> RemoveDuplicates<T>(this List<T> list)
     {
         return list.Distinct().ToList();
+    }
+
+    public static IBufferLogic GetBufferLogicFromName(string name)
+    {
+        switch (name)
+        {
+            case "BUF":
+                return new BufferLogic();
+            case "NOT":
+                return new InverterLogic();
+        }
+        return null;
     }
 
     // public static Component CreateComponentWithPluginIdentifier(string identifier, Vector2 position, int rotation, CustomComponentData data)
@@ -551,6 +577,11 @@ public static class Util
     public static string ToStringPretty<T>(this IEnumerable<T> list)
     {
         return "[" + string.Join(", ", list.Select(x => x.ToString())) + "]";
+    }
+
+    public static Color Multiply(this Color c, float f)
+    {
+        return new Color((byte)(c.r * f), (byte)(c.g * f), (byte)(c.b * f), c.a);
     }
 
     // public static List<Action<Editor.Editor, Component>> GetAdditionalComponentContexts(Type component)
@@ -990,5 +1021,20 @@ public static class Util
     public static Vector2 MiddleOfEdge(this Edge<WireNode> edge)
     {
         return (edge.Source.GetPosition() + edge.Target.GetPosition()) / 2;
+    }
+
+    public static Color ToColor(this LogicValue value, Color? lowColor = null)
+    {
+        switch (value)
+        {
+            case LogicValue.HIGH:
+                return Color.BLUE;
+            case LogicValue.LOW:
+                return lowColor ?? Color.WHITE;
+            case LogicValue.UNKNOWN:
+                return Color.GRAY;
+            default:
+                throw new ArgumentOutOfRangeException(nameof(value), value, null);
+        }
     }
 }

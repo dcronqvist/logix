@@ -58,6 +58,7 @@ public class IntegratedComponent : Component
         }
     }
     Simulator simulator;
+    public override string Text => this.Circuit.Name;
 
     public IntegratedComponent(Vector2 position, Circuit circuit, string? uniqueID = null) : base(position, ComponentType.INTEGRATED, uniqueID)
     {

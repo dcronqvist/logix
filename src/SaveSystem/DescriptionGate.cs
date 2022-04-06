@@ -7,7 +7,7 @@ public class DescriptionGate : ComponentDescription
     public int Bits { get; set; }
     public string Logic { get; set; }
 
-    public DescriptionGate(Vector2 position, int rotation, string uniqueID, int bits, string logic) : base(position, rotation, uniqueID, ComponentType.SWITCH)
+    public DescriptionGate(Vector2 position, int rotation, string uniqueID, int bits, string logic) : base(position, rotation, uniqueID, ComponentType.LOGIC_GATE)
     {
         this.Bits = bits;
         this.Logic = logic;

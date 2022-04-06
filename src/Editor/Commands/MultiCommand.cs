@@ -8,6 +8,12 @@ public class MultiCommand<T> : Command<T>
     List<Command<T>> commands;
     string description;
 
+    public MultiCommand(string description, List<Command<T>> commands)
+    {
+        this.description = description;
+        this.commands = commands;
+    }
+
     public MultiCommand(string description, params Command<T>[] commands)
     {
         this.commands = new List<Command<T>>(commands);

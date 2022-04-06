@@ -34,7 +34,7 @@ public class Switch : Component
         }
     }
 
-    [ComponentProp("Side")]
+    [ComponentProp("Integrated Side")]
     public ComponentSide Side { get; set; }
 
     [ComponentProp("Identifier")]
@@ -90,6 +90,41 @@ public class Switch : Component
             Rectangle rec = new Rectangle(basePos.X + WIDTH_PER_BITS * i, basePos.Y, WIDTH_PER_BITS, WIDTH_PER_BITS).Inflate(-2);
             Raylib.DrawRectangleRec(rec, this.Values[i] == LogicValue.HIGH ? Color.BLUE : Color.LIGHTGRAY);
         }
+
+        // Render label on the opposite side of the IO
+        IO io = this.GetIO(0);
+        ComponentSide oppositeSide = Util.GetRotatedComponentSide(this.IOs[0].Item2.Side, (this.Rotation + 2) % 4);
+        Vector2 endPos = Vector2.Zero;
+
+        // Calculate position of IO
+        if (oppositeSide == ComponentSide.LEFT)
+        {
+            // LEFT
+            endPos = new Vector2(basePos.X - Util.GridSizeX, basePos.Y + Util.GridSizeY);
+        }
+        else if (oppositeSide == ComponentSide.TOP)
+        {
+            // TOP
+            endPos = new Vector2(basePos.X + Util.GridSizeX, basePos.Y - Util.GridSizeY);
+        }
+        else if (oppositeSide == ComponentSide.RIGHT)
+        {
+            // RIGHT
+            endPos = new Vector2(basePos.X + this.Bits * WIDTH_PER_BITS + Util.GridSizeX, basePos.Y + Util.GridSizeY);
+        }
+        else if (oppositeSide == ComponentSide.BOTTOM)
+        {
+            // BOTTOM
+            endPos = new Vector2(basePos.X + Util.GridSizeX, basePos.Y + this.Size.Y + Util.GridSizeY);
+        }
+
+        // Render label
+        int labelFontSize = 12;
+
+        Vector2 textMeasure = Raylib.MeasureTextEx(Util.OpenSans, this.Identifier, labelFontSize, 0);
+
+        Util.RenderTextRotated(endPos - new Vector2(oppositeSide == ComponentSide.LEFT ? textMeasure.X : 0, textMeasure.Y / 2f), Util.OpenSans, labelFontSize, 0, this.Identifier, 0f, Color.BLACK);
+
     }
 
     public override ComponentDescription ToDescription()

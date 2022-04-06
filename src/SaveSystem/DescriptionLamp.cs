@@ -8,7 +8,7 @@ public class DescriptionLamp : ComponentDescription
     public ComponentSide Side { get; set; }
     public string Identifier { get; set; }
 
-    public DescriptionLamp(Vector2 position, int rotation, string uniqueID, int bits, string identifier, ComponentSide side) : base(position, rotation, uniqueID, ComponentType.SWITCH)
+    public DescriptionLamp(Vector2 position, int rotation, string uniqueID, int bits, string identifier, ComponentSide side) : base(position, rotation, uniqueID, ComponentType.LAMP)
     {
         this.Bits = bits;
         this.Side = side;

@@ -35,8 +35,9 @@ public class Simulator
 
     public List<(int, IOConfig, string)> GetIOConfigs()
     {
-        List<Switch> switches = GetAllSwitches();
-        List<Lamp> lamps = GetAllLamps();
+        List<Switch> switches = GetAllSwitches().OrderBy(x => x.Position.X).ThenBy(x => x.Position.Y).ToList();
+        List<Lamp> lamps = GetAllLamps().OrderBy(x => x.Position.X).ThenBy(x => x.Position.Y).ToList();
+
         List<(int, IOConfig, string)> ioConfigs = new List<(int, IOConfig, string)>();
 
         foreach (Switch s in switches)
@@ -303,6 +304,21 @@ public class Simulator
         {
             component.Interact(editor);
         }
+    }
+
+    public List<TComp> GetComponents<TComp>(Func<TComp, bool> func) where TComp : Component
+    {
+        List<TComp> components = new List<TComp>();
+
+        foreach (Component c in this.AllComponents)
+        {
+            if (c is TComp tcomp && func(tcomp))
+            {
+                components.Add(tcomp);
+            }
+        }
+
+        return components;
     }
 
     public Simulator Copy()

@@ -1,4 +1,6 @@
+using System.Diagnostics.CodeAnalysis;
 using System.Reflection;
+using LogiX.Editor.Commands;
 
 namespace LogiX.Components;
 
@@ -21,7 +23,7 @@ public class ComponentPropAttribute : Attribute
         this.ItemWidth = 100;
     }
 
-    public void SubmitForProperty(PropertyInfo prop, Component comp)
+    public bool SubmitForProperty(PropertyInfo prop, Component comp, [NotNullWhen(true)] out CommandComponentPropChanged? cmd)
     {
         Type propType = prop.PropertyType;
 
@@ -29,24 +31,27 @@ public class ComponentPropAttribute : Attribute
         {
             if (propType == typeof(int))
             {
-                this.SubmitInt(prop, comp);
+                return this.SubmitInt(prop, comp, out cmd);
             }
             else if (propType.IsEnum)
             {
-                this.SubmitEnum(prop, comp);
+                return this.SubmitEnum(prop, comp, out cmd);
             }
             else if (propType == typeof(string))
             {
-                this.SubmitString(prop, comp);
+                return this.SubmitString(prop, comp, out cmd);
             }
         }
         else
         {
             ImGui.TextDisabled(prop.GetValue(comp).ToString() + ": " + this.Name);
         }
+
+        cmd = null;
+        return false;
     }
 
-    public void SubmitInt(PropertyInfo prop, Component comp)
+    public bool SubmitInt(PropertyInfo prop, Component comp, [NotNullWhen(true)] out CommandComponentPropChanged? cmd)
     {
         int v = prop.GetValue(comp) as int? ?? 0;
         int oldVal = v;
@@ -57,10 +62,16 @@ public class ComponentPropAttribute : Attribute
         v = Math.Min(v, this.IntMax);
 
         if (oldVal != v)
-            prop.SetValue(comp, v);
+        {
+            cmd = new CommandComponentPropChanged($"{this.Name} of {comp.DisplayText} changed", comp, prop, v);
+            return true;
+        }
+
+        cmd = null;
+        return false;
     }
 
-    public void SubmitEnum(PropertyInfo prop, Component comp)
+    public bool SubmitEnum(PropertyInfo prop, Component comp, [NotNullWhen(true)] out CommandComponentPropChanged? cmd)
     {
         var values = Enum.GetValues(prop.PropertyType);
 
@@ -70,17 +81,32 @@ public class ComponentPropAttribute : Attribute
             foreach (var val in values)
             {
                 if (ImGui.Selectable(val.ToString()))
-                    prop.SetValue(comp, val);
+                {
+                    cmd = new CommandComponentPropChanged($"{this.Name} of {comp.DisplayText} changed", comp, prop, val);
+                    return true;
+                }
             }
             ImGui.EndCombo();
         }
+
+        cmd = null;
+        return false;
     }
 
-    public void SubmitString(PropertyInfo prop, Component comp)
+    public bool SubmitString(PropertyInfo prop, Component comp, [NotNullWhen(true)] out CommandComponentPropChanged? cmd)
     {
         string s = prop.GetValue(comp) as string ?? "";
+        string copy = s;
         ImGui.SetNextItemWidth(this.ItemWidth);
         ImGui.InputText(this.Name, ref s, 16);
-        prop.SetValue(comp, s);
+
+        if (s != copy)
+        {
+            cmd = new CommandComponentPropChanged($"{this.Name} of {comp.DisplayText} changed", comp, prop, s);
+            return true;
+        }
+
+        cmd = null;
+        return false;
     }
 }

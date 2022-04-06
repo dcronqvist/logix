@@ -61,6 +61,30 @@ public class ANDLogic : IGateLogic
     }
 }
 
+public class NANDLogic : IGateLogic
+{
+    public string GetLogicText()
+    {
+        return "NAND";
+    }
+
+    public LogicValue GetOutput(params LogicValue[] inputs)
+    {
+        if (inputs.Any(v => v == LogicValue.ERROR))
+        {
+            return LogicValue.ERROR;
+        }
+        else if (inputs.Any(v => v == LogicValue.UNKNOWN))
+        {
+            return LogicValue.UNKNOWN;
+        }
+        else
+        {
+            return inputs.All(v => v == LogicValue.HIGH) ? LogicValue.LOW : LogicValue.HIGH;
+        }
+    }
+}
+
 public class ORLogic : IGateLogic
 {
     public string GetLogicText()
@@ -89,30 +113,6 @@ public class ORLogic : IGateLogic
     }
 }
 
-public class XORLogic : IGateLogic
-{
-    public string GetLogicText()
-    {
-        return "XOR";
-    }
-
-    public LogicValue GetOutput(params LogicValue[] inputs)
-    {
-        if (inputs.Any(v => v == LogicValue.ERROR))
-        {
-            return LogicValue.ERROR;
-        }
-        else if (inputs.Any(v => v == LogicValue.UNKNOWN))
-        {
-            return LogicValue.UNKNOWN;
-        }
-        else
-        {
-            return inputs.Count(v => v == LogicValue.HIGH) % 2 == 1 ? LogicValue.HIGH : LogicValue.LOW;
-        }
-    }
-}
-
 public class NORLogic : IGateLogic
 {
     public string GetLogicText()
@@ -137,6 +137,54 @@ public class NORLogic : IGateLogic
         else
         {
             return LogicValue.HIGH;
+        }
+    }
+}
+
+public class XORLogic : IGateLogic
+{
+    public string GetLogicText()
+    {
+        return "XOR";
+    }
+
+    public LogicValue GetOutput(params LogicValue[] inputs)
+    {
+        if (inputs.Any(v => v == LogicValue.ERROR))
+        {
+            return LogicValue.ERROR;
+        }
+        else if (inputs.Any(v => v == LogicValue.UNKNOWN))
+        {
+            return LogicValue.UNKNOWN;
+        }
+        else
+        {
+            return inputs.Count(v => v == LogicValue.HIGH) % 2 == 1 ? LogicValue.HIGH : LogicValue.LOW;
+        }
+    }
+}
+
+public class XNORLogic : IGateLogic
+{
+    public string GetLogicText()
+    {
+        return "XNOR";
+    }
+
+    public LogicValue GetOutput(params LogicValue[] inputs)
+    {
+        if (inputs.Any(v => v == LogicValue.ERROR))
+        {
+            return LogicValue.ERROR;
+        }
+        else if (inputs.Any(v => v == LogicValue.UNKNOWN))
+        {
+            return LogicValue.UNKNOWN;
+        }
+        else
+        {
+            return inputs.Count(v => v == LogicValue.HIGH) % 2 == 1 ? LogicValue.LOW : LogicValue.HIGH;
         }
     }
 }

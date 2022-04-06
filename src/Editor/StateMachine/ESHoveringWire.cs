@@ -34,14 +34,6 @@ public class ESHoveringWire : State<Editor, int>
 
                 arg.OpenContextMenu("test", () =>
                 {
-                    ImGui.Text($"Wire {arg.Simulator.AllWires.IndexOf(this.wire!)}");
-                    ImGui.Text($"{this.wire!.IOs.Count} IOs");
-                    foreach (IO io in this.wire!.IOs)
-                    {
-                        ImGui.Text($"{io.OnComponent.Text}");
-                    }
-
-                    ImGui.Separator();
                     if (ImGui.MenuItem("Delete Segment"))
                     {
                         CommandDeleteWireSegment cdws = new CommandDeleteWireSegment(clickedMousePos);

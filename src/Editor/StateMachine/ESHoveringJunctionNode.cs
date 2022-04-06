@@ -43,7 +43,6 @@ public class ESHoveringJunctionNode : State<Editor, int>
 
             arg.OpenContextMenu("test", () =>
             {
-                ImGui.Separator();
                 if (ImGui.MenuItem("Create Wire"))
                 {
                     arg.FirstClickedWireNode = node;

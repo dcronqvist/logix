@@ -18,11 +18,11 @@ public class CommandAddJunction : Command<Editor>
 
     public override void Execute(Editor arg)
     {
-        Edge<WireNode> edge = Util.GetEdgeFromPos(arg.Simulator, this.position, out Wire wire);
+        Edge<WireNode> edge = Util.GetEdgeFromPos(arg!.Simulator!, this.position, out Wire wire);
         this.sourcePos = edge.Source.GetPosition();
         this.targetPos = edge.Target.GetPosition();
 
-        wire.InsertNodeBetween(edge.Source, wire.CreateJunctionWireNode(this.position), edge.Target);
+        wire.InsertNodeBetween(edge.Source, edge.Target, wire.CreateJunctionWireNode(this.position));
     }
 
     public override string ToString()
@@ -32,10 +32,10 @@ public class CommandAddJunction : Command<Editor>
 
     public override void Undo(Editor arg)
     {
-        WireNode source = Util.GetWireNodeFromPos(arg.Simulator, this.sourcePos, out Wire sourceWire);
-        WireNode target = Util.GetWireNodeFromPos(arg.Simulator, this.targetPos, out Wire targetWire);
+        WireNode source = Util.GetWireNodeFromPos(arg!.Simulator!, this.sourcePos, out Wire sourceWire);
+        WireNode target = Util.GetWireNodeFromPos(arg!.Simulator!, this.targetPos, out Wire targetWire);
 
-        WireNode newJunc = Util.GetWireNodeFromPos(arg.Simulator, this.position, out Wire newJuncWire);
+        WireNode newJunc = Util.GetWireNodeFromPos(arg!.Simulator!, this.position, out Wire newJuncWire);
 
         newJuncWire.RemoveNode(newJunc);
 

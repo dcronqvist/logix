@@ -7,7 +7,9 @@ public enum ComponentType
     LOGIC_GATE,
     SWITCH,
     LAMP,
-    INTEGRATED
+    INTEGRATED,
+    BUFFER,
+    TRI_STATE,
 }
 
 public abstract class ComponentDescription
@@ -17,6 +19,7 @@ public abstract class ComponentDescription
     public string UniqueID { get; set; }
     public ComponentType Type { get; set; }
 
+    [JsonConstructor]
     public ComponentDescription(Vector2 position, int rotation, string uniqueID, ComponentType type)
     {
         this.Position = position;

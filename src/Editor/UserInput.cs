@@ -50,13 +50,29 @@ public static class UserInput
         return new Vector2(topLeft.X + (currentMousePos.X - offset.X) / cam.zoom, topLeft.Y + (currentMousePos.Y - offset.Y) / cam.zoom);
     }
 
-    public static bool KeyComboPressed(KeyboardKey hold, KeyboardKey press)
+    public static bool KeyComboPressed(params KeyboardKey[] keys)
     {
-        return Raylib.IsKeyDown(hold) && Raylib.IsKeyPressed(press);
+        for (int i = 0; i < keys.Length - 1; i++)
+        {
+            if (!Raylib.IsKeyDown(keys[i]))
+            {
+                return false;
+            }
+        }
+
+        return Raylib.IsKeyPressed(keys.Last());
     }
 
-    public static string KeyComboString(KeyboardKey hold, KeyboardKey press)
+    public static bool KeyComboReleased(params KeyboardKey[] keys)
     {
-        return hold.Pretty() + " + " + press.Pretty();
+        for (int i = 0; i < keys.Length - 1; i++)
+        {
+            if (!Raylib.IsKeyUp(keys[i]))
+            {
+                return false;
+            }
+        }
+
+        return Raylib.IsKeyReleased(keys.Last());
     }
 }
