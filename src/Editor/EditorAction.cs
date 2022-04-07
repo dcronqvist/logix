@@ -1,62 +1,47 @@
+using LogiX.Editor.Commands;
+
 namespace LogiX.Editor;
 
 public class EditorAction
 {
-    public Func<Editor, bool> Condition { get; set; }
-    public Func<Editor, bool> Selected { get; set; }
+    public string Category { get; set; }
+    public string Name { get; set; }
+    public KeyboardKey[] Shortcut { get; set; }
+    public Func<Editor, bool> Prerequisite { get; set; }
+    public Action<Editor> Action { get; set; }
 
-    public delegate bool Execution(Editor editor, out string error);
-
-    public Execution Execute { get; set; }
-    public KeyboardKey[] Keys { get; set; }
-
-    public EditorAction(Func<Editor, bool> condition, Func<Editor, bool> selected, Execution execute, params KeyboardKey[] keys)
+    public EditorAction(string category, string name, Action<Editor>? action, Func<Editor, bool>? prerequisite, params KeyboardKey[] shortcut)
     {
-        Condition = condition;
-        this.Selected = selected;
-        Execute = execute;
-        Keys = keys;
+        Category = category;
+        Name = name;
+        Shortcut = shortcut;
+        Action = action ?? (editor => { });
+        Prerequisite = prerequisite ?? (editor => true);
     }
 
-    public bool HasKeys()
+    public bool CanExecute(Editor editor)
     {
-        return this.Keys.Length > 0;
+        return this.Prerequisite(editor);
     }
 
-    public void Update(Editor editor)
+    public virtual void Execute(Editor editor)
     {
-        if (this.Keys.Length > 0)
-        {
-            for (int i = 0; i < this.Keys.Length - 1; i++)
-            {
-                if (!Raylib.IsKeyDown(this.Keys[i]))
-                {
-                    return;
-                }
-            }
+        this.Action(editor);
+    }
+}
 
-            if (this.Condition(editor) && Raylib.IsKeyPressed(this.Keys.Last()))
-            {
-                if (!this.Execute(editor, out string error))
-                {
-                    // An error occured.
-                    editor.ModalError(error);
-                }
-            }
-        }
+public class EditorActionCommand : EditorAction
+{
+    public Command<Editor> Command { get; set; }
+
+    public EditorActionCommand(string category, string name, Command<Editor> command, Func<Editor, bool>? prereq, params KeyboardKey[] shortcut) : base(category, name, null, prereq, shortcut)
+    {
+        Command = command;
+        Prerequisite = prereq ?? ((e) => true);
     }
 
-    public string GetShortcutString()
+    public override void Execute(Editor editor)
     {
-        string s = "";
-        for (int i = 0; i < this.Keys.Length; i++)
-        {
-            s += this.Keys[i].Pretty();
-            if (this.Keys[i] != this.Keys.Last())
-            {
-                s += "+";
-            }
-        }
-        return s;
+        editor.Execute(this.Command);
     }
 }

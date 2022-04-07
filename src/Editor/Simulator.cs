@@ -1,361 +1,340 @@
 using LogiX.Components;
+using QuikGraph;
+using System.Diagnostics.CodeAnalysis;
 
 namespace LogiX.Editor;
 
 public class Simulator
 {
-    public List<Component> Components { get; private set; }
-    public List<Wire> Wires { get; private set; }
-    public List<Component> SelectedComponents { get; private set; }
-    public List<(Wire, int)> SelectedWirePoints { get; private set; }
-    public float SimulationSpeed { get; set; } = 1f;
-    public float UpdatesPerFrame => 1f / this.SimulationSpeed;
-    public bool Simulating { get; set; } = true;
-    private float currentSimCounter = 0f;
-    public Action<Component, Exception> OnComponentCausedError { get; set; }
+    public List<Component> AllComponents { get; set; }
+    public List<Wire> AllWires { get; set; }
+    public List<ISelectable> Selection { get; set; }
 
     public Simulator()
     {
-        this.Components = new List<Component>();
-        this.Wires = new List<Wire>();
-        this.SelectedComponents = new List<Component>();
-        this.SelectedWirePoints = new List<(Wire, int)>();
+        this.AllComponents = new List<Component>();
+        this.AllWires = new List<Wire>();
+        this.Selection = new List<ISelectable>();
     }
 
-    public void SingleUpdate(Vector2 mousePosInWorld)
+    public List<Switch> GetAllSwitches()
     {
-        bool oldSimulate = this.Simulating;
-        this.Simulating = true;
-        for (int i = this.Components.Count - 1; i >= 0; i--)
-        {
-            Component component = this.Components[i];
-
-            try
-            {
-                component.Update(mousePosInWorld, this);
-            }
-            catch (Exception e)
-            {
-                OnComponentCausedError?.Invoke(component, e);
-            }
-        }
-
-        for (int i = this.Wires.Count - 1; i >= 0; i--)
-        {
-            Wire wire = this.Wires[i];
-            wire.Update(mousePosInWorld, this);
-        }
-        this.Simulating = oldSimulate;
+        return AllComponents.Where(x => x is Switch).Cast<Switch>().ToList();
     }
 
-    public void Update(Vector2 mousePosInWorld)
+    public List<Lamp> GetAllLamps()
     {
-        //this.Components.Shuffle();
-        if (Simulating)
-        {
-            this.currentSimCounter += this.SimulationSpeed;
-
-            while (this.currentSimCounter >= 1f)
-            {
-                this.currentSimCounter -= 1f;
-                this.SingleUpdate(mousePosInWorld);
-            }
-        }
+        return AllComponents.Where(x => x is Lamp).Cast<Lamp>().ToList();
     }
 
-    public void Interact(Vector2 mousePosInWorld)
+    public bool TryGetComponentByID(string id, [NotNullWhen(true)] out Component? comp)
     {
-        foreach (Component component in this.Components)
+        comp = AllComponents.FirstOrDefault(x => x.UniqueID == id, null);
+        return comp != null;
+    }
+
+    public List<(int, IOConfig, string)> GetIOConfigs()
+    {
+        List<Switch> switches = GetAllSwitches().OrderBy(x => x.Position.X).ThenBy(x => x.Position.Y).ToList();
+        List<Lamp> lamps = GetAllLamps().OrderBy(x => x.Position.X).ThenBy(x => x.Position.Y).ToList();
+
+        List<(int, IOConfig, string)> ioConfigs = new List<(int, IOConfig, string)>();
+
+        foreach (Switch s in switches)
         {
-            component.Interact(mousePosInWorld, this);
+            ioConfigs.Add((s.Bits, new IOConfig(s.Side, s.Identifier), s.UniqueID));
         }
 
-        foreach (Wire w in this.Wires)
+        foreach (Lamp l in lamps)
         {
-            w.Interact(mousePosInWorld, this);
+            ioConfigs.Add((l.Bits, new IOConfig(l.Side, l.Identifier), l.UniqueID));
+        }
+
+        return ioConfigs;
+    }
+
+    public void RotateSelection(int i)
+    {
+        foreach (Component item in Selection.Where(x => x is Component))
+        {
+            item.Rotation += i;
         }
     }
 
-    public void Render(Vector2 mousePosInWorld)
+    public void AddComponent(Component component)
     {
-        foreach (Wire wire in this.Wires)
-        {
-            wire.Render(mousePosInWorld);
-        }
-
-        foreach (Component component in this.Components)
-        {
-            component.Render(mousePosInWorld);
-        }
-
-        foreach (Component component in this.SelectedComponents)
-        {
-            component.RenderSelected();
-        }
-
-        foreach ((Wire w, int i) in this.SelectedWirePoints)
-        {
-            Vector2 p = w.IntermediatePoints[i];
-            Raylib.DrawCircleV(p, 7f, Color.ORANGE);
-            Raylib.DrawCircleV(p, 5f, Util.InterpolateColors(Color.WHITE, Color.BLUE, w.GetHighFraction()));
-        }
-    }
-
-    public void AddComponents(List<Component> components)
-    {
-        foreach (Component c in components)
-        {
-            this.AddComponent(c);
-        }
-    }
-
-    public void AddComponent(Component c)
-    {
-        this.Components.Add(c);
-    }
-
-    public void DeleteComponent(Component c)
-    {
-        // Delete all input wires
-        // Delete all output wires
-        // Delete component
-
-        List<Wire> toDelete = new List<Wire>();
-
-        foreach (ComponentInput ci in c.Inputs)
-        {
-            if (ci.Signal != null)
-            {
-                toDelete.Add(ci.Signal);
-            }
-        }
-
-        foreach (ComponentOutput co in c.Outputs)
-        {
-            if (co.Signals.Count > 0)
-            {
-                co.Signals.ForEach((wire) =>
-                {
-                    toDelete.Add(wire);
-                });
-            }
-        }
-
-        for (int i = 0; i < toDelete.Count; i++)
-        {
-            this.DeleteWire(toDelete[i]);
-        }
-        this.Components.Remove(c);
-        if (this.SelectedComponents.Contains(c))
-        {
-            this.SelectedComponents.Remove(c);
-        }
-    }
-
-    public void AddWires(List<Wire> wires)
-    {
-        foreach (Wire w in wires)
-        {
-            this.AddWire(w);
-        }
+        this.AllComponents.Add(component);
     }
 
     public void AddWire(Wire wire)
     {
-        this.Wires.Add(wire);
-    }
-
-    public void DeleteWire(Wire wire)
-    {
-        wire.From.RemoveOutputWire(wire.FromIndex, wire);
-        wire.To.RemoveInputWire(wire.ToIndex);
-
-        this.Wires.Remove(wire);
-
-        List<(Wire, int)> selected = this.SelectedWirePoints.Where((w, i) => w.Item1 == wire).ToList();
-        foreach ((Wire w, int i) in selected)
+        if (!this.AllWires.Contains(wire))
         {
-            this.SelectedWirePoints.Remove((w, i));
+            this.AllWires.Add(wire);
         }
     }
 
-    public Component? GetComponentFromWorldPos(Vector2 posInWorld)
+    public void RemoveComponent(Component component)
     {
-        foreach (Component c in this.Components)
+        this.AllComponents.Remove(component);
+
+        if (this.Selection.Contains(component))
         {
-            if (Raylib.CheckCollisionPointRec(posInWorld, c.Box))
+            this.Selection.Remove(component);
+        }
+    }
+
+    public void MoveSelection(Vector2 delta)
+    {
+        foreach (ISelectable selectable in this.Selection)
+        {
+            selectable.Move(delta);
+        }
+    }
+
+    public void Select(ISelectable c)
+    {
+        if (!this.Selection.Contains(c))
+            this.Selection.Add(c);
+    }
+
+    public void SelectInRect(Rectangle rec)
+    {
+        foreach (Component c in this.AllComponents)
+        {
+            if (Raylib.CheckCollisionRecs(rec, c.GetRectangle()))
             {
-                return c;
+                this.Select(c);
             }
         }
 
-        return null;
-    }
-
-    public Wire? GetWireFromWorldPos(Vector2 posInWorld)
-    {
-        foreach (Wire w in this.Wires)
+        foreach (Wire wire in this.AllWires)
         {
-            if (w.IsPositionOnWire(posInWorld, out Vector2 lStart, out Vector2 lEnd))
+            List<WireNode> wireNodes = wire.Graph.Vertices.ToList();
+
+            foreach (WireNode wn in wireNodes)
             {
-                return w;
-            }
-        }
-        return null;
-    }
-
-    public (Wire?, int) GetWireAndPointFromWorldPos(Vector2 posInWorld)
-    {
-        foreach (Wire w in this.Wires)
-        {
-            if (w.IsPositionOnIntermediatePoint(posInWorld, out Vector2 p))
-            {
-                return (w, w.IntermediatePoints.IndexOf(p));
-            }
-        }
-        return (null, -1);
-    }
-
-    public void SelectWirePoint(Wire w, int index)
-    {
-        this.SelectedWirePoints.Add((w, index));
-    }
-
-    public void MoveSelection(Camera2D cam)
-    {
-        foreach (Component c in this.SelectedComponents)
-        {
-            c.Position += UserInput.GetMouseDelta(cam);
-        }
-
-        if (this.SelectedWirePoints.Count == 1 && Raylib.IsKeyReleased(KeyboardKey.KEY_LEFT_SHIFT))
-        {
-            (Wire w, int i) = this.SelectedWirePoints[0];
-            w.IntermediatePoints[i] = UserInput.GetMousePositionInWorld(cam);
-        }
-
-        if (this.SelectedWirePoints.Count == 1 && Raylib.IsKeyDown(KeyboardKey.KEY_LEFT_SHIFT))
-        {
-            // Snap to adjacent positions
-            (Wire w, int i) = this.SelectedWirePoints[0];
-            Vector2 p = w.IntermediatePoints[i];
-            (Vector2 p1, Vector2 p2) = w.GetAdjacentPositionsToIntermediate(p);
-
-            // Snap to closest to c1 or c2
-            (Vector2 c1, Vector2 c2) = Util.GetIntersectingCornersOfPoints(p1, p2);
-
-            w.IntermediatePoints[i] = Util.GetClosestPoint(UserInput.GetMousePositionInWorld(cam), c1, c2);
-        }
-        else
-        {
-            foreach ((Wire w, int i) in this.SelectedWirePoints)
-            {
-                w.IntermediatePoints[i] += UserInput.GetMouseDelta(cam);
-            }
-        }
-    }
-
-    public void SelectComponent(Component c)
-    {
-        this.SelectedComponents.Add(c);
-    }
-
-    public void SelectComponentsInRectangle(Rectangle rec)
-    {
-        foreach (Component c in this.Components)
-        {
-            if (Raylib.CheckCollisionRecs(c.Box, rec))
-            {
-                this.SelectComponent(c);
-            }
-        }
-    }
-
-    public void SelectWirePointsInRectangle(Rectangle rec)
-    {
-        foreach (Wire w in this.Wires)
-        {
-            for (int i = 0; i < w.IntermediatePoints.Count; i++)
-            {
-                if (Raylib.CheckCollisionPointRec(w.IntermediatePoints[i], rec))
+                if (wn is JunctionWireNode)
                 {
-                    this.SelectWirePoint(w, i);
+                    if (Raylib.CheckCollisionCircleRec(wn.GetPosition(), 5, rec))
+                    {
+                        this.Select(wn);
+                    }
                 }
             }
         }
     }
 
-    public void SelectAllComponents()
+    public bool IsPositionOnSelected(Vector2 position)
     {
-        this.ClearSelection();
-
-        this.Components.ForEach(comp =>
+        foreach (ISelectable selectable in this.Selection)
         {
-            this.SelectComponent(comp);
-        });
+            if (selectable.IsPositionOn(position))
+            {
+                return true;
+            }
+        }
+        return false;
     }
 
     public void DeselectComponent(Component c)
     {
-        this.SelectedComponents.Remove(c);
-    }
-
-    public void ToggleComponentSelected(Component c)
-    {
-        if (this.SelectedComponents.Contains(c))
-        {
-            this.DeselectComponent(c);
-        }
-        else
-        {
-            this.SelectComponent(c);
-        }
+        if (this.Selection.Contains(c))
+            this.Selection.Remove(c);
     }
 
     public bool IsComponentSelected(Component c)
     {
-        return this.SelectedComponents.Contains(c);
+        return this.Selection.Contains(c);
     }
 
-    public void DeleteSelection()
+    public bool IsSelected(ISelectable selectable)
     {
-        for (int i = this.SelectedComponents.Count - 1; i >= 0; i--)
+        return this.Selection.Contains(selectable);
+    }
+
+    public bool TryGetComponentFromWorldPosition(Vector2 position, [NotNullWhen(true)] out Component? comp)
+    {
+        foreach (Component c in this.AllComponents)
         {
-            Component c = this.SelectedComponents[i];
-            this.DeleteComponent(c);
-        }
-        this.ClearSelection();
-    }
-
-    public void ClearSelection()
-    {
-        this.SelectedComponents.Clear();
-        //this.SelectedWirePoints.Clear();
-    }
-
-    public ComponentInput? GetInputFromWorldPos(Vector2 posInWorld)
-    {
-        foreach (Component c in this.Components)
-        {
-            if (c.TryGetInputFromPosition(posInWorld, out ComponentInput? input))
+            if (Raylib.CheckCollisionPointRec(position, c.GetRectangle()))
             {
-                return input;
+                comp = c;
+                return true;
+            }
+        }
+        comp = null;
+        return false;
+    }
+
+    public bool TryGetIOFromWorldPosition(Vector2 position, [NotNullWhen(true)] out (IO, int)? io)
+    {
+        foreach (Component c in this.AllComponents)
+        {
+            foreach ((IO i, IOConfig conf) in c.IOs)
+            {
+                Vector2 ioPos = c.GetIOPosition(i);
+                if ((ioPos - position).Length() < c.IORadius)
+                {
+                    io = (i, c.GetIndexOfIO(i));
+                    return true;
+                }
             }
         }
 
-        return null;
+        io = null;
+        return false;
     }
 
-    public ComponentOutput? GetOutputFromWorldPos(Vector2 posInWorld)
+    public bool TryGetIOWireNodeFromWorldPosition(Vector2 position, [NotNullWhen(true)] out IOWireNode? node, [NotNullWhen(true)] out Wire? wire)
     {
-        foreach (Component c in this.Components)
+        foreach (Wire w in this.AllWires)
         {
-            if (c.TryGetOutputFromPosition(posInWorld, out ComponentOutput? output))
+            if (w.TryGetIOWireNodeFromPosition(position, out node))
             {
-                return output;
+                wire = w;
+                return true;
             }
         }
 
-        return null;
+        wire = null;
+        node = null;
+        return false;
+    }
+
+    public bool TryGetWireNodeFromWorldPosition(Vector2 position, [NotNullWhen(true)] out WireNode? node, [NotNullWhen(true)] out Wire? wire)
+    {
+        if (this.TryGetIOWireNodeFromWorldPosition(position, out IOWireNode? iowireNode, out wire))
+        {
+            node = iowireNode;
+            return true;
+        }
+        else if (this.TryGetJunctionFromPosition(position, out JunctionWireNode? junctionWireNode, out wire))
+        {
+            node = junctionWireNode;
+            return true;
+        }
+
+        node = null;
+        wire = null;
+        return false;
+    }
+
+    public void RemoveWire(Wire wire)
+    {
+        // wire.DisconnectAllIOs();
+
+        this.AllWires.Remove(wire);
+
+        // foreach (WireNode n in wire.Graph.Vertices)
+        // {
+        //     if (this.Selection.Contains(n))
+        //     {
+        //         this.Selection.Remove(n);
+        //     }
+        // }
+    }
+
+    public void PerformLogic()
+    {
+        foreach (Component component in this.AllComponents)
+        {
+            component.UpdateLogic();
+        }
+
+        foreach (Wire wire in this.AllWires)
+        {
+            wire.Propagate();
+        }
+    }
+
+    public void Render()
+    {
+        foreach (ISelectable selectable in this.Selection)
+        {
+            selectable.RenderSelected();
+        }
+
+        foreach (Wire wire in this.AllWires)
+        {
+            wire.Render();
+        }
+
+        foreach (Component component in this.AllComponents)
+        {
+            component.Render();
+        }
+    }
+
+    public bool TryGetJunctionFromPosition(Vector2 position, [NotNullWhen(true)] out JunctionWireNode? node, [NotNullWhen(true)] out Wire? nodeOnWire)
+    {
+        foreach (Wire wire in this.AllWires)
+        {
+            if (wire.TryGetJunctionFromPosition(position, out node))
+            {
+                nodeOnWire = wire;
+                return true;
+            }
+        }
+
+        nodeOnWire = null;
+        node = null;
+        return false;
+    }
+
+    public bool TryGetEdgeFromPosition(Vector2 position, [NotNullWhen(true)] out Edge<WireNode>? edge, [NotNullWhen(true)] out Wire? nodeOnWire)
+    {
+        foreach (Wire wire in this.AllWires)
+        {
+            if (wire.TryGetEdgeFromPosition(position, out edge))
+            {
+                nodeOnWire = wire;
+                return true;
+            }
+        }
+
+        nodeOnWire = null;
+        edge = null;
+        return false;
+    }
+
+    public void Interact(Editor editor)
+    {
+        foreach (Component component in this.AllComponents)
+        {
+            component.Interact(editor);
+        }
+    }
+
+    public List<TComp> GetComponents<TComp>(Func<TComp, bool> func) where TComp : Component
+    {
+        List<TComp> components = new List<TComp>();
+
+        foreach (Component c in this.AllComponents)
+        {
+            if (c is TComp tcomp && func(tcomp))
+            {
+                components.Add(tcomp);
+            }
+        }
+
+        return components;
+    }
+
+    public Simulator Copy()
+    {
+        Simulator copy = new Simulator();
+
+        foreach (Component component in this.AllComponents)
+        {
+            copy.AddComponent(component);
+        }
+
+        foreach (Wire wire in this.AllWires)
+        {
+            copy.AddWire(wire);
+        }
+
+        return copy;
     }
 }

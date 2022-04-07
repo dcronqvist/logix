@@ -2,83 +2,189 @@ using LogiX.SaveSystem;
 
 namespace LogiX.Components;
 
+public interface IGateLogic
+{
+    LogicValue GetOutput(params LogicValue[] inputs);
+    string GetLogicText();
+}
+
 public class LogicGate : Component
 {
-    private IGateLogic Logic { get; set; }
+    public IGateLogic Logic { get; set; }
+    public int Bits { get; set; }
     public override string Text => this.Logic.GetLogicText();
-    public override bool HasContextMenu => true;
-    public override string? Documentation => @"
 
-# Logic Gate
-
-These are the basic building blocks of all logic circuits.
-
-The below gates can be configured to have between 2 and a virtually infinite amount of inputs.
-When configured to have 2 inputs, the gate will behave as expected.
-
-When configured to have more than 2 inputs, the gates will instead behave as follows:
-
-* AND: The gate will return HIGH if all inputs are HIGH, otherwise LOW.
-* NAND: The gate will return LOW if all inputs are HIGH, otherwise HIGH.
-* OR: The gate will return HIGH if at least one input is HIGH, otherwise LOW.
-* NOR: The gate will return LOW if at least one input is HIGH, otherwise HIGH.
-* XOR: The gate will return HIGH if an uneven amount of inputs are HIGH, otherwise LOW.
-
-There is also a NOT gate, which is a special gate since it only has one input. It cannot be configured to have more than 1 input, and therefore always behaves as an inverter of the single input.
-
-";
-
-    public LogicGate(int inputBits, bool multibit, IGateLogic gateLogic, Vector2 position) : base(multibit ? Util.Listify(inputBits) : Util.NValues(1, inputBits), Util.Listify(1), position)
+    public LogicGate(Vector2 position, int bits, IGateLogic logic, string? uniqueID = null) : base(position, ComponentType.LOGIC_GATE, uniqueID)
     {
-        if (inputBits < gateLogic.MinBits() || inputBits > gateLogic.MaxBits())
+        this.Logic = logic;
+        this.Bits = bits;
+        for (int i = 0; i < bits; i++)
         {
-            throw new Exception($"Amount of bits must be between {gateLogic.MinBits()} and {gateLogic.MaxBits()} for {gateLogic.GetLogicText()} gates.");
+            this.AddIO(1, new IOConfig(ComponentSide.LEFT)); // Inputs
         }
-        this.Logic = gateLogic;
+        this.AddIO(1, new IOConfig(ComponentSide.RIGHT)); // Output
     }
 
     public override void PerformLogic()
     {
-        this.OutputAt(0).SetValues(this.Logic.PerformLogic(this.Inputs.Select(i => i.Values).Aggregate((a, b) => a.Concat(b).ToList())));
+        LogicValue[] inputValues = this.IOs.Take(this.Bits).Select(io => io.Item1.Values[0]).ToArray();
+        this.GetIO(this.IOs.Count - 1).PushValues(this.Logic.GetOutput(inputValues));
     }
 
     public override ComponentDescription ToDescription()
     {
-        List<IODescription> inputs = this.Inputs.Select((ci) =>
-        {
-            return new IODescription(ci.Bits);
-        }).ToList();
+        return new DescriptionGate(this.Position, this.Rotation, this.UniqueID, this.Bits, this.Logic.GetLogicText());
+    }
+}
 
-        List<IODescription> outputs = this.Outputs.Select((co) =>
-        {
-            return new IODescription(co.Bits);
-        }).ToList();
-
-        return new GateDescription(this.Position, this.Rotation, inputs, outputs, this.Logic);
+public class ANDLogic : IGateLogic
+{
+    public string GetLogicText()
+    {
+        return "AND";
     }
 
-    private int currentlySelectedLogic = 0;
-    public override void SubmitContextPopup(Editor.Editor editor)
+    public LogicValue GetOutput(params LogicValue[] inputs)
     {
-        base.SubmitContextPopup(editor);
-        string[] items = new string[5] {
-            "AND",
-            "NAND",
-            "OR",
-            "NOR",
-            "XOR"
-        };
-
-        if (ImGui.Combo("Change Logic", ref this.currentlySelectedLogic, items, items.Length))
+        if (inputs.Any(v => v == LogicValue.ERROR))
         {
-            this.Logic = Util.GetGateLogicFromName(items[this.currentlySelectedLogic]);
+            return LogicValue.ERROR;
+        }
+        else if (inputs.Any(v => v == LogicValue.UNKNOWN))
+        {
+            return LogicValue.UNKNOWN;
+        }
+        else
+        {
+            return inputs.All(v => v == LogicValue.HIGH) ? LogicValue.HIGH : LogicValue.LOW;
         }
     }
+}
 
-    public override Dictionary<string, int> GetGateAmount()
+public class NANDLogic : IGateLogic
+{
+    public string GetLogicText()
     {
-        return new Dictionary<string, int>() {
-            { this.Logic.GetLogicText(), 1 }
-        };
+        return "NAND";
+    }
+
+    public LogicValue GetOutput(params LogicValue[] inputs)
+    {
+        if (inputs.Any(v => v == LogicValue.ERROR))
+        {
+            return LogicValue.ERROR;
+        }
+        else if (inputs.Any(v => v == LogicValue.UNKNOWN))
+        {
+            return LogicValue.UNKNOWN;
+        }
+        else
+        {
+            return inputs.All(v => v == LogicValue.HIGH) ? LogicValue.LOW : LogicValue.HIGH;
+        }
+    }
+}
+
+public class ORLogic : IGateLogic
+{
+    public string GetLogicText()
+    {
+        return "OR";
+    }
+
+    public LogicValue GetOutput(params LogicValue[] inputs)
+    {
+        if (inputs.Any(v => v == LogicValue.ERROR))
+        {
+            return LogicValue.ERROR;
+        }
+        else if (inputs.Any(v => v == LogicValue.HIGH))
+        {
+            return LogicValue.HIGH;
+        }
+        else if (inputs.Any(v => v == LogicValue.UNKNOWN))
+        {
+            return LogicValue.UNKNOWN;
+        }
+        else
+        {
+            return LogicValue.LOW;
+        }
+    }
+}
+
+public class NORLogic : IGateLogic
+{
+    public string GetLogicText()
+    {
+        return "NOR";
+    }
+
+    public LogicValue GetOutput(params LogicValue[] inputs)
+    {
+        if (inputs.Any(v => v == LogicValue.ERROR))
+        {
+            return LogicValue.ERROR;
+        }
+        else if (inputs.Any(v => v == LogicValue.HIGH))
+        {
+            return LogicValue.LOW;
+        }
+        else if (inputs.Any(v => v == LogicValue.UNKNOWN))
+        {
+            return LogicValue.UNKNOWN;
+        }
+        else
+        {
+            return LogicValue.HIGH;
+        }
+    }
+}
+
+public class XORLogic : IGateLogic
+{
+    public string GetLogicText()
+    {
+        return "XOR";
+    }
+
+    public LogicValue GetOutput(params LogicValue[] inputs)
+    {
+        if (inputs.Any(v => v == LogicValue.ERROR))
+        {
+            return LogicValue.ERROR;
+        }
+        else if (inputs.Any(v => v == LogicValue.UNKNOWN))
+        {
+            return LogicValue.UNKNOWN;
+        }
+        else
+        {
+            return inputs.Count(v => v == LogicValue.HIGH) % 2 == 1 ? LogicValue.HIGH : LogicValue.LOW;
+        }
+    }
+}
+
+public class XNORLogic : IGateLogic
+{
+    public string GetLogicText()
+    {
+        return "XNOR";
+    }
+
+    public LogicValue GetOutput(params LogicValue[] inputs)
+    {
+        if (inputs.Any(v => v == LogicValue.ERROR))
+        {
+            return LogicValue.ERROR;
+        }
+        else if (inputs.Any(v => v == LogicValue.UNKNOWN))
+        {
+            return LogicValue.UNKNOWN;
+        }
+        else
+        {
+            return inputs.Count(v => v == LogicValue.HIGH) % 2 == 1 ? LogicValue.LOW : LogicValue.HIGH;
+        }
     }
 }

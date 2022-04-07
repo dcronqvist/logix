@@ -1,90 +1,93 @@
 using System.Diagnostics.CodeAnalysis;
 using System.Text;
 using LogiX.Components;
+using LogiX.Editor.Commands;
+using LogiX.Editor.StateMachine;
 using LogiX.SaveSystem;
+using QuikGraph;
 
 namespace LogiX.Editor;
 
-public class Editor : Application<Editor>
+public class Editor : Application
 {
-    // Editor states
-    public Camera2D editorCamera;
+    // EDITOR LAYOUT VARIABLES
+    public int SidebarWidth { get; set; } = 170;
+    public int MainMenuBarHeight { get; set; } = 22;
+    public int CircuitTabBarHeight { get; set; } = 38;
 
-    public Simulator simulator;
-    public Project loadedProject;
-    Component contextMenuComponent;
-    public EditorFSM fsm;
-    Dictionary<string, Tuple<Func<Component>, IUISubmitter<bool, Editor>?>> componentCreationContexts;
-    Dictionary<string, List<string>> componentCategories;
-    Modal currentModal;
-    public Component? currentComponentDocumentation;
+    // EDITOR STUFF
+    public Camera2D camera;
+    public List<ComponentCreationContext> ComponentCreationContexts { get; set; }
+    public List<(string, List<ComponentCreationContext>)> ComponentCreationContextCategories { get; set; }
+    public bool IsMouseInWorld { get; set; }
 
-    // GATES
-    IGateLogic[] availableGateLogics;
+    // EDITOR ACTIONS
+    public List<EditorAction> EditorActions { get; set; }
+    public List<(string, List<EditorAction>)> EditorActionCategories { get; set; }
 
-    // KEY COMBINATIONS
-    KeyboardKey primaryKeyMod;
+    public Dictionary<string, EditorTab> EditorTabs { get; set; }
 
-    // MAIN MENU BAR ACTIONS
-    List<Tuple<string, List<Tuple<string, EditorAction>>>> mainMenuButtons;
+    private string? _currentEditorTab;
+    public string? CurrentEditorTab
+    {
+        get => _currentEditorTab;
+        set
+        {
+            if (value != _currentEditorTab)
+            {
+                _currentEditorTab = value;
 
-    // VARIABLES FOR TEMPORARY STUFF
-    public ComponentInput? hoveredInput;
-    public ComponentOutput? hoveredOutput;
-    public Component? hoveredComponent;
-    public Vector2 recSelectFirstCorner;
+                if (value != null)
+                    this.EditorTabs[value].OnEnter(this);
+            }
+        }
+    }
+    public EditorTab? CurrentTab => this.CurrentEditorTab != null ? this.EditorTabs[this.CurrentEditorTab] : null;
+    public Simulator? Simulator => this.CurrentTab?.Simulator;
+    public EditorFSM? FSM => this.CurrentTab?.FSM;
+    public Project CurrentProject { get; set; }
 
-    public ComponentOutput? connectFrom;
-    public CircuitDescription? copiedCircuit;
+    // TEMPORARY VARIABLES FOR CONNECTIONS
+    public IO FirstClickedIO { get; set; }
+    public WireNode FirstClickedWireNode { get; set; }
+    public Wire FirstClickedWire { get; set; }
 
-    // UI VARIABLES
-    int newComponentBits;
-    bool newComponentMultibit;
-    int newRomOutputbits;
-    bool newRomOutputMultibit;
-    bool displayDebugWindow;
-    bool displayDemoWindow;
+    // WINDOW AND UI
+    public List<EditorWindow> EditorWindows { get; set; }
+    public Func<bool> CurrentContextMenu { get; set; }
+    public string? ContextMenuID { get; set; }
+    public Vector2 MouseStartPos { get; set; }
 
-    List<EditorWindow> editorWindows;
+    // TEMPORARY VARIABLES FOR MENU BAR UI
+    public string newCircuitName;
+
+    public Editor()
+    {
+        this.ComponentCreationContexts = new List<ComponentCreationContext>();
+        this.ComponentCreationContextCategories = new List<(string, List<ComponentCreationContext>)>();
+        this.EditorWindows = new List<EditorWindow>();
+        this.EditorTabs = new Dictionary<string, EditorTab>();
+        this.EditorActions = new List<EditorAction>();
+        this.EditorActionCategories = new List<(string, List<EditorAction>)>();
+    }
 
     public override void Initialize()
     {
-        mainMenuButtons = new List<Tuple<string, List<Tuple<string, EditorAction>>>>();
-#if OSX
-        this.primaryKeyMod = KeyboardKey.KEY_LEFT_SUPER;
-#else
-        this.primaryKeyMod = KeyboardKey.KEY_LEFT_CONTROL;
-#endif
-
         this.OnWindowResized += (width, height) =>
         {
             Vector2 windowSize = new Vector2(width, height);
-            this.editorCamera = new Camera2D(windowSize / 2.0f, Vector2.Zero, 0f, 1f);
+            this.camera = new Camera2D(windowSize / 2.0f, Vector2.Zero, 0f, 1f);
             Settings.SetSetting<int>("windowWidth", width);
             Settings.SetSetting<int>("windowHeight", height);
             Settings.SaveSettings();
         };
 
-        availableGateLogics = new IGateLogic[] {
-            new ANDLogic(),
-            new NANDLogic(),
-            new ORLogic(),
-            new NORLogic(),
-            new XORLogic(),
-            new XNORLogic(),
-            new NOTLogic()
-        };
-
-        this.componentCreationContexts = new Dictionary<string, Tuple<Func<Component>, IUISubmitter<bool, Editor>?>>();
-        this.componentCategories = new Dictionary<string, List<string>>();
-        this.displayDebugWindow = false;
-        this.displayDemoWindow = false;
-        this.editorWindows = new List<EditorWindow>();
+        this.newCircuitName = "";
     }
 
     public bool EditorWindowOfTypeOpen<T>() where T : EditorWindow
     {
-        foreach (EditorWindow window in this.editorWindows)
+        foreach (EditorWindow window in this.EditorWindows)
         {
             if (window is T)
             {
@@ -96,7 +99,7 @@ public class Editor : Application<Editor>
 
     public bool EditorWindowOfTypeOpen(Type t)
     {
-        foreach (EditorWindow window in this.editorWindows)
+        foreach (EditorWindow window in this.EditorWindows)
         {
             if (window.GetType() == t)
             {
@@ -106,445 +109,232 @@ public class Editor : Application<Editor>
         return false;
     }
 
+    public void Execute(Command<Editor> command, bool doExecute = true)
+    {
+        this.Execute(command, this, doExecute);
+    }
+
+    public void Execute(Command<Editor> command, Editor editor, bool doExecute = true)
+    {
+        this.CurrentTab.Execute(command, editor, doExecute);
+    }
+
+    public void Undo()
+    {
+        this.CurrentTab.Undo(this);
+    }
+
+    public void Redo()
+    {
+        this.CurrentTab.Redo(this);
+    }
+
     public void OpenEditorWindow(EditorWindow window)
     {
         if (EditorWindowOfTypeOpen(window.GetType()))
         {
             return;
         }
-        this.editorWindows.Add(window);
+        this.EditorWindows.Add(window);
     }
 
-    public void SetProject(Project proj)
+    public Vector2 GetWorldMousePos()
     {
-        try
-        {
-            if (this.loadedProject == null)
-            {
-                this.loadedProject = proj;
-                (List<Component> comps, List<Wire> wires) = proj.GetComponentsAndWires();
-                simulator.AddComponents(comps);
-                simulator.AddWires(wires);
-            }
-            else
-            {
-                // There is an already ongoing project, save it
-
-                this.loadedProject = proj;
-                simulator.ClearSelection();
-                simulator.Components.Clear();
-                simulator.Wires.Clear();
-                (List<Component> comps, List<Wire> wires) = proj.GetComponentsAndWires();
-                simulator.AddComponents(comps);
-                simulator.AddWires(wires);
-            }
-
-            Raylib.SetWindowTitle("LogiX - " + proj.GetFileName());
-            this.ResetInvoker();
-        }
-        catch (Exception e)
-        {
-            base.ModalError(e.Message);
-        }
-        this.LoadComponentButtons();
+        this.camera.target = this.CurrentTab.CameraTarget;
+        this.camera.zoom = this.CurrentTab.CameraZoom;
+        return UserInput.GetMousePositionInWorld(this.camera);
     }
 
     public override void LoadContent()
     {
-        Vector2 windowSize = new Vector2(Raylib.GetScreenWidth(), Raylib.GetScreenHeight());
-        this.editorCamera = new Camera2D(windowSize / 2.0f, Vector2.Zero, 0f, 1f);
-
-        simulator = new Simulator();
-        simulator.OnComponentCausedError = (Component c, Exception e) =>
-        {
-            base.ModalError($"Component with ID {c.uniqueID} caused an error: {e.Message}\nThe component will be removed.", ModalButtonsType.OK);
-            this.simulator.DeleteComponent(c);
-        };
-
-        Util.OpenSans = Raylib.LoadFontEx($"{Directory.GetCurrentDirectory()}/assets/opensans-bold.ttf", 100, Enumerable.Range(0, 1000).ToArray(), 1000);
+        this.camera = new Camera2D(base.WindowSize / 2f, Vector2.Zero, 0f, 1f);
         Util.Editor = this;
-        Raylib.SetTextureFilter(Util.OpenSans.texture, TextureFilter.TEXTURE_FILTER_TRILINEAR);
 
-        this.fsm = new EditorFSM();
-
-        // LOAD ALL PLUGINS
-        Plugin.TryLoadAllPlugins(out List<Plugin> plugins, out Dictionary<string, string> failedPlugins);
-        Util.Plugins = plugins;
-        if (failedPlugins.Count > 0)
+        if (!File.Exists("./project.json"))
         {
-            string error = "";
-            foreach (KeyValuePair<string, string> kvp in failedPlugins)
-            {
-                error += $"{kvp.Key} failed to load: {kvp.Value}\n";
-            }
-            base.ModalError(error);
-        }
-
-        // ASSIGNING KEYCOMBO ACTIONS
-        AddNewMainMenuItem("File", "Save", new EditorAction((editor) => true, (editor) => false, (Editor editor, out string error) =>
-        {
-            if (this.loadedProject.HasFile())
-            {
-                this.loadedProject.SaveComponentsInWorkspace(simulator.Components);
-                this.loadedProject.SaveToFile(this.loadedProject.LoadedFromFile);
-                error = ""; return true;
-            }
-            else
-            {
-                this.SaveFile(Util.FileDialogStartDir, (filePath) =>
-                {
-                    this.loadedProject.SaveToFile(filePath);
-                    Settings.SetSetting<string>("latestProject", this.loadedProject.LoadedFromFile);
-                    Settings.SaveSettings();
-                }, Project.EXTENSION);
-                error = "";
-                return true;
-            }
-
-            this.SetProject(this.loadedProject);
-
-        }, this.primaryKeyMod, KeyboardKey.KEY_S));
-        AddNewMainMenuItem("File", "New Project", new EditorAction((editor) => true, (editor) => false, (Editor editor, out string error) =>
-        {
-            // Should maybe save current project before?
-            SetProject(new Project());
-            error = "";
-            return true;
-        }));
-        AddNewMainMenuItem("File", "Open Project", new EditorAction((editor) => true, (editor) => false, (Editor editor, out string error) =>
-        {
-            this.SelectFile(Util.FileDialogStartDir, (file) =>
-            {
-                Project p = Project.LoadFromFile(file);
-                Settings.SetSetting<string>("latestProject", p.LoadedFromFile);
-                Settings.SaveSettings();
-                SetProject(p);
-            }, Project.EXTENSION);
-            error = ""; return true;
-        }, this.primaryKeyMod, KeyboardKey.KEY_O));
-        AddNewMainMenuItem("File", "Include IC File", new EditorAction((editor) => true, (editor) => false, (Editor editor, out string error) =>
-        {
-            this.SelectFile(Util.FileDialogStartDir, (file) =>
-            {
-                if (!this.loadedProject.IncludeICFile(file))
-                {
-                    base.ModalError("Could not include IC file.");
-                    return;
-                }
-                else
-                {
-                    this.LoadComponentButtons();
-                }
-
-            }, ICDescription.EXTENSION);
-            error = ""; return true;
-        }, this.primaryKeyMod, KeyboardKey.KEY_I, KeyboardKey.KEY_F));
-        AddNewMainMenuItem("File", "Include IC Collection", new EditorAction((editor) => true, (editor) => false, (Editor editor, out string error) =>
-        {
-            this.SelectFile(Util.FileDialogStartDir, (file) =>
-            {
-                this.loadedProject.IncludeICCollectionFile(file);
-                this.LoadComponentButtons();
-            }, ICCollection.EXTENSION);
-            error = ""; return true;
-        }, this.primaryKeyMod, KeyboardKey.KEY_I, KeyboardKey.KEY_C));
-        AddNewMainMenuItem("File", "Settings", new EditorAction((editor) => !editor.EditorWindowOfTypeOpen<SettingsWindow>(), (editor) => false, (Editor editor, out string error) =>
-        {
-            this.OpenEditorWindow(new SettingsWindow());
-            error = ""; return true;
-        }));
-
-        AddNewMainMenuItem("Edit", "Copy", new EditorAction((editor) => simulator.SelectedComponents.Count > 0, (editor) => false, (Editor editor, out string error) => { MMCopy(); error = ""; return true; }, this.primaryKeyMod, KeyboardKey.KEY_C));
-        AddNewMainMenuItem("Edit", "Paste", new EditorAction((editor) => this.copiedCircuit != null, (editor) => false, (Editor editor, out string error) => { MMPaste(); error = ""; return true; }, this.primaryKeyMod, KeyboardKey.KEY_V));
-        AddNewMainMenuItem("Edit", "Undo", new EditorAction((editor) => true, (editor) => false, (Editor editor, out string error) => { base.Undo(this); error = ""; return true; }, this.primaryKeyMod, KeyboardKey.KEY_Z));
-        AddNewMainMenuItem("Edit", "Redo", new EditorAction((editor) => true, (editor) => false, (Editor editor, out string error) => { base.Redo(this); error = ""; return true; }, this.primaryKeyMod, KeyboardKey.KEY_Y));
-        AddNewMainMenuItem("Edit", "Select All", new EditorAction((editor) => true, (editor) => false, (Editor editor, out string error) => { simulator.SelectAllComponents(); error = ""; return true; }, this.primaryKeyMod, KeyboardKey.KEY_A));
-        AddNewMainMenuItem("Edit", "Delete Selection", new EditorAction((editor) => simulator.SelectedComponents.Count > 0, (editor) => false, (Editor editor, out string error) => { base.Execute(new DeleteSelectionCommand(), this); error = ""; return true; }, KeyboardKey.KEY_BACKSPACE));
-        AddNewMainMenuItem("Tools", "Horizontally Align", new EditorAction((editor) => simulator.SelectedComponents.Count > 0, (editor) => false, (Editor editor, out string error) =>
-        {
-            List<Component> selected = simulator.SelectedComponents.Copy();
-            HorizontallyAlignCommand hac = new HorizontallyAlignCommand(selected);
-            base.Execute(hac, this);
-            error = "";
-            return true;
-        }));
-        AddNewMainMenuItem("Tools", "Vertically Align", new EditorAction((editor) => simulator.SelectedComponents.Count > 0, (editor) => false, (Editor editor, out string error) =>
-        {
-            List<Component> selected = simulator.SelectedComponents.Copy();
-            VerticallyAlignCommand vac = new VerticallyAlignCommand(selected);
-            base.Execute(vac, this);
-            error = "";
-            return true;
-        }));
-        AddNewMainMenuItem("Tools", "Automatically Name Selected IOs", new EditorAction((editor) => simulator.SelectedComponents.Count > 0 && (simulator.SelectedComponents.All(x => x is Switch) || simulator.SelectedComponents.All(x => x is Lamp)), (editor) => false, (Editor editor, out string error) =>
-        {
-            List<Component> selected = simulator.SelectedComponents;
-            List<Component> orderedByY = selected.OrderBy(c => c.Position.Y).ToList();
-            // Lower Y gets index 0, higher Y gets highest index
-            for (int i = 0; i < orderedByY.Count; i++)
-            {
-                if (orderedByY[i] is Switch)
-                {
-                    ((Switch)orderedByY[i]).ID += i.ToString();
-                }
-                else if (orderedByY[i] is Lamp)
-                {
-                    ((Lamp)orderedByY[i]).ID += i.ToString();
-                }
-            }
-
-            error = "";
-            return true;
-        }, this.primaryKeyMod, KeyboardKey.KEY_N));
-        AddNewMainMenuItem("Tools", "Rotate Clockwise", new EditorAction((editor) => simulator.SelectedComponents.Count > 0, (editor) => false, (Editor editor, out string error) =>
-        {
-            List<Component> selected = simulator.SelectedComponents.Copy();
-            RotateCWCommand rcc = new RotateCWCommand(selected);
-            base.Execute(rcc, this);
-            error = "";
-            return true;
-        }, KeyboardKey.KEY_RIGHT));
-        AddNewMainMenuItem("Tools", "Rotate Counterclockwise", new EditorAction((editor) => simulator.SelectedComponents.Count > 0, (editor) => false, (Editor editor, out string error) =>
-        {
-            List<Component> selected = simulator.SelectedComponents.Copy();
-            RotateCCWCommand rcc = new RotateCCWCommand(selected);
-            base.Execute(rcc, this);
-            error = "";
-            return true;
-        }, KeyboardKey.KEY_LEFT));
-        AddNewMainMenuItem("Tools", "Measure Steps", new EditorAction((editor) => simulator.SelectedComponents.Count == 1, (editor) => false, (Editor editor, out string error) =>
-        {
-            this.fsm.SetState<StateMeasuringSteps>(this, 0);
-            error = "";
-            return true;
-        }, this.primaryKeyMod, KeyboardKey.KEY_M));
-
-        AddNewMainMenuItem("Integrated Circuits", "Create IC from Selection", new EditorAction((editor) => simulator.SelectedComponents.Count > 0, (editor) => false, (Editor editor, out string error) =>
-        {
-            CircuitDescription cd = new CircuitDescription(simulator.SelectedComponents);
-
-            if (cd.ValidForIC())
-            {
-                this.currentModal = new ModalCreateIC(cd);
-                error = "";
-                return true;
-            }
-            else
-            {
-                error = "Could not create IC from selected components since there are switches or lamps without identifiers.";
-                return false;
-            }
-        }, this.primaryKeyMod, KeyboardKey.KEY_I));
-        AddNewMainMenuItem("Integrated Circuits", "Create IC from Gate Algebra", new EditorAction((editor) => true, (editor) => false, (Editor editor, out string error) =>
-        {
-            this.currentModal = new ModalGateAlgebra();
-            error = "";
-            return true;
-        }, this.primaryKeyMod, KeyboardKey.KEY_G));
-        AddNewMainMenuItem("View", "Debug Window", new EditorAction((editor) => true, (editor) => editor.displayDebugWindow, (Editor editor, out string error) =>
-        {
-            this.displayDebugWindow = !this.displayDebugWindow;
-            error = ""; return true;
-        }));
-        AddNewMainMenuItem("View", "Demo Window", new EditorAction((editor) => true, (editor) => editor.displayDemoWindow, (Editor editor, out string error) =>
-        {
-            this.displayDemoWindow = !this.displayDemoWindow;
-            error = ""; return true;
-        }));
-
-        // Initial project based on setting latestProject
-        string latestProject = Settings.GetSetting("latestProject").GetValue<string>();
-        if (latestProject != null && latestProject != "" && File.Exists(latestProject))
-        {
-            Project p = Project.LoadFromFile(latestProject);
-            SetProject(p);
+            this.CurrentProject = new Project();
+            this.OpenEditorTab(new EditorTab(this.CurrentProject.NewCircuit("Main")));
         }
         else
         {
-            SetProject(new Project());
+            this.CurrentProject = Project.LoadFromFile("./project.json");
+            this.OpenEditorTab(new EditorTab(this.CurrentProject.Circuits[0]));
         }
+
+        // THEY ARE HERE FOR NOW
+        this.ComponentCreationContexts.Clear();
+        this.AddNewComponentCreationContext(new ComponentCreationContext("Logic Gates", "AND Gate", () => new LogicGate(this.GetWorldMousePos(), 2, new ANDLogic()), new CCPUGate(new ANDLogic())));
+        this.AddNewComponentCreationContext(new ComponentCreationContext("Logic Gates", "NAND Gate", () => new LogicGate(this.GetWorldMousePos(), 2, new NANDLogic()), new CCPUGate(new NANDLogic())));
+        this.AddNewComponentCreationContext(new ComponentCreationContext("Logic Gates", "OR Gate", () => new LogicGate(this.GetWorldMousePos(), 2, new ORLogic()), new CCPUGate(new ORLogic())));
+        this.AddNewComponentCreationContext(new ComponentCreationContext("Logic Gates", "NOR Gate ", () => new LogicGate(this.GetWorldMousePos(), 2, new NORLogic()), new CCPUGate(new NORLogic())));
+        this.AddNewComponentCreationContext(new ComponentCreationContext("Logic Gates", "XOR Gate", () => new LogicGate(this.GetWorldMousePos(), 2, new XORLogic()), new CCPUGate(new XORLogic())));
+        this.AddNewComponentCreationContext(new ComponentCreationContext("Logic Gates", "XNOR Gate", () => new LogicGate(this.GetWorldMousePos(), 2, new XNORLogic()), new CCPUGate(new XNORLogic())));
+        this.AddNewComponentCreationContext(new ComponentCreationContext("Logic Gates", "NOT Gate", () => new BufferComponent(this.GetWorldMousePos(), 1, new InverterLogic())));
+        this.AddNewComponentCreationContext(new ComponentCreationContext("Logic Gates", "Buffer", () => new BufferComponent(this.GetWorldMousePos(), 1, new BufferLogic())));
+        this.AddNewComponentCreationContext(new ComponentCreationContext("Logic Gates", "Tri-State Buffer", () => new TriStateComponent(this.GetWorldMousePos(), 1)));
+
+        this.AddNewComponentCreationContext(new ComponentCreationContext("I/O", "Switch", () => new Switch(1, this.GetWorldMousePos())));
+        this.AddNewComponentCreationContext(new ComponentCreationContext("I/O", "Lamp", () => new Lamp(1, this.GetWorldMousePos())));
+
+        // MAIN MENU ITEMS
+        this.EditorActions.Clear();
+        this.AddNewEditorAction(new EditorAction("File", "New Circuit...", (editor =>
+        {
+            editor.Modal("Create New Circuit", () =>
+            {
+                ImGui.InputText("Name", ref editor.newCircuitName, 24, ImGuiInputTextFlags.None);
+                ImGui.Separator();
+
+                if (ImGui.Button("Create") || Raylib.IsKeyPressed(KeyboardKey.KEY_ENTER))
+                {
+                    Circuit newCirc = this.CurrentProject.NewCircuit(this.newCircuitName);
+                    this.newCircuitName = "";
+                    this.OpenEditorTab(new EditorTab(newCirc));
+                    return true;
+                }
+                ImGui.SameLine();
+                if (ImGui.Button("Cancel"))
+                {
+                    return true;
+                }
+
+                return false;
+            }, ImGuiWindowFlags.AlwaysAutoResize);
+
+        }), null, this.GetPrimaryMod(), KeyboardKey.KEY_N));
+        this.AddNewEditorAction(new EditorAction("File", "Quicksave", (editor =>
+        {
+            editor.CurrentTab.Save();
+            this.CurrentProject.SaveToFile("./project.json");
+        }), null, this.GetPrimaryMod(), KeyboardKey.KEY_S));
+        this.AddNewEditorAction(new EditorAction("Edit", "Undo", (editor =>
+        {
+            editor.Undo();
+        }), null, this.GetPrimaryMod(), KeyboardKey.KEY_Z));
+        this.AddNewEditorAction(new EditorAction("Edit", "Redo", (editor =>
+        {
+            editor.Redo();
+        }), null, this.GetPrimaryMod(), KeyboardKey.KEY_Y));
+        this.AddNewEditorAction(new EditorAction("Edit", "Rotate CW", (editor =>
+        {
+            List<Command<Editor>> commands = new List<Command<Editor>>();
+
+            foreach (Component c in editor.Simulator.Selection.Where(x => x is Component))
+            {
+                commands.Add(new CommandRotateComponent(c, 1));
+            }
+
+            editor.Execute(new MultiCommand<Editor>("Rotated Components Clockwise", commands));
+
+        }), null, this.GetPrimaryMod(), KeyboardKey.KEY_RIGHT));
+        this.AddNewEditorAction(new EditorAction("Edit", "Rotate CCW", (editor =>
+        {
+            List<Command<Editor>> commands = new List<Command<Editor>>();
+
+            foreach (Component c in editor.Simulator.Selection.Where(x => x is Component))
+            {
+                commands.Add(new CommandRotateComponent(c, -1));
+            }
+
+            editor.Execute(new MultiCommand<Editor>("Rotated Components Counter Clockwise", commands));
+
+        }), null, this.GetPrimaryMod(), KeyboardKey.KEY_LEFT));
+        this.AddNewEditorAction(new EditorAction("Edit", "Delete Selection", (editor =>
+        {
+            List<Component> comps = editor.Simulator.Selection.Where(x => x is Component).Cast<Component>().ToList();
+
+            List<Command<Editor>> commands = new List<Command<Editor>>();
+            foreach (Component c in comps)
+            {
+                commands.Add(new CommandDeleteComponent(c));
+            }
+
+            List<JunctionWireNode> nodes = editor.Simulator.Selection.Where(x => x is JunctionWireNode).Cast<JunctionWireNode>().ToList();
+            foreach (JunctionWireNode wn in nodes)
+            {
+                editor.Simulator.TryGetJunctionFromPosition(wn.GetPosition(), out JunctionWireNode? jwn, out Wire? nodeOnWire);
+
+                List<Edge<WireNode>> edgesAdjacent = nodeOnWire!.Graph.AdjacentEdges(wn).ToList();
+
+                foreach (Edge<WireNode> edge in edgesAdjacent)
+                {
+                    commands.Add(new CommandDeleteWireSegment(edge.MiddleOfEdge()));
+                }
+            }
+
+            MultiCommand<Editor> multiCommand = new MultiCommand<Editor>($"Deleted {comps.Count} Components & {nodes.Count} junctions", commands.ToArray());
+            editor.Execute(multiCommand);
+        }), (editor => editor?.Simulator?.Selection.Where(x => x is Component).Cast<Component>().Count() > 0 && !ImGui.IsAnyItemActive()), KeyboardKey.KEY_BACKSPACE));
     }
 
-    public void LoadComponentButtons()
+    public void AddNewComponentCreationContext(ComponentCreationContext ccc)
     {
-        this.componentCategories = new Dictionary<string, List<string>>();
-        this.componentCreationContexts = new Dictionary<string, Tuple<Func<Component>, IUISubmitter<bool, Editor>?>>();
+        this.ComponentCreationContexts.Add(ccc);
 
-        // I/O
-        this.AddNewComponentCreationContext("I/O", "Switch", () => { return new Switch(1, UserInput.GetMousePositionInWorld(editorCamera)); }, new CCPUSimple(false, false, true, false, (_, _, ob, _) =>
-        {
-            return new Switch(ob, UserInput.GetMousePositionInWorld(editorCamera));
-        }));
-        this.AddNewComponentCreationContext("I/O", "Button", () => { return new Button(1, UserInput.GetMousePositionInWorld(editorCamera)); }, null);
-        this.AddNewComponentCreationContext("I/O", "Lamp", () => { return new Lamp(1, UserInput.GetMousePositionInWorld(editorCamera)); }, new CCPUSimple(true, true, false, false, (ib, _, _, _) =>
-        {
-            return new Lamp(ib, UserInput.GetMousePositionInWorld(editorCamera));
-        }));
-        this.AddNewComponentCreationContext("I/O", "Hex Viewer", () => { return new HexViewer(4, false, false, UserInput.GetMousePositionInWorld(editorCamera)); }, new CCPUSimple(true, true, false, true, (ib, im, _, include) =>
-        {
-            return new HexViewer(ib, im, include, UserInput.GetMousePositionInWorld(editorCamera));
-        }, outputMultibitString: "Include Representation bits"));
-        this.AddNewComponentCreationContext("I/O", "ROM", () => { return new ROM(false, 4, false, 4, UserInput.GetMousePositionInWorld(editorCamera)); }, new CCPUSimple(true, true, true, true, (ib, im, ob, om) =>
-        {
-            return new ROM(im, ib, om, ob, UserInput.GetMousePositionInWorld(editorCamera));
-        }, "Address Bits", "Address Multibit", "Data Bits", "Data Multibit"));
-        this.AddNewComponentCreationContext("I/O", "Constant", () => { return new ConstantComponent(LogicValue.HIGH, UserInput.GetMousePositionInWorld(editorCamera)); }, null);
-        this.AddNewComponentCreationContext("I/O", "Clock", () => { return new Clock(500, UserInput.GetMousePositionInWorld(editorCamera)); }, null);
-        this.AddNewComponentCreationContext("Common", "Memory", () => { return new MemoryComponent(4, false, 8, false, UserInput.GetMousePositionInWorld(editorCamera)); }, new CCPUMemory());
-        this.AddNewComponentCreationContext("Common", "Label", () => { return new TextComponent(UserInput.GetMousePositionInWorld(editorCamera)); }, null);
-        this.AddNewComponentCreationContext("Common", "Splitter", () => { return new Splitter(2, 2, true, false, UserInput.GetMousePositionInWorld(editorCamera)); }, new CCPUSplitter());
-        this.AddNewComponentCreationContext("Common", "Delayer", () => { return new Delayer(100, 1, false, UserInput.GetMousePositionInWorld(editorCamera)); }, new CCPUSimple(true, true, false, false, (ib, im, _, _) =>
-        {
-            return new Delayer(100, ib, im, UserInput.GetMousePositionInWorld(editorCamera));
-        }));
-        this.AddNewComponentCreationContext("Common", "Multiplexer", () =>
-        {
-            return new Multiplexer(2, true, 4, true, UserInput.GetMousePositionInWorld(editorCamera));
-        }, new CCPUSimple(true, true, true, true, (ib, im, ob, om) =>
-        {
-            return new Multiplexer(ib, im, ob, om, UserInput.GetMousePositionInWorld(editorCamera));
-        }, "Selector Bits", "Selector Multibit", "Data Bits", "Data Multibit"));
-        this.AddNewComponentCreationContext("Common", "Demultiplexer", () =>
-        {
-            return new Demultiplexer(2, true, 4, true, UserInput.GetMousePositionInWorld(editorCamera));
-        }, new CCPUSimple(true, true, true, true, (ib, im, ob, om) =>
-        {
-            return new Demultiplexer(ib, im, ob, om, UserInput.GetMousePositionInWorld(editorCamera));
-        }, "Selector Bits", "Selector Multibit", "Data Bits", "Data Multibit"));
-        this.AddNewComponentCreationContext("Common", "Dec to Bin", () =>
-        {
-            return new DTBC(16, true, UserInput.GetMousePositionInWorld(editorCamera));
-        }, new CCPUSimple(true, true, false, false, (ib, im, _, _) =>
-        {
-            return new DTBC(ib, im, UserInput.GetMousePositionInWorld(editorCamera));
-        }, "Decimals", "Multibit"));
-        this.AddNewComponentCreationContext("Common", "Adder", () =>
-        {
-            return new AdderComponent(1, false, UserInput.GetMousePositionInWorld(editorCamera));
-        }, new CCPUSimple(true, true, false, false, (ib, im, _, _) =>
-        {
-            return new AdderComponent(ib, im, UserInput.GetMousePositionInWorld(editorCamera));
-        }, "Input Bits", "Multibit"));
-        this.AddNewComponentCreationContext("Common", "Multiplier", () =>
-        {
-            return new MultiplierComponent(1, false, UserInput.GetMousePositionInWorld(editorCamera));
-        }, new CCPUSimple(true, true, false, false, (ib, im, _, _) =>
-        {
-            return new MultiplierComponent(ib, im, UserInput.GetMousePositionInWorld(editorCamera));
-        }, "Input Bits", "Multibit"));
-        this.AddNewComponentCreationContext("Common", "Register", () =>
-        {
-            return new RegisterComponent(4, true, UserInput.GetMousePositionInWorld(editorCamera));
-        }, new CCPUSimple(true, true, false, false, (ib, im, _, _) =>
-        {
-            return new RegisterComponent(ib, im, UserInput.GetMousePositionInWorld(editorCamera));
-        }, "Data Bits", "Multibit"));
-        this.AddNewComponentCreationContext("Common", "Bitwise Gate", () =>
-        {
-            return new BitwiseComponent(Util.GetGateLogicFromName("AND"), 4, true, UserInput.GetMousePositionInWorld(editorCamera));
-        }, new CCPUBitwise());
+        // GROUP BY CATEGORIES
+        this.ComponentCreationContextCategories = this.ComponentCreationContexts.GroupBy(ccc => ccc.Category).Select(group => (group.Key, group.ToList())).ToList();
+    }
 
-        // GATES
-        foreach (IGateLogic logic in this.availableGateLogics)
-        {
-            this.AddNewComponentCreationContext("Gates", logic.GetLogicText(), () =>
-            {
-                return new LogicGate(logic.DefaultBits(), false, logic, UserInput.GetMousePositionInWorld(editorCamera));
-            }, new CCPUSimple(true, true, false, false, (ib, im, _, _) =>
-            {
-                return new LogicGate(ib, im, logic, UserInput.GetMousePositionInWorld(editorCamera));
-            }));
-        }
+    public void AddNewEditorAction(EditorAction action)
+    {
+        this.EditorActions.Add(action);
 
-        // PLUGINS
-        foreach (Plugin p in Util.Plugins)
+        this.EditorActionCategories = this.EditorActions.GroupBy(ea => ea.Category).Select(group => (group.Key, group.ToList())).ToList();
+    }
+
+    public void OpenEditorTab(EditorTab tab)
+    {
+        this.EditorTabs.Add(tab.Name, tab);
+        this.CurrentEditorTab = tab.Name;
+    }
+
+    public void SubmitMainMenuBar()
+    {
+        foreach ((string category, List<EditorAction> actions) in this.EditorActionCategories)
         {
-            foreach (KeyValuePair<string, CustomDescription> cds in p.customComponents)
+            if (ImGui.BeginMenu(category))
             {
-                this.AddNewComponentCreationContext(p.name, cds.Value.ComponentName, () => { return p.CreateComponent(cds.Key, UserInput.GetMousePositionInWorld(editorCamera), 0); }, null);
+                foreach (EditorAction ea in actions)
+                {
+                    if (ImGui.MenuItem(ea.Name, Util.KeyComboString(ea.Shortcut), false, ea.CanExecute(this)))
+                    {
+                        ea.Execute(this);
+                    }
+                }
+
+                ImGui.EndMenu();
             }
         }
-
-        // ICs
-        // Project created ICs
-        foreach (ICDescription icd in this.loadedProject.ProjectCreatedICs.ToArray())
-        {
-            this.AddNewComponentCreationContext("Project ICs", icd.Name, () => { return icd.ToComponent(false).SetPosition(UserInput.GetMousePositionInWorld(editorCamera)); },
-            new CCPUIC(icd, (desc) =>
-            {
-                this.loadedProject.RemoveProjectCreatedIC(icd);
-                this.LoadComponentButtons();
-            }));
-        }
-        // Included single IC files
-        foreach (ICDescription icd in this.loadedProject.ICsFromFile.ToArray())
-        {
-            this.AddNewComponentCreationContext("Included ICs", icd.Name, () => { return icd.ToComponent(false).SetPosition(UserInput.GetMousePositionInWorld(editorCamera)); },
-            new CCPUIC(icd, (desc) =>
-            {
-                this.loadedProject.ExcludeICFromFile(icd);
-                this.LoadComponentButtons();
-            }));
-        }
-        // Included collections
-        foreach (KeyValuePair<string, ICCollection> collection in this.loadedProject.ICCollections.ToArray())
-        {
-            foreach (ICDescription icd in collection.Value.ICs.ToArray())
-            {
-                this.AddNewComponentCreationContext(collection.Key, icd.Name, () => { return icd.ToComponent(false).SetPosition(UserInput.GetMousePositionInWorld(editorCamera)); },
-                new CCPUIC(icd, (desc) =>
-                {
-                    this.loadedProject.ExcludeICCollection(collection.Value);
-                    this.LoadComponentButtons();
-                }));
-            }
-        }
     }
 
-    public void AddNewComponentCreationContext(string category, string componentName, Func<Component> defaultCreator, IUISubmitter<bool, Editor>? contextMenu)
+    public void SubmitComponentCreations()
     {
-        if (!this.componentCategories.ContainsKey(category))
+        foreach ((string category, List<ComponentCreationContext> contexts) in this.ComponentCreationContextCategories)
         {
-            this.componentCategories.Add(category, new List<string>());
-        }
-
-        this.componentCategories[category].Add(componentName);
-
-        this.componentCreationContexts.Add(componentName, new Tuple<Func<Component>, IUISubmitter<bool, Editor>?>(defaultCreator, contextMenu));
-    }
-
-    public void HandleComponentCreationContexts()
-    {
-        foreach (KeyValuePair<string, List<string>> category in this.componentCategories)
-        {
-            List<string> compsInCategory = category.Value;
-            string cat = category.Key;
-
-            if (ImGui.TreeNodeEx(cat, ImGuiTreeNodeFlags.DefaultOpen | ImGuiTreeNodeFlags.NoTreePushOnOpen))
+            if (ImGui.TreeNodeEx(category, ImGuiTreeNodeFlags.DefaultOpen | ImGuiTreeNodeFlags.NoTreePushOnOpen))
             {
-                foreach (string component in compsInCategory)
+                for (int i = 0; i < contexts.Count; i++)
                 {
-                    Tuple<Func<Component>, IUISubmitter<bool, Editor>?> context = this.componentCreationContexts[component];
+                    ComponentCreationContext ccc = contexts[i];
 
                     Vector2 buttonSize = new Vector2(140, 25);
-                    ImGui.Button(component, buttonSize);
+                    ImGui.Button(ccc.Name, buttonSize);
                     if (ImGui.IsItemClicked())
                     {
-                        // Use default creator to create new component
-                        Component c = context.Item1();
-                        NewComponentCommand ncc = new NewComponentCommand(c, c.Position);
-                        base.Execute(ncc, this);
+                        CommandNewComponent cnc = new CommandNewComponent(ccc.DefaultComponent());
+                        this.Execute(cnc, this);
+                        this.FSM.SetState<ESMovingSelection>(this, 0);
                     }
 
-                    // If a IUISubmitter was supplied, then we want to show
-                    // it as a context menu
-                    if (context.Item2 != null)
+                    if (ccc.PopupCreator != null)
                     {
-                        if (ImGui.BeginPopupContextItem(component))
+                        if (ImGui.BeginPopupContextItem(ccc.Category + ccc.Name))
                         {
-                            if (context.Item2.SubmitUI(this))
+                            if (ccc.PopupCreator.Create(this, out Component? component))
                             {
-                                ImGui.CloseCurrentPopup();
+                                CommandNewComponent cnc = new CommandNewComponent(component);
+                                this.Execute(cnc, this);
+                                this.FSM.SetState<ESMovingSelection>(this, 0);
                             }
                             ImGui.EndPopup();
                         }
@@ -554,294 +344,172 @@ public class Editor : Application<Editor>
         }
     }
 
-    public void AddNewMainMenuItem(string mainButton, string actionButtonName, EditorAction action)
-    {
-        if (!this.mainMenuButtons.Exists(x => x.Item1 == mainButton))
-        {
-            this.mainMenuButtons.Add(new Tuple<string, List<Tuple<string, EditorAction>>>(mainButton, new List<Tuple<string, EditorAction>>()));
-        }
-
-        Tuple<string, List<Tuple<string, EditorAction>>> mainMenuButton = this.mainMenuButtons.Find(x => x.Item1 == mainButton);
-
-        mainMenuButton.Item2.Add(new Tuple<string, EditorAction>(actionButtonName, action));
-    }
-
-    public void MMCopy()
-    {
-        try
-        {
-            CopyCircuitCommand ccc = new CopyCircuitCommand(this.copiedCircuit, new CircuitDescription(simulator.SelectedComponents));
-            base.Execute(ccc, this);
-        }
-        catch (Exception e)
-        {
-            this.ModalError("Uncaught Error: " + e.Message);
-        }
-    }
-
-    public void MMPaste()
-    {
-        if (copiedCircuit != null)
-        {
-            this.PasteComponentsAndWires(copiedCircuit, UserInput.GetMousePositionInWorld(this.editorCamera), false);
-        }
-    }
-
-    public void PasteComponentsAndWires(CircuitDescription cd, Vector2 pos, bool preserveIDs)
-    {
-        try
-        {
-            PasteClipboardCommand pcc = new PasteClipboardCommand(cd, pos, preserveIDs);
-            base.Execute(pcc, this);
-        }
-        catch (Exception e)
-        {
-            base.ModalError(e.Message, ModalButtonsType.OK);
-        }
-    }
-
     public override void SubmitUI()
     {
-        // Color windowBg = new Vector4(0.06f, 0.06f, 0.06f, 1.0f).ToColor();
-        // Color buttonColor = new Vector4(0.13f, 0.30f, 0.59f, 1.0f).ToColor();
-
-        // ImGui.PushStyleVar(ImGuiStyleVar.FrameBorderSize, 1.0f);
-        // ImGui.PushStyleColor(ImGuiCol.WindowBg, windowBg.ToVector4());
-        // ImGui.PushStyleColor(ImGuiCol.PopupBg, windowBg.ToVector4());
-        // ImGui.PushStyleColor(ImGuiCol.Button, buttonColor.ToVector4());
-        // ImGui.PushStyleColor(ImGuiCol.FrameBg, buttonColor.ToVector4());
-
         // MAIN MENU BAR
         ImGui.BeginMainMenuBar();
-
-        foreach (Tuple<string, List<Tuple<string, EditorAction>>> tup in this.mainMenuButtons)
-        {
-            if (ImGui.BeginMenu(tup.Item1))
-            {
-                foreach (Tuple<string, EditorAction> inner in tup.Item2)
-                {
-                    if (ImGui.MenuItem(inner.Item1, (inner.Item2.HasKeys()) ? inner.Item2.GetShortcutString() : null, inner.Item2.Selected(this), (inner.Item2.Condition(this))))
-                    {
-                        if (!inner.Item2.Execute(this, out string error))
-                        {
-                            this.ModalError(error);
-                        }
-                    }
-                }
-
-                ImGui.EndMenu();
-            }
-        }
-
-        ImGui.Separator();
-
-        if (ImGui.BeginMenu("Simulation"))
-        {
-            bool simulating = this.simulator.Simulating;
-            ImGui.Checkbox("Simulating", ref simulating);
-            this.simulator.Simulating = simulating;
-
-            float simSpeed = this.simulator.SimulationSpeed;
-            ImGui.SliderFloat("Simulation Speed", ref simSpeed, 0.001f, 5f, "%.2f", ImGuiSliderFlags.Logarithmic);
-            this.simulator.SimulationSpeed = simSpeed;
-
-            if (ImGui.Button("Run Update"))
-            {
-                this.simulator.SingleUpdate(UserInput.GetMousePositionInWorld(editorCamera));
-            }
-
-            ImGui.EndMenu();
-        }
-
-        if (ImGui.BeginMenu("Plugins"))
-        {
-            // Import new plugin
-            if (ImGui.MenuItem("Install plugin from file..."))
-            {
-                this.SelectFile(Util.FileDialogStartDir, (file) =>
-                {
-                    if (!Plugin.TryInstall(file, out List<Plugin> newPluginList, out string? error))
-                    {
-                        base.ModalError(error!);
-                    }
-                    Util.Plugins = newPluginList;
-                    this.SetProject(this.loadedProject);
-                }, ".zip");
-            }
-
-            if (ImGui.MenuItem("Reload plugins"))
-            {
-                Plugin.TryLoadAllPlugins(out List<Plugin> plugins, out Dictionary<string, string> failedPlugins);
-                if (failedPlugins.Count > 0)
-                {
-                    string error = "";
-                    foreach (KeyValuePair<string, string> kvp in failedPlugins)
-                    {
-                        error += $"{kvp.Key} failed to load: {kvp.Value}\n";
-                    }
-                    base.ModalError(error);
-                }
-                Util.Plugins = plugins;
-                this.SetProject(this.loadedProject);
-            }
-
-            ImGui.Separator();
-
-            // Show list of plugins
-            foreach (Plugin plugin in Util.Plugins)
-            {
-                if (ImGui.BeginMenu(plugin.name + ", " + plugin.version))
-                {
-                    // Here we do all the plugin methods
-                    foreach (KeyValuePair<string, PluginMethod> methods in plugin.customMethods)
-                    {
-                        if (ImGui.MenuItem(methods.Key, methods.Value.CanRun(this)))
-                        {
-                            try
-                            {
-                                if (!methods.Value.OnRun(this, out string? error))
-                                {
-                                    base.ModalError(error!);
-                                }
-                            }
-                            catch (Exception e)
-                            {
-                                base.ModalError(e.Message);
-                            }
-                        }
-                    }
-                    ImGui.Separator();
-                    if (ImGui.MenuItem("About"))
-                    {
-                        this.Modal(plugin.name, plugin.GetAboutInfo());
-                    }
-                    if (ImGui.MenuItem("Uninstall"))
-                    {
-                        base.Modal("Uninstall plugin", "Are you sure you want to uninstall " + plugin.name + ", v" + plugin.version + "?", ModalButtonsType.YesNo, (result) =>
-                        {
-                            if (result == ModalResult.Yes)
-                            {
-                                File.Delete(plugin.file);
-                                Plugin.TryLoadAllPlugins(out List<Plugin> plugins, out Dictionary<string, string> failedPlugins);
-                                if (failedPlugins.Count > 0)
-                                {
-                                    string error = "";
-                                    foreach (KeyValuePair<string, string> kvp in failedPlugins)
-                                    {
-                                        error += $"{kvp.Key} failed to load: {kvp.Value}\n";
-                                    }
-                                    base.ModalError(error);
-                                }
-                                Util.Plugins = plugins;
-                                this.SetProject(this.loadedProject);
-                            }
-                        });
-                    }
-
-                    ImGui.EndMenu();
-                }
-            }
-
-            ImGui.EndMenu();
-        }
-
+        this.SubmitMainMenuBar();
         ImGui.EndMainMenuBar();
 
-        ImGui.Begin("Editor Actions");
-        ImGui.Text("Current Command: " + this.CurrentCommandIndex);
-        for (int i = 0; i < this.Commands.Count; i++)
-        {
-            if (i <= this.CurrentCommandIndex)
-            {
-                ImGui.Text(this.Commands[i].ToString());
-            }
-            else
-            {
-                ImGui.TextDisabled(this.Commands[i].ToString());
-            }
-        }
-        ImGui.End();
-
-        // COMPONENTS WINDOW
-
+        // SIDEBAR WINDOW
         ImGui.PushStyleVar(ImGuiStyleVar.WindowRounding, 0f);
         ImGui.SetNextWindowPos(new Vector2(0, 22), ImGuiCond.Always);
-        float sidebarWidth = 170;
-        ImGui.SetNextWindowSize(new Vector2(sidebarWidth, base.WindowSize.Y - 19), ImGuiCond.Always);
+        ImGui.SetNextWindowSize(new Vector2(this.SidebarWidth, base.WindowSize.Y - (this.MainMenuBarHeight - 2)), ImGuiCond.Always);
         ImGui.Begin("Components", ImGuiWindowFlags.NoResize | ImGuiWindowFlags.AlwaysVerticalScrollbar | ImGuiWindowFlags.NoNavInputs | ImGuiWindowFlags.NoCollapse | ImGuiWindowFlags.NoTitleBar | ImGuiWindowFlags.NoMove | ImGuiWindowFlags.NoSavedSettings);
         ImGui.PopStyleVar();
-        this.HandleComponentCreationContexts();
+
+        // Here we should submit all custom circuits to the sidebar and
+        this.SubmitCircuitCreations();
+        this.SubmitComponentCreations();
         ImGui.End();
 
-        if (currentComponentDocumentation != null)
+        Vector2 windowSize = this.WindowSize;
+        ImGuiWindowFlags flags = ImGuiWindowFlags.NoResize | ImGuiWindowFlags.NoMove | ImGuiWindowFlags.NoCollapse | ImGuiWindowFlags.NoTitleBar | ImGuiWindowFlags.NoSavedSettings | ImGuiWindowFlags.NoNav | ImGuiWindowFlags.NoNavFocus | ImGuiWindowFlags.NoBringToFrontOnFocus | ImGuiWindowFlags.NoDocking;
+        ImGui.PushStyleVar(ImGuiStyleVar.WindowRounding, 0f);
+        ImGui.SetNextWindowPos(new Vector2(this.SidebarWidth, this.MainMenuBarHeight), ImGuiCond.Always);
+        ImGui.SetNextWindowSize(new Vector2(windowSize.X - this.SidebarWidth, this.CircuitTabBarHeight), ImGuiCond.Always);
+
+        ImGui.Begin("Main Dockspace", flags);
+        ImGui.PopStyleVar();
+
+        ImGui.BeginTabBar("Tabs", ImGuiTabBarFlags.None | ImGuiTabBarFlags.Reorderable | ImGuiTabBarFlags.AutoSelectNewTabs);
+
+        foreach (KeyValuePair<string, EditorTab> kvp in this.EditorTabs)
         {
             bool open = true;
-            ImGui.SetNextWindowSize(new Vector2(500, 300), ImGuiCond.Appearing);
-            ImGui.Begin($"Documentation", ref open, ImGuiWindowFlags.NoNav);
-            Util.RenderMarkdown(currentComponentDocumentation.Documentation!);
+
+            if (this.FSM.CurrentState.ForcesSameTab && kvp.Key != this.CurrentEditorTab)
+            {
+                ImGui.PushStyleVar(ImGuiStyleVar.Alpha, 0.5f);
+            }
+
+            if (ImGui.BeginTabItem(kvp.Key, ref open, kvp.Value.HasChanges() ? ImGuiTabItemFlags.UnsavedDocument : ImGuiTabItemFlags.None))
+            {
+                this.CurrentEditorTab = kvp.Key;
+                ImGui.EndTabItem();
+            }
+
+            if (this.FSM.CurrentState.ForcesSameTab && kvp.Key != this.CurrentEditorTab)
+            {
+                ImGui.PopStyleVar();
+            }
+
             if (!open)
             {
-                this.currentComponentDocumentation = null;
-            }
-            ImGui.End();
-        }
-
-        // If single selecting a component
-        if (simulator.SelectedComponents.Count == 1)
-        {
-            Component c = simulator.SelectedComponents[0];
-            c.OnSingleSelectedSubmitUI();
-        }
-
-        if (!ImGui.GetIO().WantCaptureMouse)
-        {
-            // On right clicking component, open its context menu
-            foreach (Component c in simulator.Components)
-            {
-                if (c.HasContextMenu && ImGui.IsMouseClicked(ImGuiMouseButton.Right) && Raylib.CheckCollisionPointRec(UserInput.GetMousePositionInWorld(this.editorCamera), c.Box))
+                if (kvp.Value.TryClose())
                 {
-                    this.contextMenuComponent = c;
-                    ImGui.OpenPopup($"###ContextMenuComp{this.contextMenuComponent.uniqueID}");
+                    // TODO: Remove the tab
+                    this.EditorTabs.Remove(kvp.Key);
+                    if (this.CurrentEditorTab == kvp.Key)
+                    {
+                        this.CurrentEditorTab = this.EditorTabs.Count > 0 ? this.EditorTabs.First().Key : null;
+                    }
+                }
+                else
+                {
+                    this.ModalError($"You have unsaved changes in '{kvp.Key}'. Closing the tab before\nsaving will discard all changes. Are you sure you want to close it?", ModalButtonsType.YesNo, yes: () =>
+                    {
+                        // TODO: Remove the tab with same code as above ^
+                        this.EditorTabs.Remove(kvp.Key);
+                        if (this.CurrentEditorTab == kvp.Key)
+                        {
+                            this.CurrentEditorTab = this.EditorTabs.Count > 0 ? this.EditorTabs.First().Key : null;
+                        }
+                    });
+                }
+            }
+
+        }
+
+        ImGui.EndTabBar();
+
+        ImGui.End();
+
+        if (this.ContextMenuID != null)
+        {
+            ImGui.OpenPopup("###" + this.ContextMenuID);
+
+            if (ImGui.BeginPopup("###" + this.ContextMenuID, ImGuiWindowFlags.NoMove))
+            {
+                if (!this.CurrentContextMenu())
+                {
+                    this.ContextMenuID = null;
+                    ImGui.CloseCurrentPopup();
+                }
+
+                Vector2 popupSize = ImGui.GetWindowSize();
+                Rectangle rec = new Rectangle(this.MouseStartPos.X, this.MouseStartPos.Y, popupSize.X, popupSize.Y).Inflate(25);
+                if (!rec.ContainsVector2(UserInput.GetMousePositionInWindow()))
+                {
+                    this.ContextMenuID = null;
+                    ImGui.CloseCurrentPopup();
+                }
+
+                ImGui.EndPopup();
+            }
+        }
+
+        this.CurrentTab?.SubmitUI(this);
+        this.IsMouseInWorld = Raylib.CheckCollisionPointRec(UserInput.GetMousePositionInWindow(), Util.CreateRecFromTwoCorners(new Vector2(this.SidebarWidth, this.MainMenuBarHeight + this.CircuitTabBarHeight), this.WindowSize)) && !ImGui.GetIO().WantCaptureKeyboard;
+        this.IsMouseInWorld = this.IsMouseInWorld && !ImGui.GetIO().WantCaptureMouse;
+    }
+
+    private void SubmitCircuitCreations()
+    {
+        if (ImGui.TreeNodeEx("Circuits", ImGuiTreeNodeFlags.NoTreePushOnOpen))
+        {
+            foreach (Circuit circ in this.CurrentProject.Circuits)
+            {
+                Vector2 buttonSize = new Vector2(140, 25);
+
+                if (circ.Name == this.CurrentEditorTab)
+                    ImGui.PushStyleVar(ImGuiStyleVar.Alpha, 0.5f);
+
+                ImGui.Button(circ.Name, buttonSize);
+
+                if (circ.Name == this.CurrentEditorTab)
+                    ImGui.PopStyleVar();
+
+                if (circ.Name != this.CurrentEditorTab)
+                {
+                    if (ImGui.IsItemClicked())
+                    {
+                        Component c = new IntegratedComponent(this.GetWorldMousePos().SnapToGrid(), circ);
+                        CommandNewComponent cnc = new CommandNewComponent(c);
+                        this.Execute(cnc, this);
+                        this.FSM?.SetState<ESMovingSelection>(this, 0);
+                    }
+
+                    if (ImGui.BeginPopupContextItem(circ.Name))
+                    {
+                        if (ImGui.MenuItem("Edit"))
+                        {
+                            if (this.EditorTabs.ContainsKey(circ.Name))
+                            {
+                                this.CurrentEditorTab = circ.Name;
+                            }
+                            else
+                            {
+                                this.OpenEditorTab(new EditorTab(circ));
+                            }
+                        }
+                        ImGui.EndPopup();
+                    }
                 }
             }
         }
+    }
 
-        ImGui.SetNextWindowPos(UserInput.GetMousePositionInWindow() - new Vector2(5, 5), ImGuiCond.Appearing);
-        if (ImGui.BeginPopupContextWindow($"###ContextMenuComp{(this.contextMenuComponent != null ? this.contextMenuComponent.uniqueID : 5)}"))
+    public void NewComponent(Component c, bool absolutePosition = false)
+    {
+        if (!absolutePosition)
         {
-            this.contextMenuComponent.SubmitContextPopup(this);
-            ImGui.EndPopup();
+            c.Position -= c.Size / 2f;
         }
-
-        if (this.currentModal != null)
-        {
-            if (base.AppModalRequested())
-            {
-                this.currentModal = null;
-            }
-            if (this.currentModal.SubmitUI(this))
-            {
-                this.currentModal = null;
-            }
-
-        }
-
-        // Render additional editor windows
-        for (int i = this.editorWindows.Count - 1; i >= 0; i--)
-        {
-            if (!this.editorWindows[i].IsOpen)
-            {
-                this.editorWindows.RemoveAt(i);
-                continue;
-            }
-
-            this.editorWindows[i].Draw(this);
-        }
-
-        this.fsm.SubmitUI(this);
-
-        // ImGui.PopStyleVar();
-        // ImGui.PopStyleColor(3);
+        c.Position = c.Position.SnapToGrid();
+        this.Simulator.Selection.Clear();
+        this.Simulator.AddComponent(c);
+        this.Simulator.Select(c);
     }
 
     public void DrawGrid()
@@ -849,10 +517,10 @@ public class Editor : Application<Editor>
         // Get camera's position and the size of the current view
         // This depends on the zoom of the camera. Dividing by the
         // zoom gives a correct representation of the actual visible view.
-        Vector2 camPos = this.editorCamera.target;
-        Vector2 viewSize = UserInput.GetViewSize(this.editorCamera);
+        Vector2 viewSize = UserInput.GetViewSize(this.camera);
+        Vector2 camPos = this.camera.target;
 
-        int pixelsInBetweenLines = 250;
+        int pixelsInBetweenLines = Util.GridSizeX;
 
         // Draw vertical lines
         for (int i = (int)((camPos.X - viewSize.X / 2.0F) / pixelsInBetweenLines); i < ((camPos.X + viewSize.X / 2.0F) / pixelsInBetweenLines); i++)
@@ -861,7 +529,7 @@ public class Editor : Application<Editor>
             int lineYstart = (int)(camPos.Y - viewSize.Y / 2.0F);
             int lineYend = (int)(camPos.Y + viewSize.Y / 2.0F);
 
-            Raylib.DrawLine(lineX, lineYstart, lineX, lineYend, Color.DARKGRAY);
+            Raylib.DrawLine(lineX, lineYstart, lineX, lineYend, Color.DARKGRAY.Opacity(0.1f));
         }
 
         // Draw horizontal lines
@@ -870,92 +538,62 @@ public class Editor : Application<Editor>
             int lineY = i * pixelsInBetweenLines;
             int lineXstart = (int)(camPos.X - viewSize.X / 2.0F);
             int lineXend = (int)(camPos.X + viewSize.X / 2.0F);
-            Raylib.DrawLine(lineXstart, lineY, lineXend, lineY, Color.DARKGRAY);
+            Raylib.DrawLine(lineXstart, lineY, lineXend, lineY, Color.DARKGRAY.Opacity(0.1f));
         }
-    }
-
-    public void NewComponent(Component comp)
-    {
-        List<Action<Editor, Component>> additionalContexts = Util.GetAdditionalComponentContexts(comp.GetType());
-        comp.AdditionalUISubmitters = additionalContexts;
-        simulator.AddComponent(comp);
-        simulator.ClearSelection();
-        simulator.SelectedWirePoints.Clear();
-        simulator.SelectComponent(comp);
     }
 
     public override void Update()
     {
-        Vector2 mousePosInWorld = UserInput.GetMousePositionInWorld(this.editorCamera);
+        // UPDATE SIMULATION HERE
+        this.CurrentTab?.Update(this);
 
-        if (!ImGui.GetIO().WantCaptureMouse)
+        // CHECK IF EDITOR ACTIONS SHORTCUTS ARE PRESSED
+        foreach (EditorAction ea in this.EditorActions)
         {
-            if (Raylib.GetMouseWheelMove() > 0)
+            if (ea.CanExecute(this) && UserInput.KeyComboPressed(ea.Shortcut))
             {
-                this.editorCamera.zoom = 1.05F * this.editorCamera.zoom;
-            }
-            if (Raylib.GetMouseWheelMove() < 0)
-            {
-                this.editorCamera.zoom = (1f / 1.05f) * this.editorCamera.zoom;
+                ea.Execute(this);
             }
         }
-
-        this.hoveredInput = simulator.GetInputFromWorldPos(mousePosInWorld);
-        this.hoveredOutput = simulator.GetOutputFromWorldPos(mousePosInWorld);
-        this.hoveredComponent = simulator.GetComponentFromWorldPos(mousePosInWorld);
-
-        simulator.Update(mousePosInWorld);
-        if (!ImGui.GetIO().WantCaptureMouse)
-        {
-            this.simulator.Interact(mousePosInWorld);
-        }
-        this.fsm.Update(this);
-
-        if (!ImGui.GetIO().WantCaptureKeyboard)
-        {
-            List<List<EditorAction>> actions = this.mainMenuButtons.Select(x => x.Item2.Select(y => y.Item2).ToList()).ToList();
-            foreach (List<EditorAction> lea in actions)
-            {
-                foreach (EditorAction ea in lea)
-                {
-                    ea.Update(this);
-                }
-            }
-        }
-
     }
 
-    public override void Render()
+    public unsafe override void Render()
     {
-        Raylib.BeginMode2D(this.editorCamera);
-        Raylib.ClearBackground(Settings.GetSettingValue<Color>("editorBackgroundColor"));
-        DrawGrid();
+        this.camera.target = this.CurrentTab == null ? Vector2.Zero : this.CurrentTab.CameraTarget;
+        this.camera.zoom = this.CurrentTab == null ? 1f : this.CurrentTab.CameraZoom;
 
-        Vector2 mousePosInWorld = UserInput.GetMousePositionInWorld(this.editorCamera);
+        Raylib.BeginMode2D(this.camera);
 
-        simulator.Render(mousePosInWorld);
-        this.fsm.Render(this);
+        if (this.CurrentTab != null)
+        {
+            Raylib.ClearBackground(Settings.GetSettingValue<Color>("editorBackgroundColor"));
+            DrawGrid();
+        }
+        else
+        {
+            Raylib.ClearBackground(Settings.GetSettingValue<Color>("editorBackgroundColor").Multiply(0.3f));
+        }
 
+        // RENDER SIMULATION HERE
+        this.CurrentTab?.Render(this);
         Raylib.EndMode2D();
-    }
 
-    public void SelectFile(string startDirectory, Action<string> onSelect, params string[] filteredExtensions)
-    {
-        this.currentModal = new FileDialog(startDirectory, FileDialogType.SelectFile, onSelect, filteredExtensions);
-    }
+        Rectangle rTop = Util.CreateRecFromTwoCorners(Vector2.Zero, new Vector2(this.WindowSize.X, this.MainMenuBarHeight + this.CircuitTabBarHeight));
+        Rectangle rLeft = Util.CreateRecFromTwoCorners(Vector2.Zero, new Vector2(this.SidebarWidth, this.WindowSize.Y));
+        Raylib.DrawRectangleRec(rTop, Color.GRAY);
+        Raylib.DrawRectangleRec(rLeft, Color.GRAY);
 
-    public void SelectFolder(string startDirectory, Action<string> onSelect)
-    {
-        this.currentModal = new FileDialog(startDirectory, FileDialogType.SelectFolder, onSelect);
-    }
-
-    public void SaveFile(string startDirectory, Action<string> onSelect, params string[] filteredExtensions)
-    {
-        this.currentModal = new FileDialog(startDirectory, FileDialogType.SaveFile, onSelect, filteredExtensions);
     }
 
     public override void OnClose()
     {
 
+    }
+
+    public void OpenContextMenu(string id, Func<bool> submit)
+    {
+        this.CurrentContextMenu = submit;
+        this.ContextMenuID = id;
+        this.MouseStartPos = UserInput.GetMousePositionInWindow();
     }
 }

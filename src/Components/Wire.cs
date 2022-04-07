@@ -1,239 +1,446 @@
+using System.Diagnostics.CodeAnalysis;
+using QuikGraph;
+using QuikGraph.Algorithms.Search;
+using QuikGraph.Algorithms.ConnectedComponents;
 using LogiX.SaveSystem;
-using LogiX.Editor;
 
 namespace LogiX.Components;
 
+public enum WireStatus
+{
+    NORMAL,
+    ERROR,
+    CONFLICT,
+    DIFF_BITWIDTH,
+    UNKNOWN,
+}
+
+public abstract class WireNode : ISelectable
+{
+    public abstract Vector2 GetPosition();
+    public abstract bool IsPositionOn(Vector2 position);
+    public abstract void Move(Vector2 delta);
+    public void RenderSelected()
+    {
+        Raylib.DrawCircleV(this.GetPosition(), 4.5f, Color.ORANGE);
+    }
+}
+
+public class IOWireNode : WireNode
+{
+    public IO IO { get; set; }
+
+    public IOWireNode(IO io)
+    {
+        this.IO = io;
+    }
+
+    public override Vector2 GetPosition()
+    {
+        return this.IO.GetPosition();
+    }
+
+    public override bool IsPositionOn(Vector2 position)
+    {
+        return (this.GetPosition() - position).Length() < 5;
+    }
+
+    public override void Move(Vector2 delta)
+    {
+        // DO NOTHING
+    }
+}
+
+public class JunctionWireNode : WireNode
+{
+    public Vector2 Position { get; set; }
+
+    public JunctionWireNode(Vector2 position)
+    {
+        this.Position = position;
+    }
+
+    public override Vector2 GetPosition()
+    {
+        return this.Position;
+    }
+
+    public override bool IsPositionOn(Vector2 position)
+    {
+        return (this.GetPosition() - position).Length() < 5;
+    }
+
+    public override void Move(Vector2 delta)
+    {
+        this.Position += delta;
+    }
+}
+
 public class Wire
 {
-    public int Bits { get; private set; }
-    public List<LogicValue> Values { get; private set; }
+    public List<IO> IOs { get; private set; }
+    public WireStatus Status { get; set; }
 
-    public Component To { get; private set; }
-    public int ToIndex { get; private set; }
-    public Component From { get; private set; }
-    public int FromIndex { get; private set; }
+    private UndirectedGraph<WireNode, Edge<WireNode>> _graph;
+    public UndirectedGraph<WireNode, Edge<WireNode>> Graph { get => _graph; set => _graph = value; }
 
-    public List<Vector2> IntermediatePoints { get; set; }
-
-    public Wire(int bits, Component to, int toIndex, Component from, int fromIndex)
+    public Wire()
     {
-        this.Bits = bits;
-        this.Values = Util.NValues(LogicValue.LOW, bits);
-        this.To = to;
-        this.From = from;
-        this.ToIndex = toIndex;
-        this.FromIndex = fromIndex;
-        this.IntermediatePoints = new List<Vector2>();
+        this.IOs = new List<IO>();
+        this._graph = new UndirectedGraph<WireNode, Edge<WireNode>>();
     }
 
-    public void SetValues(IEnumerable<LogicValue> values)
+    public Wire(IO initialIO)
     {
-        if (values.Count() != this.Bits)
+        this.IOs = new List<IO>();
+        this._graph = new UndirectedGraph<WireNode, Edge<WireNode>>();
+
+        this.ConnectIO(initialIO);
+    }
+
+    public void ConnectIO(IO io)
+    {
+        this.IOs.Add(io);
+        io.Wire = this;
+    }
+
+    public void DisconnectAllIOs()
+    {
+        foreach (IO io in this.IOs)
         {
-            throw new ArgumentException("The number of values does not match the number of bits.");
+            io.Wire = null;
         }
-
-        this.Values = new List<LogicValue>(values);
+        this.IOs.Clear();
     }
 
-    public void SetAllValues(LogicValue value)
+    public void DisconnectIO(IO io)
     {
-        this.Values = Enumerable.Repeat(value, this.Bits).ToList();
+        //io.SetValues(Util.NValues(LogicValue.UNKNOWN, io.BitWidth).ToArray());
+        io.Wire = null;
+        this.IOs.Remove(io);
     }
 
-    public float GetHighFraction()
-    {
-        int highCount = 0;
+    public bool HasAnyIOs() => this.IOs.Count > 0;
 
-        foreach (LogicValue value in this.Values)
+    public bool AllIOsSameBitWidth(out int bitWidth)
+    {
+        bitWidth = this.IOs[0].BitWidth;
+        foreach (IO io in this.IOs)
         {
-            if (value == LogicValue.HIGH)
+            if (io.BitWidth != bitWidth)
             {
-                highCount++;
-            }
-        }
-
-        return (float)highCount / (float)this.Bits;
-    }
-
-    public bool IsPositionOnWire(Vector2 pos, out Vector2 lStart, out Vector2 lEnd)
-    {
-        float width = 4f;
-
-        bool posIsOnOutput = this.From.IsPositionOnOutput(this.FromIndex, pos);
-        bool posIsOnInput = this.To.IsPositionOnInput(this.ToIndex, pos);
-        bool posIsOnIO = posIsOnOutput || posIsOnInput;
-
-        // Get distance to line describing wire, if less than width, then on wire
-        if (this.IntermediatePoints.Count == 0)
-        {
-            // Single line, should be easy.
-            Vector2 lineStart = this.From.GetOutputLinePositions(this.FromIndex).Item1;
-            Vector2 lineEnd = this.To.GetInputLinePositions(this.ToIndex).Item1;
-
-            if (!Raylib.CheckCollisionPointRec(pos, Util.CreateRecFromTwoCorners(lineStart.Vector2Towards(5, lineEnd), lineEnd.Vector2Towards(5, lineStart), width / 2)))
-            {
-                lStart = lEnd = Vector2.Zero;
                 return false;
             }
-
-            float distance = Util.DistanceToLine(lineEnd, lineStart, pos);
-            if (distance < width)
-            {
-                lStart = lineStart;
-                lEnd = lineEnd;
-                return true && !this.IsPositionOnIntermediatePoint(pos, out Vector2 iPoint) && !posIsOnIO;
-            }
         }
-        else
-        {
-            // Multiple lines, need to check each line.
-            Vector2 start = this.From.GetOutputLinePositions(this.FromIndex).Item1;
-            Vector2 end = this.To.GetInputLinePositions(this.ToIndex).Item1;
-
-            List<Vector2> linePoints = IntermediatePoints.Concat(new List<Vector2>() { end }).ToList();
-            Vector2 previousPos = start;
-            for (int i = 0; i < linePoints.Count; i++)
-            {
-                Rectangle rec = Util.CreateRecFromTwoCorners(previousPos.Vector2Towards(5, linePoints[i]), linePoints[i].Vector2Towards(5, previousPos), width / 2);
-                if (Raylib.CheckCollisionPointRec(pos, rec))
-                {
-                    if (Util.DistanceToLine(previousPos, linePoints[i], pos) < width)
-                    {
-                        lStart = previousPos;
-                        lEnd = linePoints[i];
-                        return true && !this.IsPositionOnIntermediatePoint(pos, out Vector2 iPoint) && !posIsOnIO;
-                    }
-                }
-                previousPos = linePoints[i];
-            }
-        }
-
-        lStart = Vector2.Zero;
-        lEnd = Vector2.Zero;
-        return false;
+        return true;
     }
 
-    public bool IsPositionOnIntermediatePoint(Vector2 pos, out Vector2 point)
+    public bool IsConnectedTo(IO io, [NotNullWhen(true)] out IOWireNode? node)
     {
-        foreach (Vector2 p in this.IntermediatePoints)
+        node = this.Graph.Vertices.FirstOrDefault(x => x is IOWireNode iow && iow.IO == io, null) as IOWireNode;
+
+        return this.IOs.Contains(io);
+    }
+
+    public void ChangeIOWireNodeToJunction(IOWireNode node)
+    {
+        List<Edge<WireNode>> edges = this.Graph.AdjacentEdges(node).ToList();
+
+        foreach (Edge<WireNode> edge in edges)
         {
-            if ((p - pos).Length() < 5)
+            this.Graph.RemoveEdge(edge);
+        }
+
+        this.Graph.RemoveVertex(node);
+        WireNode newJunc = this.CreateJunctionWireNode(node.GetPosition());
+
+        foreach (Edge<WireNode> edge in edges)
+        {
+            this.Graph.AddEdge(new Edge<WireNode>(edge.GetOtherVertex(node), newJunc));
+        }
+
+        this.UpdateIOs();
+    }
+
+    public void ChangeJunctionNodeToIONode(JunctionWireNode jwn, IO io)
+    {
+        List<Edge<WireNode>> edges = this.Graph.AdjacentEdges(jwn).ToList();
+
+        foreach (Edge<WireNode> edge in edges)
+        {
+            this.Graph.RemoveEdge(edge);
+        }
+
+        this.Graph.RemoveVertex(jwn);
+        IOWireNode newIO = this.CreateIOWireNode(io);
+
+        foreach (Edge<WireNode> edge in edges)
+        {
+            this.Graph.AddEdge(new Edge<WireNode>(edge.GetOtherVertex(jwn), newIO));
+        }
+
+        this.UpdateIOs();
+    }
+
+    public bool AllIOsUnknown() => this.IOs.All(io => io.HasUnknown());
+
+    public bool AnyIOPushing() => this.IOs.Any(io => io.IsPushing());
+
+    public bool IOsAgree(IO[] ios, int bitWidth, out LogicValue[] agreedValues)
+    {
+        LogicValue[] valuesToAgreeOn = ios[0].PushedValues;
+        LogicValue[] conjunction = valuesToAgreeOn;
+        for (int i = 1; i < ios.Length; i++)
+        {
+            for (int j = 0; j < bitWidth; j++)
             {
-                point = p;
+                if (ios[i].PushedValues[j] != valuesToAgreeOn[j])
+                {
+                    conjunction[j] = LogicValue.ERROR;
+                }
+                else
+                {
+                    conjunction[j] = valuesToAgreeOn[j];
+                }
+            }
+        }
+
+        agreedValues = conjunction;
+        return conjunction.SameAs(valuesToAgreeOn);
+    }
+
+    public void Propagate()
+    {
+        if (this.TryGetValuesToPropagate(out LogicValue[]? values))
+        {
+            foreach (IO io in this.IOs)
+            {
+                io.SetValues(values);
+            }
+        }
+    }
+
+    public bool TryGetValuesToPropagate([NotNullWhen(true)] out LogicValue[]? values)
+    {
+        if (!this.HasAnyIOs())
+        {
+            this.Status = WireStatus.UNKNOWN;
+            values = null;
+            return true;
+        }
+
+        if (!this.AllIOsSameBitWidth(out int bitWidth))
+        {
+            this.Status = WireStatus.DIFF_BITWIDTH;
+            values = null;
+            return false;
+        }
+
+        if (this.AllIOsUnknown() && !this.AnyIOPushing())
+        {
+            this.Status = WireStatus.UNKNOWN;
+            values = Util.NValues(LogicValue.UNKNOWN, bitWidth).ToArray();
+            return true;
+        }
+
+        if (!this.AnyIOPushing())
+        {
+            this.Status = WireStatus.UNKNOWN;
+            values = Util.NValues(LogicValue.UNKNOWN, bitWidth).ToArray();
+            return true;
+        }
+
+        IO[] pushingIOs = this.IOs.Where(io => io.IsPushing()).ToArray();
+        if (!this.IOsAgree(pushingIOs, bitWidth, out LogicValue[] agreedValues))
+        {
+            this.Status = WireStatus.CONFLICT;
+        }
+
+        this.Status = WireStatus.NORMAL;
+        values = agreedValues;
+        return true;
+    }
+
+    public void Render()
+    {
+        Color color = this.IOs.Count > 0 ? this.IOs[0].GetColor() : Color.GRAY;
+
+        if (this.Status == WireStatus.CONFLICT)
+        {
+            color = Color.RED;
+        }
+        else if (this.Status == WireStatus.DIFF_BITWIDTH)
+        {
+            color = Color.ORANGE;
+        }
+
+        foreach (Edge<WireNode> edge in this.Graph.Edges)
+        {
+            Vector2 start = edge.Source.GetPosition();
+            Vector2 end = edge.Target.GetPosition();
+            Raylib.DrawLineEx(start, end, 6f, Color.BLACK);
+            Raylib.DrawLineEx(start, end, 4f, color);
+            start = end;
+        }
+
+        foreach (WireNode node in this.Graph.Vertices.Where(x => x is JunctionWireNode))
+        {
+            Vector2 position = node.GetPosition();
+            Raylib.DrawCircleV(position, 3.5f, Color.BLACK);
+            Raylib.DrawCircleV(position, 2.5f, color);
+        }
+    }
+
+    public bool TryGetJunctionFromPosition(Vector2 position, [NotNullWhen(true)] out JunctionWireNode? junction)
+    {
+        foreach (WireNode vertex in this.Graph.Vertices)
+        {
+            if (vertex.IsPositionOn(position) && vertex is JunctionWireNode jwn)
+            {
+                junction = jwn;
                 return true;
             }
         }
-        point = Vector2.Zero;
+
+        junction = null;
         return false;
     }
 
-    public void Update(Vector2 mousePosInWorld, Simulator simulator)
+    public bool TryGetEdgeFromPosition(Vector2 position, [NotNullWhen(true)] out Edge<WireNode>? edge)
     {
-
-    }
-
-    public void Interact(Vector2 mousePosInWorld, Simulator simulator)
-    {
-        if (Raylib.IsMouseButtonPressed(MouseButton.MOUSE_LEFT_BUTTON) && this.IsPositionOnWire(mousePosInWorld, out Vector2 lStart, out Vector2 lEnd))
+        foreach (Edge<WireNode> e in this.Graph.Edges)
         {
-            // Command for adding intermediate point
+            Rectangle rec = Util.CreateRecFromTwoCorners(e.Source.GetPosition(), e.Target.GetPosition()).Inflate(5f / 2);
 
-            // If mouse is on wire, update intermediate points.
-            int index = this.IntermediatePoints.IndexOf(lStart);
-            // this.IntermediatePoints.Insert(index + 1, mousePosInWorld);
-            // simulator.SelectedWirePoints.Clear();
-            // simulator.SelectedWirePoints.Add((this, index + 1));
-            AddIntermediatePointCommand aipc = new AddIntermediatePointCommand(this, index, mousePosInWorld);
-            Util.ExecuteCommandInEditor(aipc);
-        }
-
-        if (Raylib.IsMouseButtonPressed(MouseButton.MOUSE_RIGHT_BUTTON) && this.IsPositionOnIntermediatePoint(mousePosInWorld, out Vector2 point))
-        {
-            // If mouse is on wire, remove intermediate point
-            int index = this.IntermediatePoints.IndexOf(point);
-            if (simulator.SelectedWirePoints.Contains((this, index)))
+            if (rec.ContainsVector2(position) && Util.DistanceToLine(e.Source.GetPosition(), e.Target.GetPosition(), position) <= 5f)
             {
-                simulator.SelectedWirePoints.Remove((this, index));
+                edge = e;
+                return true;
             }
-            // Check if any of the following intermediate points on this wire is in the selected wire points.
-            // If any are, then decrement their index to fit in the new list.
-            for (int i = index; i < this.IntermediatePoints.Count; i++)
+        }
+
+        edge = null;
+        return false;
+    }
+
+    public bool TryGetIOWireNodeFromPosition(Vector2 position, [NotNullWhen(true)] out IOWireNode? node)
+    {
+        foreach (WireNode vertex in this.Graph.Vertices)
+        {
+            if (vertex.IsPositionOn(position) && vertex is IOWireNode iown)
             {
-                if (simulator.SelectedWirePoints.Contains((this, i)))
-                {
-                    simulator.SelectedWirePoints.Remove((this, i));
-                    simulator.SelectedWirePoints.Add((this, i - 1));
-                }
+                node = iown;
+                return true;
             }
+        }
 
-            this.IntermediatePoints.Remove(point);
+        node = null;
+        return false;
+    }
+
+    public IOWireNode CreateIOWireNode(IO io)
+    {
+        IOWireNode node = new IOWireNode(io);
+        this.Graph.AddVertex(node);
+        return node;
+    }
+
+    public JunctionWireNode CreateJunctionWireNode(Vector2 junction)
+    {
+        JunctionWireNode node = new JunctionWireNode(junction);
+        this.Graph.AddVertex(node);
+        return node;
+    }
+
+    public void UpdateIOs()
+    {
+        this.DisconnectAllIOs();
+
+        foreach (WireNode wn in this.Graph.Vertices)
+        {
+            if (wn is IOWireNode iown)
+            {
+                this.ConnectIO(iown.IO);
+            }
         }
     }
 
-    public void AddIntermediatePoint(Vector2 pos)
+    public void AddNode(WireNode node)
     {
-        this.IntermediatePoints.Add(pos);
+        this.Graph.AddVertex(node);
+
+        this.UpdateIOs();
     }
 
-    public (Vector2, Vector2) GetAdjacentPositionsToIntermediate(Vector2 point)
+    public void RemoveNode(WireNode node)
     {
-        int index = this.IntermediatePoints.IndexOf(point);
-        if (index == 0)
-        {
-            return (this.From.GetOutputPosition(this.FromIndex), this.IntermediatePoints.Count > 1 ? this.IntermediatePoints[1] : this.To.GetInputPosition(this.ToIndex));
-        }
-        else if (index == this.IntermediatePoints.Count - 1)
-        {
-            return (this.IntermediatePoints.Count > 1 ? this.IntermediatePoints[this.IntermediatePoints.Count - 2] : this.From.GetOutputPosition(this.FromIndex), this.To.GetInputPosition(this.ToIndex));
-        }
-        else
-        {
-            return (this.IntermediatePoints[index - 1], this.IntermediatePoints[index + 1]);
-        }
+        this.Graph.RemoveVertex(node);
+
+        this.UpdateIOs();
     }
 
-    public void Render(Vector2 mousePosInWorld)
+    public bool ConnectNodes(WireNode source, Wire targetWire, WireNode target)
     {
-        Vector2 fromPos = this.From.GetOutputLinePositions(this.FromIndex).Item1;
-        Vector2 toPos = this.To.GetInputLinePositions(this.ToIndex).Item1;
-        float width = 4f;
-        Color color = Util.InterpolateColors(Color.WHITE, Color.BLUE, this.GetHighFraction());
+        this.Graph = Util.ConnectVertices(this.Graph, source, targetWire.Graph, target, out bool delete);
 
-        List<Vector2> linePoints = IntermediatePoints.Concat(new List<Vector2>() { toPos }).ToList();
-        Vector2 previousPos = fromPos;
-        for (int i = 0; i < linePoints.Count; i++)
-        {
-            Raylib.DrawLineEx(previousPos, linePoints[i], width + 2f, Color.BLACK);
-            Raylib.DrawLineEx(previousPos, linePoints[i], width, color);
-            Rectangle rec = Util.CreateRecFromTwoCorners(previousPos.Vector2Towards(5, linePoints[i]), linePoints[i].Vector2Towards(5, previousPos), width / 2);
-            //Raylib.DrawRectangleRec(rec, Color.BLUE.Opacity(0.3f));
-            previousPos = linePoints[i];
-        }
-
-        if (this.IsPositionOnWire(mousePosInWorld, out Vector2 lStart, out Vector2 lEnd))
-        {
-            Raylib.DrawLineEx(lStart, lEnd, width + 2f, Color.ORANGE);
-            Raylib.DrawLineEx(lStart, lEnd, width, color);
-        }
-
-        for (int i = 0; i < linePoints.Count - 1; i++)
-        {
-            Raylib.DrawCircleV(linePoints[i], width + 1f, Color.BLACK);
-            Raylib.DrawCircleV(linePoints[i], width, color);
-        }
-
-        if (this.IsPositionOnIntermediatePoint(mousePosInWorld, out Vector2 point))
-        {
-            Raylib.DrawCircleV(point, width, Color.ORANGE);
-        }
+        this.UpdateIOs();
+        return delete;
     }
 
-    public void RenderSelected()
+    public bool DisconnectNodes(WireNode source, WireNode target, [NotNullWhen(true)] out Wire? newWire)
     {
-        Vector2 fromPos = this.From.GetOutputLinePositions(this.FromIndex).Item1;
-        Vector2 toPos = this.To.GetInputLinePositions(this.ToIndex).Item1;
-        //Raylib.DrawLineEx(fromPos, toPos, 6f, Color.ORANGE);
-        //Raylib.DrawLineEx(fromPos, toPos, 4, Util.InterpolateColors(Color.WHITE, Color.BLUE, this.GetHighFraction()));
+        if (Util.DisconnectVertices(ref this._graph, source, target, out UndirectedGraph<WireNode, Edge<WireNode>>? newGraph))
+        {
+            newWire = new Wire();
+            newWire.Graph = newGraph;
+            newWire.UpdateIOs();
+
+            this.UpdateIOs();
+            return true;
+        }
+
+        this.UpdateIOs();
+
+        newWire = null;
+        return false;
+    }
+
+    public void InsertNodeBetween(WireNode source, WireNode target, WireNode insert)
+    {
+        this.Graph.RemoveEdgeIf(e => e.Source == source && e.Target == target);
+        this.Graph.AddEdge(new Edge<WireNode>(source, insert));
+        this.Graph.AddEdge(new Edge<WireNode>(insert, target));
+    }
+
+    public WireDescription ToDescription()
+    {
+        UndirectedGraph<Node, Edge<Node>> graph = new UndirectedGraph<Node, Edge<Node>>();
+
+        Dictionary<WireNode, Node> nodeMap = new Dictionary<WireNode, Node>();
+
+        foreach (WireNode vertex in this.Graph.Vertices)
+        {
+            if (vertex is IOWireNode iow)
+            {
+                Node newIONode = new Node() { IOIndex = iow.IO.GetIndexOnComponent(), Component = iow.IO.OnComponent.UniqueID };
+                nodeMap.Add(vertex, newIONode);
+                graph.AddVertex(newIONode);
+            }
+            else
+            {
+                Node newJuncNode = new Node() { Position = vertex.GetPosition() };
+                nodeMap.Add(vertex, newJuncNode);
+                graph.AddVertex(newJuncNode);
+            }
+        }
+
+        foreach (Edge<WireNode> edge in this.Graph.Edges)
+        {
+            Node source = nodeMap[edge.Source];
+            Node target = nodeMap[edge.Target];
+            graph.AddEdge(new Edge<Node>(source, target));
+        }
+
+        return new WireDescription(graph);
     }
 }

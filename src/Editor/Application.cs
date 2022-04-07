@@ -1,4 +1,4 @@
-using LogiX.SaveSystem;
+using LogiX.Editor.StateMachine;
 
 namespace LogiX.Editor;
 
@@ -9,15 +9,7 @@ public enum ModalButtonsType
     YesNo
 }
 
-public enum ModalResult
-{
-    OK,
-    Cancel,
-    Yes,
-    No
-}
-
-public abstract class Application<TArg> : Invoker<TArg>
+public abstract class Application
 {
     public abstract void Initialize();
     public abstract void LoadContent();
@@ -32,10 +24,10 @@ public abstract class Application<TArg> : Invoker<TArg>
     private RenderTexture2D uiTexture;
 
     private bool modalRequested;
-    private string? lastModalTitle;
-    private string? lastModalMessage;
-    private ModalButtonsType lastModalType;
-    private Action<ModalResult>? lastModalCallback;
+    private string? modalTitle;
+    private Func<bool> modalSubmit;
+    private List<(string, Action?)> modalButtons;
+    private ImGuiWindowFlags modalFlags;
 
     public void Run(int windowWidth, int windowHeight, string windowTitle, int initialTargetFPS, string? iconFile = null)
     {
@@ -77,6 +69,8 @@ public abstract class Application<TArg> : Invoker<TArg>
         Util.ImGuiFonts = fontsPtrs;
 
         LoadContent();
+        Util.OpenSans = Raylib.LoadFontEx($"{Directory.GetCurrentDirectory()}/assets/opensans-bold.ttf", 100, Enumerable.Range(0, 1000).ToArray(), 1000);
+        Raylib.SetTextureFilter(Util.OpenSans.texture, TextureFilter.TEXTURE_FILTER_TRILINEAR);
 
         // Main application loop
         while (!Raylib.WindowShouldClose())
@@ -141,13 +135,75 @@ public abstract class Application<TArg> : Invoker<TArg>
         this.OnClose();
     }
 
-    public void Modal(string modalTitle, string modalMessage, ModalButtonsType type = ModalButtonsType.OK, Action<ModalResult>? onResult = null)
+    public KeyboardKey GetPrimaryMod()
+    {
+#if OSX
+        return KeyboardKey.KEY_LEFT_SUPER;
+#else
+        return KeyboardKey.KEY_LEFT_CONTROL;
+#endif
+    }
+
+    public void Modal(string modalTitle, Func<bool> modalSubmit, ImGuiWindowFlags modalFlags, params (string, Action?)[] modalButtons)
     {
         this.modalRequested = true;
-        this.lastModalTitle = modalTitle;
-        this.lastModalMessage = modalMessage;
-        this.lastModalType = type;
-        this.lastModalCallback = onResult;
+
+        this.modalTitle = modalTitle;
+        this.modalSubmit = modalSubmit;
+        this.modalButtons = modalButtons.ToList();
+        this.modalFlags = modalFlags;
+    }
+
+    public void ModalDefault(string modalTitle, string message, ModalButtonsType type, Action? ok = null, Action? cancel = null, Action? yes = null, Action? no = null, ImGuiWindowFlags? flags = null)
+    {
+        List<(string, Action?)> buttons = new List<(string, Action?)>();
+
+        switch (type)
+        {
+            case ModalButtonsType.OK:
+                buttons.Add(("OK", ok));
+                break;
+            case ModalButtonsType.OKCancel:
+                buttons.Add(("OK", ok));
+                buttons.Add(("Cancel", cancel));
+                break;
+            case ModalButtonsType.YesNo:
+                buttons.Add(("Yes", yes));
+                buttons.Add(("No", no));
+                break;
+        }
+
+        this.Modal(modalTitle, () =>
+        {
+            ImGui.Text(message);
+            return false;
+        }, flags ?? ImGuiWindowFlags.AlwaysAutoResize, buttons.ToArray());
+    }
+
+    public void ModalMarkdown(string modalTitle, string message, ModalButtonsType type, Action? ok = null, Action? cancel = null, Action? yes = null, Action? no = null, ImGuiWindowFlags? flags = null)
+    {
+        List<(string, Action?)> buttons = new List<(string, Action?)>();
+
+        switch (type)
+        {
+            case ModalButtonsType.OK:
+                buttons.Add(("OK", ok));
+                break;
+            case ModalButtonsType.OKCancel:
+                buttons.Add(("OK", ok));
+                buttons.Add(("Cancel", cancel));
+                break;
+            case ModalButtonsType.YesNo:
+                buttons.Add(("Yes", yes));
+                buttons.Add(("No", no));
+                break;
+        }
+
+        this.Modal(modalTitle, () =>
+        {
+            Util.RenderMarkdown(message);
+            return false;
+        }, flags ?? ImGuiWindowFlags.AlwaysAutoResize, buttons.ToArray());
     }
 
     public bool AppModalRequested()
@@ -155,61 +211,35 @@ public abstract class Application<TArg> : Invoker<TArg>
         return this.modalRequested;
     }
 
-    public void ModalError(string errorMessage, ModalButtonsType type = ModalButtonsType.OK, Action<ModalResult>? onResult = null)
+    public void ModalError(string errorMessage, ModalButtonsType type = ModalButtonsType.OK, Action? ok = null, Action? cancel = null, Action? yes = null, Action? no = null)
     {
-        Modal("Error", errorMessage, type, onResult);
+        ModalDefault("Error", errorMessage, type, ok, cancel, yes, no);
     }
 
     private void HandleModal()
     {
         if (modalRequested)
         {
-            ImGui.OpenPopup($"###{this.lastModalTitle}");
+            ImGui.OpenPopup($"{this.modalTitle} ###{this.modalTitle}");
 
-            if (ImGui.BeginPopupModal($"###{this.lastModalTitle}", ref this.modalRequested, ImGuiWindowFlags.AlwaysAutoResize))
+            ImGui.SetNextWindowPos(this.WindowSize / 2f, ImGuiCond.Appearing, new Vector2(0.5f, 0.5f));
+            if (ImGui.BeginPopupModal($"{this.modalTitle} ###{this.modalTitle}", ref this.modalRequested, this.modalFlags))
             {
-                ImGui.Text(this.lastModalMessage);
+                if (this.modalSubmit())
+                {
+                    this.modalRequested = false;
+                    ImGui.CloseCurrentPopup();
+                }
 
-                if (this.lastModalType == ModalButtonsType.OK)
+                foreach ((string button, Action? callback) in this.modalButtons)
                 {
-                    if (ImGui.Button("OK"))
+                    if (ImGui.Button(button))
                     {
+                        this.modalRequested = false;
                         ImGui.CloseCurrentPopup();
-                        modalRequested = false;
-                        this.lastModalCallback?.Invoke(ModalResult.OK);
-                    }
-                }
-                else if (this.lastModalType == ModalButtonsType.OKCancel)
-                {
-                    if (ImGui.Button("OK"))
-                    {
-                        ImGui.CloseCurrentPopup();
-                        modalRequested = false;
-                        this.lastModalCallback?.Invoke(ModalResult.OK);
+                        callback?.Invoke();
                     }
                     ImGui.SameLine();
-                    if (ImGui.Button("Cancel"))
-                    {
-                        ImGui.CloseCurrentPopup();
-                        modalRequested = false;
-                        this.lastModalCallback?.Invoke(ModalResult.Cancel);
-                    }
-                }
-                else if (this.lastModalType == ModalButtonsType.YesNo)
-                {
-                    if (ImGui.Button("Yes"))
-                    {
-                        ImGui.CloseCurrentPopup();
-                        modalRequested = false;
-                        this.lastModalCallback?.Invoke(ModalResult.Yes);
-                    }
-                    ImGui.SameLine();
-                    if (ImGui.Button("No"))
-                    {
-                        ImGui.CloseCurrentPopup();
-                        modalRequested = false;
-                        this.lastModalCallback?.Invoke(ModalResult.No);
-                    }
                 }
 
                 ImGui.EndPopup();

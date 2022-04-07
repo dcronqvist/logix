@@ -1,92 +1,134 @@
-using LogiX.Editor;
 using LogiX.SaveSystem;
 
 namespace LogiX.Components;
 
 public class Switch : Component
 {
-    public List<LogicValue> Values { get; set; }
-    public override Vector2 Size => new Vector2(this.Outputs[0].Bits * (30 + 2) + 2, 34);
-    public override bool TextVisible => false;
-    public string ID { get; set; }
+    public LogicValue[] Values { get; set; }
 
-    public Switch(int bits, Vector2 position, string id = "") : base(Util.EmptyList<int>(), Util.Listify(bits), position)
+    private int _bits;
+    [ComponentProp("Bits", IntMin = 1)]
+    public int Bits
     {
-        this.Values = Util.NValues(LogicValue.LOW, bits);
-        this.ID = (id == null) ? "" : id;
+        get => _bits;
+        set
+        {
+            if (this.Values is null)
+            {
+                this.Values = new LogicValue[value];
+            }
+
+            if (value > this._bits)
+            {
+                // Increasing amount
+                this.Values = this.Values.Take(this._bits).Concat(Util.NValues(LogicValue.LOW, value - this._bits)).ToArray();
+            }
+            else
+            {
+                // Decreasing amount
+                this.Values = this.Values.Take(value).ToArray();
+            }
+
+            _bits = value;
+            this.GetIO(0).UpdateBitWidth(value);
+        }
+    }
+
+    [ComponentProp("Integrated Side")]
+    public ComponentSide Side { get; set; }
+
+    [ComponentProp("Identifier")]
+    public string Identifier { get; set; }
+
+    public int WIDTH_PER_BITS = Util.GridSizeX * 2;
+    public override Vector2 Size => new Vector2(WIDTH_PER_BITS * this.Bits, WIDTH_PER_BITS);
+    public override bool DisplayText => false;
+
+    public Switch(int bits, Vector2 position, string? uniqueID = null) : base(position, ComponentType.SWITCH, uniqueID)
+    {
+        this.AddIO(bits, new IOConfig(ComponentSide.RIGHT));
+        this.Bits = bits;
     }
 
     public override void PerformLogic()
     {
-        this.Outputs[0].SetValues(this.Values);
+        this.GetIO(0).PushValues(this.Values);
     }
 
-    public override void Interact(Vector2 mousePosInWorld, Simulator simulator)
+    public void PushUnknown()
     {
-        if (Raylib.IsMouseButtonPressed(MouseButton.MOUSE_RIGHT_BUTTON))
+        this.GetIO(0).PushValues(Util.NValues(LogicValue.UNKNOWN, this.Bits).ToArray());
+    }
+
+    public override void Interact(Editor.Editor editor)
+    {
+        Vector2 basePos = new Vector2(this.GetRectangle().x, this.GetRectangle().y);
+
+        for (int i = 0; i < this.Bits; i++)
         {
-            for (int i = 0; i < this.Values.Count; i++)
+            if (Raylib.IsMouseButtonPressed(MouseButton.MOUSE_RIGHT_BUTTON))
             {
-                Vector2 pos = new Vector2(this.Box.x, this.Box.y) + new Vector2(2 + 32 * i, 2);
-                Rectangle rec = new Rectangle(pos.X, pos.Y, 30f, 30f);
-                if (Raylib.CheckCollisionPointRec(mousePosInWorld, rec))
+                Rectangle rec = new Rectangle(basePos.X + WIDTH_PER_BITS * i, basePos.Y, WIDTH_PER_BITS, WIDTH_PER_BITS).Inflate(-2);
+
+                if (Raylib.CheckCollisionPointRec(editor.GetWorldMousePos(), rec))
                 {
-                    // TOGGLE VALUE
-                    this.ToggleValue(this.Values.Count - i - 1);
+                    this.Values[i] = this.Values[i] == LogicValue.LOW ? LogicValue.HIGH : LogicValue.LOW;
                 }
             }
         }
     }
 
-    public override void Render(Vector2 mousePosInWorld)
+    public override void Render()
     {
-        base.Render(mousePosInWorld);
+        this.RenderIOs();
+        this.RenderRectangle();
 
-        // ADDITIONAL STUFF, ONE THING PER BIT
-        for (int i = 0; i < this.Values.Count; i++)
+        Vector2 basePos = new Vector2(this.GetRectangle().x, this.GetRectangle().y);
+
+        for (int i = 0; i < this.Bits; i++)
         {
-            Vector2 offset = new Vector2(2 + 32 * i, 2);
-            Rectangle rec = new Rectangle(offset.X, offset.Y, 30f, 30f);
-            Raylib.DrawRectangleV(new Vector2(this.Box.x, this.Box.y) + offset, new Vector2(30f), this.Values[this.Values.Count - i - 1] == LogicValue.LOW ? new Color(240, 240, 240, 255) : Color.BLUE);
+            Rectangle rec = new Rectangle(basePos.X + WIDTH_PER_BITS * i, basePos.Y, WIDTH_PER_BITS, WIDTH_PER_BITS).Inflate(-2);
+            Raylib.DrawRectangleRec(rec, this.Values[i] == LogicValue.HIGH ? Color.BLUE : Color.LIGHTGRAY);
         }
 
-        Vector2 leftMiddle = new Vector2(this.Box.x, this.Box.y + this.Box.height / 2f);
+        // Render label on the opposite side of the IO
+        IO io = this.GetIO(0);
+        ComponentSide oppositeSide = Util.GetRotatedComponentSide(this.IOs[0].Item2.Side, (this.Rotation + 2) % 4);
+        Vector2 endPos = Vector2.Zero;
 
-        if (this.ID != "")
+        // Calculate position of IO
+        if (oppositeSide == ComponentSide.LEFT)
         {
-            // Display label
-            int fontSize = 22;
-            Vector2 measure = Raylib.MeasureTextEx(Util.OpenSans, this.ID, fontSize, 1);
-            Raylib.DrawTextEx(Util.OpenSans, this.ID, leftMiddle + new Vector2(-10 - measure.X, measure.Y / -2f), fontSize, 1, Color.BLACK);
+            // LEFT
+            endPos = new Vector2(basePos.X - Util.GridSizeX, basePos.Y + Util.GridSizeY);
         }
-    }
+        else if (oppositeSide == ComponentSide.TOP)
+        {
+            // TOP
+            endPos = new Vector2(basePos.X + Util.GridSizeX, basePos.Y - Util.GridSizeY);
+        }
+        else if (oppositeSide == ComponentSide.RIGHT)
+        {
+            // RIGHT
+            endPos = new Vector2(basePos.X + this.Bits * WIDTH_PER_BITS + Util.GridSizeX, basePos.Y + Util.GridSizeY);
+        }
+        else if (oppositeSide == ComponentSide.BOTTOM)
+        {
+            // BOTTOM
+            endPos = new Vector2(basePos.X + Util.GridSizeX, basePos.Y + this.Size.Y + Util.GridSizeY);
+        }
 
-    public void ToggleValue(int index)
-    {
-        this.Values[index] = this.Values[index] == LogicValue.LOW ? LogicValue.HIGH : LogicValue.LOW;
+        // Render label
+        int labelFontSize = 12;
+
+        Vector2 textMeasure = Raylib.MeasureTextEx(Util.OpenSans, this.Identifier, labelFontSize, 0);
+
+        Util.RenderTextRotated(endPos - new Vector2(oppositeSide == ComponentSide.LEFT ? textMeasure.X : 0, textMeasure.Y / 2f), Util.OpenSans, labelFontSize, 0, this.Identifier, 0f, Color.BLACK);
+
     }
 
     public override ComponentDescription ToDescription()
     {
-        return new SLDescription(this.Position, this.Rotation, Util.EmptyList<IODescription>(), Util.Listify(new IODescription(this.Outputs[0].Bits)), ComponentType.Switch, this.ID);
-    }
-
-    public override void OnSingleSelectedSubmitUI()
-    {
-        ImGui.Begin("Lamp", ImGuiWindowFlags.AlwaysAutoResize | ImGuiWindowFlags.NoNavInputs);
-
-        string id = this.ID;
-        ImGui.SetNextItemWidth(100);
-        ImGui.PushID(this.uniqueID);
-        ImGui.InputText("Name", ref id, 13, ImGuiInputTextFlags.AlwaysInsertMode);
-        ImGui.PopID();
-        this.ID = id;
-
-        ImGui.End();
-    }
-
-    public override Dictionary<string, int> GetGateAmount()
-    {
-        return Util.EmptyGateAmount();
+        return new DescriptionSwitch(this.Position, this.Rotation, this.UniqueID, this.Bits, this.Identifier, this.Side);
     }
 }
