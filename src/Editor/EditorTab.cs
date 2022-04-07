@@ -15,6 +15,7 @@ public class EditorTab : Invoker<Editor>
     public EditorFSM FSM { get; set; }
     public int LastSavedCommandIndex { get; set; }
     public Circuit Circuit { get; set; }
+    public Circuit LiveCircuit { get; set; }
 
     public IntegratedComponent? ic;
 
@@ -25,13 +26,14 @@ public class EditorTab : Invoker<Editor>
         this.CameraTarget = Vector2.Zero;
         this.CameraZoom = 1f;
         this.LastSavedCommandIndex = this.CurrentCommandIndex;
+        this.LiveCircuit = circuit.Clone();
         this.Circuit = circuit;
         this.Simulator = circuit.GetSimulatorForCircuit();
     }
 
     public void OnEnter(Editor editor)
     {
-        List<CircuitDependency> dependencies = this.Circuit.GetDependencyCircuits();
+        List<CircuitDependency> dependencies = this.LiveCircuit.GetDependencyCircuits();
 
         foreach (EditorTab tab in editor.EditorTabs.Values)
         {
@@ -47,7 +49,7 @@ public class EditorTab : Invoker<Editor>
                     List<IntegratedComponent> comps = this.Simulator.GetComponents<IntegratedComponent>(ic => ic.Circuit.UniqueID == dependency.CircuitID);
                     comps.ForEach(ic => ic.UpdateCircuit(tab.Circuit));
 
-                    this.Circuit.UpdateDependency(dependency, tab.Circuit);
+                    this.LiveCircuit.UpdateDependency(dependency, tab.Circuit);
                 }
             }
         }
@@ -100,6 +102,8 @@ public class EditorTab : Invoker<Editor>
         this.FSM.Update(editor);
         this.Simulator.Interact(editor);
         this.Simulator.PerformLogic();
+
+        this.LiveCircuit.Update(this.Simulator.AllComponents, this.Simulator.AllWires);
     }
 
     public void SubmitUI(Editor editor)
@@ -119,6 +123,16 @@ public class EditorTab : Invoker<Editor>
         ImGui.Text("Deps:");
 
         List<CircuitDependency> dependencies = this.Circuit.GetDependencyCircuits();
+        foreach (CircuitDependency dep in dependencies)
+        {
+            ImGui.Text(dep.CircuitID);
+            ImGui.Text(dep.CircuitUpdateID);
+            ImGui.Separator();
+        }
+
+        ImGui.Text("Live Deps:");
+
+        dependencies = this.LiveCircuit.GetDependencyCircuits();
         foreach (CircuitDependency dep in dependencies)
         {
             ImGui.Text(dep.CircuitID);

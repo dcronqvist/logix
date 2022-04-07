@@ -199,7 +199,7 @@ public class Editor : Application
                 }
 
                 return false;
-            });
+            }, ImGuiWindowFlags.AlwaysAutoResize);
 
         }), null, this.GetPrimaryMod(), KeyboardKey.KEY_N));
         this.AddNewEditorAction(new EditorAction("File", "Quicksave", (editor =>
@@ -413,7 +413,7 @@ public class Editor : Application
                         this.EditorTabs.Remove(kvp.Key);
                         if (this.CurrentEditorTab == kvp.Key)
                         {
-                            this.CurrentEditorTab = this.EditorTabs.First().Key;
+                            this.CurrentEditorTab = this.EditorTabs.Count > 0 ? this.EditorTabs.First().Key : null;
                         }
                     });
                 }

@@ -36,9 +36,13 @@ public class Circuit
 
     public void Update(List<Component> comps, List<Wire> wires)
     {
+        List<(int, IOConfig, string)> oldIOConfigs = this.GetIOConfigs();
+
         this.Components = this.GatherComponents(comps);
         this.Wires = this.GatherWires(wires);
         this.UpdateID = Guid.NewGuid().ToString();
+
+        List<(int, IOConfig, string)> newIOConfigs = this.GetIOConfigs();
     }
 
     public List<ComponentDescription> GatherComponents(List<Component> comps)

@@ -27,6 +27,7 @@ public abstract class Application
     private string? modalTitle;
     private Func<bool> modalSubmit;
     private List<(string, Action?)> modalButtons;
+    private ImGuiWindowFlags modalFlags;
 
     public void Run(int windowWidth, int windowHeight, string windowTitle, int initialTargetFPS, string? iconFile = null)
     {
@@ -143,16 +144,17 @@ public abstract class Application
 #endif
     }
 
-    public void Modal(string modalTitle, Func<bool> modalSubmit, params (string, Action?)[] modalButtons)
+    public void Modal(string modalTitle, Func<bool> modalSubmit, ImGuiWindowFlags modalFlags, params (string, Action?)[] modalButtons)
     {
         this.modalRequested = true;
 
         this.modalTitle = modalTitle;
         this.modalSubmit = modalSubmit;
         this.modalButtons = modalButtons.ToList();
+        this.modalFlags = modalFlags;
     }
 
-    public void ModalDefault(string modalTitle, string? message, ModalButtonsType type, Action? ok = null, Action? cancel = null, Action? yes = null, Action? no = null)
+    public void ModalDefault(string modalTitle, string message, ModalButtonsType type, Action? ok = null, Action? cancel = null, Action? yes = null, Action? no = null, ImGuiWindowFlags? flags = null)
     {
         List<(string, Action?)> buttons = new List<(string, Action?)>();
 
@@ -175,7 +177,33 @@ public abstract class Application
         {
             ImGui.Text(message);
             return false;
-        }, buttons.ToArray());
+        }, flags ?? ImGuiWindowFlags.AlwaysAutoResize, buttons.ToArray());
+    }
+
+    public void ModalMarkdown(string modalTitle, string message, ModalButtonsType type, Action? ok = null, Action? cancel = null, Action? yes = null, Action? no = null, ImGuiWindowFlags? flags = null)
+    {
+        List<(string, Action?)> buttons = new List<(string, Action?)>();
+
+        switch (type)
+        {
+            case ModalButtonsType.OK:
+                buttons.Add(("OK", ok));
+                break;
+            case ModalButtonsType.OKCancel:
+                buttons.Add(("OK", ok));
+                buttons.Add(("Cancel", cancel));
+                break;
+            case ModalButtonsType.YesNo:
+                buttons.Add(("Yes", yes));
+                buttons.Add(("No", no));
+                break;
+        }
+
+        this.Modal(modalTitle, () =>
+        {
+            Util.RenderMarkdown(message);
+            return false;
+        }, flags ?? ImGuiWindowFlags.AlwaysAutoResize, buttons.ToArray());
     }
 
     public bool AppModalRequested()
@@ -195,7 +223,7 @@ public abstract class Application
             ImGui.OpenPopup($"{this.modalTitle} ###{this.modalTitle}");
 
             ImGui.SetNextWindowPos(this.WindowSize / 2f, ImGuiCond.Appearing, new Vector2(0.5f, 0.5f));
-            if (ImGui.BeginPopupModal($"{this.modalTitle} ###{this.modalTitle}", ref this.modalRequested, ImGuiWindowFlags.AlwaysAutoResize))
+            if (ImGui.BeginPopupModal($"{this.modalTitle} ###{this.modalTitle}", ref this.modalRequested, this.modalFlags))
             {
                 if (this.modalSubmit())
                 {

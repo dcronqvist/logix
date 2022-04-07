@@ -46,10 +46,18 @@ public class IntegratedComponent : Component
 
                 int removedIOs = this.IOs.Count - configs.Count;
 
+                List<int> removeIndices = new List<int>();
+
                 for (int i = 0; i < removedIOs; i++)
                 {
+                    IO io = this.IOs[configs.Count + i].Item1;
                     this._ioToId.Remove(this.GetIO(configs.Count + i));
-                    this.IOs.RemoveAt(configs.Count + i);
+                    removeIndices.Add(configs.Count + i);
+                }
+
+                foreach (int index in removeIndices.OrderByDescending(x => x))
+                {
+                    this.IOs.RemoveAt(index);
                 }
             }
 
