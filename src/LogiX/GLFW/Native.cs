@@ -3,7 +3,7 @@ using System.Runtime.InteropServices;
 using System.Security;
 using System.Text;
 
-namespace GoodGame.GLFW
+namespace LogiX.GLFW
 {
     /// <summary>
     ///     Provides access to relevant native functions of the current operating system.

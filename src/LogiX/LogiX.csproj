@@ -23,7 +23,6 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\modules\Symphony\Symphony\Symphony.csproj" />
-    <ProjectReference Include="..\..\modules\Arachne\Arachne\Arachne.csproj" />
   </ItemGroup>
 
   <ItemGroup>

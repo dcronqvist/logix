@@ -1,6 +1,6 @@
 ﻿#pragma warning disable 1591
 
-namespace GoodGame.GLFW
+namespace LogiX.GLFW
 {
     /// <summary>
     ///     Strongly-typed enumeration for key code values.

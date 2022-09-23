@@ -1,16 +1,17 @@
 using System.Drawing;
 using System.Numerics;
-using GoodGame.Content;
-using GoodGame.Content.Scripting;
-using GoodGame.Graphics;
-using GoodGame.Graphics.UI;
-using GoodGame.Rendering;
+using LogiX.Content;
+using LogiX.Content.Scripting;
+using LogiX.Graphics;
+using LogiX.Graphics.UI;
+using LogiX.Rendering;
 using Symphony;
 using Symphony.Common;
-using static GoodGame.OpenGL.GL;
+using static LogiX.OpenGL.GL;
 
-namespace GoodGame;
-public class GoodGame : Game
+namespace LogiX;
+
+public class LogiX : Game
 {
     public static ContentManager<ContentMeta> ContentManager { get; private set; }
     Camera2D cam;

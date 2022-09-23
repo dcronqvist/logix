@@ -1,9 +1,9 @@
 using System.Drawing;
 using System.Numerics;
-using GoodGame.GLFW;
-using GoodGame.Rendering;
+using LogiX.GLFW;
+using LogiX.Rendering;
 
-namespace GoodGame.Graphics.UI;
+namespace LogiX.Graphics.UI;
 
 public static class GUI
 {
@@ -140,12 +140,12 @@ public static class GUI
 
         if (_font is null)
         {
-            _font = GoodGame.ContentManager.GetContentItem<Font>(_fontPath);
+            _font = LogiX.ContentManager.GetContentItem<Font>(_fontPath);
         }
 
         if (_textShader is null)
         {
-            _textShader = GoodGame.ContentManager.GetContentItem<ShaderProgram>(_textShaderPath);
+            _textShader = LogiX.ContentManager.GetContentItem<ShaderProgram>(_textShaderPath);
         }
     }
 
@@ -252,7 +252,7 @@ public static class GUI
         }
 
         var col = defaultColor;
-        var shader = GoodGame.ContentManager.GetContentItem<ShaderProgram>("content_1.shader_program.primitive");
+        var shader = LogiX.ContentManager.GetContentItem<ShaderProgram>("content_1.shader_program.primitive");
 
         if (HasKeyboardFocus(id))
         {
@@ -313,7 +313,7 @@ public static class GUI
         }
 
         var sliderColor = defaultColor;
-        var shader = GoodGame.ContentManager.GetContentItem<ShaderProgram>("content_1.shader_program.primitive");
+        var shader = LogiX.ContentManager.GetContentItem<ShaderProgram>("content_1.shader_program.primitive");
         if (shader is null)
         {
             return false;
@@ -385,7 +385,7 @@ public static class GUI
             }
         }
 
-        var shader = GoodGame.ContentManager.GetContentItem<ShaderProgram>("content_1.shader_program.primitive");
+        var shader = LogiX.ContentManager.GetContentItem<ShaderProgram>("content_1.shader_program.primitive");
         if (shader is null)
         {
             return false;
@@ -480,7 +480,7 @@ public static class GUI
             }
         }
 
-        var shader = GoodGame.ContentManager.GetContentItem<ShaderProgram>("content_1.shader_program.primitive");
+        var shader = LogiX.ContentManager.GetContentItem<ShaderProgram>("content_1.shader_program.primitive");
         if (shader is null)
         {
             return false;
@@ -548,7 +548,7 @@ public static class GUI
         var mousePos = Input.GetMousePositionInWindow();
         var rect = new RectangleF(position.X, position.Y, size.X, size.Y);
 
-        var shader = GoodGame.ContentManager.GetContentItem<ShaderProgram>("content_1.shader_program.primitive");
+        var shader = LogiX.ContentManager.GetContentItem<ShaderProgram>("content_1.shader_program.primitive");
         if (shader is null)
         {
             return false;

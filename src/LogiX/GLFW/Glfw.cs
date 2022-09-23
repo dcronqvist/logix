@@ -5,7 +5,7 @@ using System.Text;
 
 #pragma warning disable 0419
 
-namespace GoodGame.GLFW
+namespace LogiX.GLFW
 {
     /// <summary>
     ///     The base class the vast majority of the GLFW functions, excluding only Vulkan and native platform specific

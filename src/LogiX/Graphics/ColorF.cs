@@ -1,6 +1,6 @@
 using System;
 
-namespace GoodGame.Graphics;
+namespace LogiX.Graphics;
 
 public struct ColorF
 {

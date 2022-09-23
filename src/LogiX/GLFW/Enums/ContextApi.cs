@@ -1,4 +1,4 @@
-﻿namespace GoodGame.GLFW
+﻿namespace LogiX.GLFW
 {
     /// <summary>
     ///     Describes the API used for creating the OpenGL context.

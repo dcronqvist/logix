@@ -1,9 +1,9 @@
 using System.Diagnostics.CodeAnalysis;
-using GoodGame.Graphics;
+using LogiX.Graphics;
 using StbImageSharp;
 using Symphony;
 
-namespace GoodGame.Content;
+namespace LogiX.Content;
 
 public class FontLoader : IContentItemLoader
 {

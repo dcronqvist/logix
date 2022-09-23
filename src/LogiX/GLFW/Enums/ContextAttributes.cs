@@ -1,4 +1,4 @@
-﻿namespace GoodGame.GLFW
+﻿namespace LogiX.GLFW
 {
     /// <summary>
     ///     Used internally to consolidate strongly-typed values for getting/setting window attributes.

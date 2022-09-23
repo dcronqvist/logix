@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Runtime.InteropServices;
 
-namespace GoodGame.GLFW
+namespace LogiX.GLFW
 {
     /// <summary>
     ///     Describes the gamma ramp for a monitor.

@@ -2,7 +2,7 @@
 using System.Runtime.InteropServices;
 using System.Text;
 
-namespace GoodGame.GLFW
+namespace LogiX.GLFW
 {
     internal static class Util
     {

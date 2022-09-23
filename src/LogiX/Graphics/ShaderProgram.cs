@@ -1,9 +1,9 @@
-using GoodGame.Content;
-using static GoodGame.OpenGL.GL;
+using LogiX.Content;
+using static LogiX.OpenGL.GL;
 using Symphony;
 using System.Numerics;
 
-namespace GoodGame.Graphics;
+namespace LogiX.Graphics;
 
 public struct ShaderVariable
 {
@@ -73,8 +73,8 @@ public class ShaderProgram : GLContentItem<ShaderProgramDescription>
 
     public unsafe override void InitGL(ShaderProgramDescription newContent)
     {
-        var vertexShader = GoodGame.ContentManager.GetContentItem<VertexShader>(newContent.VertexShader);
-        var fragmentShader = GoodGame.ContentManager.GetContentItem<FragmentShader>(newContent.FragmentShader);
+        var vertexShader = LogiX.ContentManager.GetContentItem<VertexShader>(newContent.VertexShader);
+        var fragmentShader = LogiX.ContentManager.GetContentItem<FragmentShader>(newContent.FragmentShader);
 
         vertexShader.ContentUpdated += (sender, e) => { this.OnContentUpdated(newContent); };
         fragmentShader.ContentUpdated += (sender, e) => { this.OnContentUpdated(newContent); };

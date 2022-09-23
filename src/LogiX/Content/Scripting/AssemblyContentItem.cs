@@ -1,7 +1,7 @@
 using System.Reflection;
 using Symphony;
 
-namespace GoodGame.Content.Scripting;
+namespace LogiX.Content.Scripting;
 
 public class AssemblyContentItem : ContentItem<Assembly>
 {

@@ -1,8 +1,8 @@
 using System.Diagnostics.CodeAnalysis;
 using Symphony;
-using static GoodGame.OpenGL.GL;
+using static LogiX.OpenGL.GL;
 
-namespace GoodGame.Content;
+namespace LogiX.Content;
 
 public class VertexShader : Shader
 {

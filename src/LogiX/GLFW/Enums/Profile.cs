@@ -1,4 +1,4 @@
-﻿namespace GoodGame.GLFW
+﻿namespace LogiX.GLFW
 {
     /// <summary>
     ///     Strongly-typed values used for getting/setting window hints.

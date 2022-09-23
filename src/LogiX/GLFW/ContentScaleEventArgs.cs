@@ -1,6 +1,6 @@
 using System;
 
-namespace GoodGame.GLFW
+namespace LogiX.GLFW
 {
     /// <summary>
     ///     Arguments used when a window content scaling is changed.

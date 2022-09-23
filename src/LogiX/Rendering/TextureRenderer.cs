@@ -3,10 +3,10 @@ using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
 using System.Numerics;
-using GoodGame.Graphics;
-using static GoodGame.OpenGL.GL;
+using LogiX.Graphics;
+using static LogiX.OpenGL.GL;
 
-namespace GoodGame.Rendering;
+namespace LogiX.Rendering;
 
 [Flags]
 public enum TextureRenderEffects

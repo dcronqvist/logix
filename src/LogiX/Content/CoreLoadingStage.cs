@@ -1,8 +1,8 @@
 using System.Diagnostics.CodeAnalysis;
-using GoodGame.Graphics;
+using LogiX.Graphics;
 using Symphony;
 
-namespace GoodGame.Content;
+namespace LogiX.Content;
 
 public class CoreLoadingStage : BaseLoadingStage
 {

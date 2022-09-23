@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Drawing;
 
-namespace GoodGame.GLFW
+namespace LogiX.GLFW
 {
     /// <summary>
     ///     Arguments supplied with size changing events.

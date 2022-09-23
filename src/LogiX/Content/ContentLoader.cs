@@ -1,6 +1,6 @@
 using Symphony;
 
-namespace GoodGame.Content;
+namespace LogiX.Content;
 
 public class ContentLoader : IContentLoader<ContentMeta>
 {

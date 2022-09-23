@@ -1,6 +1,6 @@
 using System.Numerics;
 
-namespace GoodGame.Rendering;
+namespace LogiX.Rendering;
 
 public class PRectangle : Primitive
 {

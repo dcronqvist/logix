@@ -3,11 +3,11 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
-using GoodGame.GLFW;
-using GoodGame.Graphics;
-using GoodGame.Rendering;
+using LogiX.GLFW;
+using LogiX.Graphics;
+using LogiX.Rendering;
 
-namespace GoodGame;
+namespace LogiX;
 
 public static class Input
 {

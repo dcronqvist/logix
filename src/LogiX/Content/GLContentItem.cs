@@ -1,7 +1,7 @@
-using GoodGame.Graphics;
+using LogiX.Graphics;
 using Symphony;
 
-namespace GoodGame.Content;
+namespace LogiX.Content;
 
 public abstract class GLContentItem : ContentItem
 {

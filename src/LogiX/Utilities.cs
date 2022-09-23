@@ -1,8 +1,8 @@
 using System.Drawing;
 using System.Numerics;
-using GoodGame.Graphics;
+using LogiX.Graphics;
 
-namespace GoodGame;
+namespace LogiX;
 
 public static class Utilities
 {

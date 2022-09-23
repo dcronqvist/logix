@@ -1,9 +1,9 @@
 using System.Threading;
 using System;
-using GoodGame.Graphics;
-using GoodGame.GLFW;
+using LogiX.Graphics;
+using LogiX.GLFW;
 
-namespace GoodGame;
+namespace LogiX;
 
 public abstract class Game
 {

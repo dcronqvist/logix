@@ -1,10 +1,10 @@
 using System.Diagnostics.CodeAnalysis;
 using System.Text;
 using System.Text.Json;
-using GoodGame.Graphics;
+using LogiX.Graphics;
 using Symphony;
 
-namespace GoodGame.Content;
+namespace LogiX.Content;
 
 public class ShaderProgramLoader : IContentItemLoader
 {

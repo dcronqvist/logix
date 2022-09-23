@@ -1,8 +1,8 @@
 using System.Numerics;
-using GoodGame.Graphics;
-using static GoodGame.OpenGL.GL;
+using LogiX.Graphics;
+using static LogiX.OpenGL.GL;
 
-namespace GoodGame.Rendering;
+namespace LogiX.Rendering;
 
 public static class TextRenderer
 {

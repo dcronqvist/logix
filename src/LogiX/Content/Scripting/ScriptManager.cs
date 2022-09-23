@@ -1,6 +1,6 @@
 using Symphony;
 
-namespace GoodGame.Content.Scripting;
+namespace LogiX.Content.Scripting;
 
 public static class ScriptManager
 {

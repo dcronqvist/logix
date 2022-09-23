@@ -1,7 +1,7 @@
 using System;
 using System.Runtime.InteropServices;
 
-namespace GoodGame.GLFW
+namespace LogiX.GLFW
 {
     /// <summary>
     ///     Wrapper around a OSMesa context pointer.

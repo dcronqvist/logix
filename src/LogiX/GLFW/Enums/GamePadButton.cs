@@ -1,6 +1,6 @@
 #pragma warning disable 1591
 
-namespace GoodGame.GLFW
+namespace LogiX.GLFW
 {
     /// <summary>
     ///     Represents gamepad buttons.

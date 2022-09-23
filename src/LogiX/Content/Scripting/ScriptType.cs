@@ -1,4 +1,4 @@
-namespace GoodGame.Content.Scripting;
+namespace LogiX.Content.Scripting;
 
 [AttributeUsage(AttributeTargets.Class)]
 public class ScriptTypeAttribute : Attribute

@@ -2,7 +2,7 @@
 
 // TODO: Create Hint component
 
-namespace GoodGame.GLFW
+namespace LogiX.GLFW
 {
     /// <summary>
     ///     Strongly-typed values for setting window hints.

@@ -1,6 +1,6 @@
 using System.Runtime.InteropServices;
 
-namespace GoodGame.GLFW
+namespace LogiX.GLFW
 {
     /// <summary>
     ///     Represents the state of a gamepad.

@@ -2,7 +2,7 @@ using System.Diagnostics.CodeAnalysis;
 using System.Text.Json;
 using Symphony;
 
-namespace GoodGame.Content;
+namespace LogiX.Content;
 
 public class ContentValidator : IContentStructureValidator<ContentMeta>
 {

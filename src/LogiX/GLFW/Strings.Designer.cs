@@ -8,7 +8,7 @@
 // </auto-generated>
 //------------------------------------------------------------------------------
 
-namespace GoodGame.GLFW
+namespace LogiX.GLFW
 {
     using System;
 

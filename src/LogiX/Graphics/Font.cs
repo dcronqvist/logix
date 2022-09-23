@@ -1,13 +1,13 @@
 using System.Drawing;
 using System.Numerics;
 using FreeTypeSharp;
-using GoodGame.Content;
+using LogiX.Content;
 using Symphony;
-using static GoodGame.OpenGL.GL;
+using static LogiX.OpenGL.GL;
 using static FreeTypeSharp.Native.FT;
 using FreeTypeSharp.Native;
 
-namespace GoodGame.Graphics;
+namespace LogiX.Graphics;
 
 public class FontData
 {

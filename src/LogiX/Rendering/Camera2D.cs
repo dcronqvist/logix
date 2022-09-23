@@ -1,9 +1,9 @@
 using System;
 using System.Drawing;
 using System.Numerics;
-using GoodGame.Graphics;
+using LogiX.Graphics;
 
-namespace GoodGame.Rendering;
+namespace LogiX.Rendering;
 
 public class Camera2D
 {

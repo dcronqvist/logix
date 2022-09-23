@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace GoodGame.GLFW
+namespace LogiX.GLFW
 {
     /// <summary>
     ///     Arguments supplied with keyboard events.

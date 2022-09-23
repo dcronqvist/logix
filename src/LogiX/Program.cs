@@ -1,14 +1,14 @@
 ﻿using Symphony;
-using GoodGame.Content;
+using LogiX.Content;
 using Symphony.Common;
 
-namespace GoodGame;
+namespace LogiX;
 
 public class Program
 {
     public static void Main(string[] args)
     {
-        var game = new GoodGame();
+        var game = new LogiX();
         game.Run(1280, 720, "GoodGame", args);
     }
 }

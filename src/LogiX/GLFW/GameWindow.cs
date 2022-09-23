@@ -1,7 +1,7 @@
 using System;
 
 // ReSharper disable once CheckNamespace
-namespace GoodGame.GLFW
+namespace LogiX.GLFW
 {
     /// <inheritdoc cref="NativeWindow"/>
     [Obsolete("Use NativeWindow, GameWindow will be removed in future release.")]

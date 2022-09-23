@@ -2,7 +2,7 @@ using System.Diagnostics.CodeAnalysis;
 using System.Text;
 using Symphony;
 
-namespace GoodGame.Content;
+namespace LogiX.Content;
 
 public class ShaderLoader : IContentItemLoader
 {

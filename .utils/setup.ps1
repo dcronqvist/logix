@@ -7,9 +7,9 @@ Expand-Archive winglfw.zip
 
 Remove-Item winglfw.zip
 
-mkdir ../src/GoodGame/libs/win
+mkdir ../src/LogiX/libs/win
 
-Copy-Item ./winglfw/glfw-3.3.4.bin.WIN64/lib-vc2019/glfw3.dll ../src/GoodGame/libs/win/glfw3.dll
+Copy-Item ./winglfw/glfw-3.3.4.bin.WIN64/lib-vc2019/glfw3.dll ../src/LogiX/libs/win/glfw3.dll
 
 Set-Location ..
 

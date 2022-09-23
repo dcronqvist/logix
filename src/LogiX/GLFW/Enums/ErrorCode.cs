@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace GoodGame.GLFW
+namespace LogiX.GLFW
 {
     /// <summary>
     ///     Strongly-typed error codes for error handling.

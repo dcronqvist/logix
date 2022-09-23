@@ -1,7 +1,7 @@
 using System.Diagnostics.CodeAnalysis;
 using Symphony;
 
-namespace GoodGame.Content;
+namespace LogiX.Content;
 
 public abstract class Shader : GLContentItem<string>
 {

@@ -1,9 +1,9 @@
-using GoodGame.Content;
+using LogiX.Content;
 using StbImageSharp;
 using Symphony;
-using static GoodGame.OpenGL.GL;
+using static LogiX.OpenGL.GL;
 
-namespace GoodGame.Graphics;
+namespace LogiX.Graphics;
 
 public class Texture2D : GLContentItem<ImageResult>
 {

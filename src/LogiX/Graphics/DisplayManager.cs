@@ -1,12 +1,12 @@
 using System;
 using System.Drawing;
 using System.Numerics;
-using GoodGame.Content;
-using GoodGame.GLFW;
-using GoodGame.OpenGL;
-using static GoodGame.OpenGL.GL;
+using LogiX.Content;
+using LogiX.GLFW;
+using LogiX.OpenGL;
+using static LogiX.OpenGL.GL;
 
-namespace GoodGame.Graphics;
+namespace LogiX.Graphics;
 
 public static class DisplayManager
 {

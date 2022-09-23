@@ -1,4 +1,4 @@
-namespace GoodGame;
+namespace LogiX;
 
 public static class GameTime
 {

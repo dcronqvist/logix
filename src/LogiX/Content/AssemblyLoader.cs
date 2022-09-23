@@ -1,8 +1,8 @@
 using System.Reflection;
-using GoodGame.Content.Scripting;
+using LogiX.Content.Scripting;
 using Symphony;
 
-namespace GoodGame.Content;
+namespace LogiX.Content;
 
 public class AssemblyLoader : IContentItemLoader
 {

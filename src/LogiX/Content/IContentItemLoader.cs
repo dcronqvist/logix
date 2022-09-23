@@ -2,7 +2,7 @@ using System.Diagnostics.CodeAnalysis;
 using StbImageSharp;
 using Symphony;
 
-namespace GoodGame.Content;
+namespace LogiX.Content;
 
 public interface IContentItemLoader
 {
