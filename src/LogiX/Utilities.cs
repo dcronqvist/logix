@@ -6,6 +6,8 @@ namespace LogiX;
 
 public static class Utilities
 {
+    static Random RNG = new();
+
     public static void CopyPropsAndFields<T1, T2>(T1 a, ref T2 b)
     {
         var aProps = a.GetType().GetProperties();
@@ -105,5 +107,29 @@ public static class Utilities
     public static string RepeatChar(this char c, int count)
     {
         return new string(c, count);
+    }
+
+    public static bool SameAs(LogicValue[] a, LogicValue[] b)
+    {
+        if (a.Length != b.Length)
+            return false;
+
+        for (int i = 0; i < a.Length; i++)
+        {
+            if (a[i] != b[i])
+                return false;
+        }
+
+        return true;
+    }
+
+    public static float CeilToMultipleOf(this float value, float multiple)
+    {
+        return MathF.Ceiling(value / multiple) * multiple;
+    }
+
+    public static T Choose<T>(params T[] values)
+    {
+        return values[RNG.Next(values.Length)];
     }
 }

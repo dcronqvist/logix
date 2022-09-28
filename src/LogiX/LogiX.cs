@@ -15,9 +15,27 @@ public class LogiX : Game
 {
     public static ContentManager<ContentMeta> ContentManager { get; private set; }
     Camera2D cam;
+    Simulation sim;
 
     public override void Initialize(string[] args)
     {
+        sim = new Simulation();
+
+        IOGroup g1 = new IOGroup("g1", ComponentSide.LEFT, 0);
+        IOGroup g2 = new IOGroup("g2", ComponentSide.LEFT, 1);
+        IOGroup g3 = new IOGroup("g2", ComponentSide.RIGHT, 2);
+        IOMapping mapping = new IOMapping(g1, g2, g3);
+
+        sim.AddComponent(new ANDGate(mapping, 2), new Vector2i(35, 20));
+        sim.AddComponent(new ANDGate(mapping, 2), new Vector2i(45, 20));
+
+        var w1 = new Wire(new Vector2i(38, 20), new Vector2i(42, 20));
+        w1.RootNode.Children[0].AddChild(new WireNode(new Vector2i(44, 20)));
+        var w2 = new WireNode(new Vector2i(42, 21));
+        w1.RootNode.Children[0].AddChild(w2);
+        w2.AddChild(new WireNode(new Vector2i(44, 21)));
+
+        sim.AddWire(w1);
     }
 
     public override void LoadContent(string[] args)
@@ -99,6 +117,10 @@ public class LogiX : Game
                 };
                 DisplayManager.SetWindowIcon(tex);
             }
+            if (e.Stage is NormalLoadingStage)
+            {
+                normalDone = true;
+            }
         };
 
         ContentManager.ContentItemStartedLoading += (sender, e) =>
@@ -139,15 +161,11 @@ public class LogiX : Game
 
     }
 
-    float slider1 = 0;
-    float slider2 = 0;
-    string string1 = "";
-    string string2 = "";
-    bool bool1 = false;
-    bool bool2 = false;
-    int selected1 = 0;
-    int selected2 = 0;
-    string[] options = new string[] { "Option 1", "Option 2", "Option 3" };
+    bool u1 = false;
+    bool u2 = false;
+    bool h1 = false;
+    bool h2 = false;
+    bool normalDone = false;
 
     public override void Render()
     {
@@ -156,67 +174,39 @@ public class LogiX : Game
             glClearColor(0.1f, 0.2f, 0.3f, 1);
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-            var shader = ContentManager.GetContentItem<ShaderProgram>("content_1.shader_program.texture");
-
-            if (shader is null)
+            if (!normalDone)
             {
                 return;
             }
 
             GUI.Begin(this.cam);
 
-            if (GUI.Button("hej 1", new Vector2(100, 100), new Vector2(50, 30)))
+            //this.sim.Reset();
+
+            GUI.Checkbox("U1", new Vector2(100, 100), new Vector2(30, 30), ref u1);
+            GUI.Checkbox("U2", new Vector2(100, 150), new Vector2(30, 30), ref u2);
+            GUI.Checkbox("H1", new Vector2(100, 200), new Vector2(30, 30), ref h1);
+            GUI.Checkbox("H2", new Vector2(100, 250), new Vector2(30, 30), ref h2);
+
+            if (u1)
             {
-                Console.WriteLine("CLICKED 1");
+                LogicValue val = h1 ? LogicValue.HIGH : LogicValue.LOW;
+                this.sim.PushValuesAt(new Vector2i(34, 20), val);
             }
-            if (GUI.Button("hej 2", new Vector2(160, 100), new Vector2(50, 30)))
+            if (u2)
             {
-                Console.WriteLine("CLICKED 2");
-            }
-            if (GUI.Button("hej 3", new Vector2(220, 100), new Vector2(50, 30)))
-            {
-                Console.WriteLine("CLICKED 3");
-            }
-            if (GUI.Button("hej 4", new Vector2(280, 100), new Vector2(50, 30)))
-            {
-                Console.WriteLine("CLICKED 4");
+                LogicValue val = h2 ? LogicValue.HIGH : LogicValue.LOW;
+                this.sim.PushValuesAt(new Vector2i(34, 21), val);
             }
 
-            if (GUI.Slider("slider 1", new Vector2(100, 200), new Vector2(200, 30), ref slider1))
-            {
-                Console.WriteLine($"slider 1: {MathF.Round(slider1, 2)}");
-            }
-
-            if (GUI.Slider($"slider 2, {MathF.Round(slider2, 2)}", new Vector2(100, 250), new Vector2(200, 30), ref slider2))
-            {
-                Console.WriteLine($"slider 2: {MathF.Round(slider2, 2)}");
-            }
-
-            if (GUI.TextField("username", new Vector2(100, 300), new Vector2(200, 30), ref string1))
-            {
-                Console.WriteLine($"text field 1 submitted: {string1}");
-            }
-            if (GUI.TextField("password", new Vector2(100, 350), new Vector2(200, 30), ref string2, GUI.TextFieldFlags.Password))
-            {
-                Console.WriteLine($"text field 2 submitted: {string2}");
-            }
-
-            GUI.Checkbox("checkbox 1", new Vector2(100, 400), new Vector2(30, 30), ref bool1);
-            GUI.Checkbox("checkbox 2", new Vector2(100, 450), new Vector2(30, 30), ref bool2);
-
-            if (GUI.Dropdown(new Vector2(100, 500), new Vector2(200, 30), options, ref selected1))
-            {
-                Console.WriteLine($"dropdown 1 selected: {options[selected1]}");
-            }
-
-            if (GUI.Dropdown(new Vector2(320, 500), new Vector2(200, 30), options, ref selected2))
-            {
-                Console.WriteLine($"dropdown 2 selected: {options[selected2]}");
-            }
+            this.sim.PushValuesAt(new Vector2i(38, 21), LogicValue.HIGH);
 
             DisplayManager.SetWindowTitle($"HOT: {GUI._hotID}, ACTIVE: {GUI._activeID}, KBD: {GUI._kbdFocusID}, _CARET: {GUI._caretPosition}, DROP: {GUI._showingDropdownID}");
 
             GUI.End();
+
+            this.sim.Tick();
+            this.sim.Render(cam);
 
             DisplayManager.SwapBuffers(-1);
         });
