@@ -83,7 +83,8 @@ public class StateDraggingWire : State<EditorTab, int>
                 Console.WriteLine($"Create wire between {_startPos.ToString()}, {_cornerPos.ToString()} and {_endPos.ToString()}, CORNER: {this.CornerNeeded()}");
                 if (CornerNeeded())
                 {
-
+                    s.ConnectPointsWithWire(_startPos, _cornerPos);
+                    s.ConnectPointsWithWire(_cornerPos, _endPos);
                 }
                 else
                 {

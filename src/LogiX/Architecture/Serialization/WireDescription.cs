@@ -16,22 +16,12 @@ public class WireDescription
         Children.Add(child);
     }
 
-    private WireNode CreateWireNode()
-    {
-        WireNode node = new WireNode(this.Position);
-
-        foreach (var child in this.Children)
-        {
-            node.AddChild(child.CreateWireNode());
-        }
-
-        return node;
-    }
-
     public Wire CreateWire()
     {
-        Wire wire = new();
-        wire.RootNode = this.CreateWireNode();
-        return wire;
+        throw new NotImplementedException();
+
+        // Wire wire = new();
+        // wire.RootNode = this.CreateWireNode();
+        // return wire;
     }
 }

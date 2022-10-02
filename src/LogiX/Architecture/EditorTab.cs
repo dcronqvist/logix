@@ -99,6 +99,29 @@ public class EditorTab : Invoker<EditorTab>
     public void Update()
     {
         this.FSM.Update(this);
+
+        var mousePos = Input.GetMousePosition(this.Camera).ToVector2i(16);
+
+        if (Input.IsKeyPressed(Keys.Alpha1))
+        {
+            var c = ComponentDescription.CreateDefaultComponent("content_1.script_type.CONST");
+            c.Position = mousePos;
+            this.Sim.LockedAction(s => s.AddComponent(c, c.Position));
+        }
+        if (Input.IsKeyPressed(Keys.Alpha2))
+        {
+            var c = ComponentDescription.CreateDefaultComponent("content_1.script_type.ORGATE");
+            c.Position = mousePos;
+            this.Sim.LockedAction(s => s.AddComponent(c, c.Position));
+        }
+        if (Input.IsKeyPressed(Keys.Alpha3))
+        {
+            var c = ComponentDescription.CreateDefaultComponent("content_1.script_type.ANDGATE");
+            c.Position = mousePos;
+            this.Sim.LockedAction(s => s.AddComponent(c, c.Position));
+        }
+
+        this.Sim.LockedAction(s => s.Tick());
     }
 
     public void Render()
@@ -126,7 +149,7 @@ public class EditorTab : Invoker<EditorTab>
             this.SubmitGUI();
             this.FSM.SubmitUI(this);
 
-            DisplayManager.SetWindowTitle($"STATE: {this.FSM.CurrentState.ToString()}, HOT: {GUI._hotID}, ACTIVE: {GUI._activeID}, KBD: {GUI._kbdFocusID}, _CARET: {GUI._caretPosition}, DROP: {GUI._showingDropdownID}");
+            DisplayManager.SetWindowTitle($"STATE: {this.FSM.CurrentState.GetType().ToString()}, HOT: {GUI._hotID}, ACTIVE: {GUI._activeID}, KBD: {GUI._kbdFocusID}, _CARET: {GUI._caretPosition}, DROP: {GUI._showingDropdownID}, WIRES: {this.Sim.LockedAction(s => s.Wires.Count)}");
             GUI.End();
         });
 

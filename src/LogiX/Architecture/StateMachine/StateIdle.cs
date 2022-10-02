@@ -16,14 +16,17 @@ public class StateIdle : State<EditorTab, int>
 
         var mouseWorldPosition = Input.GetMousePosition(arg.Camera);
 
-        arg.Sim.LockedAction(s =>
+        if (!GUI.IsAnyHot())
         {
-            s.Interact(arg.Camera);
-
-            if (Input.IsMouseButtonPressed(MouseButton.Left))
+            arg.Sim.LockedAction(s =>
             {
-                this.GoToState<StateDraggingWire>(0);
-            }
-        });
+                s.Interact(arg.Camera);
+
+                if (Input.IsMouseButtonPressed(MouseButton.Left))
+                {
+                    this.GoToState<StateDraggingWire>(0);
+                }
+            });
+        }
     }
 }

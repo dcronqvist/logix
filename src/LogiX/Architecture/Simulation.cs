@@ -162,7 +162,7 @@ public class Simulation
     {
         foreach (Wire w in Wires)
         {
-            if (w.RootNode.CollectPositions().Contains(position))
+            if (w.GetPoints().Contains(position))
             {
                 wire = w;
                 return true;
@@ -183,7 +183,7 @@ public class Simulation
 
         if (this.TryGetWireAtPos(position, out var wire))
         {
-            var positions = wire.RootNode.CollectPositions();
+            var positions = wire.GetPoints();
             foreach (var pos in positions)
             {
                 if (!NewValues.ContainsKey(pos))
@@ -343,51 +343,42 @@ public class Simulation
         return false;
     }
 
-    public bool TryGetWireNodeFromPosition(Vector2i gridPos, out WireNode node, out Wire wire, bool createIfNone = false)
+    public void ConnectPointsWithWire(Vector2i point1, Vector2i point2)
     {
-        foreach (var w in this.Wires)
+        if (this.TryGetWireAtPos(point1, out var w1))
         {
-            if (w.IsPositionOnWire(gridPos))
+            if (this.TryGetWireAtPos(point2, out var w2))
             {
-                node = w.GetNodeAtPosition(gridPos, true);
-                wire = w;
-                return true;
-            }
-        }
-
-        if (createIfNone)
-        {
-            node = new WireNode(gridPos);
-            wire = new Wire();
-            wire.RootNode = node;
-            this.AddWire(wire);
-            return true;
-        }
-
-        node = null;
-        wire = null;
-        return false;
-    }
-
-    public void ConnectPointsWithWire(Vector2i pos1, Vector2i pos2)
-    {
-        if (this.TryGetWireNodeFromPosition(pos1, out var node1, out var wire1, true))
-        {
-            if (this.TryGetWireNodeFromPosition(pos2, out var node2, out var wire2, true))
-            {
-                Wire newWire = Wire.Connect(wire1, node1, wire2, node2);
-
-                if (wire1 != wire2)
+                if (w1 == w2)
                 {
-                    this.Wires.Remove(wire1);
-                    this.Wires.Remove(wire2);
+                    // Same wire? Just add the segment
+                    w1.AddSegment(point1, point2);
                 }
                 else
                 {
-                    this.Wires.Remove(wire1);
+                    // Different wires? Merge them
+                    w1.MergeWith(w2);
+                    this.Wires.Remove(w2);
                 }
-
-                this.Wires.Add(newWire);
+            }
+            else
+            {
+                // Add segment to wire
+                w1.AddSegment(point1, point2);
+            }
+        }
+        else
+        {
+            if (this.TryGetWireAtPos(point2, out var w2))
+            {
+                // Add segment to wire
+                w2.AddSegment(point2, point1);
+            }
+            else
+            {
+                // Create new wire
+                var wire = new Wire(point1, point2);
+                this.AddWire(wire);
             }
         }
     }

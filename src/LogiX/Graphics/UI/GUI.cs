@@ -132,6 +132,16 @@ public static class GUI
         return _kbdFocusID == id;
     }
 
+    public static bool IsAnyHot()
+    {
+        return _hotID != -1;
+    }
+
+    public static bool IsAnyActive()
+    {
+        return _activeID != -1;
+    }
+
     // BEGIN AND END STUFF
     public static void Begin(Camera2D camera)
     {
