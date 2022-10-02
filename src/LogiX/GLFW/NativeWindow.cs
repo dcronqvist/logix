@@ -157,7 +157,7 @@ namespace LogiX.GLFW
         /// <summary>
         ///     Gets or sets the width of the client area of the window, in screen coordinates.
         /// </summary>
-        /// <exception cref="Exception">Thrown when specified value is less than 1.</exception>
+        /// <exception cref="GLFWException">Thrown when specified value is less than 1.</exception>
         public int ClientWidth
         {
             get
@@ -168,7 +168,7 @@ namespace LogiX.GLFW
             set
             {
                 if (value < 1)
-                    throw new Exception("Window width muts be greater than 0.");
+                    throw new GLFWException("Window width muts be greater than 0.");
                 Glfw.GetWindowSize(Window, out var dummy, out var height);
                 Glfw.SetWindowSize(Window, value, height);
             }
@@ -177,7 +177,7 @@ namespace LogiX.GLFW
         /// <summary>
         ///     Gets or sets the height of the client area of the window, in screen coordinates.
         /// </summary>
-        /// <exception cref="Exception">Thrown when specified value is less than 1.</exception>
+        /// <exception cref="GLFWException">Thrown when specified value is less than 1.</exception>
         public int ClientHeight
         {
             get
@@ -188,7 +188,7 @@ namespace LogiX.GLFW
             set
             {
                 if (value < 1)
-                    throw new Exception("Window height muts be greater than 0.");
+                    throw new GLFWException("Window height muts be greater than 0.");
                 Glfw.GetWindowSize(Window, out var width, out var dummy);
                 Glfw.SetWindowSize(Window, width, value);
             }
@@ -270,7 +270,7 @@ namespace LogiX.GLFW
                 {
                     return Native.GetWin32Window(Window);
                 }
-                catch (Exception)
+                catch (GLFWException)
                 {
                     return IntPtr.Zero;
                 }
@@ -775,7 +775,7 @@ namespace LogiX.GLFW
                 Glfw.DestroyWindow(Window);
                 return true;
             }
-            catch (Exception)
+            catch (GLFWException)
             {
                 return false;
             }

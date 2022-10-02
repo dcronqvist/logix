@@ -21,7 +21,7 @@ public class ContentLoader : IContentLoader<ContentMeta>
         yield return new ShaderLoadingStage(_loaders, ".fs", ".vs");
         yield return new ShaderProgramLoadingStage(_loaders, ".shader");
 
-        yield return new CoreLoadingStage(_loaders, ".png", ".dll", ".ttf");
+        yield return new CoreLoadingStage(_loaders, ".png", ".ttf");
         yield return new NormalLoadingStage(_loaders, ".png", ".dll", ".ttf");
     }
 }

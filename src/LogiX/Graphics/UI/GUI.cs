@@ -529,7 +529,7 @@ public static class GUI
         var measure = _font.MeasureString(text, 1f);
         RenderText(text, 1f, position + new Vector2(size.X + 10, size.Y / 2 - measure.Y / 2f), ColorF.White, false);
 
-        return (IsActive(id) && Input.IsMouseButtonPressed(MouseButton.Left)) || (IsActive(id) && Input.IsKeyPressed(Keys.Enter));
+        return (IsActive(id) && Input.IsMouseButtonPressed(MouseButton.Left)) || (HasKeyboardFocus(id) && Input.IsKeyPressed(Keys.Enter));
     }
 
     public static int _showingDropdownID = -1;

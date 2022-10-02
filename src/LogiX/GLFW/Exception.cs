@@ -3,7 +3,7 @@
     /// <summary>
     /// Base exception class for GLFW related errors.
     /// </summary>
-    public class Exception : System.Exception
+    public class GLFWException : System.Exception
     {
         #region Methods
 
@@ -35,16 +35,16 @@
         #region Constructors
 
         /// <summary>
-        ///     Initializes a new instance of the <see cref="Exception" /> class.
+        ///     Initializes a new instance of the <see cref="GLFWException" /> class.
         /// </summary>
         /// <param name="error">The error code to create a generic message from.</param>
-        public Exception(ErrorCode error) : base(GetErrorMessage(error)) { }
+        public GLFWException(ErrorCode error) : base(GetErrorMessage(error)) { }
 
         /// <summary>
-        ///     Initializes a new instance of the <see cref="Exception" /> class.
+        ///     Initializes a new instance of the <see cref="GLFWException" /> class.
         /// </summary>
         /// <param name="message">The error message.</param>
-        public Exception(string message) : base(message) { }
+        public GLFWException(string message) : base(message) { }
 
         #endregion
     }

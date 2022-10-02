@@ -1,5 +1,7 @@
 using System.Drawing;
 using System.Numerics;
+using System.Reflection;
+using LogiX.Architecture;
 using LogiX.Graphics;
 
 namespace LogiX;
@@ -83,6 +85,16 @@ public static class Utilities
         return new RectangleF(r.X - v.X, r.Y - v.Y, r.Width + v.X * 2, r.Height + v.Y * 2);
     }
 
+    public static Rectangle Inflate(this RectangleF r, float f)
+    {
+        return new Rectangle((int)(r.X - f), (int)(r.Y - f), (int)(r.Width + f * 2), (int)(r.Height + f * 2));
+    }
+
+    public static RectangleF Inflate(this RectangleF r, float x, float y)
+    {
+        return new RectangleF(r.X - x, r.Y - y, r.Width + x * 2, r.Height + y * 2);
+    }
+
     public static Vector2 PixelAlign(this Vector2 v)
     {
         return new Vector2(MathF.Round(v.X), MathF.Round(v.Y));
@@ -97,6 +109,16 @@ public static class Utilities
     public static Vector2 GetMiddleOfRectangle(this RectangleF rect)
     {
         return new Vector2(rect.X + rect.Width / 2, rect.Y + rect.Height / 2);
+    }
+
+    public static ColorF Darken(this ColorF c, float amnt)
+    {
+        return ColorF.Darken(c, amnt);
+    }
+
+    public static RectangleF CreateRect(this Vector2 position, Vector2 size)
+    {
+        return new RectangleF(position.X, position.Y, size.X, size.Y);
     }
 
     public static float Clamp(float value, float min, float max)
@@ -131,5 +153,139 @@ public static class Utilities
     public static T Choose<T>(params T[] values)
     {
         return values[RNG.Next(values.Length)];
+    }
+
+    public static ColorF GetValueColor(LogicValue value)
+    {
+        return value switch
+        {
+            LogicValue.LOW => ColorF.White,
+            LogicValue.HIGH => ColorF.RoyalBlue,
+            _ => ColorF.Gray
+        };
+    }
+
+    public static ColorF GetValueColor(LogicValue[] values)
+    {
+        if (values.Length == 1)
+            return GetValueColor(values[0]);
+
+        var color = GetValueColor(values[0]);
+        foreach (var value in values)
+        {
+            color = ColorF.Lerp(color, GetValueColor(value), 0.5f);
+        }
+
+        return color;
+    }
+
+    public static string GetAsHertzString(this int ticksPerSeconds)
+    {
+        if (ticksPerSeconds < 1000)
+            return $"{ticksPerSeconds} Hz";
+        else if (ticksPerSeconds < 1000000)
+            return $"{Math.Round(ticksPerSeconds / 1000D, 1)} kHz";
+        else
+            return $"{Math.Round(ticksPerSeconds / 1000000D, 1)} MHz";
+    }
+
+    public static string GetAsHertzString(this float ticksPerSeconds)
+    {
+        if (ticksPerSeconds < 1000)
+            return $"{Math.Round(ticksPerSeconds)} Hz";
+        else if (ticksPerSeconds < 1000000)
+            return $"{Math.Round(ticksPerSeconds / 1000D, 2)} kHz";
+        else
+            return $"{Math.Round(ticksPerSeconds / 1000000D, 2)} MHz";
+    }
+
+    public static IEnumerable<Type> FindDerivedTypesInAssembly(Assembly assembly, Type baseType)
+    {
+        return assembly.GetTypes().Where(t => baseType.IsAssignableFrom(t));
+    }
+
+    public static IEnumerable<Type> FindDerivedTypes(Type baseType)
+    {
+        return AppDomain.CurrentDomain.GetAssemblies().SelectMany(ass =>
+        {
+            return FindDerivedTypesInAssembly(ass, baseType);
+        });
+    }
+
+    public static bool IsSubclassOfRawGeneric(Type generic, Type toCheck)
+    {
+        while (toCheck != null && toCheck != typeof(object))
+        {
+            var cur = toCheck.IsGenericType ? toCheck.GetGenericTypeDefinition() : toCheck;
+            if (generic == cur)
+            {
+                return true;
+            }
+            toCheck = toCheck.BaseType;
+        }
+        return false;
+    }
+
+    public static Vector2i ToVector2i(this Vector2 worldPosition, int gridSize)
+    {
+        float x = worldPosition.X;
+        float y = worldPosition.Y;
+        int signX = Math.Sign(x);
+        int signY = Math.Sign(y);
+
+        x = Math.Abs(x);
+        y = Math.Abs(y);
+
+        int gridX = (int)MathF.Round(x / gridSize);
+        int gridY = (int)MathF.Round(y / gridSize);
+
+        return new Vector2i(gridX * signX, gridY * signY);
+    }
+
+    public static Vector2 GetClosestPoint(Vector2 point, params Vector2[] points)
+    {
+        Vector2 closest = points[0];
+        float closestDist = (point - closest).Length();
+        for (int i = 1; i < points.Length; i++)
+        {
+            float dist = (point - points[i]).Length();
+            if (dist < closestDist)
+            {
+                closest = points[i];
+                closestDist = dist;
+            }
+        }
+        return closest;
+    }
+
+    public static Vector2i[] GetAllGridPointsBetween(Vector2i v1, Vector2i v2)
+    {
+        // Assume to be aligned on the x or y axis
+        if (v1.X == v2.X)
+        {
+            int minY = Math.Min(v1.Y, v2.Y);
+            int maxY = Math.Max(v1.Y, v2.Y);
+            var points = new Vector2i[maxY - minY + 1];
+            for (int i = 0; i < points.Length; i++)
+            {
+                points[i] = new Vector2i(v1.X, minY + i);
+            }
+            return points;
+        }
+        else if (v1.Y == v2.Y)
+        {
+            int minX = Math.Min(v1.X, v2.X);
+            int maxX = Math.Max(v1.X, v2.X);
+            var points = new Vector2i[maxX - minX + 1];
+            for (int i = 0; i < points.Length; i++)
+            {
+                points[i] = new Vector2i(minX + i, v1.Y);
+            }
+            return points;
+        }
+        else
+        {
+            throw new Exception("Points are not aligned on the x or y axis");
+        }
     }
 }

@@ -36,7 +36,7 @@ public static class TextRenderer
         glBindVertexArray(0);
     }
 
-    public static unsafe void RenderText(ShaderProgram shader, Font f, string s, Vector2 position, float scale, ColorF color, Camera2D cam)
+    public static unsafe void RenderText(ShaderProgram shader, Font f, string s, Vector2 position, float scale, ColorF color, Camera2D cam, bool pixelAlign = true)
     {
         shader.Use(() =>
         {
@@ -53,7 +53,7 @@ public static class TextRenderer
             glActiveTexture(GL_TEXTURE0);
             glBindVertexArray(fontVAO);
 
-            position = position.PixelAlign();
+            position = pixelAlign ? position.PixelAlign() : position;
 
             float x = position.X;
             float y = position.Y;

@@ -58,7 +58,7 @@ public static class PrimitiveRenderer
 
         float rotation = MathF.Atan2(yDist, xDist);
 
-        RectangleF rec = new RectangleF(start.X, start.Y, distance, height);
+        RectangleF rec = new RectangleF(start.X, start.Y - height / 2, distance, height);
 
         RenderRectangle(shader, rec, new Vector2(0, 0.5f), rotation, color, camera);
     }

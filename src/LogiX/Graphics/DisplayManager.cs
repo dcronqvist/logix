@@ -4,6 +4,7 @@ using System.Numerics;
 using LogiX.Content;
 using LogiX.GLFW;
 using LogiX.OpenGL;
+using LogiX.Rendering;
 using static LogiX.OpenGL.GL;
 
 namespace LogiX.Graphics;
@@ -144,14 +145,20 @@ public static class DisplayManager
         return Glfw.GetWindowAttribute(WindowHandle, WindowAttribute.Focused);
     }
 
-    public unsafe static void SetWindowIcon(Texture2D tex)
+    public unsafe static void SetWindowIcon(Texture2D texture)
     {
-        byte[] pixelData = tex.GetPixelData();
-        fixed (byte* pix = &pixelData[0])
-        {
-            IntPtr ip = new IntPtr(pix);
-            Glfw.SetWindowIcon(WindowHandle, 1, new Image[] { new Image(tex.Width, tex.Height, ip) });
-        }
+        Glfw.SetWindowIcon(WindowHandle, 1, new Image[] { texture.GetAsGLFWImage() });
+    }
+
+    public unsafe static void SetCursorToPlatformStandard(CursorType cursorType)
+    {
+        var cursor = Glfw.CreateStandardCursor(cursorType);
+        Glfw.SetCursor(WindowHandle, cursor);
+    }
+
+    public unsafe static void SetCursorToTexture(Texture2D texture, int xHotspot, int yHotspot)
+    {
+        Glfw.SetCursor(WindowHandle, Glfw.CreateCursor(texture.GetAsGLFWImage(), xHotspot, yHotspot));
     }
 
     public static void SetWindowShouldClose(bool value)
@@ -178,5 +185,11 @@ public static class DisplayManager
     public static void SetWindowTitle(string title)
     {
         Glfw.SetWindowTitle(WindowHandle, title);
+    }
+
+    public static Vector2 GetViewSize(Camera2D camera)
+    {
+        Vector2 windowSize = GetWindowSizeInPixels();
+        return new Vector2(windowSize.X / camera.Zoom, windowSize.Y / camera.Zoom);
     }
 }

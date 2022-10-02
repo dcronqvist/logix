@@ -1,7 +1,11 @@
+using System.Diagnostics;
 using System.Drawing;
 using System.Numerics;
+using LogiX.Architecture;
+using LogiX.Architecture.Serialization;
 using LogiX.Content;
 using LogiX.Content.Scripting;
+using LogiX.GLFW;
 using LogiX.Graphics;
 using LogiX.Graphics.UI;
 using LogiX.Rendering;
@@ -14,28 +18,81 @@ namespace LogiX;
 public class LogiX : Game
 {
     public static ContentManager<ContentMeta> ContentManager { get; private set; }
-    Camera2D cam;
-    Simulation sim;
+    bool allContentLoaded = false;
+    bool coreLoaded = false;
+
+    // Camera2D cam;
+    // ThreadSafe<Simulation> sim;
+    // Mutex simTickMutex = new();
+    // Task simTickTask;
+    // Framebuffer gui;
+    // double currentDiff = 0;
+    // float ticksPerSecond = 0;
+    // bool ticking = true;
 
     public override void Initialize(string[] args)
     {
-        sim = new Simulation();
+        // sim = new(new());
 
-        IOGroup g1 = new IOGroup("g1", ComponentSide.LEFT, 0);
-        IOGroup g2 = new IOGroup("g2", ComponentSide.LEFT, 1);
-        IOGroup g3 = new IOGroup("g2", ComponentSide.RIGHT, 2);
-        IOMapping mapping = new IOMapping(g1, g2, g3);
+        // sim.LockedAction(s =>
+        // {
+        //     // s.AddComponent(new ANDGate(mapping, 2), new Vector2i(35, 20));
+        //     // s.AddComponent(new ANDGate(mapping, 2), new Vector2i(45, 20));
 
-        sim.AddComponent(new ANDGate(mapping, 2), new Vector2i(35, 20));
-        sim.AddComponent(new ANDGate(mapping, 2), new Vector2i(45, 20));
+        //     // var w1 = new Wire(new Vector2i(38, 20), new Vector2i(42, 20));
+        //     // w1.RootNode.Children[0].AddChild(new WireNode(new Vector2i(44, 20)));
+        //     // var w2 = new WireNode(new Vector2i(42, 21));
+        //     // w1.RootNode.Children[0].AddChild(w2);
+        //     // w2.AddChild(new WireNode(new Vector2i(44, 21)));
 
-        var w1 = new Wire(new Vector2i(38, 20), new Vector2i(42, 20));
-        w1.RootNode.Children[0].AddChild(new WireNode(new Vector2i(44, 20)));
-        var w2 = new WireNode(new Vector2i(42, 21));
-        w1.RootNode.Children[0].AddChild(w2);
-        w2.AddChild(new WireNode(new Vector2i(44, 21)));
+        //     // var desc = w1.GetDescriptionOfInstance();
 
-        sim.AddWire(w1);
+        //     // s.AddWire(w1);
+        //     // s.AddComponent(new ANDGate(m1, 2), new Vector2i(35, 30));
+
+        //     // s.AddComponent(new Architecture.Switch(new IOMapping(new IOGroup("g1", ComponentSide.RIGHT, 0))), new Vector2i(30, 20));
+        //     // s.AddComponent(new Architecture.Switch(new IOMapping(new IOGroup("g1", ComponentSide.RIGHT, 0))), new Vector2i(30, 24));
+
+        //     // var w3 = new Wire(new Vector2i(32, 20), new Vector2i(34, 20));
+        //     // s.AddWire(w3);
+
+        //     // var w4 = new Wire(new Vector2i(32, 24), new Vector2i(34, 24));
+        //     // w4.RootNode.Children[0].AddChild(new WireNode(new Vector2i(34, 21)));
+        //     // s.AddWire(w4);
+
+        //     // s.AddComponent(new Architecture.Switch(new IOMapping(new IOGroup("g1", ComponentSide.TOP, 0))), new Vector2i(34, 25));
+        // });
+
+
+        // simTickTask = new Task(async () =>
+        // {
+        //     Stopwatch sw = new();
+        //     sw.Start();
+
+        //     while (true)
+        //     {
+        //         long start = sw.Elapsed.Ticks;
+        //         this.simTickMutex.WaitOne();
+        //         sim.LockedAction(s =>
+        //         {
+        //             s.Tick();
+        //         });
+
+        //         int targetTps = this.tickRates[this.selectedTickRate];
+        //         long targetDiff = TimeSpan.TicksPerSecond / targetTps;
+
+        //         this.simTickMutex.ReleaseMutex();
+
+        //         while (sw.Elapsed.Ticks < start + targetDiff)
+        //         {
+        //             await Task.Delay(TimeSpan.FromTicks(targetDiff / 10));
+        //         }
+
+        //         long diff = sw.Elapsed.Ticks - start;
+        //         double seconds = diff / (double)TimeSpan.TicksPerSecond;
+        //         this.ticksPerSecond = this.ticksPerSecond + (1f / (float)seconds - this.ticksPerSecond) * (0.8f / MathF.Sqrt(targetTps));
+        //     }
+        // });
     }
 
     public override void LoadContent(string[] args)
@@ -56,7 +113,7 @@ public class LogiX : Game
         };
 
         var validator = new ContentValidator();
-        var collection = new DirectoryCollectionProvider(@"C:\Users\RichieZ\repos\GoodGame\assets\core", factory);
+        var collection = new DirectoryCollectionProvider(@"C:\Users\RichieZ\repos\logix\assets\core", factory);
         var loader = new ContentLoader();
 
         var config = new ContentManagerConfiguration<ContentMeta>(validator, collection, loader);
@@ -88,6 +145,10 @@ public class LogiX : Game
             });
 
             ScriptManager.Initialize(ContentManager);
+            ComponentDescription.RegisterComponentTypes();
+
+            tab = new EditorTab("TestTab");
+            allContentLoaded = true;
         };
 
         ContentManager.InvalidContentStructureError += (sender, e) =>
@@ -116,10 +177,8 @@ public class LogiX : Game
                     DisplayManager.SetWindowIcon(tex);
                 };
                 DisplayManager.SetWindowIcon(tex);
-            }
-            if (e.Stage is NormalLoadingStage)
-            {
-                normalDone = true;
+                coreLoaded = true;
+                Console.WriteLine($"Loaded core content!");
             }
         };
 
@@ -140,11 +199,8 @@ public class LogiX : Game
             {
                 glViewport(0, 0, (int)e.X, (int)e.Y);
                 Console.WriteLine($"Framebuffer Resized to {e.X}x{e.Y}");
-                cam = new Camera2D(DisplayManager.GetWindowSizeInPixels() / 2f, 1f);
             });
         };
-
-        cam = new Camera2D(DisplayManager.GetWindowSizeInPixels() / 2f, 1f);
 
         TextureRenderer.InitGL();
         PrimitiveRenderer.InitGL(500);
@@ -158,57 +214,45 @@ public class LogiX : Game
 
     public override void Update()
     {
-
+        if (allContentLoaded)
+        {
+            tab.Update();
+        }
     }
 
-    bool u1 = false;
-    bool u2 = false;
-    bool h1 = false;
-    bool h2 = false;
-    bool normalDone = false;
+    private EditorTab tab;
 
     public override void Render()
     {
         DisplayManager.LockedGLContext(() =>
         {
-            glClearColor(0.1f, 0.2f, 0.3f, 1);
-            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-            if (!normalDone)
+            if (!allContentLoaded)
             {
-                return;
+                if (coreLoaded)
+                {
+                    // TODO: Render loading screen
+                    Framebuffer.BindDefaultFramebuffer();
+                    Framebuffer.Clear(ColorF.Black);
+
+                    var shader = ContentManager.GetContentItem<ShaderProgram>("content_1.shader_program.text");
+                    var font = ContentManager.GetContentItem<Font>("content_1.font.default");
+
+                    var measure = font.MeasureString("Loading...", 2f);
+
+                    TextRenderer.RenderText(shader, font, "Loading...", DisplayManager.GetWindowSizeInPixels() / 2f - measure / 2f, 2f, ColorF.White, Framebuffer.GetDefaultCamera());
+                    DisplayManager.SwapBuffers(-1);
+                }
             }
-
-            GUI.Begin(this.cam);
-
-            //this.sim.Reset();
-
-            GUI.Checkbox("U1", new Vector2(100, 100), new Vector2(30, 30), ref u1);
-            GUI.Checkbox("U2", new Vector2(100, 150), new Vector2(30, 30), ref u2);
-            GUI.Checkbox("H1", new Vector2(100, 200), new Vector2(30, 30), ref h1);
-            GUI.Checkbox("H2", new Vector2(100, 250), new Vector2(30, 30), ref h2);
-
-            if (u1)
+            else
             {
-                LogicValue val = h1 ? LogicValue.HIGH : LogicValue.LOW;
-                this.sim.PushValuesAt(new Vector2i(34, 20), val);
+                Framebuffer.BindDefaultFramebuffer();
+                Framebuffer.Clear(ColorF.Transparent);
+
+                // TODO: Render editor
+                tab.Render();
+
+                DisplayManager.SwapBuffers(-1);
             }
-            if (u2)
-            {
-                LogicValue val = h2 ? LogicValue.HIGH : LogicValue.LOW;
-                this.sim.PushValuesAt(new Vector2i(34, 21), val);
-            }
-
-            this.sim.PushValuesAt(new Vector2i(38, 21), LogicValue.HIGH);
-
-            DisplayManager.SetWindowTitle($"HOT: {GUI._hotID}, ACTIVE: {GUI._activeID}, KBD: {GUI._kbdFocusID}, _CARET: {GUI._caretPosition}, DROP: {GUI._showingDropdownID}");
-
-            GUI.End();
-
-            this.sim.Tick();
-            this.sim.Render(cam);
-
-            DisplayManager.SwapBuffers(-1);
         });
     }
 

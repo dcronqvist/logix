@@ -23,4 +23,9 @@ public static class ScriptManager
     {
         return _scriptTypes.FirstOrDefault(x => x.Identifier == identifier);
     }
+
+    public static ScriptType[] GetScriptTypes()
+    {
+        return _scriptTypes.ToArray();
+    }
 }

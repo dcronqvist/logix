@@ -29,7 +29,7 @@ public class AssemblyContentItem : ContentItem<Assembly>
             var attr = type.GetCustomAttribute<ScriptTypeAttribute>();
             if (attr is not null)
             {
-                scriptTypes.Add(new ScriptType(attr.Identifier, type));
+                scriptTypes.Add(new ScriptType(this.Source.GetIdentifier() + ".script_type." + attr.Identifier, type));
             }
         }
         return scriptTypes.ToArray();

@@ -19,7 +19,7 @@ public class FontLoader : IContentItemLoader
                     using (var br = new BinaryReader(stream))
                     {
                         byte[] data = br.ReadBytes((int)stream.Length);
-                        var fd = new FontData(data, 16, FontData.FontFilter.NearestNeighbour, FontData.FontFilter.NearestNeighbour);
+                        var fd = new FontData(data, 8, FontData.FontFilter.NearestNeighbour, FontData.FontFilter.NearestNeighbour);
                         var font = new Font($"{source.GetIdentifier()}.font.{fileName}", source, fd);
                         return LoadEntryResult.CreateSuccess(font);
                     }

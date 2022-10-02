@@ -20,6 +20,9 @@ public static class Input
     public static double currentMouseScroll;
     public static double previousMouseScroll;
 
+    public static Vector2 currentMousePosition;
+    public static Vector2 previousMousePosition;
+
     public static event EventHandler<char> OnChar;
     public static event EventHandler OnBackspace;
     public static event EventHandler<float> OnScroll;
@@ -34,6 +37,9 @@ public static class Input
 
         currentMouseState = GetMouseState();
         previousMouseState = currentMouseState;
+
+        currentMousePosition = GetMousePositionInWindow();
+        previousMousePosition = currentMousePosition;
 
         Glfw.SetCharCallback(DisplayManager.WindowHandle, (Window, codePoint) =>
         {
@@ -110,6 +116,7 @@ public static class Input
     {
         currentKeyboardState = GetKeyboardState();
         currentMouseState = GetMouseState();
+        currentMousePosition = GetMousePositionInWindow();
     }
 
     public static void End()
@@ -117,6 +124,7 @@ public static class Input
         previousKeyboardState = currentKeyboardState;
         previousMouseState = currentMouseState;
         previousMouseScroll = currentMouseScroll;
+        previousMousePosition = currentMousePosition;
     }
 
     public static bool IsKeyDown(Keys key)
@@ -163,6 +171,11 @@ public static class Input
     {
         Glfw.GetCursorPosition(DisplayManager.WindowHandle, out double x, out double y);
         return new Vector2((float)x, (float)y);
+    }
+
+    public static Vector2 GetMouseWindowDelta()
+    {
+        return currentMousePosition - previousMousePosition;
     }
 
     public static int GetScroll()

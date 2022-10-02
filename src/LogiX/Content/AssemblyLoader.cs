@@ -10,6 +10,8 @@ public class AssemblyLoader : IContentItemLoader
     {
         try
         {
+            await Task.Delay(1000);
+
             using var stream = structure.GetEntryStream(pathToItem, out var entry);
 
             var assembly = System.Runtime.Loader.AssemblyLoadContext.Default.LoadFromStream(stream);

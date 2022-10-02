@@ -1858,7 +1858,7 @@ namespace LogiX.GLFW
 
         private static void GlfwError(ErrorCode code, IntPtr message)
         {
-            throw new Exception(Util.PtrToStringUTF8(message));
+            throw new GLFWException(Util.PtrToStringUTF8(message));
         }
 
         #endregion
