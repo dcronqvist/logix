@@ -61,7 +61,7 @@ public class EditorTab : Invoker<EditorTab>
             Camera.Zoom = Math.Clamp(Camera.Zoom, 0.3f, 10f);
         };
 
-        NewGUI.Init(GUIContext.GetDefault(), Framebuffer.GetDefaultCamera());
+        NewGUI.Init(LogiX.ContentManager.GetContentItem<Font>("content_1.font.default"));
     }
 
     public void DrawGrid()
@@ -193,7 +193,7 @@ public class EditorTab : Invoker<EditorTab>
             SubmitGUI();
             NewGUI.End();
 
-            string s = $"ANY_WIN_HOV: {NewGUI.AnyWindowHovered()}, HOT: {NewGUI.HotID}";
+            string s = $"ANY_WIN_HOV: {NewGUI.AnyWindowHovered()}, HOVERED: {(NewGUI.HoveredEnvironment == null ? "null" : NewGUI.HoveredEnvironment.GetID())}, HOT: {NewGUI.HotID}";
             DisplayManager.SetWindowTitle(s);
         });
 
@@ -205,7 +205,35 @@ public class EditorTab : Invoker<EditorTab>
 
     public void SubmitGUI()
     {
-        if (NewGUI.BeginWindow("Another One", new Vector2(380, 90)))
+        NewGUI.BeginMainMenuBar();
+
+        if (NewGUI.Button("Butt"))
+        {
+
+        }
+        NewGUI.Spacer(5);
+        if (NewGUI.Button("Butt1"))
+        {
+
+        }
+        NewGUI.Spacer(5);
+
+        if (NewGUI.Button("Butt2"))
+        {
+
+        }
+        NewGUI.Spacer(5);
+
+        if (NewGUI.Button("Butt3"))
+        {
+
+        }
+        NewGUI.Spacer(5);
+        NewGUI.Checkbox("cute", ref cute);
+
+        NewGUI.EndMainMenuBar();
+
+        if (NewGUI.BeginWindow("Another One", new Vector2(120, 90)))
         {
             NewGUI.Spacer(5);
 
@@ -232,12 +260,8 @@ public class EditorTab : Invoker<EditorTab>
                 cute = !cute;
             }
 
-            NewGUI.SameLine(5f);
-
-            if (NewGUI.Checkbox("TestBox", ref cute))
-            {
-                Console.WriteLine("TestBox");
-            }
+            NewGUI.SameLine(5);
+            NewGUI.Checkbox("Cute", ref cute);
 
             if (cute)
             {

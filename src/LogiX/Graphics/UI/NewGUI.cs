@@ -7,51 +7,59 @@ namespace LogiX.Graphics.UI;
 
 public static class NewGUI
 {
-    public static GUIContext Context { get; private set; }
-    private static Camera2D Camera { get; set; }
+    private static Font Font { get; set; }
 
     public static string HotID { get; private set; }
     public static string ActiveID { get; private set; }
 
-    public static Dictionary<int, List<IItemRenderCall>> WindowRenderCalls { get; private set; } = new();
+    public static IGUIPositionProvider CurrentEnvironment { get; private set; }
+    public static Dictionary<string, IGUIPositionProvider> Environments { get; private set; } = new();
+    public static Dictionary<string, List<IItemRenderCall>> EnvironmentRenderCalls { get; private set; } = new();
+    public static List<string> EnvironmentRenderOrder { get; private set; } = new();
 
-    public static void Init(GUIContext context, Camera2D camera)
+    public static IGUIPositionProvider HoveredEnvironment { get; private set; }
+    public static IGUIPositionProvider FocusedEnvironment { get; private set; }
+    public static IGUIPositionProvider DraggingEnvironment { get; private set; }
+    public static Vector2 DragOffset { get; private set; }
+
+    public static Stack<string> PushedIDs { get; private set; } = new();
+    public static Stack<Vector2> PushedSizes { get; private set; } = new();
+
+    public static void Init(Font font)
     {
-        Context = context;
-        Camera = camera;
+        Font = font;
     }
 
     public static void Begin()
     {
-        foreach (var window in Context.Windows)
+        foreach (var env in Environments.Values)
         {
-            window.Reset();
+            env.Reset();
         }
 
-        foreach (var window in Context.WindowOrder)
+        foreach (var envRenders in EnvironmentRenderCalls.Values)
         {
-            WindowRenderCalls[window] = new();
+            envRenders.Clear();
         }
     }
 
     public static void End()
     {
-        var list = Context.WindowOrder.ToArray();
-        foreach (var index in list)
+        var list = EnvironmentRenderOrder.ToArray();
+        foreach (var envID in list)
         {
-            var window = Context.Windows[index];
-            if (window.MouseOver)
+            var env = Environments[envID];
+            if (env.MouseOver)
             {
                 if (Input.IsMouseButtonPressed(MouseButton.Left))
                 {
-                    Context.SetWindowAtFront(window);
-                    Context.FocusWindow(window);
+                    SetEnvironmentAtFront(env);
+                    FocusEnvironment(env);
 
-                    if (HotID == null)
+                    if (HotID == null && env.CanBeDragged())
                     {
-                        // We can drag the window if we are not on a widget
-                        Context.DraggingWindow = window;
-                        Context.DragOffset = Input.GetMousePositionInWindow() - window.Position;
+                        DraggingEnvironment = env;
+                        DragOffset = Input.GetMousePositionInWindow() - env.GetTopLeft();
                     }
 
                     break;
@@ -59,63 +67,80 @@ public static class NewGUI
             }
         }
 
-        if (Context.DraggingWindow != null)
+        if (DraggingEnvironment is not null)
         {
             if (Input.IsMouseButtonReleased(MouseButton.Left))
             {
-                Context.DraggingWindow = null;
-                Context.DragOffset = Vector2.Zero;
+                DraggingEnvironment = null;
+                DragOffset = Vector2.Zero;
             }
             else
             {
-                Context.DraggingWindow.Position = Input.GetMousePositionInWindow() - Context.DragOffset;
+                DraggingEnvironment.MoveTo(Input.GetMousePositionInWindow() - DragOffset);
             }
         }
 
-        foreach (var index in Context.WindowOrder.Reverse<int>())
+        foreach (var envID in EnvironmentRenderOrder.Reverse<string>())
         {
-            var calls = WindowRenderCalls[index];
+            var calls = EnvironmentRenderCalls[envID];
 
             foreach (var call in calls)
             {
-                call.Render(Camera);
+                call.Render(Framebuffer.GetDefaultCamera());
             }
         }
 
-        if (!Context.Windows.Any(w => w.MouseOver))
+        if (!Environments.Values.Any(e => e.MouseOver))
         {
             if (Input.IsMouseButtonPressed(MouseButton.Left))
             {
-                Context.ResetFocusedWindow();
+                ResetFocusedEnvironment();
             }
             else
             {
-                Context.HoveredWindow = null;
+                HoveredEnvironment = null;
             }
         }
         else
         {
-            Context.HoveredWindow = Context.Windows[Context.WindowOrder.First(w => Context.Windows[w].MouseOver)];
+            var first = EnvironmentRenderOrder.First(e => Environments[e].MouseOver);
+            HoveredEnvironment = Environments[first];
         }
     }
 
-    private static bool TryBecomeHot(string id, GUIWindow window)
+    public static void SetEnvironmentAtFront(IGUIPositionProvider provider)
     {
-        if (Context.DraggingWindow != null)
-        {
-            return false;
-        }
+        EnvironmentRenderOrder.Remove(provider.GetID());
+        EnvironmentRenderOrder.Insert(0, provider.GetID());
+    }
 
-        var list = Context.WindowOrder.ToArray();
-        foreach (var index in list)
+    public static void FocusEnvironment(IGUIPositionProvider provider)
+    {
+        FocusedEnvironment = provider;
+    }
+
+    public static void ResetFocusedEnvironment()
+    {
+        FocusedEnvironment = null;
+    }
+
+    public static bool TryBecomeHot(string id)
+    {
+        // if (Context.DraggingWindow != null)
+        // {
+        //     return false;
+        // }
+
+        var list = EnvironmentRenderOrder.ToArray();
+        foreach (var envID in list)
         {
-            var w = Context.Windows[index];
-            if (w.MouseOver && w != window)
+            var currEnv = Environments[envID];
+            if (currEnv.MouseOver && currEnv != CurrentEnvironment)
             {
                 return false;
             }
 
-            if (w == window)
+            if (currEnv == CurrentEnvironment)
             {
                 break;
             }
@@ -130,18 +155,19 @@ public static class NewGUI
         return false;
     }
 
-    private static bool TryBecomeActive(string id, GUIWindow window)
+    public static bool TryBecomeActive(string id)
     {
-        var list = Context.WindowOrder.ToArray();
-        foreach (var index in list)
+        var list = EnvironmentRenderOrder.ToArray();
+        foreach (var envID in list)
         {
-            var w = Context.Windows[index];
-            if (w.MouseOver && w != window)
+            var currEnv = Environments[envID];
+
+            if (currEnv.MouseOver && currEnv != CurrentEnvironment)
             {
                 return false;
             }
 
-            if (w == window)
+            if (currEnv == CurrentEnvironment)
             {
                 break;
             }
@@ -150,113 +176,150 @@ public static class NewGUI
         if (ActiveID == null)
         {
             ActiveID = id;
-            Context.SetWindowAtFront(window);
-            Context.FocusWindow(window);
+            SetEnvironmentAtFront(CurrentEnvironment);
+            FocusEnvironment(CurrentEnvironment);
             return true;
         }
 
         return false;
     }
 
-    private static bool IsHot(string id)
+    public static bool IsHot(string id)
     {
         return HotID == id;
     }
 
-    private static bool IsActive(string id)
+    public static bool IsActive(string id)
     {
         return ActiveID == id;
     }
 
-    private static void RenderRectangle(RectangleF rect, ColorF color, int insertAt = -1)
+    public static void RenderRectangle(RectangleF rect, ColorF color, int insertAt = -1)
     {
-        var window = Context.CurrentWindow;
-        var windowIndex = Context.Windows.IndexOf(window);
+        var env = CurrentEnvironment;
 
-        if (!WindowRenderCalls.ContainsKey(windowIndex))
+        if (!EnvironmentRenderCalls.ContainsKey(env.GetID()))
         {
-            WindowRenderCalls.Add(windowIndex, new());
+            EnvironmentRenderCalls.Add(env.GetID(), new());
         }
 
         if (insertAt != -1)
         {
-            WindowRenderCalls[windowIndex].Insert(insertAt, new RectangleRenderCall(rect, color));
+            EnvironmentRenderCalls[env.GetID()].Insert(insertAt, new RectangleRenderCall(rect, color));
         }
         else
         {
-            WindowRenderCalls[windowIndex].Add(new RectangleRenderCall(rect, color));
+            EnvironmentRenderCalls[env.GetID()].Add(new RectangleRenderCall(rect, color));
         }
     }
 
-    private static void RenderText(string text, Vector2 position, ColorF color, int insertAt = -1)
+    public static void RenderText(string text, Vector2 position, ColorF color, int insertAt = -1)
     {
-        var window = Context.CurrentWindow;
-        var windowIndex = Context.Windows.IndexOf(window);
+        var env = CurrentEnvironment;
 
-        if (!WindowRenderCalls.ContainsKey(windowIndex))
+        if (!EnvironmentRenderCalls.ContainsKey(env.GetID()))
         {
-            WindowRenderCalls.Add(windowIndex, new());
+            EnvironmentRenderCalls.Add(env.GetID(), new());
         }
 
         if (insertAt != -1)
         {
-            WindowRenderCalls[windowIndex].Insert(insertAt, new TextRenderCall(text, position, color, Context.Font));
+            EnvironmentRenderCalls[env.GetID()].Insert(insertAt, new TextRenderCall(text, position, color, Font));
         }
         else
         {
-            WindowRenderCalls[windowIndex].Add(new TextRenderCall(text, position, color, Context.Font));
+            EnvironmentRenderCalls[env.GetID()].Add(new TextRenderCall(text, position, color, Font));
         }
     }
 
-    private static void RenderLine(Vector2 start, Vector2 end, ColorF color, int insertAt = -1)
+    public static void RenderLine(Vector2 start, Vector2 end, ColorF color, int insertAt = -1)
     {
-        var window = Context.CurrentWindow;
-        var windowIndex = Context.Windows.IndexOf(window);
+        var env = CurrentEnvironment;
 
-        if (!WindowRenderCalls.ContainsKey(windowIndex))
+        if (!EnvironmentRenderCalls.ContainsKey(env.GetID()))
         {
-            WindowRenderCalls.Add(windowIndex, new());
+            EnvironmentRenderCalls.Add(env.GetID(), new());
         }
 
         if (insertAt != -1)
         {
-            WindowRenderCalls[windowIndex].Insert(insertAt, new LineRenderCall(start, end, color));
+            EnvironmentRenderCalls[env.GetID()].Insert(insertAt, new LineRenderCall(start, end, color));
         }
         else
         {
-            WindowRenderCalls[windowIndex].Add(new LineRenderCall(start, end, color));
+            EnvironmentRenderCalls[env.GetID()].Add(new LineRenderCall(start, end, color));
         }
+    }
+
+    // ------------------------------ PUSHING NEXT DATA ------------------------------
+
+    public static void PushNextItemID(string id)
+    {
+        PushedIDs.Push(id);
+    }
+
+    public static string GetNextID(string id)
+    {
+        if (PushedIDs.Count > 0)
+        {
+            return PushedIDs.Pop();
+        }
+
+        return id;
+    }
+
+    public static void PushNextItemSize(Vector2 size)
+    {
+        PushedSizes.Push(size);
+    }
+
+    public static Vector2 GetNextSize(Vector2 size)
+    {
+        if (PushedSizes.Count > 0)
+        {
+            return PushedSizes.Pop();
+        }
+
+        return size;
+    }
+
+    // ------------------------------ ENVIRONMENTS ------------------------------
+
+    private static bool BeginNewEnvironment(IGUIPositionProvider provider)
+    {
+        if (!Environments.ContainsKey(provider.GetID()))
+        {
+            Environments.Add(provider.GetID(), provider);
+            EnvironmentRenderOrder.Add(provider.GetID());
+            provider.Reset();
+            CurrentEnvironment = provider;
+            SetEnvironmentAtFront(provider);
+            return provider.Begin();
+        }
+        else
+        {
+            var env = Environments[provider.GetID()];
+            CurrentEnvironment = env;
+            return env.Begin();
+        }
+    }
+
+    private static void EndCurrentEnvironment()
+    {
+        CurrentEnvironment.End();
+        CurrentEnvironment = null;
     }
 
     // ------------------------------ SIZES ------------------------------
 
     private static void RegisterItemSize(Vector2 size)
     {
-        float padding = 0f;
-        var window = Context.CurrentWindow;
-
-        var lineWidth = window.NextEmitPosition.X - window.EmitPositionStart.X;
-
-        window.EmitPositionPreviousLine = window.NextEmitPosition + new Vector2(size.X + padding, 0f);
-        window.NextEmitPosition = window.EmitPositionStart + new Vector2(0f, window.TotalEmitSize.Y + size.Y + padding);
-        window.TotalEmitSize = new Vector2(Math.Max(size.X + lineWidth, window.TotalEmitSize.X), window.TotalEmitSize.Y + size.Y + padding);
-
-        var topLeft = window.EmitPositionStart + new Vector2(0f, window.TotalEmitSize.Y - size.Y - padding);
-        var bottomRight = window.EmitPositionPreviousLine + new Vector2(-padding, size.Y);
-
-        window.LinesInWindow.Add(topLeft.CreateRect(bottomRight - topLeft));
+        CurrentEnvironment.RegisterItemSize(size);
     }
 
     public static void SameLine()
     {
-        var window = Context.CurrentWindow;
-        var lineHeight = window.NextEmitPosition.Y - window.EmitPositionPreviousLine.Y;
-        var lineWidth = window.NextEmitPosition.X - window.EmitPositionPreviousLine.X;
-
-        window.NextEmitPosition = window.EmitPositionPreviousLine;
-        window.TotalEmitSize = new Vector2(window.TotalEmitSize.X, window.TotalEmitSize.Y - lineHeight);
-
-        window.LinesInWindow.RemoveAt(window.LinesInWindow.Count - 1);
+        CurrentEnvironment.SameLine();
     }
 
     public static void SameLine(float hSpace)
@@ -270,50 +333,31 @@ public static class NewGUI
 
     public static bool AnyWindowHovered()
     {
-        return Context.HoveredWindow != null;
+        return HoveredEnvironment != null;
     }
 
     // ------------------------------ WINDOWS ------------------------------
 
     public static bool BeginWindow(string label, Vector2 initialPosition)
     {
-        var window = Context.GetWindow(label, initialPosition);
-
-        Context.PushNextID(window.Name + "_expand_button");
-        Context.PushNextSize(new Vector2(12f, 12f));
-        if (NewGUI.Button(window.Expanded ? "-" : "+"))
-        {
-            window.Expanded = !window.Expanded;
-        }
-
-        NewGUI.SameLine();
-        NewGUI.Spacer(5f);
-        NewGUI.SameLine();
-        NewGUI.Label(label);
-
-        if (window.Expanded)
-        {
-            NewGUI.Spacer(5f);
-        }
-
-        return window.Expanded;
+        return BeginNewEnvironment(new NewGUIWindow(label, initialPosition));
     }
 
     public static void EndWindow()
     {
-        var window = Context.CurrentWindow;
+        EndCurrentEnvironment();
+    }
 
-        var windowRect = window.Position.CreateRect(window.TotalEmitSize).Inflate(5, 5, 5, 5);
-        window.MouseOver = windowRect.Contains(Input.GetMousePositionInWindow());
+    // ------------------------------ MAIN MENU BAR ------------------------------
 
-        RenderRectangle(windowRect, ColorF.DarkGray * (Context.FocusedWindow == window ? 0.9f : 0.75f), 0);
+    public static bool BeginMainMenuBar()
+    {
+        return BeginNewEnvironment(new MainMenuBar());
+    }
 
-        var topLine = window.LinesInWindow.First();
-        var topLineAllWay = new RectangleF(topLine.X, topLine.Y, windowRect.Width, topLine.Height);
-
-        RenderRectangle(topLineAllWay.Inflate(5, 5, -5, 5), ColorF.Purple * 0.5f, 1);
-
-        Context.CurrentWindowIndex--;
+    public static void EndMainMenuBar()
+    {
+        EndCurrentEnvironment();
     }
 
     // ------------------------------ SPACERS ------------------------------
@@ -323,39 +367,18 @@ public static class NewGUI
         RegisterItemSize(new Vector2(size, size));
     }
 
-    public static void SeparatorH()
-    {
-        var window = Context.CurrentWindow;
-        var position = window.NextEmitPosition;
-
-        float paddingAround = 5f;
-
-        RegisterItemSize(new Vector2(window.TotalEmitSize.X, paddingAround * 2f));
-        RenderLine(position + new Vector2(0f, paddingAround), position + new Vector2(window.TotalEmitSize.X, paddingAround), ColorF.Gray * 0.5f);
-    }
-
-    public static void SeparatorV()
-    {
-        var window = Context.CurrentWindow;
-        var position = window.NextEmitPosition;
-
-        float paddingAround = 5f;
-
-        var lineHeight = window.LinesInWindow.SkipLast(2).Last().Height;
-        RegisterItemSize(new Vector2(paddingAround * 2f, lineHeight));
-        RenderLine(position + new Vector2(paddingAround, -1f), position + new Vector2(paddingAround, lineHeight - 1), ColorF.Gray * 0.5f);
-    }
-
     // ------------------------------ WIDGETS ------------------------------
 
     public static void Label(string label)
     {
-        var id = Context.GetNextID(label);
-        var window = Context.CurrentWindow;
-        var position = window.NextEmitPosition;
+        var env = CurrentEnvironment;
+        var id = GetNextID(label);
+        var position = env.GetNextEmitPosition();
 
-        var size = Context.MeasureString(label);
+        var size = Font.MeasureString(label, 1f);
         var padded = size.Pad(8f);
+
+        padded = GetNextSize(padded);
 
         RegisterItemSize(padded);
 
@@ -364,18 +387,15 @@ public static class NewGUI
 
     public static bool Button(string label)
     {
-        var id = Context.GetNextID(label);
-        var window = Context.CurrentWindow;
-        var position = window.NextEmitPosition;
+        var id = GetNextID(label);
+        var env = CurrentEnvironment;
+        var position = env.GetNextEmitPosition();
 
-        var textSize = Context.MeasureString(label);
+        var textSize = Font.MeasureString(label, 1f);
 
         var padded = textSize.Pad(8f);
 
-        if (Context.TryGetPushedNextSize(out var size))
-        {
-            padded = size;
-        }
+        padded = GetNextSize(padded);
 
         var rect = position.CreateRect(padded);
 
@@ -399,13 +419,13 @@ public static class NewGUI
         {
             if (Input.IsMouseButtonDown(MouseButton.Left))
             {
-                TryBecomeActive(id, window);
+                TryBecomeActive(id);
             }
         }
 
         if (rect.Contains(Input.GetMousePositionInWindow()))
         {
-            TryBecomeHot(id, window);
+            TryBecomeHot(id);
         }
         else
         {
@@ -426,8 +446,8 @@ public static class NewGUI
     public static bool Checkbox(string label, ref bool value)
     {
         var old = value;
-        Context.PushNextID($"{label}_checkbox_button");
-        Context.PushNextSize(new Vector2(16, 16f));
+        PushNextItemID($"{label}_checkbox_button");
+        PushNextItemSize(new Vector2(16, 16f));
         if (Button(value ? "X" : ""))
         {
             value = !value;
