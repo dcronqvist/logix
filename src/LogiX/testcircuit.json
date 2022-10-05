@@ -1,0 +1,185 @@
+{
+  "components": [
+    {
+      "componentTypeID": "content_1.script_type.CONST",
+      "data": {
+        "value": true
+      },
+      "mapping": {
+        "groups": [
+          {
+            "ioIndices": [
+              0
+            ],
+            "identifier": "Z",
+            "side": 3
+          }
+        ]
+      },
+      "position": {
+        "x": -16,
+        "y": -4
+      }
+    },
+    {
+      "componentTypeID": "content_1.script_type.ORGATE",
+      "data": {
+        "inputBits": 2
+      },
+      "mapping": {
+        "groups": [
+          {
+            "ioIndices": [
+              0
+            ],
+            "identifier": "A0",
+            "side": 2
+          },
+          {
+            "ioIndices": [
+              1
+            ],
+            "identifier": "A1",
+            "side": 2
+          },
+          {
+            "ioIndices": [
+              2
+            ],
+            "identifier": "Z",
+            "side": 3
+          }
+        ]
+      },
+      "position": {
+        "x": -1,
+        "y": -6
+      }
+    },
+    {
+      "componentTypeID": "content_1.script_type.ANDGATE",
+      "data": {
+        "inputBits": 2
+      },
+      "mapping": {
+        "groups": [
+          {
+            "ioIndices": [
+              0
+            ],
+            "identifier": "A0",
+            "side": 2
+          },
+          {
+            "ioIndices": [
+              1
+            ],
+            "identifier": "A1",
+            "side": 2
+          },
+          {
+            "ioIndices": [
+              2
+            ],
+            "identifier": "Z",
+            "side": 3
+          }
+        ]
+      },
+      "position": {
+        "x": 16,
+        "y": -2
+      }
+    }
+  ],
+  "wires": [
+    {
+      "segments": [
+        [
+          {
+            "x": -14,
+            "y": -4
+          },
+          {
+            "x": -10,
+            "y": -4
+          }
+        ],
+        [
+          {
+            "x": -10,
+            "y": -4
+          },
+          {
+            "x": -10,
+            "y": -4
+          }
+        ],
+        [
+          {
+            "x": -10,
+            "y": -4
+          },
+          {
+            "x": -10,
+            "y": -6
+          }
+        ],
+        [
+          {
+            "x": -10,
+            "y": -6
+          },
+          {
+            "x": -10,
+            "y": -6
+          }
+        ],
+        [
+          {
+            "x": -10,
+            "y": -6
+          },
+          {
+            "x": -2,
+            "y": -6
+          }
+        ]
+      ]
+    },
+    {
+      "segments": [
+        [
+          {
+            "x": 1,
+            "y": -6
+          },
+          {
+            "x": 1,
+            "y": -2
+          }
+        ],
+        [
+          {
+            "x": 1,
+            "y": -2
+          },
+          {
+            "x": 1,
+            "y": -2
+          }
+        ],
+        [
+          {
+            "x": 1,
+            "y": -2
+          },
+          {
+            "x": 15,
+            "y": -2
+          }
+        ]
+      ]
+    }
+  ]
+}

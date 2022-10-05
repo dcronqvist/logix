@@ -365,7 +365,7 @@ public abstract class Component
 
         // Draw the component
         var textPos = pos + realSize / 2f - textSize / 2f - new Vector2(0, 1);
-        PrimitiveRenderer.RenderRectangle(pShader, Utilities.Inflate(rect, 0, 5), Vector2.Zero, 0f, ColorF.White, camera);
+        PrimitiveRenderer.RenderRectangle(pShader, Utilities.Inflate(rect, 0, this.DisplayIOGroupIdentifiers ? 5 : 1), Vector2.Zero, 0f, ColorF.White, camera);
         //PrimitiveRenderer.RenderRectangle(pShader, textPos.CreateRect(textSize), Vector2.Zero, 0f, ColorF.Red, camera);
         TextRenderer.RenderText(tShader, font, this.Name, textPos, 1, ColorF.Black, camera);
 

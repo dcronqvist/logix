@@ -16,7 +16,7 @@ public class StateIdle : State<EditorTab, int>
 
         var mouseWorldPosition = Input.GetMousePosition(arg.Camera);
 
-        if (!GUI.IsAnyHot())
+        if (!NewGUI.AnyWindowHovered())
         {
             arg.Sim.LockedAction(s =>
             {

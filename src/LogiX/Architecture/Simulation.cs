@@ -358,6 +358,7 @@ public class Simulation
                 {
                     // Different wires? Merge them
                     w1.MergeWith(w2);
+                    w1.AddSegment(point1, point2);
                     this.Wires.Remove(w2);
                 }
             }
@@ -380,6 +381,77 @@ public class Simulation
                 var wire = new Wire(point1, point2);
                 this.AddWire(wire);
             }
+        }
+    }
+
+    public bool TryGetWireSegmentAtPos(Vector2i pos, out (Vector2i, Vector2i) edge, out Wire wire)
+    {
+        foreach (var w in this.Wires)
+        {
+            if (w.TryGetSegmentAtPos(pos, out edge))
+            {
+                wire = w;
+                return true;
+            }
+        }
+
+        edge = (Vector2i.Zero, Vector2i.Zero);
+        wire = null;
+        return false;
+    }
+
+    public bool TryGetWireVertexAtPos(Vector2i pos, out Wire wire)
+    {
+        foreach (var w in this.Wires)
+        {
+            if (Utilities.IsPointInGraph(w.Segments, pos))
+            {
+                wire = w;
+                return true;
+            }
+        }
+
+        wire = null;
+        return false;
+    }
+
+    public void DisconnectPoints(Vector2i point1, Vector2i point2)
+    {
+        if (this.TryGetWireAtPos(point1, out var w1))
+        {
+            if (this.TryGetWireAtPos(point2, out var w2))
+            {
+                if (w1 == w2)
+                {
+                    // Same wire? Remove the segment
+                    Wire[] newWires = Wire.RemoveSegmentFromWire(w1, (point1, point2));
+                    this.Wires.Remove(w1);
+                    this.Wires.AddRange(newWires);
+                }
+                else
+                {
+                    // Should never be different wires? Two points are only connected if they are on the same wire
+                    throw new Exception("Two points are only connected if they are on the same wire");
+                }
+            }
+            else
+            {
+                throw new Exception("No wire at point 2");
+            }
+        }
+        else
+        {
+            throw new Exception("No wire at point 1");
+        }
+    }
+
+    public void RemoveWirePoint(Vector2i point)
+    {
+        if (this.TryGetWireVertexAtPos(point, out var wire))
+        {
+            Wire[] newWires = wire.RemoveVertex(point);
+            this.Wires.Remove(wire);
+            this.Wires.AddRange(newWires);
         }
     }
 }

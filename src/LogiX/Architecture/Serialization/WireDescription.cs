@@ -1,27 +1,26 @@
+using System.Text.Json.Serialization;
+
 namespace LogiX.Architecture.Serialization;
 
 public class WireDescription
 {
-    public Vector2i Position { get; set; }
-    public List<WireDescription> Children { get; set; }
+    public List<Vector2i[]> Segments { get; set; }
 
-    public WireDescription(Vector2i position)
+    public WireDescription(List<(Vector2i, Vector2i)> segments)
     {
-        Position = position;
-        Children = new List<WireDescription>();
+        this.Segments = segments.Select(s => new Vector2i[] { s.Item1, s.Item2 }).ToList();
     }
 
-    public void AddChild(WireDescription child)
+    [JsonConstructor]
+    public WireDescription()
     {
-        Children.Add(child);
+
     }
 
     public Wire CreateWire()
     {
-        throw new NotImplementedException();
-
-        // Wire wire = new();
-        // wire.RootNode = this.CreateWireNode();
-        // return wire;
+        var wire = new Wire();
+        wire.Segments = this.Segments.Select(s => (s[0], s[1])).ToList();
+        return wire;
     }
 }

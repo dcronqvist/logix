@@ -1,4 +1,5 @@
 using System.Numerics;
+using LogiX.Architecture.Commands;
 using LogiX.GLFW;
 using LogiX.Graphics;
 using LogiX.Rendering;
@@ -83,12 +84,12 @@ public class StateDraggingWire : State<EditorTab, int>
                 Console.WriteLine($"Create wire between {_startPos.ToString()}, {_cornerPos.ToString()} and {_endPos.ToString()}, CORNER: {this.CornerNeeded()}");
                 if (CornerNeeded())
                 {
-                    s.ConnectPointsWithWire(_startPos, _cornerPos);
-                    s.ConnectPointsWithWire(_cornerPos, _endPos);
+                    arg.Execute(new CAddWire(_startPos, _cornerPos), arg);
+                    arg.Execute(new CAddWire(_cornerPos, _endPos), arg);
                 }
                 else
                 {
-                    s.ConnectPointsWithWire(_startPos, _endPos);
+                    arg.Execute(new CAddWire(_startPos, _endPos), arg);
                 }
             });
             this.GoToState<StateIdle>(0);

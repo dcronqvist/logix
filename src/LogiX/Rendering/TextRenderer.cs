@@ -38,6 +38,11 @@ public static class TextRenderer
 
     public static unsafe void RenderText(ShaderProgram shader, Font f, string s, Vector2 position, float scale, ColorF color, Camera2D cam, bool pixelAlign = true)
     {
+        if (s.Length == 0)
+        {
+            return;
+        }
+
         shader.Use(() =>
         {
             shader.SetMatrix4x4("projection", cam.GetProjectionMatrix());

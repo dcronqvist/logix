@@ -1,6 +1,8 @@
 using System.Drawing;
 using System.Numerics;
 using System.Reflection;
+using System.Security.Cryptography;
+using System.Text;
 using LogiX.Architecture;
 using LogiX.Graphics;
 
@@ -93,6 +95,11 @@ public static class Utilities
     public static RectangleF Inflate(this RectangleF r, float x, float y)
     {
         return new RectangleF(r.X - x, r.Y - y, r.Width + x * 2, r.Height + y * 2);
+    }
+
+    public static RectangleF Inflate(this RectangleF r, float left, float top, float right, float bottom)
+    {
+        return new RectangleF(r.X - left, r.Y - top, r.Width + left + right, r.Height + top + bottom);
     }
 
     public static Vector2 PixelAlign(this Vector2 v)
@@ -287,5 +294,161 @@ public static class Utilities
         {
             throw new Exception("Points are not aligned on the x or y axis");
         }
+    }
+
+    public static bool CanFindPositionInGraph(List<(Vector2i, Vector2i)> edges, Vector2i start, Vector2i end)
+    {
+        var visited = new HashSet<Vector2i>();
+        var queue = new Queue<Vector2i>();
+        queue.Enqueue(start);
+
+        while (queue.Count > 0)
+        {
+            var current = queue.Dequeue();
+            if (current == end)
+                return true;
+
+            visited.Add(current);
+
+            foreach (var edge in edges)
+            {
+                if (edge.Item1 == current && !visited.Contains(edge.Item2))
+                    queue.Enqueue(edge.Item2);
+                else if (edge.Item2 == current && !visited.Contains(edge.Item1))
+                    queue.Enqueue(edge.Item1);
+            }
+        }
+
+        return false;
+    }
+
+    public static List<(Vector2i, Vector2i)> FindAllTraversableEdges(List<(Vector2i, Vector2i)> edges, Vector2i start)
+    {
+        var visited = new HashSet<Vector2i>();
+        var queue = new Queue<Vector2i>();
+        queue.Enqueue(start);
+
+        var traversableEdges = new List<(Vector2i, Vector2i)>();
+
+        while (queue.Count > 0)
+        {
+            var current = queue.Dequeue();
+            visited.Add(current);
+
+            foreach (var edge in edges)
+            {
+                if (edge.Item1 == current && !visited.Contains(edge.Item2))
+                {
+                    queue.Enqueue(edge.Item2);
+                    traversableEdges.Add(edge);
+                }
+                else if (edge.Item2 == current && !visited.Contains(edge.Item1))
+                {
+                    queue.Enqueue(edge.Item1);
+                    traversableEdges.Add(edge);
+                }
+            }
+        }
+
+        return traversableEdges;
+    }
+
+    public static bool IsPositionBetween(Vector2i start, Vector2i end, Vector2i pos)
+    {
+        if (start.X == end.X)
+        {
+            int minY = Math.Min(start.Y, end.Y);
+            int maxY = Math.Max(start.Y, end.Y);
+            return pos.X == start.X && pos.Y > minY && pos.Y < maxY;
+        }
+        else if (start.Y == end.Y)
+        {
+            int minX = Math.Min(start.X, end.X);
+            int maxX = Math.Max(start.X, end.X);
+            return pos.Y == start.Y && pos.X > minX && pos.X < maxX;
+        }
+        else
+        {
+            throw new Exception("Points are not aligned on the x or y axis");
+        }
+    }
+
+    public static bool IsPointInGraph(List<(Vector2i, Vector2i)> edges, Vector2i point)
+    {
+        foreach (var edge in edges)
+        {
+            if (edge.Item1 == point || edge.Item2 == point)
+                return true;
+        }
+        return false;
+    }
+
+    public static bool TryGetPerpendicularEdgesTo(List<(Vector2i, Vector2i)> edges, (Vector2i, Vector2i) edge, out List<(Vector2i, Vector2i)> perpendicular)
+    {
+        var perpendicularEdges = new List<(Vector2i, Vector2i)>();
+        foreach (var otherEdge in edges)
+        {
+            if (otherEdge == edge)
+                continue;
+
+            if (otherEdge.Item1 == edge.Item1 || otherEdge.Item2 == edge.Item1)
+                perpendicularEdges.Add(otherEdge);
+            else if (otherEdge.Item1 == edge.Item2 || otherEdge.Item2 == edge.Item2)
+                perpendicularEdges.Add(otherEdge);
+        }
+
+        perpendicular = perpendicularEdges;
+        return perpendicularEdges.Count > 0;
+    }
+
+    public static bool AreEdgesParallel((Vector2i, Vector2i) edge1, (Vector2i, Vector2i) edge2)
+    {
+        if (edge1.Item1.X == edge1.Item2.X && edge2.Item1.X == edge2.Item2.X)
+            return true;
+        else if (edge1.Item1.Y == edge1.Item2.Y && edge2.Item1.Y == edge2.Item2.Y)
+            return true;
+        else
+            return false;
+    }
+
+    public static bool VertexOnlyHasOneEdge(List<(Vector2i, Vector2i)> edges, Vector2i vertex, out (Vector2i, Vector2i) edge)
+    {
+        int count = 0;
+        edge = default((Vector2i, Vector2i));
+        foreach (var e in edges)
+        {
+            if (e.Item1 == vertex || e.Item2 == vertex)
+            {
+                count++;
+                edge = e;
+            }
+        }
+        return count == 1;
+    }
+
+    public static string GetHash(string input)
+    {
+        using (var md5 = MD5.Create())
+        {
+            var inputBytes = Encoding.ASCII.GetBytes(input);
+            var hashBytes = md5.ComputeHash(inputBytes);
+
+            var sb = new StringBuilder();
+            for (int i = 0; i < hashBytes.Length; i++)
+            {
+                sb.Append(hashBytes[i].ToString("X2"));
+            }
+            return sb.ToString();
+        }
+    }
+
+    public static Vector2 Pad(this Vector2 v, float padding)
+    {
+        return new Vector2(v.X + padding, v.Y + padding);
+    }
+
+    public static Vector2 Max(Vector2 v1, Vector2 v2)
+    {
+        return new Vector2(Math.Max(v1.X, v2.X), Math.Max(v1.Y, v2.Y));
     }
 }

@@ -60,6 +60,8 @@ public class EditorTab : Invoker<EditorTab>
 
             Camera.Zoom = Math.Clamp(Camera.Zoom, 0.3f, 10f);
         };
+
+        NewGUI.Init(GUIContext.GetDefault(), Framebuffer.GetDefaultCamera());
     }
 
     public void DrawGrid()
@@ -121,6 +123,36 @@ public class EditorTab : Invoker<EditorTab>
             this.Sim.LockedAction(s => s.AddComponent(c, c.Position));
         }
 
+        if (Input.IsKeyPressed(Keys.Space))
+        {
+            this.Sim.LockedAction(s =>
+            {
+                if (s.TryGetWireSegmentAtPos(mousePos, out var segment, out var wire))
+                {
+                    s.DisconnectPoints(segment.Item1, segment.Item2);
+                }
+            });
+        }
+
+        if (Input.IsKeyPressed(Keys.G))
+        {
+            this.Sim.LockedAction(s =>
+            {
+                if (s.TryGetWireAtPos(mousePos, out var wire))
+                {
+                    wire.MergeEdgesThatMeetAt(mousePos);
+                }
+            });
+        }
+
+        if (Input.IsKeyPressed(Keys.H))
+        {
+            this.Sim.LockedAction(s =>
+            {
+                s.RemoveWirePoint(mousePos);
+            });
+        }
+
         this.Sim.LockedAction(s => s.Tick());
     }
 
@@ -128,6 +160,7 @@ public class EditorTab : Invoker<EditorTab>
     {
         var fShader = LogiX.ContentManager.GetContentItem<ShaderProgram>("content_1.shader_program.fb_default");
         var pShader = LogiX.ContentManager.GetContentItem<ShaderProgram>("content_1.shader_program.primitive");
+        var mousePos = Input.GetMousePosition(this.Camera).ToVector2i(16);
 
         // Render workspace to its own framebuffer, then render that framebuffer to the screen
         this.WorkspaceFramebuffer.Bind(() =>
@@ -139,51 +172,81 @@ public class EditorTab : Invoker<EditorTab>
             this.FSM.Render(this);
 
             PrimitiveRenderer.RenderCircle(pShader, Input.GetMousePosition(this.Camera).ToVector2i(16).ToVector2(16), 4, 0, ColorF.Red, this.Camera);
+
+            this.Sim.LockedAction(s =>
+            {
+                if (s.TryGetWireSegmentAtPos(mousePos, out var segment, out var wire))
+                {
+                    var points = Utilities.GetAllGridPointsBetween(segment.Item1, segment.Item2);
+
+                    foreach (var point in points)
+                    {
+                        PrimitiveRenderer.RenderCircle(pShader, point.ToVector2(16), 4, 0, ColorF.Green, this.Camera);
+                    }
+                }
+            });
         });
 
         this.GUIFramebuffer.Bind(() =>
         {
-            //Framebuffer.Clear(ColorF.Transparent);
-            GUI.Begin(Framebuffer.GetDefaultCamera());
+            NewGUI.Begin();
+            SubmitGUI();
+            NewGUI.End();
 
-            this.SubmitGUI();
-            this.FSM.SubmitUI(this);
-
-            DisplayManager.SetWindowTitle($"STATE: {this.FSM.CurrentState.GetType().ToString()}, HOT: {GUI._hotID}, ACTIVE: {GUI._activeID}, KBD: {GUI._kbdFocusID}, _CARET: {GUI._caretPosition}, DROP: {GUI._showingDropdownID}, WIRES: {this.Sim.LockedAction(s => s.Wires.Count)}");
-            GUI.End();
+            string s = $"ANY_WIN_HOV: {NewGUI.AnyWindowHovered()}, HOT: {NewGUI.HotID}";
+            DisplayManager.SetWindowTitle(s);
         });
 
         Framebuffer.RenderFrameBufferToScreen(fShader, this.WorkspaceFramebuffer);
         Framebuffer.RenderFrameBufferToScreen(fShader, this.GUIFramebuffer);
     }
 
+    bool cute = false;
+
     public void SubmitGUI()
     {
-        if (GUI.Button("TEST", new Vector2(50, 50), new Vector2(100, 50)))
+        if (NewGUI.BeginWindow("Another One", new Vector2(380, 90)))
         {
-            Console.WriteLine("TEST");
-        }
+            NewGUI.Spacer(5);
 
-        if (GUI.Button("ADD", new Vector2(50, 150), new Vector2(100, 50)))
+            if (NewGUI.Button("Testi Testi"))
+            {
+                Console.WriteLine("Testi Testi");
+            }
+
+            NewGUI.SameLine(5);
+
+            if (NewGUI.Button("Testi Testi 2"))
+            {
+                Console.WriteLine("Testi Testi 2");
+            }
+        }
+        NewGUI.EndWindow();
+
+        if (NewGUI.BeginWindow("är saga söt?", new Vector2(100, 100)))
         {
-            var desc = ComponentDescription.CreateDefaultComponentDescription("content_1.script_type.ORGATE");
-            var middleOfCam = Camera.FocusPosition / 16;
-            var pos = new Vector2i((int)middleOfCam.X, (int)middleOfCam.Y);
-            desc.Position = pos;
-            CAddComponent add = new(desc);
+            NewGUI.Spacer(5);
 
-            this.Execute(add, this);
-        }
+            if (NewGUI.Button("se svar"))
+            {
+                cute = !cute;
+            }
 
-        if (GUI.Button("UNDO", new Vector2(50, 250), new Vector2(100, 50)))
-        {
-            this.Undo(this);
-        }
+            NewGUI.SameLine(5f);
 
-        if (GUI.Button("REDO", new Vector2(50, 350), new Vector2(100, 50)))
-        {
-            this.Redo(this);
+            if (NewGUI.Checkbox("TestBox", ref cute))
+            {
+                Console.WriteLine("TestBox");
+            }
+
+            if (cute)
+            {
+                NewGUI.Spacer(5);
+                NewGUI.Label("japp! saga är jättesöt!");
+            }
+
         }
+        NewGUI.EndWindow();
     }
 
     public void PerformSimulationTick()
