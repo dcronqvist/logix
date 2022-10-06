@@ -12,18 +12,31 @@ public static class NewGUI
     public static string HotID { get; private set; }
     public static string ActiveID { get; private set; }
 
-    public static IGUIPositionProvider CurrentEnvironment { get; private set; }
-    public static Dictionary<string, IGUIPositionProvider> Environments { get; private set; } = new();
+    public static Stack<IGUIEnvironment> CurrentEnvironmentStack { get; private set; } = new();
+    public static IGUIEnvironment CurrentEnvironment => CurrentEnvironmentStack.Peek();
+    public static Dictionary<string, IGUIEnvironment> Environments { get; private set; } = new();
     public static Dictionary<string, List<IItemRenderCall>> EnvironmentRenderCalls { get; private set; } = new();
     public static List<string> EnvironmentRenderOrder { get; private set; } = new();
 
-    public static IGUIPositionProvider HoveredEnvironment { get; private set; }
-    public static IGUIPositionProvider FocusedEnvironment { get; private set; }
-    public static IGUIPositionProvider DraggingEnvironment { get; private set; }
+    public static Stack<Vector2> ItemPositionStack { get; private set; } = new();
+    public static Stack<Vector2> ItemSizeStack { get; private set; } = new();
+
+    public static IGUIEnvironment HoveredEnvironment { get; private set; }
+    public static IGUIEnvironment FocusedEnvironment { get; private set; }
+    public static IGUIEnvironment DraggingEnvironment { get; private set; }
+    public static IGUIEnvironment CurrentlyOpenMenu { get; private set; }
     public static Vector2 DragOffset { get; private set; }
 
+    public static Stack<string> VisibleIDs { get; private set; } = new();
     public static Stack<string> PushedIDs { get; private set; } = new();
     public static Stack<Vector2> PushedSizes { get; private set; } = new();
+
+    public static ColorF BackgroundColor => ColorF.Black * 0.4f;
+    public static ColorF BackgroundColorAccent => ColorF.Purple;
+    public static ColorF ItemColor => ColorF.Lerp(ColorF.Purple, ColorF.White, 0.25f);
+    public static ColorF ItemHoverColor => ColorF.Lerp(ColorF.Purple, ColorF.White, 0.4f);
+    public static ColorF ItemActiveColor => ColorF.Lerp(ColorF.Purple, ColorF.White, 0.6f);
+    public static ColorF TextColor => ColorF.White;
 
     public static void Init(Font font)
     {
@@ -32,6 +45,11 @@ public static class NewGUI
 
     public static void Begin()
     {
+        ItemSizeStack.Clear();
+        VisibleIDs.Clear();
+        ItemPositionStack.Clear();
+        ItemSizeStack.Clear();
+
         foreach (var env in Environments.Values)
         {
             env.Reset();
@@ -48,21 +66,26 @@ public static class NewGUI
         var list = EnvironmentRenderOrder.ToArray();
         foreach (var envID in list)
         {
-            var env = Environments[envID];
-            if (env.MouseOver)
+            if (Environments.TryGetValue(envID, out var env))
             {
-                if (Input.IsMouseButtonPressed(MouseButton.Left))
+                if (env.MouseOver)
                 {
-                    SetEnvironmentAtFront(env);
-                    FocusEnvironment(env);
-
-                    if (HotID == null && env.CanBeDragged())
+                    if (Input.IsMouseButtonPressed(MouseButton.Left))
                     {
-                        DraggingEnvironment = env;
-                        DragOffset = Input.GetMousePositionInWindow() - env.GetTopLeft();
-                    }
+                        if (env.CanBeReordered())
+                        {
+                            SetEnvironmentAtFront(env);
+                            FocusEnvironment(env);
+                        }
 
-                    break;
+                        if (HotID == null && env.CanBeDragged())
+                        {
+                            DraggingEnvironment = env;
+                            DragOffset = Input.GetMousePositionInWindow() - env.GetTopLeft();
+                        }
+
+                        break;
+                    }
                 }
             }
         }
@@ -82,11 +105,12 @@ public static class NewGUI
 
         foreach (var envID in EnvironmentRenderOrder.Reverse<string>())
         {
-            var calls = EnvironmentRenderCalls[envID];
-
-            foreach (var call in calls)
+            if (EnvironmentRenderCalls.TryGetValue(envID, out var calls))
             {
-                call.Render(Framebuffer.GetDefaultCamera());
+                foreach (var call in calls)
+                {
+                    call.Render(Framebuffer.GetDefaultCamera());
+                }
             }
         }
 
@@ -106,15 +130,25 @@ public static class NewGUI
             var first = EnvironmentRenderOrder.First(e => Environments[e].MouseOver);
             HoveredEnvironment = Environments[first];
         }
+
+        if (HotID != null && !VisibleIDs.Contains(HotID))
+        {
+            HotID = null;
+        }
+
+        if (ActiveID != null && !VisibleIDs.Contains(ActiveID))
+        {
+            ActiveID = null;
+        }
     }
 
-    public static void SetEnvironmentAtFront(IGUIPositionProvider provider)
+    public static void SetEnvironmentAtFront(IGUIEnvironment provider)
     {
         EnvironmentRenderOrder.Remove(provider.GetID());
         EnvironmentRenderOrder.Insert(0, provider.GetID());
     }
 
-    public static void FocusEnvironment(IGUIPositionProvider provider)
+    public static void FocusEnvironment(IGUIEnvironment provider)
     {
         FocusedEnvironment = provider;
     }
@@ -262,9 +296,12 @@ public static class NewGUI
     {
         if (PushedIDs.Count > 0)
         {
-            return PushedIDs.Pop();
+            var i = PushedIDs.Pop();
+            VisibleIDs.Push(i);
+            return i;
         }
 
+        VisibleIDs.Push(id);
         return id;
     }
 
@@ -285,36 +322,75 @@ public static class NewGUI
 
     // ------------------------------ ENVIRONMENTS ------------------------------
 
-    private static bool BeginNewEnvironment(IGUIPositionProvider provider)
+    private static bool BeginNewEnvironment(IGUIEnvironment provider, int flags, bool beginPartOfEnv)
     {
-        if (!Environments.ContainsKey(provider.GetID()))
+        if (beginPartOfEnv)
         {
-            Environments.Add(provider.GetID(), provider);
-            EnvironmentRenderOrder.Add(provider.GetID());
-            provider.Reset();
-            CurrentEnvironment = provider;
-            SetEnvironmentAtFront(provider);
-            return provider.Begin();
+            if (!Environments.ContainsKey(provider.GetID()))
+            {
+                Environments.Add(provider.GetID(), provider);
+                EnvironmentRenderOrder.Add(provider.GetID());
+                provider.Reset();
+                CurrentEnvironmentStack.Push(provider);
+                SetEnvironmentAtFront(provider);
+                return provider.Begin(flags);
+            }
+            else
+            {
+                var env = Environments[provider.GetID()];
+                CurrentEnvironmentStack.Push(env);
+                return env.Begin(flags);
+            }
         }
         else
         {
-            var env = Environments[provider.GetID()];
-            CurrentEnvironment = env;
-            return env.Begin();
+            if (!Environments.ContainsKey(provider.GetID()))
+            {
+                Environments.Add(provider.GetID(), provider);
+                EnvironmentRenderOrder.Add(provider.GetID());
+                provider.Reset();
+                bool begin = provider.Begin(flags);
+                CurrentEnvironmentStack.Push(provider);
+                SetEnvironmentAtFront(provider);
+                return begin;
+            }
+            else
+            {
+                var env = Environments[provider.GetID()];
+                bool begin = env.Begin(flags);
+                CurrentEnvironmentStack.Push(env);
+                return begin;
+            }
         }
     }
 
     private static void EndCurrentEnvironment()
     {
         CurrentEnvironment.End();
-        CurrentEnvironment = null;
+        CurrentEnvironmentStack.Pop();
     }
 
-    // ------------------------------ SIZES ------------------------------
+    // ------------------------------ SIZES & POSITIONS ------------------------------
 
     private static void RegisterItemSize(Vector2 size)
     {
         CurrentEnvironment.RegisterItemSize(size);
+        ItemSizeStack.Push(size);
+    }
+
+    public static Vector2 GetPreviousItemSize()
+    {
+        return ItemSizeStack.Peek();
+    }
+
+    public static void PushItemPosition(Vector2 position)
+    {
+        ItemPositionStack.Push(position);
+    }
+
+    public static Vector2 GetPreviousItemPosition()
+    {
+        return ItemPositionStack.Peek();
     }
 
     public static void SameLine()
@@ -336,11 +412,37 @@ public static class NewGUI
         return HoveredEnvironment != null;
     }
 
+    public static bool AnyItemActive()
+    {
+        return ActiveID != null;
+    }
+
+    public static bool IsPreviousItemHot()
+    {
+        return HotID == VisibleIDs.Peek();
+    }
+
+    public static ColorF GetItemColor(string id)
+    {
+        if (id == ActiveID)
+        {
+            return ItemActiveColor;
+        }
+        else if (id == HotID)
+        {
+            return ItemHoverColor;
+        }
+        else
+        {
+            return ItemColor;
+        }
+    }
+
     // ------------------------------ WINDOWS ------------------------------
 
-    public static bool BeginWindow(string label, Vector2 initialPosition)
+    public static bool BeginWindow(string label, Vector2 initialPosition, GUIWindowFlags flags = GUIWindowFlags.None)
     {
-        return BeginNewEnvironment(new NewGUIWindow(label, initialPosition));
+        return BeginNewEnvironment(new NewGUIWindow(label, initialPosition), (int)flags, true);
     }
 
     public static void EndWindow()
@@ -350,12 +452,27 @@ public static class NewGUI
 
     // ------------------------------ MAIN MENU BAR ------------------------------
 
-    public static bool BeginMainMenuBar()
+    public static bool BeginMainMenuBar(MainMenuBarFlags flags = MainMenuBarFlags.None)
     {
-        return BeginNewEnvironment(new MainMenuBar());
+        return BeginNewEnvironment(new MainMenuBar(), (int)flags, false);
     }
 
     public static void EndMainMenuBar()
+    {
+        EndCurrentEnvironment();
+    }
+
+    public static bool BeginMenu(string label)
+    {
+        var menuBegin = BeginNewEnvironment(new MenuEnv(label, CurrentEnvironment.GetNextEmitPosition()), 0, false);
+        if (menuBegin)
+        {
+            CurrentlyOpenMenu = CurrentEnvironment;
+        }
+        return menuBegin;
+    }
+
+    public static void EndMenu()
     {
         EndCurrentEnvironment();
     }
@@ -380,9 +497,10 @@ public static class NewGUI
 
         padded = GetNextSize(padded);
 
+        PushItemPosition(position);
         RegisterItemSize(padded);
 
-        RenderText(label, position + padded / 2f - size / 2f, ColorF.White);
+        RenderText(label, position + padded / 2f - size / 2f, NewGUI.TextColor);
     }
 
     public static bool Button(string label)
@@ -397,6 +515,7 @@ public static class NewGUI
 
         padded = GetNextSize(padded);
 
+        PushItemPosition(position);
         var rect = position.CreateRect(padded);
 
         RegisterItemSize(padded);
@@ -435,10 +554,15 @@ public static class NewGUI
             }
         }
 
-        var color = (IsActive(id)) ? ColorF.LightGray : (IsHot(id) ? ColorF.Darken(ColorF.Gray, 1.2f) : ColorF.Gray);
+        var color = GetItemColor(id);
 
         RenderRectangle(rect, color);
         RenderText(label, position + (padded - textSize) / 2f, ColorF.White);
+
+        if (pressed)
+        {
+            CurrentEnvironment.DirectChildReturnedTrue();
+        }
 
         return pressed;
     }
@@ -456,6 +580,77 @@ public static class NewGUI
         SameLine(5f);
         Label(label);
 
-        return old != value;
+        var pressed = old != value;
+        if (pressed)
+        {
+            CurrentEnvironment.DirectChildReturnedTrue();
+        }
+        return pressed;
+    }
+
+    public static bool MenuItem(string label)
+    {
+        // Basically like a button, but with a different styling
+        var id = GetNextID(label);
+        var env = CurrentEnvironment;
+        var position = env.GetNextEmitPosition();
+
+        var textSize = Font.MeasureString(label, 1f);
+
+        var padded = textSize.Pad(8f);
+
+        padded = new Vector2(Math.Max(CurrentEnvironment.GetTotalEmitSizePreviousFrame().X, padded.X), padded.Y);
+        padded = GetNextSize(padded);
+
+        PushItemPosition(position);
+        var rect = position.CreateRect(padded);
+
+        RegisterItemSize(padded);
+
+        bool pressed = false;
+
+        if (IsActive(id))
+        {
+            if (Input.IsMouseButtonReleased(MouseButton.Left))
+            {
+                if (IsHot(id))
+                {
+                    pressed = true;
+                }
+
+                ActiveID = null;
+            }
+        }
+        else if (IsHot(id))
+        {
+            if (Input.IsMouseButtonDown(MouseButton.Left))
+            {
+                TryBecomeActive(id);
+            }
+        }
+
+        if (rect.Contains(Input.GetMousePositionInWindow()))
+        {
+            TryBecomeHot(id);
+        }
+        else
+        {
+            if (IsHot(id))
+            {
+                HotID = null;
+            }
+        }
+
+        var color = (IsActive(id)) ? ItemActiveColor : (IsHot(id) ? ItemHoverColor : ColorF.Transparent);
+
+        RenderRectangle(rect, color);
+        RenderText(label, position + new Vector2(3, textSize.Y / 2f), TextColor);
+
+        if (pressed)
+        {
+            CurrentEnvironment.DirectChildReturnedTrue();
+        }
+
+        return pressed;
     }
 }

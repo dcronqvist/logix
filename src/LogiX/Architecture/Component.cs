@@ -382,13 +382,8 @@ public abstract class Component
             int lineThickness = 2;
             var groupCol = this.GetGroupColor(i);
 
-            if ((Input.GetMousePosition(camera) - gPos).Length() <= 4f)
-            {
-                groupCol = ColorF.Orange;
-            }
-
             PrimitiveRenderer.RenderLine(pShader, gPos, lineEndPos, lineThickness, groupCol.Darken(0.5f), camera);
-            PrimitiveRenderer.RenderCircle(pShader, gPos, 4f, 0f, groupCol, camera);
+            PrimitiveRenderer.RenderCircle(pShader, gPos, Constants.IO_GROUP_RADIUS, 0f, groupCol, camera);
 
             if (this.DisplayIOGroupIdentifiers)
             {
@@ -439,7 +434,7 @@ public abstract class Component
         var rect = new RectangleF(pos.X, pos.Y, size.X * 16, size.Y * 16);
 
         // Draw the component
-        PrimitiveRenderer.RenderRectangle(pShader, rect.Inflate(3), Vector2.Zero, 0f, ColorF.Orange, camera);
+        PrimitiveRenderer.RenderRectangle(pShader, rect.Inflate(3), Vector2.Zero, 0f, Constants.COLOR_SELECTED, camera);
     }
 
     public abstract IComponentDescriptionData GetDescriptionData();

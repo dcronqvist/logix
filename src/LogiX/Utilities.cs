@@ -451,4 +451,44 @@ public static class Utilities
     {
         return new Vector2(Math.Max(v1.X, v2.X), Math.Max(v1.Y, v2.Y));
     }
+
+    public static float DistanceToLine(Vector2 lineStart, Vector2 lineEnd, Vector2 point)
+    {
+        // Line defined by two points
+        float numerator = MathF.Abs((lineEnd.X - lineStart.X) * (lineStart.Y - point.Y) - (lineStart.X - point.X) * (lineEnd.Y - lineStart.Y));
+        float denominator = MathF.Sqrt(MathF.Pow(lineEnd.X - lineStart.X, 2) + MathF.Pow(lineEnd.Y - lineStart.Y, 2));
+
+        if (numerator < 0.05f)
+        {
+            return 0f;
+        }
+
+        return numerator / denominator;
+    }
+
+    public static RectangleF GetWireRectangle(Vector2i start, Vector2i end)
+    {
+        var wireWidth = Constants.WIRE_WIDTH;
+        var wStart = start.ToVector2(16);
+        var wEnd = end.ToVector2(16);
+
+        if (start.X == end.X)
+        {
+            // VERTICAL WIRE
+            var minY = Math.Min(wStart.Y, wEnd.Y);
+            var maxY = Math.Max(wStart.Y, wEnd.Y);
+            return new RectangleF(wStart.X - wireWidth / 2, minY, wireWidth, maxY - minY);
+        }
+        else if (start.Y == end.Y)
+        {
+            // HORIZONTAL WIRE
+            var minX = Math.Min(wStart.X, wEnd.X);
+            var maxX = Math.Max(wStart.X, wEnd.X);
+            return new RectangleF(minX, wStart.Y - wireWidth / 2, maxX - minX, wireWidth);
+        }
+        else
+        {
+            throw new Exception("Points are not aligned on the x or y axis");
+        }
+    }
 }

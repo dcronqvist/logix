@@ -4,6 +4,8 @@ using LogiX;
 using LogiX.Architecture;
 using LogiX.Architecture.Serialization;
 using LogiX.Content.Scripting;
+using LogiX.GLFW;
+using LogiX.Rendering;
 
 namespace content_1;
 
@@ -25,7 +27,7 @@ public class ConstData : IComponentDescriptionData
 [ScriptType("CONST")]
 public class Constant : Component<ConstData>
 {
-    public override string Name => this._data.Value.ToString().Substring(0, 1);
+    public override string Name => this._data.Value ? "1" : "0";
     public override bool DisplayIOGroupIdentifiers => false;
 
     public Constant(IOMapping mapping) : base(mapping) { }
@@ -55,5 +57,18 @@ public class Constant : Component<ConstData>
     {
         this._data = data;
         this.RegisterIO("Z", "out");
+    }
+
+    public override void Interact(Camera2D cam)
+    {
+        var rect = this.Position.ToVector2(16).CreateRect(this.GetSize().ToVector2(16));
+
+        if (Input.IsMouseButtonPressed(MouseButton.Right))
+        {
+            if (rect.Contains(Input.GetMousePosition(cam)))
+            {
+                this._data.Value = !this._data.Value;
+            }
+        }
     }
 }

@@ -54,7 +54,7 @@ public class Wire
             var a = segment.Item1.ToVector2(16);
             var b = segment.Item2.ToVector2(16);
 
-            PrimitiveRenderer.RenderLine(pShader, a, b, 2, color, cam);
+            PrimitiveRenderer.RenderLine(pShader, a, b, Constants.WIRE_WIDTH, color, cam);
         }
 
         var segmentPoints = this.Segments.SelectMany(s => new Vector2i[] { s.Item1, s.Item2 }).Distinct().ToArray();
@@ -62,7 +62,7 @@ public class Wire
         foreach (var point in segmentPoints)
         {
             var worldPos = point.ToVector2(16);
-            PrimitiveRenderer.RenderCircle(pShader, worldPos, 4, 0, color, cam);
+            PrimitiveRenderer.RenderCircle(pShader, worldPos, Constants.WIRE_POINT_RADIUS, 0, color, cam);
         }
     }
 

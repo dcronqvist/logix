@@ -153,6 +153,18 @@ public class EditorTab : Invoker<EditorTab>
             });
         }
 
+        if (Input.IsMouseButtonPressed(MouseButton.Left))
+        {
+            if (this._currentlySelectedComponent is not null)
+            {
+                this.Sim.LockedAction(s =>
+                {
+                    s.AddComponent(this._currentlySelectedComponent, mousePos);
+                });
+                _currentlySelectedComponent = null;
+            }
+        }
+
         this.Sim.LockedAction(s => s.Tick());
     }
 
@@ -171,20 +183,11 @@ public class EditorTab : Invoker<EditorTab>
             this.Sim.LockedAction(s => s.Render(this.Camera));
             this.FSM.Render(this);
 
-            PrimitiveRenderer.RenderCircle(pShader, Input.GetMousePosition(this.Camera).ToVector2i(16).ToVector2(16), 4, 0, ColorF.Red, this.Camera);
-
-            this.Sim.LockedAction(s =>
+            if (_currentlySelectedComponent is not null)
             {
-                if (s.TryGetWireSegmentAtPos(mousePos, out var segment, out var wire))
-                {
-                    var points = Utilities.GetAllGridPointsBetween(segment.Item1, segment.Item2);
-
-                    foreach (var point in points)
-                    {
-                        PrimitiveRenderer.RenderCircle(pShader, point.ToVector2(16), 4, 0, ColorF.Green, this.Camera);
-                    }
-                }
-            });
+                _currentlySelectedComponent.Position = mousePos;
+                _currentlySelectedComponent.Render(this.Camera);
+            }
         });
 
         this.GUIFramebuffer.Bind(() =>
@@ -193,7 +196,7 @@ public class EditorTab : Invoker<EditorTab>
             SubmitGUI();
             NewGUI.End();
 
-            string s = $"ANY_WIN_HOV: {NewGUI.AnyWindowHovered()}, HOVERED: {(NewGUI.HoveredEnvironment == null ? "null" : NewGUI.HoveredEnvironment.GetID())}, HOT: {NewGUI.HotID}";
+            string s = $"ANY_WIN_HOV: {NewGUI.AnyWindowHovered()}, HOVERED: {(NewGUI.HoveredEnvironment == null ? "null" : NewGUI.HoveredEnvironment.GetID())}, HOT: {NewGUI.HotID ?? "null"}, ACTIVE: {NewGUI.ActiveID ?? "null"}";
             DisplayManager.SetWindowTitle(s);
         });
 
@@ -201,76 +204,94 @@ public class EditorTab : Invoker<EditorTab>
         Framebuffer.RenderFrameBufferToScreen(fShader, this.GUIFramebuffer);
     }
 
-    bool cute = false;
+    private Component _currentlySelectedComponent = null;
 
     public void SubmitGUI()
     {
         NewGUI.BeginMainMenuBar();
 
-        if (NewGUI.Button("Butt"))
+        if (NewGUI.BeginMenu("TestMenu"))
         {
-
+            if (NewGUI.MenuItem("Hello"))
+            {
+                Console.WriteLine("Hello");
+            }
+            NewGUI.Spacer(5);
+            if (NewGUI.MenuItem("World"))
+            {
+                Console.WriteLine("World");
+            }
+            NewGUI.Spacer(5);
+            if (NewGUI.MenuItem("I am a big ass button"))
+            {
+                Console.WriteLine("Big ass button");
+            }
         }
+        NewGUI.EndMenu();
+
         NewGUI.Spacer(5);
-        if (NewGUI.Button("Butt1"))
+
+        if (NewGUI.BeginMenu("TestMenu2"))
         {
-
+            if (NewGUI.MenuItem("Hello"))
+            {
+                Console.WriteLine("Hello");
+            }
+            NewGUI.Spacer(5);
+            if (NewGUI.MenuItem("World"))
+            {
+                Console.WriteLine("World");
+            }
+            NewGUI.Spacer(5);
+            if (NewGUI.MenuItem("I am a big button"))
+            {
+                Console.WriteLine("Big button");
+            }
         }
-        NewGUI.Spacer(5);
+        NewGUI.EndMenu();
 
-        if (NewGUI.Button("Butt2"))
+        var stateName = this.FSM.CurrentState.GetType().Name;
+        NewGUI.Label($"STATE: {stateName}");
+
+        var amountOfWires = this.Sim.LockedAction(s => s.Wires.Count);
+        NewGUI.Label($"WIRES: {amountOfWires}");
+
+        if (NewGUI.Button("Save"))
         {
-
+            this.Sim.LockedAction(s =>
+            {
+                s.GetCircuitInSimulation().SaveToFile("test_circuit.json");
+            });
         }
+
         NewGUI.Spacer(5);
 
-        if (NewGUI.Button("Butt3"))
+        if (NewGUI.Button("Load"))
         {
-
+            this.Sim.LockedAction(s =>
+            {
+                s.SetCircuitInSimulation(Circuit.LoadFromFile("test_circuit.json"));
+            });
         }
-        NewGUI.Spacer(5);
-        NewGUI.Checkbox("cute", ref cute);
 
         NewGUI.EndMainMenuBar();
-
-        if (NewGUI.BeginWindow("Another One", new Vector2(120, 90)))
+        if (NewGUI.BeginWindow("Components", new Vector2(5, 50)))
         {
             NewGUI.Spacer(5);
-
-            if (NewGUI.Button("Testi Testi"))
+            var types = ComponentDescription.GetRegisteredComponentTypes();
+            foreach (var type in types)
             {
-                Console.WriteLine("Testi Testi");
-            }
-
-            NewGUI.SameLine(5);
-
-            if (NewGUI.Button("Testi Testi 2"))
-            {
-                Console.WriteLine("Testi Testi 2");
-            }
-        }
-        NewGUI.EndWindow();
-
-        if (NewGUI.BeginWindow("är saga söt?", new Vector2(100, 100)))
-        {
-            NewGUI.Spacer(5);
-
-            if (NewGUI.Button("se svar"))
-            {
-                cute = !cute;
-            }
-
-            NewGUI.SameLine(5);
-            NewGUI.Checkbox("Cute", ref cute);
-
-            if (cute)
-            {
+                if (NewGUI.Button(type))
+                {
+                    // TODO: Add component to simulation
+                    _currentlySelectedComponent = ComponentDescription.CreateDefaultComponent(type);
+                }
                 NewGUI.Spacer(5);
-                NewGUI.Label("japp! saga är jättesöt!");
             }
-
+            NewGUI.Spacer(-5);
         }
         NewGUI.EndWindow();
+
     }
 
     public void PerformSimulationTick()

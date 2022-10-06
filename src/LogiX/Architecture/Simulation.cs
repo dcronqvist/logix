@@ -1,4 +1,5 @@
 using System.Diagnostics.CodeAnalysis;
+using System.Drawing;
 using System.Linq;
 using System.Numerics;
 using LogiX.Architecture;
@@ -173,6 +174,60 @@ public class Simulation
         return false;
     }
 
+    public bool TryGetWireSegmentAtPos(Vector2 worldPosition, out (Vector2i, Vector2i) edge, out Wire wire)
+    {
+        foreach (var w in this.Wires)
+        {
+            foreach (var seg in w.Segments)
+            {
+                var start = seg.Item1;
+                var end = seg.Item2;
+                var rect = Utilities.GetWireRectangle(start, end);
+
+                if (rect.Contains(worldPosition))
+                {
+                    edge = seg;
+                    wire = w;
+                    return true;
+                }
+            }
+        }
+
+        edge = default;
+        wire = null;
+        return false;
+    }
+
+    public bool TryGetWireVertexAtPos(Vector2 worldPosition, out Vector2i pos, out Wire wire)
+    {
+        foreach (var w in this.Wires)
+        {
+            foreach (var seg in w.Segments)
+            {
+                var start = seg.Item1.ToVector2(16);
+                var end = seg.Item2.ToVector2(16);
+
+                if (Vector2.Distance(start, worldPosition) <= Constants.WIRE_POINT_RADIUS)
+                {
+                    wire = w;
+                    pos = seg.Item1;
+                    return true;
+                }
+
+                if (Vector2.Distance(end, worldPosition) <= Constants.WIRE_POINT_RADIUS)
+                {
+                    wire = w;
+                    pos = seg.Item2;
+                    return true;
+                }
+            }
+        }
+
+        wire = null;
+        pos = default;
+        return false;
+    }
+
     public void PushValuesAt(Vector2i position, params LogicValue[] values)
     {
         // Attempt to push values to this grid position.
@@ -186,12 +241,15 @@ public class Simulation
             var positions = wire.GetPoints();
             foreach (var pos in positions)
             {
-                if (!NewValues.ContainsKey(pos))
+                if (this.TryGetIOGroupFromPosition(pos.ToVector2(16), out var group, out var comp))
                 {
-                    NewValues[pos] = new ValueCollection();
-                }
+                    if (!NewValues.ContainsKey(pos))
+                    {
+                        NewValues[pos] = new ValueCollection();
+                    }
 
-                NewValues[pos].Add(values);
+                    NewValues[pos].Add(values);
+                }
             }
         }
         else
@@ -324,14 +382,16 @@ public class Simulation
     {
         foreach (var c in this.Components)
         {
-            var positions = c.GetAllGroupPositions().Select(x => x.ToVector2(16));
+            var positions = c.GetAllGroupPositions();
 
-            for (int i = 0; i < positions.Count(); i++)
+            for (int i = 0; i < positions.Length; i++)
             {
-                var pos = positions.ElementAt(i);
-                if (Vector2.Distance(pos, worldPosition) < 4f)
+                var pos = positions[i].ToVector2(16);
+                var group = c.GetIOGroup(i);
+
+                if (Vector2.Distance(pos, worldPosition) <= Constants.IO_GROUP_RADIUS)
                 {
-                    ioGroup = c.GetIOGroup(i);
+                    ioGroup = group;
                     component = c;
                     return true;
                 }
@@ -345,6 +405,11 @@ public class Simulation
 
     public void ConnectPointsWithWire(Vector2i point1, Vector2i point2)
     {
+        if (point1 == point2)
+        {
+            return;
+        }
+
         if (this.TryGetWireAtPos(point1, out var w1))
         {
             if (this.TryGetWireAtPos(point2, out var w2))
