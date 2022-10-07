@@ -275,7 +275,7 @@ public class EditorTab : Invoker<EditorTab>
         }
 
         NewGUI.EndMainMenuBar();
-        if (NewGUI.BeginWindow("Components", new Vector2(5, 50)))
+        if (NewGUI.BeginWindow("Components", new Vector2(5, 50), GUIWindowFlags.NoExpandButton))
         {
             NewGUI.Spacer(5);
             var types = ComponentDescription.GetRegisteredComponentTypes();
@@ -288,7 +288,46 @@ public class EditorTab : Invoker<EditorTab>
                 }
                 NewGUI.Spacer(5);
             }
-            NewGUI.Spacer(-5);
+
+            if (NewGUI.BeginMenu("TestMenu3"))
+            {
+                if (NewGUI.MenuItem("Hello3"))
+                {
+                    Console.WriteLine("Hello3");
+                }
+                NewGUI.Spacer(5);
+                if (NewGUI.MenuItem("World3"))
+                {
+                    Console.WriteLine("World3");
+                }
+                NewGUI.Spacer(5);
+                if (NewGUI.MenuItem("I am a big button3"))
+                {
+                    Console.WriteLine("Big button3");
+                }
+            }
+            NewGUI.EndMenu();
+
+            NewGUI.Spacer(5);
+
+            if (NewGUI.BeginMenu("TestMenu4"))
+            {
+                if (NewGUI.MenuItem("Hello4"))
+                {
+                    Console.WriteLine("Hello4");
+                }
+                NewGUI.Spacer(5);
+                if (NewGUI.MenuItem("World4"))
+                {
+                    Console.WriteLine("World4");
+                }
+                NewGUI.Spacer(5);
+                if (NewGUI.MenuItem("I am a big button4"))
+                {
+                    Console.WriteLine("Big button4");
+                }
+            }
+            NewGUI.EndMenu();
         }
         NewGUI.EndWindow();
 

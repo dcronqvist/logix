@@ -17,6 +17,7 @@ public interface IGUIEnvironment
     bool MouseOver { get; set; }
     bool CanBeDragged();
     bool CanBeReordered();
+    bool AlwaysOnTop();
     Vector2 GetTopLeft();
     void MoveTo(Vector2 position);
 
@@ -188,6 +189,11 @@ public class NewGUIWindow : IGUIEnvironment
     {
 
     }
+
+    public bool AlwaysOnTop()
+    {
+        return false;
+    }
 }
 
 [Flags]
@@ -303,6 +309,11 @@ public class MainMenuBar : IGUIEnvironment
     {
 
     }
+
+    public bool AlwaysOnTop()
+    {
+        return false;
+    }
 }
 
 public class MenuEnv : IGUIEnvironment
@@ -328,6 +339,7 @@ public class MenuEnv : IGUIEnvironment
 
     public bool Begin(int flags)
     {
+        this.Position = NewGUI.CurrentEnvironment.GetNextEmitPosition();
         NewGUI.PushNextItemID(this.Label + "_expand_button");
         if (NewGUI.Button(this.Label))
         {
@@ -432,5 +444,10 @@ public class MenuEnv : IGUIEnvironment
     public void DirectChildReturnedTrue()
     {
         this.Expanded = false;
+    }
+
+    public bool AlwaysOnTop()
+    {
+        return true;
     }
 }

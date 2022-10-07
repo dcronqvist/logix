@@ -31,7 +31,7 @@ public static class NewGUI
     public static Stack<string> PushedIDs { get; private set; } = new();
     public static Stack<Vector2> PushedSizes { get; private set; } = new();
 
-    public static ColorF BackgroundColor => ColorF.Black * 0.4f;
+    public static ColorF BackgroundColor => ColorF.DarkGray * 0.8f;
     public static ColorF BackgroundColorAccent => ColorF.Purple;
     public static ColorF ItemColor => ColorF.Lerp(ColorF.Purple, ColorF.White, 0.25f);
     public static ColorF ItemHoverColor => ColorF.Lerp(ColorF.Purple, ColorF.White, 0.4f);
@@ -339,7 +339,12 @@ public static class NewGUI
             {
                 var env = Environments[provider.GetID()];
                 CurrentEnvironmentStack.Push(env);
-                return env.Begin(flags);
+                bool begin = env.Begin(flags);
+                if (env.AlwaysOnTop())
+                {
+                    SetEnvironmentAtFront(env);
+                }
+                return begin;
             }
         }
         else
@@ -359,6 +364,10 @@ public static class NewGUI
                 var env = Environments[provider.GetID()];
                 bool begin = env.Begin(flags);
                 CurrentEnvironmentStack.Push(env);
+                if (env.AlwaysOnTop())
+                {
+                    SetEnvironmentAtFront(env);
+                }
                 return begin;
             }
         }
