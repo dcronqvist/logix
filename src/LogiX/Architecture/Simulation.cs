@@ -65,12 +65,93 @@ public enum LogicValueRetrievalStatus
     DISAGREE,
 }
 
+public abstract class SimulationError
+{
+    public string Message { get; set; }
+
+    public SimulationError(string message)
+    {
+        this.Message = message;
+    }
+
+    public abstract void Render(Camera2D cam);
+}
+
+public class ReadWrongAmountOfBitsError : SimulationError
+{
+    public Component Comp { get; set; }
+    public Vector2i Pos { get; set; }
+    public int Expected { get; set; }
+    public int Actual { get; set; }
+
+    public ReadWrongAmountOfBitsError(Component comp, Vector2i pos, int expected, int actual) : base($"DIFF_BITWIDTH")
+    {
+        this.Comp = comp;
+        this.Pos = pos;
+        this.Expected = expected;
+        this.Actual = actual;
+    }
+
+    public override void Render(Camera2D cam)
+    {
+        var shader = LogiX.ContentManager.GetContentItem<ShaderProgram>("content_1.shader_program.primitive");
+        PrimitiveRenderer.RenderCircle(shader, this.Pos.ToVector2(16), 8, 0f, ColorF.Red, cam);
+        var tShader = LogiX.ContentManager.GetContentItem<ShaderProgram>("content_1.shader_program.text");
+        var font = LogiX.ContentManager.GetContentItem<Font>("content_1.font.default");
+        var measure = font.MeasureString(this.Message, 1f);
+        TextRenderer.RenderText(tShader, font, this.Message, this.Pos.ToVector2(16) - measure / 2f, 1f, ColorF.Black, cam);
+    }
+}
+
+public class PushingDifferentValuesError : SimulationError
+{
+    public Wire Wire { get; set; }
+
+    public PushingDifferentValuesError(Wire wire) : base($"DISAGREE")
+    {
+        this.Wire = wire;
+    }
+
+    public override void Render(Camera2D cam)
+    {
+        var pShader = LogiX.ContentManager.GetContentItem<ShaderProgram>("content_1.shader_program.primitive");
+        var color = ColorF.Red;
+
+        for (int i = 0; i < Wire.Segments.Count; i++)
+        {
+            var segment = Wire.Segments[i];
+            var a = segment.Item1.ToVector2(16);
+            var b = segment.Item2.ToVector2(16);
+
+            PrimitiveRenderer.RenderLine(pShader, a, b, Constants.WIRE_WIDTH, color, cam);
+        }
+
+        var segmentPoints = Wire.Segments.SelectMany(s => new Vector2i[] { s.Item1, s.Item2 }).Distinct().ToArray();
+
+        foreach (var point in segmentPoints)
+        {
+            var worldPos = point.ToVector2(16);
+            //PrimitiveRenderer.RenderCircle(pShader, worldPos, Constants.WIRE_POINT_RADIUS, 0, color, cam);
+            PrimitiveRenderer.RenderRectangle(pShader, new RectangleF(worldPos.X, worldPos.Y, 0, 0).Inflate(Constants.WIRE_WIDTH / 2f), Vector2.Zero, 0, color, cam);
+        }
+
+        var firstSegment = Wire.Segments[0];
+        var tShader = LogiX.ContentManager.GetContentItem<ShaderProgram>("content_1.shader_program.text");
+        var font = LogiX.ContentManager.GetContentItem<Font>("content_1.font.default");
+        var measure = font.MeasureString(this.Message, 0.5f);
+        TextRenderer.RenderText(tShader, font, this.Message, Utilities.GetMiddleOfVec2(firstSegment.Item1.ToVector2(16), firstSegment.Item2.ToVector2(16)) - measure / 2f, 0.5f, ColorF.Black, cam);
+    }
+}
+
 public class Simulation
 {
     public List<Component> Components { get; private set; } = new();
     public Dictionary<Vector2i, ValueCollection> NewValues { get; private set; } = new();
     public Dictionary<Vector2i, ValueCollection> CurrentValues { get; private set; } = new();
     public List<Wire> Wires { get; private set; } = new();
+    public List<Component> SelectedComponents { get; set; } = new();
+    public List<SimulationError> PreviousErrors { get; private set; } = new();
+    public List<SimulationError> Errors { get; private set; } = new();
 
     public Simulation()
     {
@@ -99,7 +180,7 @@ public class Simulation
             }
             else
             {
-                values = Enumerable.Repeat(LogicValue.UNDEFINED, expectedWidth).ToArray();
+                values = pushedValues[0];
                 status = LogicValueRetrievalStatus.DIFF_WIDTH;
                 return false;
             }
@@ -249,6 +330,11 @@ public class Simulation
                     }
 
                     NewValues[pos].Add(values);
+
+                    if (!NewValues[pos].AllAgree())
+                    {
+                        this.AddError(new PushingDifferentValuesError(wire));
+                    }
                 }
             }
         }
@@ -258,10 +344,9 @@ public class Simulation
         }
     }
 
-    public void Reset()
+    public void AddError(SimulationError error)
     {
-        // Reset pushed values
-        this.NewValues.Clear();
+        this.Errors.Add(error);
     }
 
     public void AddComponent(Component component, Vector2i position)
@@ -273,6 +358,10 @@ public class Simulation
     public void RemoveComponent(Component component)
     {
         this.Components.Remove(component);
+        if (this.SelectedComponents.Contains(component))
+        {
+            this.SelectedComponents.Remove(component);
+        }
     }
 
     public void AddWire(Wire wire)
@@ -282,6 +371,9 @@ public class Simulation
 
     public void Tick()
     {
+        this.PreviousErrors = Errors;
+        this.Errors.Clear();
+
         // Allow components to perform their logic
         foreach (Component component in Components)
         {
@@ -303,16 +395,28 @@ public class Simulation
 
     public void Render(Camera2D cam)
     {
-        //Allow components to render themselves
-        foreach (Component component in Components)
+        // Render selected components
+        foreach (Component component in SelectedComponents)
         {
-            component.Render(cam);
+            component.RenderSelected(cam);
         }
 
         // Allow wires to render themselves
         foreach (Wire wire in Wires)
         {
             wire.Render(this, cam);
+        }
+
+        //Allow components to render themselves
+        foreach (Component component in Components)
+        {
+            component.Render(cam);
+        }
+
+        // Render errors
+        foreach (var error in this.Errors)
+        {
+            error.Render(cam);
         }
 
         // var font = LogiX.ContentManager.GetContentItem<Font>("content_1.font.default");
@@ -480,6 +584,36 @@ public class Simulation
         return false;
     }
 
+    public bool TryGetComponentAtPos(Vector2i pos, out Component component)
+    {
+        foreach (var c in this.Components)
+        {
+            if (c.GetBoundingBox(out var tz).Contains(pos.ToVector2(16)))
+            {
+                component = c;
+                return true;
+            }
+        }
+
+        component = null;
+        return false;
+    }
+
+    public bool TryGetComponentAtPos(Vector2 pos, out Component component)
+    {
+        foreach (var c in this.Components)
+        {
+            if (c.GetBoundingBox(out var tz).Contains(pos))
+            {
+                component = c;
+                return true;
+            }
+        }
+
+        component = null;
+        return false;
+    }
+
     public void DisconnectPoints(Vector2i point1, Vector2i point2)
     {
         if (this.TryGetWireAtPos(point1, out var w1))
@@ -517,6 +651,71 @@ public class Simulation
             Wire[] newWires = wire.RemoveVertex(point);
             this.Wires.Remove(wire);
             this.Wires.AddRange(newWires);
+        }
+    }
+
+    public void SelectComponent(Component component)
+    {
+        if (!this.SelectedComponents.Contains(component))
+        {
+            this.SelectedComponents.Add(component);
+        }
+    }
+
+    public void DeselectComponent(Component component)
+    {
+        if (this.SelectedComponents.Contains(component))
+        {
+            this.SelectedComponents.Remove(component);
+        }
+    }
+
+    public void ToggleSelection(Component component)
+    {
+        if (this.SelectedComponents.Contains(component))
+        {
+            this.SelectedComponents.Remove(component);
+        }
+        else
+        {
+            this.SelectedComponents.Add(component);
+        }
+    }
+
+    public void ClearSelection()
+    {
+        this.SelectedComponents.Clear();
+    }
+
+    public void SelectAllComponents()
+    {
+        this.SelectedComponents.Clear();
+        this.SelectedComponents.AddRange(this.Components);
+    }
+
+    public void SelectComponentsInRectangle(RectangleF rectangle)
+    {
+        this.SelectedComponents.Clear();
+
+        foreach (var c in this.Components)
+        {
+            if (c.GetBoundingBox(out var tz).IntersectsWith(rectangle))
+            {
+                this.SelectedComponents.Add(c);
+            }
+        }
+    }
+
+    public bool IsComponentSelected(Component component)
+    {
+        return this.SelectedComponents.Contains(component);
+    }
+
+    public void MoveSelection(Vector2i delta)
+    {
+        foreach (var c in this.SelectedComponents)
+        {
+            c.Move(delta);
         }
     }
 }

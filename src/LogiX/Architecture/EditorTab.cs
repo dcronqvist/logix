@@ -17,6 +17,8 @@ public class EditorTab : Invoker<EditorTab>
     public Framebuffer WorkspaceFramebuffer { get; private set; }
     public Framebuffer GUIFramebuffer { get; private set; }
     public TabFSM FSM { get; private set; }
+    public Action ContextMenuAction { get; set; }
+    public bool ContextMenuOpen { get; set; }
 
     public EditorTab(string tabName, Circuit initialCircuit)
     {
@@ -101,70 +103,6 @@ public class EditorTab : Invoker<EditorTab>
     public void Update()
     {
         this.FSM.Update(this);
-
-        var mousePos = Input.GetMousePosition(this.Camera).ToVector2i(16);
-
-        if (Input.IsKeyPressed(Keys.Alpha1))
-        {
-            var c = ComponentDescription.CreateDefaultComponent("content_1.script_type.CONST");
-            c.Position = mousePos;
-            this.Sim.LockedAction(s => s.AddComponent(c, c.Position));
-        }
-        if (Input.IsKeyPressed(Keys.Alpha2))
-        {
-            var c = ComponentDescription.CreateDefaultComponent("content_1.script_type.ORGATE");
-            c.Position = mousePos;
-            this.Sim.LockedAction(s => s.AddComponent(c, c.Position));
-        }
-        if (Input.IsKeyPressed(Keys.Alpha3))
-        {
-            var c = ComponentDescription.CreateDefaultComponent("content_1.script_type.ANDGATE");
-            c.Position = mousePos;
-            this.Sim.LockedAction(s => s.AddComponent(c, c.Position));
-        }
-
-        if (Input.IsKeyPressed(Keys.Space))
-        {
-            this.Sim.LockedAction(s =>
-            {
-                if (s.TryGetWireSegmentAtPos(mousePos, out var segment, out var wire))
-                {
-                    s.DisconnectPoints(segment.Item1, segment.Item2);
-                }
-            });
-        }
-
-        if (Input.IsKeyPressed(Keys.G))
-        {
-            this.Sim.LockedAction(s =>
-            {
-                if (s.TryGetWireAtPos(mousePos, out var wire))
-                {
-                    wire.MergeEdgesThatMeetAt(mousePos);
-                }
-            });
-        }
-
-        if (Input.IsKeyPressed(Keys.H))
-        {
-            this.Sim.LockedAction(s =>
-            {
-                s.RemoveWirePoint(mousePos);
-            });
-        }
-
-        if (Input.IsMouseButtonPressed(MouseButton.Left))
-        {
-            if (this._currentlySelectedComponent is not null)
-            {
-                this.Sim.LockedAction(s =>
-                {
-                    s.AddComponent(this._currentlySelectedComponent, mousePos);
-                });
-                _currentlySelectedComponent = null;
-            }
-        }
-
         this.Sim.LockedAction(s => s.Tick());
     }
 
@@ -194,6 +132,24 @@ public class EditorTab : Invoker<EditorTab>
         {
             NewGUI.Begin();
             SubmitGUI();
+
+            this.Sim.LockedAction(s =>
+            {
+                if (s.SelectedComponents.Count == 1)
+                {
+                    var c = s.SelectedComponents.First();
+
+                    if (c.ShowPropertyWindow)
+                    {
+                        if (NewGUI.BeginWindow("Component Properties", new Vector2(100, 100)))
+                        {
+                            c.SubmitUISelected();
+                        }
+                        NewGUI.EndWindow();
+                    }
+                }
+            });
+
             NewGUI.End();
 
             string s = $"ANY_WIN_HOV: {NewGUI.AnyWindowHovered()}, HOVERED: {(NewGUI.HoveredEnvironment == null ? "null" : NewGUI.HoveredEnvironment.GetID())}, HOT: {NewGUI.HotID ?? "null"}, ACTIVE: {NewGUI.ActiveID ?? "null"}";
@@ -204,48 +160,49 @@ public class EditorTab : Invoker<EditorTab>
         Framebuffer.RenderFrameBufferToScreen(fShader, this.GUIFramebuffer);
     }
 
+    public void OpenContextMenu(Action action)
+    {
+        this.ContextMenuOpen = true;
+        this.ContextMenuAction = action;
+    }
+
+    public void AddNewComponent(ComponentDescription comp, Vector2i position)
+    {
+        var command = new CAddComponent(comp.CreateComponent(), position);
+        this.Execute(command, this);
+        this.FSM.SetState<StateMovingSelection>(this, 0);
+    }
+
     private Component _currentlySelectedComponent = null;
+
+    bool open = false;
+    string s = "";
 
     public void SubmitGUI()
     {
         NewGUI.BeginMainMenuBar();
 
-        if (NewGUI.BeginMenu("TestMenu"))
+        if (NewGUI.BeginMenu("File"))
         {
-            if (NewGUI.MenuItem("Hello"))
+            if (NewGUI.MenuItem("New..."))
             {
-                Console.WriteLine("Hello");
-            }
-            NewGUI.Spacer(5);
-            if (NewGUI.MenuItem("World"))
-            {
-                Console.WriteLine("World");
-            }
-            NewGUI.Spacer(5);
-            if (NewGUI.MenuItem("I am a big ass button"))
-            {
-                Console.WriteLine("Big ass button");
+
             }
         }
         NewGUI.EndMenu();
 
         NewGUI.Spacer(5);
 
-        if (NewGUI.BeginMenu("TestMenu2"))
+        if (NewGUI.BeginMenu("Edit"))
         {
-            if (NewGUI.MenuItem("Hello"))
+            if (NewGUI.MenuItem("Undo"))
             {
-                Console.WriteLine("Hello");
+                this.Undo(this);
             }
             NewGUI.Spacer(5);
-            if (NewGUI.MenuItem("World"))
+            if (NewGUI.MenuItem("Redo"))
             {
-                Console.WriteLine("World");
-            }
-            NewGUI.Spacer(5);
-            if (NewGUI.MenuItem("I am a big button"))
-            {
-                Console.WriteLine("Big button");
+                this.Redo(this);
             }
         }
         NewGUI.EndMenu();
@@ -275,59 +232,51 @@ public class EditorTab : Invoker<EditorTab>
         }
 
         NewGUI.EndMainMenuBar();
-        if (NewGUI.BeginWindow("Components", new Vector2(5, 50), GUIWindowFlags.NoExpandButton))
+
+        bool open = this.ContextMenuOpen;
+        if (NewGUI.BeginContextMenu(ref open))
+        {
+            this.ContextMenuAction();
+            NewGUI.EndContextMenu();
+        }
+        this.ContextMenuOpen = open;
+
+        if (NewGUI.BeginWindow("Components", new Vector2(5, 28)))
         {
             NewGUI.Spacer(5);
+
+            NewGUI.InputText("Test", ref s);
+            NewGUI.Spacer(5);
+
             var types = ComponentDescription.GetRegisteredComponentTypes();
             foreach (var type in types)
             {
-                if (NewGUI.Button(type))
+                NewGUI.PushNextItemSize(new Vector2(100, 20));
+                if (NewGUI.Button(type.Split(".").Last()))
                 {
                     // TODO: Add component to simulation
-                    _currentlySelectedComponent = ComponentDescription.CreateDefaultComponent(type);
+                    //_currentlySelectedComponent = ComponentDescription.CreateDefaultComponent(type);
+                }
+                if (NewGUI.IsPreviousItemActive() && this.FSM.CurrentState is StateIdle)
+                {
+                    this.AddNewComponent(ComponentDescription.CreateDefaultComponentDescription(type), Input.GetMousePosition(this.Camera).ToVector2i(16));
                 }
                 NewGUI.Spacer(5);
             }
 
-            if (NewGUI.BeginMenu("TestMenu3"))
+            // NewGUI.Spacer(-5);
+
+            if (NewGUI.Expandable("expand me", ref open))
             {
-                if (NewGUI.MenuItem("Hello3"))
-                {
-                    Console.WriteLine("Hello3");
-                }
                 NewGUI.Spacer(5);
-                if (NewGUI.MenuItem("World3"))
-                {
-                    Console.WriteLine("World3");
-                }
+                NewGUI.Label("");
+                NewGUI.SameLine();
+                NewGUI.Button("In expanded");
                 NewGUI.Spacer(5);
-                if (NewGUI.MenuItem("I am a big button3"))
-                {
-                    Console.WriteLine("Big button3");
-                }
+                NewGUI.Label("");
+                NewGUI.SameLine();
+                NewGUI.Button("In expanded 2");
             }
-            NewGUI.EndMenu();
-
-            NewGUI.Spacer(5);
-
-            if (NewGUI.BeginMenu("TestMenu4"))
-            {
-                if (NewGUI.MenuItem("Hello4"))
-                {
-                    Console.WriteLine("Hello4");
-                }
-                NewGUI.Spacer(5);
-                if (NewGUI.MenuItem("World4"))
-                {
-                    Console.WriteLine("World4");
-                }
-                NewGUI.Spacer(5);
-                if (NewGUI.MenuItem("I am a big button4"))
-                {
-                    Console.WriteLine("Big button4");
-                }
-            }
-            NewGUI.EndMenu();
         }
         NewGUI.EndWindow();
 

@@ -27,59 +27,60 @@ public class StateIdle : State<EditorTab, int>
                 if (s.TryGetIOGroupFromPosition(mouseWorldPosition, out var group, out var comp))
                 {
                     this.GoToState<StateHoveringIOGroup>(0);
-                }
-
-                if (s.TryGetWireVertexAtPos(mouseWorldPosition.ToVector2i(16), out var wire) && Input.IsMouseButtonPressed(MouseButton.Left))
-                {
-                    this.GoToState<StateDraggingWire>(0);
                     return;
                 }
 
-                if (s.TryGetWireSegmentAtPos(mouseWorldPosition.ToVector2i(16), out var edge, out wire) && Input.IsMouseButtonPressed(MouseButton.Left))
+                if (s.TryGetWireVertexAtPos(mouseWorldPosition, out var pos, out var wire))
                 {
-                    this.GoToState<StateDraggingWire>(0);
+                    this.GoToState<StateHoveringWireVertex>(0);
                     return;
+                }
+
+                if (s.TryGetWireSegmentAtPos(mouseWorldPosition, out var edge, out wire))
+                {
+                    this.GoToState<StateHoveringWireSegment>(0);
+                    return;
+                }
+
+                if (Input.IsMouseButtonPressed(MouseButton.Left))
+                {
+                    // Check if we clicked on a component
+                    if (s.TryGetComponentAtPos(mouseWorldPosition, out comp))
+                    {
+                        // If we clicked on a component and it isn't selected, select it.
+                        if (!s.IsComponentSelected(comp))
+                        {
+                            if (!Input.IsKeyDown(Keys.LeftShift))
+                            {
+                                s.ClearSelection();
+                            }
+                            s.SelectComponent(comp);
+                            // Should go to the state of moving selection.
+                            // TODO:
+                            this.GoToState<StateMovingSelection>(0);
+                        }
+                        else
+                        {
+                            if (Input.IsKeyDown(Keys.LeftShift))
+                            {
+                                s.DeselectComponent(comp);
+                            }
+                            else
+                            {
+                                // If it already is selected, immediately go to the state of moving selection.
+                                // TODO: 
+                                this.GoToState<StateMovingSelection>(0);
+                            }
+                        }
+                    }
+                    else
+                    {
+                        // If we didn't click on a component, then we are starting a selection box.
+                        s.ClearSelection(); // Clear selection
+                        this.GoToState<StateRectangleSelecting>(0);
+                    }
                 }
             });
         }
-    }
-
-    public override void Render(EditorTab arg)
-    {
-        var mouseWorld = Input.GetMousePosition(arg.Camera);
-        var pShader = LogiX.ContentManager.GetContentItem<ShaderProgram>("content_1.shader_program.primitive");
-        arg.Sim.LockedAction(s =>
-        {
-            if (s.TryGetWireVertexAtPos(mouseWorld, out var pos, out Wire wire))
-            {
-                PrimitiveRenderer.RenderCircle(pShader, pos.ToVector2(16), Constants.WIRE_POINT_RADIUS, 0, Constants.COLOR_SELECTED, arg.Camera);
-                return;
-            }
-
-            if (s.TryGetWireSegmentAtPos(mouseWorld, out var edge, out wire))
-            {
-                PrimitiveRenderer.RenderLine(pShader, edge.Item1.ToVector2(16), edge.Item2.ToVector2(16), Constants.WIRE_WIDTH, Constants.COLOR_SELECTED, arg.Camera);
-                return;
-            }
-            // if (s.TryGetWireVertexAtPos(mouseWorld, out var wire) && Input.IsMouseButtonPressed(MouseButton.Left))
-            // {
-            //     this.GoToState<StateDraggingWire>(0);
-            // }
-
-            // if (s.TryGetWireSegmentAtPos(mouseWorld, out var edge, out wire) && Input.IsMouseButtonPressed(MouseButton.Left))
-            // {
-            //     this.GoToState<StateDraggingWire>(0);
-            // }
-
-            // if (s.TryGetWireSegmentAtPos(mousePos, out var segment, out var wire))
-            // {
-            //     var points = Utilities.GetAllGridPointsBetween(segment.Item1, segment.Item2);
-
-            //     foreach (var point in points)
-            //     {
-            //         PrimitiveRenderer.RenderCircle(pShader, point.ToVector2(16), 4, 0, ColorF.Green, this.Camera);
-            //     }
-            // }
-        });
     }
 }

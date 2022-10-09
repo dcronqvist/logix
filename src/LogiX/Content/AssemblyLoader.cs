@@ -15,6 +15,9 @@ public class AssemblyLoader : IContentItemLoader
             using var stream = structure.GetEntryStream(pathToItem, out var entry);
 
             var assembly = System.Runtime.Loader.AssemblyLoadContext.Default.LoadFromStream(stream);
+
+            var defs = assembly.DefinedTypes;
+
             var fileName = Path.GetFileNameWithoutExtension(pathToItem);
             return LoadEntryResult.CreateSuccess(new AssemblyContentItem($"{source.GetIdentifier()}.assembly.{fileName}", source, assembly));
         }

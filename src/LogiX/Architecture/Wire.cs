@@ -1,3 +1,6 @@
+using System.Drawing;
+using System.Numerics;
+using System.Text;
 using LogiX.Architecture;
 using LogiX.Architecture.Serialization;
 using LogiX.Graphics;
@@ -10,6 +13,7 @@ public enum WireStatus
     DISAGREE,
     AGREE,
     NONE,
+    DIFF_WIDTH
 }
 
 public class Wire
@@ -32,6 +36,20 @@ public class Wire
         this.Segments = segments;
     }
 
+    public string GetHash()
+    {
+        var hash = new StringBuilder();
+        foreach (var segment in this.Segments)
+        {
+            hash.Append(segment.Item1.X);
+            hash.Append(segment.Item1.Y);
+            hash.Append(segment.Item2.X);
+            hash.Append(segment.Item2.Y);
+        }
+
+        return Utilities.GetHash(hash.ToString());
+    }
+
     public Vector2i[] GetPoints()
     {
         var points = new List<Vector2i>();
@@ -47,7 +65,7 @@ public class Wire
     public void Render(Simulation simulation, Camera2D cam)
     {
         var pShader = LogiX.ContentManager.GetContentItem<ShaderProgram>("content_1.shader_program.primitive");
-        var color = this.GetWireColor(simulation);
+        var color = GetWireColor(this.GetPoints(), simulation);
 
         foreach (var segment in this.Segments)
         {
@@ -62,13 +80,14 @@ public class Wire
         foreach (var point in segmentPoints)
         {
             var worldPos = point.ToVector2(16);
-            PrimitiveRenderer.RenderCircle(pShader, worldPos, Constants.WIRE_POINT_RADIUS, 0, color, cam);
+            //PrimitiveRenderer.RenderCircle(pShader, worldPos, Constants.WIRE_POINT_RADIUS, 0, color, cam);
+            PrimitiveRenderer.RenderRectangle(pShader, new RectangleF(worldPos.X, worldPos.Y, 0, 0).Inflate(Constants.WIRE_WIDTH / 2f), Vector2.Zero, 0, color, cam);
         }
     }
 
-    private ColorF GetWireColor(Simulation simulation)
+    private static ColorF GetWireColor(Vector2i[] points, Simulation simulation)
     {
-        var positions = this.GetPoints();
+        var positions = points;
 
         List<LogicValue[]> values = new();
         foreach (var pos in positions)
@@ -76,13 +95,6 @@ public class Wire
             if (simulation.TryGetLogicValuesAtPosition(pos, out var vs, out var status))
             {
                 values.Add(vs);
-            }
-            else
-            {
-                if (status == LogicValueRetrievalStatus.DISAGREE)
-                {
-                    return ColorF.Red;
-                }
             }
         }
 

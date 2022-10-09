@@ -26,4 +26,9 @@ public class CAddWire : Command<EditorTab>
             s.DisconnectPoints(_startPos, _endPos);
         });
     }
+
+    public override string ToString()
+    {
+        return $"Connect {_startPos} to {_endPos}";
+    }
 }

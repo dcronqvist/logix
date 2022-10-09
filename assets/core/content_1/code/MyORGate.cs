@@ -43,6 +43,7 @@ public class MyORGate : Component<BitData>
 {
     public override string Name => "OR";
     public override bool DisplayIOGroupIdentifiers => false;
+    public override bool ShowPropertyWindow => false;
 
     public MyORGate(IOMapping mapping) : base(mapping) { }
 
@@ -59,11 +60,11 @@ public class MyORGate : Component<BitData>
         }
         else
         {
-            if (vals.All(v => v == LogicValue.UNDEFINED))
+            if (vals.Any(v => v == LogicValue.UNDEFINED) && vals.Any(v => v == LogicValue.LOW))
             {
                 return; // PUSH NOTHING, WE CANNOT DETERMINE THE OUTPUT
             }
-            else
+            else if (vals.All(v => v == LogicValue.LOW))
             {
                 z.Push(LogicValue.LOW);
             }
@@ -86,5 +87,10 @@ public class MyORGate : Component<BitData>
         }
 
         this.RegisterIO("Z", "out");
+    }
+
+    public override void SubmitUISelected()
+    {
+
     }
 }

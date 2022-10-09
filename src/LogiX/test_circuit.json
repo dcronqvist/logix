@@ -1,177 +1,39 @@
 {
   "components": [
     {
-      "componentTypeID": "content_1.script_type.CONST",
+      "componentTypeID": "logix_builtin.script_type.SWITCH",
       "data": {
-        "value": true
-      },
-      "mapping": {
-        "groups": [
-          {
-            "ioIndices": [
-              0
-            ],
-            "identifier": "Z",
-            "side": 3
-          }
+        "bits": 4,
+        "values": [
+          1,
+          1,
+          0,
+          1
         ]
       },
-      "position": {
-        "x": -18,
-        "y": -1
-      }
-    },
-    {
-      "componentTypeID": "content_1.script_type.CONST",
-      "data": {
-        "value": true
-      },
       "mapping": {
         "groups": [
           {
             "ioIndices": [
-              0
+              0,
+              1,
+              2,
+              3
             ],
-            "identifier": "Z",
-            "side": 3
-          }
-        ]
-      },
-      "position": {
-        "x": -18,
-        "y": 1
-      }
-    },
-    {
-      "componentTypeID": "content_1.script_type.CONST",
-      "data": {
-        "value": false
-      },
-      "mapping": {
-        "groups": [
-          {
-            "ioIndices": [
-              0
-            ],
-            "identifier": "Z",
-            "side": 3
-          }
-        ]
-      },
-      "position": {
-        "x": -18,
-        "y": 6
-      }
-    },
-    {
-      "componentTypeID": "content_1.script_type.XORGATE",
-      "data": {
-        "inputBits": 2
-      },
-      "mapping": {
-        "groups": [
-          {
-            "ioIndices": [
-              0
-            ],
-            "identifier": "A0",
-            "side": 2
-          },
-          {
-            "ioIndices": [
-              1
-            ],
-            "identifier": "A1",
-            "side": 2
-          },
-          {
-            "ioIndices": [
-              2
-            ],
-            "identifier": "Z",
-            "side": 3
-          }
-        ]
-      },
-      "position": {
-        "x": -12,
-        "y": -1
-      }
-    },
-    {
-      "componentTypeID": "content_1.script_type.XORGATE",
-      "data": {
-        "inputBits": 2
-      },
-      "mapping": {
-        "groups": [
-          {
-            "ioIndices": [
-              0
-            ],
-            "identifier": "A0",
-            "side": 2
-          },
-          {
-            "ioIndices": [
-              1
-            ],
-            "identifier": "A1",
-            "side": 2
-          },
-          {
-            "ioIndices": [
-              2
-            ],
-            "identifier": "Z",
-            "side": 3
-          }
-        ]
-      },
-      "position": {
-        "x": -2,
-        "y": -1
-      }
-    },
-    {
-      "componentTypeID": "content_1.script_type.ANDGATE",
-      "data": {
-        "inputBits": 2
-      },
-      "mapping": {
-        "groups": [
-          {
-            "ioIndices": [
-              0
-            ],
-            "identifier": "A0",
-            "side": 2
-          },
-          {
-            "ioIndices": [
-              1
-            ],
-            "identifier": "A1",
-            "side": 2
-          },
-          {
-            "ioIndices": [
-              2
-            ],
-            "identifier": "Z",
+            "identifier": "io",
             "side": 3
           }
         ]
       },
       "position": {
         "x": -7,
-        "y": 2
+        "y": 0
       }
     },
     {
-      "componentTypeID": "content_1.script_type.ANDGATE",
+      "componentTypeID": "content_1.script_type.ORGATE",
       "data": {
-        "inputBits": 2
+        "inputBits": 4
       },
       "mapping": {
         "groups": [
@@ -193,13 +55,75 @@
             "ioIndices": [
               2
             ],
+            "identifier": "A1",
+            "side": 2
+          },
+          {
+            "ioIndices": [
+              3
+            ],
+            "identifier": "A1",
+            "side": 2
+          },
+          {
+            "ioIndices": [
+              4
+            ],
             "identifier": "Z",
             "side": 3
           }
         ]
       },
       "position": {
-        "x": -9,
+        "x": 1,
+        "y": 2
+      }
+    },
+    {
+      "componentTypeID": "logix_builtin.script_type.SWITCH",
+      "data": {
+        "bits": 1,
+        "values": [
+          1
+        ]
+      },
+      "mapping": {
+        "groups": [
+          {
+            "ioIndices": [
+              0
+            ],
+            "identifier": "io",
+            "side": 3
+          }
+        ]
+      },
+      "position": {
+        "x": -6,
+        "y": 2
+      }
+    },
+    {
+      "componentTypeID": "logix_builtin.script_type.SWITCH",
+      "data": {
+        "bits": 1,
+        "values": [
+          0
+        ]
+      },
+      "mapping": {
+        "groups": [
+          {
+            "ioIndices": [
+              0
+            ],
+            "identifier": "io",
+            "side": 3
+          }
+        ]
+      },
+      "position": {
+        "x": -6,
         "y": 4
       }
     },
@@ -234,8 +158,8 @@
         ]
       },
       "position": {
-        "x": -3,
-        "y": 3
+        "x": 1,
+        "y": 0
       }
     }
   ],
@@ -244,42 +168,12 @@
       "segments": [
         [
           {
-            "x": -16,
-            "y": -1
+            "x": -4,
+            "y": 0
           },
           {
-            "x": -14,
-            "y": -1
-          }
-        ],
-        [
-          {
-            "x": -14,
-            "y": -1
-          },
-          {
-            "x": -13,
-            "y": -1
-          }
-        ],
-        [
-          {
-            "x": -14,
-            "y": -1
-          },
-          {
-            "x": -14,
-            "y": 4
-          }
-        ],
-        [
-          {
-            "x": -14,
-            "y": 4
-          },
-          {
-            "x": -10,
-            "y": 4
+            "x": 0,
+            "y": 0
           }
         ]
       ]
@@ -288,178 +182,122 @@
       "segments": [
         [
           {
-            "x": -16,
-            "y": 1
+            "x": -1,
+            "y": 2
           },
           {
-            "x": -16,
-            "y": 0
-          }
-        ],
-        [
-          {
-            "x": -16,
-            "y": 0
-          },
-          {
-            "x": -15,
-            "y": 0
-          }
-        ],
-        [
-          {
-            "x": -15,
-            "y": 0
-          },
-          {
-            "x": -13,
-            "y": 0
-          }
-        ],
-        [
-          {
-            "x": -15,
-            "y": 0
-          },
-          {
-            "x": -15,
-            "y": 5
-          }
-        ],
-        [
-          {
-            "x": -15,
-            "y": 5
-          },
-          {
-            "x": -10,
-            "y": 5
-          }
-        ]
-      ]
-    },
-    {
-      "segments": [
-        [
-          {
-            "x": -9,
-            "y": -1
-          },
-          {
-            "x": -3,
-            "y": -1
-          }
-        ],
-        [
-          {
-            "x": -9,
-            "y": -1
-          },
-          {
-            "x": -9,
+            "x": 0,
             "y": 2
           }
         ],
         [
           {
-            "x": -9,
+            "x": -1,
             "y": 2
           },
           {
-            "x": -8,
+            "x": -1,
+            "y": 3
+          }
+        ],
+        [
+          {
+            "x": -1,
+            "y": 3
+          },
+          {
+            "x": 0,
+            "y": 3
+          }
+        ],
+        [
+          {
+            "x": -2,
+            "y": 2
+          },
+          {
+            "x": -1,
             "y": 2
           }
-        ]
-      ]
-    },
-    {
-      "segments": [
+        ],
         [
           {
-            "x": -16,
-            "y": 6
+            "x": -2,
+            "y": 2
           },
           {
-            "x": -16,
-            "y": 3
+            "x": -2,
+            "y": 4
           }
         ],
         [
           {
-            "x": -16,
-            "y": 3
+            "x": -2,
+            "y": 4
           },
           {
-            "x": -10,
-            "y": 3
+            "x": 0,
+            "y": 4
           }
         ],
         [
           {
-            "x": -10,
-            "y": 3
-          },
-          {
-            "x": -8,
-            "y": 3
-          }
-        ],
-        [
-          {
-            "x": -10,
-            "y": 3
-          },
-          {
-            "x": -10,
-            "y": 1
-          }
-        ],
-        [
-          {
-            "x": -10,
-            "y": 1
-          },
-          {
-            "x": -3,
-            "y": 1
-          }
-        ],
-        [
-          {
-            "x": -3,
-            "y": 1
-          },
-          {
-            "x": -3,
-            "y": 0
-          }
-        ]
-      ]
-    },
-    {
-      "segments": [
-        [
-          {
-            "x": -6,
+            "x": -4,
             "y": 4
           },
           {
             "x": -4,
-            "y": 4
+            "y": 5
           }
-        ]
-      ]
-    },
-    {
-      "segments": [
+        ],
         [
           {
             "x": -4,
             "y": 2
           },
           {
+            "x": -3,
+            "y": 2
+          }
+        ],
+        [
+          {
+            "x": -3,
+            "y": 2
+          },
+          {
+            "x": -2,
+            "y": 2
+          }
+        ],
+        [
+          {
             "x": -4,
-            "y": 3
+            "y": 5
+          },
+          {
+            "x": -3,
+            "y": 5
+          }
+        ],
+        [
+          {
+            "x": -3,
+            "y": 5
+          },
+          {
+            "x": 0,
+            "y": 5
+          }
+        ],
+        [
+          {
+            "x": -3,
+            "y": 2
+          },
+          {
+            "x": -3,
+            "y": 5
           }
         ]
       ]

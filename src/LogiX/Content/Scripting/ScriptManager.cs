@@ -1,3 +1,4 @@
+using System.Reflection;
 using Symphony;
 
 namespace LogiX.Content.Scripting;
@@ -17,6 +18,24 @@ public static class ScriptManager
             var types = assembly.GetScriptTypes();
             _scriptTypes.AddRange(types);
         }
+
+        _scriptTypes.AddRange(GetScriptTypesInAssembly(Assembly.GetExecutingAssembly()));
+    }
+
+    private static ScriptType[] GetScriptTypesInAssembly(Assembly assembly)
+    {
+        var types = assembly.GetTypes();
+        var scriptTypes = new List<ScriptType>();
+        for (int i = 0; i < types.Length; i++)
+        {
+            var type = types[i];
+            var attr = type.GetCustomAttribute<ScriptTypeAttribute>();
+            if (attr is not null)
+            {
+                scriptTypes.Add(new ScriptType("logix_builtin.script_type." + attr.Identifier, type));
+            }
+        }
+        return scriptTypes.ToArray();
     }
 
     public static ScriptType GetScriptType(string identifier)

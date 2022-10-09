@@ -182,4 +182,9 @@ public static class Input
     {
         return (int)(currentMouseScroll - previousMouseScroll);
     }
+
+    public static void SetMousePosition(int x, int y)
+    {
+        Glfw.SetCursorPosition(DisplayManager.WindowHandle, x, y);
+    }
 }

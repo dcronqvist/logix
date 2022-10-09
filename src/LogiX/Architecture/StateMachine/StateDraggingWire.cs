@@ -108,7 +108,7 @@ public class StateDraggingWire : State<EditorTab, int>
         var endWorld = _endPos.ToVector2(16);
 
         var pShader = LogiX.ContentManager.GetContentItem<ShaderProgram>("content_1.shader_program.primitive");
-        PrimitiveRenderer.RenderLine(pShader, startWorld, cornerWorld, 2, ColorF.Green, arg.Camera);
-        PrimitiveRenderer.RenderLine(pShader, cornerWorld, endWorld, 2, ColorF.Green, arg.Camera);
+        PrimitiveRenderer.RenderLine(pShader, startWorld, cornerWorld, Constants.WIRE_WIDTH, ColorF.Green, arg.Camera);
+        PrimitiveRenderer.RenderLine(pShader, cornerWorld, endWorld, Constants.WIRE_WIDTH, ColorF.Green, arg.Camera);
     }
 }

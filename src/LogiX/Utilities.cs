@@ -118,6 +118,11 @@ public static class Utilities
         return new Vector2(rect.X + rect.Width / 2, rect.Y + rect.Height / 2);
     }
 
+    public static Vector2 GetMiddleOfVec2(Vector2 v1, Vector2 v2)
+    {
+        return new Vector2((v1.X + v2.X) / 2, (v1.Y + v2.Y) / 2);
+    }
+
     public static ColorF Darken(this ColorF c, float amnt)
     {
         return ColorF.Darken(c, amnt);
@@ -160,6 +165,11 @@ public static class Utilities
     public static T Choose<T>(params T[] values)
     {
         return values[RNG.Next(values.Length)];
+    }
+
+    public static int GetNextInt(int min, int max)
+    {
+        return RNG.Next(min, max);
     }
 
     public static ColorF GetValueColor(LogicValue value)
@@ -489,6 +499,32 @@ public static class Utilities
         else
         {
             throw new Exception("Points are not aligned on the x or y axis");
+        }
+    }
+
+    public static RectangleF CreateRecFromTwoCorners(Vector2 a, Vector2 b, float padding = 0)
+    {
+        if (a.Y < b.Y)
+        {
+            if (a.X < b.X)
+            {
+                return new RectangleF(a.X - padding, a.Y - padding, (b.X - a.X) + padding * 2, (b.Y - a.Y) + padding * 2);
+            }
+            else
+            {
+                return new RectangleF(b.X - padding, a.Y - padding, (a.X - b.X) + padding * 2, (b.Y - a.Y) + padding * 2);
+            }
+        }
+        else
+        {
+            if (a.X < b.X)
+            {
+                return new RectangleF(a.X - padding, b.Y - padding, (b.X - a.X) + padding * 2, (a.Y - b.Y) + padding * 2);
+            }
+            else
+            {
+                return new RectangleF(b.X - padding, b.Y - padding, (a.X - b.X) + padding * 2, (a.Y - b.Y) + padding * 2);
+            }
         }
     }
 }

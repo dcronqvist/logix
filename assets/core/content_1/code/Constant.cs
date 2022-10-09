@@ -5,6 +5,7 @@ using LogiX.Architecture;
 using LogiX.Architecture.Serialization;
 using LogiX.Content.Scripting;
 using LogiX.GLFW;
+using LogiX.Graphics.UI;
 using LogiX.Rendering;
 
 namespace content_1;
@@ -29,6 +30,7 @@ public class Constant : Component<ConstData>
 {
     public override string Name => this._data.Value ? "1" : "0";
     public override bool DisplayIOGroupIdentifiers => false;
+    public override bool ShowPropertyWindow => true;
 
     public Constant(IOMapping mapping) : base(mapping) { }
 
@@ -70,5 +72,11 @@ public class Constant : Component<ConstData>
                 this._data.Value = !this._data.Value;
             }
         }
+    }
+
+    public override void SubmitUISelected()
+    {
+        NewGUI.Spacer(5);
+        NewGUI.Label($"Value: {(this._data.Value ? "HIGH" : "LOW")}");
     }
 }

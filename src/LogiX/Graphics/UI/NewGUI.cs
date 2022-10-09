@@ -11,6 +11,7 @@ public static class NewGUI
 
     public static string HotID { get; private set; }
     public static string ActiveID { get; private set; }
+    public static string KeyboardFocusID { get; private set; }
 
     public static Stack<IGUIEnvironment> CurrentEnvironmentStack { get; private set; } = new();
     public static IGUIEnvironment CurrentEnvironment => CurrentEnvironmentStack.Peek();
@@ -38,9 +39,48 @@ public static class NewGUI
     public static ColorF ItemActiveColor => ColorF.Lerp(ColorF.Purple, ColorF.White, 0.6f);
     public static ColorF TextColor => ColorF.White;
 
+    public static Queue<char> InputBuffer { get; private set; } = new();
+
     public static void Init(Font font)
     {
         Font = font;
+
+        Input.OnChar += (sender, e) =>
+        {
+            if (KeyboardFocusID is not null)
+            {
+                InputBuffer.Enqueue(e);
+            }
+        };
+
+        Input.OnBackspace += (sender, e) =>
+        {
+            if (KeyboardFocusID is not null)
+            {
+                InputBuffer.Enqueue('\b');
+            }
+        };
+
+        Input.OnEnterPressed += (sender, e) =>
+        {
+            if (KeyboardFocusID is not null)
+            {
+                InputBuffer.Enqueue('\r');
+            }
+        };
+
+
+        Input.OnKeyPressOrRepeat += (sender, e) =>
+        {
+            if (e.Item1 == Keys.Left)
+            {
+                _caretPosition = Math.Max(0, _caretPosition - 1);
+            }
+            if (e.Item1 == Keys.Right)
+            {
+                _caretPosition++;
+            }
+        };
     }
 
     public static void Begin()
@@ -63,6 +103,17 @@ public static class NewGUI
 
     public static void End()
     {
+        _caretBlinkCounter += GameTime.DeltaTime;
+        if (_caretBlinkCounter > _caretBlinkTime * 2f)
+        {
+            _caretBlinkCounter = 0f;
+        }
+
+        if (Input.IsKeyPressed(Keys.Escape) && KeyboardFocusID is not null)
+        {
+            KeyboardFocusID = null;
+        }
+
         var list = EnvironmentRenderOrder.ToArray();
         foreach (var envID in list)
         {
@@ -119,6 +170,7 @@ public static class NewGUI
             if (Input.IsMouseButtonPressed(MouseButton.Left))
             {
                 ResetFocusedEnvironment();
+                KeyboardFocusID = null;
             }
             else
             {
@@ -210,6 +262,36 @@ public static class NewGUI
         if (ActiveID == null)
         {
             ActiveID = id;
+            KeyboardFocusID = null;
+            SetEnvironmentAtFront(CurrentEnvironment);
+            FocusEnvironment(CurrentEnvironment);
+            return true;
+        }
+
+        return false;
+    }
+
+    public static bool TryGetKeyboardFocus(string id)
+    {
+        var list = EnvironmentRenderOrder.ToArray();
+        foreach (var envID in list)
+        {
+            var currEnv = Environments[envID];
+
+            if (currEnv.MouseOver && currEnv != CurrentEnvironment)
+            {
+                return false;
+            }
+
+            if (currEnv == CurrentEnvironment)
+            {
+                break;
+            }
+        }
+
+        if (KeyboardFocusID == null)
+        {
+            KeyboardFocusID = id;
             SetEnvironmentAtFront(CurrentEnvironment);
             FocusEnvironment(CurrentEnvironment);
             return true;
@@ -226,6 +308,11 @@ public static class NewGUI
     public static bool IsActive(string id)
     {
         return ActiveID == id;
+    }
+
+    public static bool HasKeyboardFocus(string id)
+    {
+        return KeyboardFocusID == id;
     }
 
     public static void RenderRectangle(RectangleF rect, ColorF color, int insertAt = -1)
@@ -431,6 +518,11 @@ public static class NewGUI
         return HotID == VisibleIDs.Peek();
     }
 
+    public static bool IsPreviousItemActive()
+    {
+        return ActiveID == VisibleIDs.Peek();
+    }
+
     public static ColorF GetItemColor(string id)
     {
         if (id == ActiveID)
@@ -482,6 +574,31 @@ public static class NewGUI
     }
 
     public static void EndMenu()
+    {
+        EndCurrentEnvironment();
+    }
+
+    public static bool BeginContextMenu(ref bool open)
+    {
+        if (open)
+        {
+            bool begin = BeginNewEnvironment(new ContextMenu(), 0, true);
+            var contextMenu = CurrentEnvironment as ContextMenu;
+            if (!begin)
+            {
+                EndCurrentEnvironment();
+                contextMenu.Expanded = true;
+                open = false;
+            }
+            return begin;
+        }
+        else
+        {
+            return false;
+        }
+    }
+
+    public static void EndContextMenu()
     {
         EndCurrentEnvironment();
     }
@@ -654,6 +771,206 @@ public static class NewGUI
 
         RenderRectangle(rect, color);
         RenderText(label, position + new Vector2(3, textSize.Y / 2f), TextColor);
+
+        if (pressed)
+        {
+            CurrentEnvironment.DirectChildReturnedTrue();
+        }
+
+        return pressed;
+    }
+
+    public static bool Expandable(string label, ref bool open)
+    {
+        label = $"{(open ? "-" : "+")} {label}";
+        var id = GetNextID(label);
+        var env = CurrentEnvironment;
+        var position = env.GetNextEmitPosition();
+
+        var textSize = Font.MeasureString(label, 1f);
+
+        var padded = textSize.Pad(8f);
+
+        //padded = new Vector2(Math.Max(CurrentEnvironment.GetTotalEmitSizePreviousFrame().X, padded.X), padded.Y);
+        padded = GetNextSize(padded);
+
+        PushItemPosition(position);
+        var rect = position.CreateRect(padded);
+
+        RegisterItemSize(padded);
+
+        bool pressed = false;
+
+        if (IsActive(id))
+        {
+            if (Input.IsMouseButtonReleased(MouseButton.Left))
+            {
+                if (IsHot(id))
+                {
+                    pressed = true;
+                }
+
+                ActiveID = null;
+            }
+        }
+        else if (IsHot(id))
+        {
+            if (Input.IsMouseButtonDown(MouseButton.Left))
+            {
+                TryBecomeActive(id);
+            }
+        }
+
+        if (rect.Contains(Input.GetMousePositionInWindow()))
+        {
+            TryBecomeHot(id);
+        }
+        else
+        {
+            if (IsHot(id))
+            {
+                HotID = null;
+            }
+        }
+
+        var color = (IsActive(id)) ? ItemActiveColor : (IsHot(id) ? ItemHoverColor : ColorF.Transparent);
+
+        RenderRectangle(rect, color);
+        RenderText(label, position + new Vector2(3, textSize.Y / 2f), ColorF.White);
+
+        if (pressed)
+        {
+            CurrentEnvironment.DirectChildReturnedTrue();
+            open = !open;
+        }
+
+        return open;
+    }
+
+    private static float _caretBlinkTime = 0.5f;
+    private static float _caretBlinkCounter;
+    private static bool _caretVisible => _caretBlinkCounter < _caretBlinkTime;
+    public static int _caretPosition = -1;
+
+    public static bool InputText(string label, ref string value, Func<bool> validation = null)
+    {
+        // Basically like a button, but with a different styling
+        var id = GetNextID(label);
+        var env = CurrentEnvironment;
+        var position = env.GetNextEmitPosition();
+
+        var textSize = Font.MeasureString(value, 1f);
+
+        var padded = textSize.Pad(12f);
+        padded = new Vector2(Math.Max(padded.X, 100), padded.Y);
+        padded = GetNextSize(padded);
+
+        PushItemPosition(position);
+        var rect = position.CreateRect(padded);
+
+        RegisterItemSize(padded);
+
+        bool pressed = false;
+
+        if (IsActive(id))
+        {
+            if (Input.IsMouseButtonReleased(MouseButton.Left))
+            {
+                if (IsHot(id))
+                {
+                    if (TryGetKeyboardFocus(id))
+                    {
+                        _caretPosition = value.Length;
+                        _caretBlinkCounter = 0f;
+                    }
+                }
+
+                ActiveID = null;
+            }
+        }
+        else if (IsHot(id))
+        {
+            if (Input.IsMouseButtonDown(MouseButton.Left))
+            {
+                TryBecomeActive(id);
+            }
+        }
+
+        if (rect.Contains(Input.GetMousePositionInWindow()))
+        {
+            TryBecomeHot(id);
+        }
+        else
+        {
+            if (IsHot(id))
+            {
+                HotID = null;
+            }
+        }
+
+        if (HasKeyboardFocus(id))
+        {
+            if (_caretPosition == -1)
+            {
+                _caretPosition = value.Length;
+                _caretBlinkCounter = 0f;
+            }
+
+            while (InputBuffer.Count > 0)
+            {
+                var c = InputBuffer.Dequeue();
+                if (c == '\b')
+                {
+                    if (value.Length > 0 && _caretPosition > 0)
+                    {
+                        value = value.Remove(_caretPosition - 1, 1);
+                        _caretPosition = Math.Max(0, _caretPosition - 1);
+                    }
+                }
+                else if (c == '\r')
+                {
+                    //ReleaseKeyboardFocus(id);
+                    KeyboardFocusID = null;
+                    ActiveID = null;
+                    HotID = null;
+
+                    if (validation is null)
+                    {
+                        pressed = true;
+                    }
+                    else
+                    {
+                        pressed = validation();
+                    }
+                }
+                else
+                {
+                    value = value.Insert(_caretPosition, c.ToString());
+                    _caretPosition = Math.Min(value.Length, _caretPosition + 1);
+                }
+            }
+
+            _caretPosition = Math.Min(value.Length, _caretPosition);
+        }
+
+        var color = (IsActive(id)) ? ItemActiveColor : (IsHot(id) ? ItemHoverColor : BackgroundColor);
+
+        var textPos = position + new Vector2(5, rect.Height / 2f) - new Vector2(0, textSize.Y / 2f);
+        if (HasKeyboardFocus(id))
+        {
+            var outlineColor = validation is null ? ItemActiveColor : (validation() ? ItemActiveColor : ColorF.Red);
+            RenderRectangle(rect, outlineColor);
+            RenderRectangle(rect.Inflate(-2), color);
+
+            var caretMeasure = Font.MeasureString(value.Substring(0, _caretPosition), 1f);
+            RenderText("_", textPos + new Vector2(caretMeasure.X, 0), _caretVisible ? ColorF.White : ColorF.Transparent);
+        }
+        else
+        {
+            RenderRectangle(rect, ColorF.Darken(color, 1.5f));
+            RenderRectangle(rect.Inflate(-2), color);
+        }
+        RenderText(value.Length == 0 ? label : value, textPos, value.Length == 0 ? TextColor * 0.4f : TextColor);
 
         if (pressed)
         {

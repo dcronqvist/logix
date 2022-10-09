@@ -340,6 +340,10 @@ public class MenuEnv : IGUIEnvironment
     public bool Begin(int flags)
     {
         this.Position = NewGUI.CurrentEnvironment.GetNextEmitPosition();
+
+        this.ButtonHot = false;
+        this.ButtonSize = Vector2.Zero;
+
         NewGUI.PushNextItemID(this.Label + "_expand_button");
         if (NewGUI.Button(this.Label))
         {
@@ -348,9 +352,7 @@ public class MenuEnv : IGUIEnvironment
         var buttonSize = NewGUI.GetPreviousItemSize();
         var buttonHot = NewGUI.IsPreviousItemHot();
         this.ButtonHot = buttonHot;
-
         this.RegisterItemSize(buttonSize);
-
         this.ButtonSize = buttonSize;
 
         return this.Expanded;
@@ -389,6 +391,135 @@ public class MenuEnv : IGUIEnvironment
     public string GetID()
     {
         return this.Label;
+    }
+
+    public Vector2 GetNextEmitPosition()
+    {
+        return this.NextEmitPosition;
+    }
+
+    public Vector2 GetTopLeft()
+    {
+        return this.EmitPositionStart;
+    }
+
+    public Vector2 GetTotalEmitSize()
+    {
+        return this.TotalEmitSize;
+    }
+
+    public Vector2 GetTotalEmitSizePreviousFrame()
+    {
+        return this.TotalEmitSizePreviousFrame;
+    }
+
+    public void MoveTo(Vector2 position)
+    {
+        this.Position = position;
+    }
+
+    public void RegisterItemSize(Vector2 size)
+    {
+        var lineWidth = this.NextEmitPosition.X - this.EmitPositionStart.X;
+
+        this.NextEmitPosition = this.EmitPositionStart + new Vector2(0f, this.TotalEmitSize.Y + size.Y);
+        this.TotalEmitSize = new Vector2(Math.Max(size.X + lineWidth, this.TotalEmitSize.X), this.TotalEmitSize.Y + size.Y);
+    }
+
+    public void Reset()
+    {
+        this.TotalEmitSizePreviousFrame = this.TotalEmitSize;
+        this.TotalEmitSize = Vector2.Zero;
+        this.NextEmitPosition = this.EmitPositionStart;
+    }
+
+    public void SameLine()
+    {
+        // Does nothing, menus are always vertical
+    }
+
+    public bool CanBeReordered()
+    {
+        return false;
+    }
+
+    public void DirectChildReturnedTrue()
+    {
+        this.Expanded = false;
+    }
+
+    public bool AlwaysOnTop()
+    {
+        return true;
+    }
+}
+
+public class ContextMenu : IGUIEnvironment
+{
+    public bool MouseOver { get; set; } = false;
+    public Vector2 Position { get; set; }
+    public Vector2 EmitPositionStart => this.Position + new Vector2(5, 5); // Potentially add padding here as well
+    public Vector2 NextEmitPosition { get; set; }
+    public Vector2 TotalEmitSize { get; set; }
+    public Vector2 TotalEmitSizePreviousFrame { get; set; }
+
+    public bool Expanded { get; set; } = true;
+    public bool First { get; set; } = true;
+
+    public ContextMenu()
+    {
+    }
+
+    public bool Begin(int flags)
+    {
+        if (this.First)
+        {
+            this.Position = Input.GetMousePositionInWindow() - new Vector2(2, 2);
+            this.Reset();
+            this.First = false;
+        }
+
+        if (!this.Expanded)
+        {
+            this.Expanded = true;
+            this.First = true;
+            return false;
+        }
+
+        return true;
+    }
+
+    public bool CanBeDragged()
+    {
+        return false;
+    }
+
+    public void End()
+    {
+        var backgroundRect = (this.Position + new Vector2(5, 5)).CreateRect(this.TotalEmitSize).Inflate(5, 5, 5, 5);
+        this.MouseOver = backgroundRect.Contains(Input.GetMousePositionInWindow());
+
+        if (!this.MouseOver)
+        {
+            this.Expanded = false;
+        }
+
+        if (this.Expanded)
+        {
+            NewGUI.RenderRectangle(backgroundRect, NewGUI.BackgroundColor, 0);
+        }
+
+        if (!this.Expanded)
+        {
+            this.TotalEmitSize = Vector2.Zero;
+            this.TotalEmitSizePreviousFrame = Vector2.Zero;
+            this.MouseOver = false;
+        }
+    }
+
+    public string GetID()
+    {
+        return "context_menu";
     }
 
     public Vector2 GetNextEmitPosition()

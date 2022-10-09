@@ -51,6 +51,11 @@ public class Vector2i
         return new Vector2i(left.X - right.X, left.Y - right.Y);
     }
 
+    public static Vector2i operator -(Vector2i x)
+    {
+        return new Vector2i(-x.X, -x.Y);
+    }
+
     public static bool operator ==(Vector2i left, Vector2i right)
     {
         return left.Equals(right);
@@ -90,6 +95,7 @@ public abstract class Component
     public abstract string Name { get; }
 
     public abstract bool DisplayIOGroupIdentifiers { get; }
+    public abstract bool ShowPropertyWindow { get; }
 
     public Component(IOMapping mapping)
     {
@@ -318,6 +324,11 @@ public abstract class Component
                 {
                     iosInGroup[j].SetValue(LogicValue.UNDEFINED);
                 }
+
+                if (status == LogicValueRetrievalStatus.DIFF_WIDTH)
+                {
+                    simulation.AddError(new ReadWrongAmountOfBitsError(this, groupPos, iosInGroup.Length, values.Length));
+                }
             }
         }
 
@@ -350,22 +361,35 @@ public abstract class Component
         }
     }
 
-    public void Render(Camera2D camera)
+    public RectangleF GetBoundingBox(out Vector2 textSize)
+    {
+        var pos = this.Position.ToVector2(16);
+        var size = this.GetSize(out textSize).ToVector2(16);
+        var rect = pos.CreateRect(size);
+
+        if (this.DisplayIOGroupIdentifiers)
+        {
+            return Utilities.Inflate(rect, 0, 5);
+        }
+
+        return Utilities.Inflate(rect, 0, 1);
+    }
+
+    public virtual void Render(Camera2D camera)
     {
         // Position of component
-        var pos = this.Position.ToVector2(16);
-        var size = this.GetSize(out var textSize);
-        var realSize = size.ToVector2(16);
 
         var font = LogiX.ContentManager.GetContentItem<Font>("content_1.font.default");
         var pShader = LogiX.ContentManager.GetContentItem<ShaderProgram>("content_1.shader_program.primitive");
         var tShader = LogiX.ContentManager.GetContentItem<ShaderProgram>("content_1.shader_program.text");
 
-        var rect = pos.CreateRect(realSize);
-
+        var pos = this.Position.ToVector2(16);
+        var rect = this.GetBoundingBox(out var textSize);
+        var size = this.GetSize();
+        var realSize = size.ToVector2(16);
         // Draw the component
         var textPos = pos + realSize / 2f - textSize / 2f - new Vector2(0, 1);
-        PrimitiveRenderer.RenderRectangle(pShader, Utilities.Inflate(rect, 0, this.DisplayIOGroupIdentifiers ? 5 : 1), Vector2.Zero, 0f, ColorF.White, camera);
+        PrimitiveRenderer.RenderRectangle(pShader, rect, Vector2.Zero, 0f, ColorF.White, camera);
         //PrimitiveRenderer.RenderRectangle(pShader, textPos.CreateRect(textSize), Vector2.Zero, 0f, ColorF.Red, camera);
         TextRenderer.RenderText(tShader, font, this.Name, textPos, 1, ColorF.Black, camera);
 
@@ -450,6 +474,8 @@ public abstract class Component
     {
         return new ComponentDescription(this.GetComponentTypeID(), this.Position, this.GetDescriptionData(), this._mapping);
     }
+
+    public abstract void SubmitUISelected();
 }
 
 public abstract class Component<TData> : Component where TData : IComponentDescriptionData

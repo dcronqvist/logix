@@ -12,6 +12,7 @@ public class MyANDGate : Component<BitData>
 {
     public override string Name => "AND";
     public override bool DisplayIOGroupIdentifiers => false;
+    public override bool ShowPropertyWindow => false;
 
     public MyANDGate(IOMapping mapping) : base(mapping) { }
 
@@ -55,5 +56,10 @@ public class MyANDGate : Component<BitData>
         }
 
         this.RegisterIO("Z", "out");
+    }
+
+    public override void SubmitUISelected()
+    {
+
     }
 }

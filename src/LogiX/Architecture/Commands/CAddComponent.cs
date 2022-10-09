@@ -4,21 +4,22 @@ namespace LogiX.Architecture.Commands;
 
 public class CAddComponent : Command<EditorTab>
 {
-    public ComponentDescription Component { get; set; }
+    public Component Component { get; set; }
+    public Vector2i Position { get; set; }
 
-    private Component _addedComponent;
-
-    public CAddComponent(ComponentDescription description)
+    public CAddComponent(Component comp, Vector2i position)
     {
-        this.Component = description;
+        this.Component = comp;
+        this.Position = position;
     }
 
     public override void Execute(EditorTab arg)
     {
         arg.Sim.LockedAction(s =>
         {
-            _addedComponent = this.Component.CreateComponent();
-            s.AddComponent(_addedComponent, this.Component.Position);
+            s.AddComponent(this.Component, this.Position);
+            s.ClearSelection();
+            s.SelectComponent(this.Component);
         });
     }
 
@@ -26,7 +27,7 @@ public class CAddComponent : Command<EditorTab>
     {
         arg.Sim.LockedAction(s =>
         {
-            s.RemoveComponent(_addedComponent);
+            s.RemoveComponent(this.Component);
         });
     }
 }

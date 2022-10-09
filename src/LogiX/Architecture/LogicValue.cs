@@ -2,7 +2,7 @@ namespace LogiX;
 
 public enum LogicValue
 {
-    HIGH,
-    LOW,
-    UNDEFINED
+    UNDEFINED = -1,
+    LOW = 0,
+    HIGH = 1,
 }

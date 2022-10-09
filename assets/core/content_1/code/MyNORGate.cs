@@ -7,14 +7,14 @@ using LogiX.Content.Scripting;
 
 namespace content_1;
 
-[ScriptType("XORGATE")]
-public class MyXORGate : Component<BitData>
+[ScriptType("NORGATE")]
+public class MyNORGate : Component<BitData>
 {
-    public override string Name => "XOR";
+    public override string Name => "NOR";
     public override bool DisplayIOGroupIdentifiers => false;
     public override bool ShowPropertyWindow => false;
 
-    public MyXORGate(IOMapping mapping) : base(mapping) { }
+    public MyNORGate(IOMapping mapping) : base(mapping) { }
 
     public override void PerformLogic()
     {
@@ -22,21 +22,20 @@ public class MyXORGate : Component<BitData>
         var z = this.GetIOFromIdentifier("Z");
 
         var vals = inputs.Select(i => i.GetValue());
+        var highs = vals.Count(v => v == LogicValue.HIGH);
 
-        if (vals.Any(v => v == LogicValue.UNDEFINED))
+        if (highs == 0 && vals.Any(v => v == LogicValue.UNDEFINED))
         {
-            // Cannot determine output
+            return;
+        }
+
+        if (highs > 0)
+        {
+            z.Push(LogicValue.LOW);
         }
         else
         {
-            if (vals.Count(v => v == LogicValue.HIGH) % 2 == 1)
-            {
-                z.Push(LogicValue.HIGH);
-            }
-            else
-            {
-                z.Push(LogicValue.LOW);
-            }
+            z.Push(LogicValue.HIGH);
         }
     }
 
