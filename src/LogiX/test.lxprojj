@@ -1,0 +1,1389 @@
+{
+  "name": "Untitled",
+  "circuits": [
+    {
+      "id": "004d91c4-a081-4ce4-8a78-96f7642cb7ab",
+      "iterationID": "95184d4d-739f-41e9-b3cf-0ae165eb2ad4",
+      "name": "main",
+      "components": [
+        {
+          "componentTypeID": "logix_builtin.script_type.INTEGRATED",
+          "data": {
+            "circuitID": "5783773d-ee3d-41c0-b132-e2684d8040e7"
+          },
+          "position": {
+            "x": -6,
+            "y": -2
+          }
+        },
+        {
+          "componentTypeID": "logix_builtin.script_type.PIN",
+          "data": {
+            "bits": 1,
+            "values": [
+              0
+            ],
+            "label": "bajs",
+            "behaviour": 0,
+            "side": 0
+          },
+          "position": {
+            "x": -14,
+            "y": -3
+          }
+        },
+        {
+          "componentTypeID": "logix_builtin.script_type.PIN",
+          "data": {
+            "bits": 1,
+            "values": [
+              1
+            ],
+            "label": "",
+            "behaviour": 1,
+            "side": 0
+          },
+          "position": {
+            "x": -14,
+            "y": -1
+          }
+        },
+        {
+          "componentTypeID": "logix_builtin.script_type.PIN",
+          "data": {
+            "bits": 1,
+            "values": [
+              0
+            ],
+            "label": "",
+            "behaviour": 1,
+            "side": 0
+          },
+          "position": {
+            "x": -14,
+            "y": 1
+          }
+        },
+        {
+          "componentTypeID": "logix_builtin.script_type.PIN",
+          "data": {
+            "bits": 1,
+            "values": [
+              1
+            ],
+            "label": "",
+            "behaviour": 1,
+            "side": 0
+          },
+          "position": {
+            "x": -14,
+            "y": 3
+          }
+        },
+        {
+          "componentTypeID": "content_1.script_type.CLOCK",
+          "data": {
+            "highDuration": 20,
+            "lowDuration": 20
+          },
+          "position": {
+            "x": -15,
+            "y": 11
+          }
+        },
+        {
+          "componentTypeID": "logix_builtin.script_type.PIN",
+          "data": {
+            "bits": 1,
+            "values": [
+              1
+            ],
+            "label": "",
+            "behaviour": 1,
+            "side": 2
+          },
+          "position": {
+            "x": -5,
+            "y": 11
+          }
+        },
+        {
+          "componentTypeID": "logix_builtin.script_type.INTEGRATED",
+          "data": {
+            "circuitID": "eb672913-9fb0-42bb-8188-234ce9266e58"
+          },
+          "position": {
+            "x": -9,
+            "y": 20
+          }
+        },
+        {
+          "componentTypeID": "logix_builtin.script_type.PIN",
+          "data": {
+            "bits": 4,
+            "values": [
+              0,
+              0,
+              0,
+              0
+            ],
+            "label": "",
+            "behaviour": 0,
+            "side": 2
+          },
+          "position": {
+            "x": -22,
+            "y": 20
+          }
+        },
+        {
+          "componentTypeID": "logix_builtin.script_type.PIN",
+          "data": {
+            "bits": 4,
+            "values": [
+              0,
+              0,
+              0,
+              0
+            ],
+            "label": "",
+            "behaviour": 1,
+            "side": 2
+          },
+          "position": {
+            "x": -22,
+            "y": 21
+          }
+        },
+        {
+          "componentTypeID": "logix_builtin.script_type.PIN",
+          "data": {
+            "bits": 1,
+            "values": [
+              0
+            ],
+            "label": "",
+            "behaviour": 1,
+            "side": 2
+          },
+          "position": {
+            "x": -19,
+            "y": 19
+          }
+        }
+      ],
+      "wires": [
+        {
+          "segments": [
+            [
+              {
+                "x": -12,
+                "y": -3
+              },
+              {
+                "x": -7,
+                "y": -3
+              }
+            ],
+            [
+              {
+                "x": -7,
+                "y": -3
+              },
+              {
+                "x": -7,
+                "y": -2
+              }
+            ]
+          ]
+        },
+        {
+          "segments": [
+            [
+              {
+                "x": -12,
+                "y": 1
+              },
+              {
+                "x": -12,
+                "y": 0
+              }
+            ],
+            [
+              {
+                "x": -12,
+                "y": 0
+              },
+              {
+                "x": 3,
+                "y": 0
+              }
+            ],
+            [
+              {
+                "x": 3,
+                "y": 0
+              },
+              {
+                "x": 3,
+                "y": -2
+              }
+            ],
+            [
+              {
+                "x": 3,
+                "y": -2
+              },
+              {
+                "x": 0,
+                "y": -2
+              }
+            ]
+          ]
+        },
+        {
+          "segments": [
+            [
+              {
+                "x": -12,
+                "y": 3
+              },
+              {
+                "x": -7,
+                "y": 3
+              }
+            ],
+            [
+              {
+                "x": -7,
+                "y": 3
+              },
+              {
+                "x": -7,
+                "y": 1
+              }
+            ],
+            [
+              {
+                "x": -7,
+                "y": 1
+              },
+              {
+                "x": 2,
+                "y": 1
+              }
+            ],
+            [
+              {
+                "x": 2,
+                "y": 1
+              },
+              {
+                "x": 2,
+                "y": -1
+              }
+            ],
+            [
+              {
+                "x": 2,
+                "y": -1
+              },
+              {
+                "x": 0,
+                "y": -1
+              }
+            ]
+          ]
+        },
+        {
+          "segments": [
+            [
+              {
+                "x": -12,
+                "y": 11
+              },
+              {
+                "x": -12,
+                "y": 9
+              }
+            ],
+            [
+              {
+                "x": -3,
+                "y": 9
+              },
+              {
+                "x": -3,
+                "y": 11
+              }
+            ],
+            [
+              {
+                "x": -12,
+                "y": 9
+              },
+              {
+                "x": -9,
+                "y": 9
+              }
+            ],
+            [
+              {
+                "x": -9,
+                "y": 9
+              },
+              {
+                "x": -3,
+                "y": 9
+              }
+            ],
+            [
+              {
+                "x": -12,
+                "y": -1
+              },
+              {
+                "x": -9,
+                "y": -1
+              }
+            ],
+            [
+              {
+                "x": -9,
+                "y": -1
+              },
+              {
+                "x": -7,
+                "y": -1
+              }
+            ],
+            [
+              {
+                "x": -9,
+                "y": 9
+              },
+              {
+                "x": -9,
+                "y": -1
+              }
+            ]
+          ]
+        },
+        {
+          "segments": [
+            [
+              {
+                "x": -17,
+                "y": 20
+              },
+              {
+                "x": -10,
+                "y": 20
+              }
+            ]
+          ]
+        },
+        {
+          "segments": [
+            [
+              {
+                "x": -17,
+                "y": 21
+              },
+              {
+                "x": -10,
+                "y": 21
+              }
+            ]
+          ]
+        },
+        {
+          "segments": [
+            [
+              {
+                "x": -3,
+                "y": 20
+              },
+              {
+                "x": -3,
+                "y": 19
+              }
+            ],
+            [
+              {
+                "x": -3,
+                "y": 19
+              },
+              {
+                "x": -17,
+                "y": 19
+              }
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "id": "721841ad-6ab1-4fbf-9b13-4774d7905423",
+      "iterationID": "504c5880-31e1-4f2b-a256-42ee09101fd5",
+      "name": "sr latch",
+      "components": [
+        {
+          "componentTypeID": "logix_builtin.script_type.PIN",
+          "data": {
+            "bits": 1,
+            "values": [
+              0
+            ],
+            "label": "S",
+            "behaviour": 0,
+            "side": 2
+          },
+          "position": {
+            "x": -12,
+            "y": -6
+          }
+        },
+        {
+          "componentTypeID": "logix_builtin.script_type.PIN",
+          "data": {
+            "bits": 1,
+            "values": [
+              0
+            ],
+            "label": "R",
+            "behaviour": 0,
+            "side": 2
+          },
+          "position": {
+            "x": -12,
+            "y": 1
+          }
+        },
+        {
+          "componentTypeID": "logix_builtin.script_type.NOR_GATE",
+          "data": {},
+          "position": {
+            "x": -5,
+            "y": -6
+          }
+        },
+        {
+          "componentTypeID": "logix_builtin.script_type.NOR_GATE",
+          "data": {},
+          "position": {
+            "x": -5,
+            "y": 0
+          }
+        },
+        {
+          "componentTypeID": "logix_builtin.script_type.PIN",
+          "data": {
+            "bits": 1,
+            "values": [
+              1
+            ],
+            "label": "Q",
+            "behaviour": 1,
+            "side": 3
+          },
+          "position": {
+            "x": 3,
+            "y": 2
+          }
+        },
+        {
+          "componentTypeID": "logix_builtin.script_type.PIN",
+          "data": {
+            "bits": 1,
+            "values": [
+              0
+            ],
+            "label": "!Q",
+            "behaviour": 1,
+            "side": 3
+          },
+          "position": {
+            "x": 3,
+            "y": -4
+          }
+        }
+      ],
+      "wires": [
+        {
+          "segments": [
+            [
+              {
+                "x": -10,
+                "y": -6
+              },
+              {
+                "x": -6,
+                "y": -6
+              }
+            ]
+          ]
+        },
+        {
+          "segments": [
+            [
+              {
+                "x": -10,
+                "y": 1
+              },
+              {
+                "x": -6,
+                "y": 1
+              }
+            ]
+          ]
+        },
+        {
+          "segments": [
+            [
+              {
+                "x": -1,
+                "y": -6
+              },
+              {
+                "x": -1,
+                "y": -3
+              }
+            ],
+            [
+              {
+                "x": -1,
+                "y": -3
+              },
+              {
+                "x": -6,
+                "y": -3
+              }
+            ],
+            [
+              {
+                "x": -6,
+                "y": -3
+              },
+              {
+                "x": -6,
+                "y": 0
+              }
+            ],
+            [
+              {
+                "x": -1,
+                "y": -6
+              },
+              {
+                "x": 5,
+                "y": -6
+              }
+            ],
+            [
+              {
+                "x": 5,
+                "y": -6
+              },
+              {
+                "x": 5,
+                "y": -4
+              }
+            ]
+          ]
+        },
+        {
+          "segments": [
+            [
+              {
+                "x": -1,
+                "y": 0
+              },
+              {
+                "x": -1,
+                "y": -2
+              }
+            ],
+            [
+              {
+                "x": -1,
+                "y": -2
+              },
+              {
+                "x": -7,
+                "y": -2
+              }
+            ],
+            [
+              {
+                "x": -7,
+                "y": -2
+              },
+              {
+                "x": -7,
+                "y": -5
+              }
+            ],
+            [
+              {
+                "x": -7,
+                "y": -5
+              },
+              {
+                "x": -6,
+                "y": -5
+              }
+            ],
+            [
+              {
+                "x": -1,
+                "y": 0
+              },
+              {
+                "x": 5,
+                "y": 0
+              }
+            ],
+            [
+              {
+                "x": 5,
+                "y": 0
+              },
+              {
+                "x": 5,
+                "y": 2
+              }
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "id": "5783773d-ee3d-41c0-b132-e2684d8040e7",
+      "iterationID": "b3cc9114-8835-4958-a262-45a61768d7ed",
+      "name": "d latch",
+      "components": [
+        {
+          "componentTypeID": "logix_builtin.script_type.PIN",
+          "data": {
+            "bits": 1,
+            "values": [
+              0
+            ],
+            "label": "D",
+            "behaviour": 0,
+            "side": 2
+          },
+          "position": {
+            "x": -8,
+            "y": -2
+          }
+        },
+        {
+          "componentTypeID": "logix_builtin.script_type.PIN",
+          "data": {
+            "bits": 1,
+            "values": [
+              0
+            ],
+            "label": "\u003E",
+            "behaviour": 0,
+            "side": 2
+          },
+          "position": {
+            "x": -8,
+            "y": 0
+          }
+        },
+        {
+          "componentTypeID": "logix_builtin.script_type.INTEGRATED",
+          "data": {
+            "circuitID": "721841ad-6ab1-4fbf-9b13-4774d7905423"
+          },
+          "position": {
+            "x": 11,
+            "y": -4
+          }
+        },
+        {
+          "componentTypeID": "logix_builtin.script_type.NOR_GATE",
+          "data": {},
+          "position": {
+            "x": -4,
+            "y": -6
+          }
+        },
+        {
+          "componentTypeID": "logix_builtin.script_type.AND_GATE",
+          "data": {},
+          "position": {
+            "x": 3,
+            "y": -6
+          }
+        },
+        {
+          "componentTypeID": "logix_builtin.script_type.AND_GATE",
+          "data": {},
+          "position": {
+            "x": 3,
+            "y": -4
+          }
+        },
+        {
+          "componentTypeID": "logix_builtin.script_type.PIN",
+          "data": {
+            "bits": 1,
+            "values": [
+              1
+            ],
+            "label": "Q",
+            "behaviour": 1,
+            "side": 3
+          },
+          "position": {
+            "x": -8,
+            "y": 2
+          }
+        },
+        {
+          "componentTypeID": "logix_builtin.script_type.PIN",
+          "data": {
+            "bits": 1,
+            "values": [
+              0
+            ],
+            "label": "!Q",
+            "behaviour": 1,
+            "side": 3
+          },
+          "position": {
+            "x": -8,
+            "y": 4
+          }
+        }
+      ],
+      "wires": [
+        {
+          "segments": [
+            [
+              {
+                "x": -6,
+                "y": -2
+              },
+              {
+                "x": -6,
+                "y": -5
+              }
+            ],
+            [
+              {
+                "x": -6,
+                "y": -5
+              },
+              {
+                "x": -5,
+                "y": -5
+              }
+            ],
+            [
+              {
+                "x": -6,
+                "y": -5
+              },
+              {
+                "x": -6,
+                "y": -6
+              }
+            ],
+            [
+              {
+                "x": -6,
+                "y": -6
+              },
+              {
+                "x": -5,
+                "y": -6
+              }
+            ],
+            [
+              {
+                "x": -6,
+                "y": -2
+              },
+              {
+                "x": 2,
+                "y": -2
+              }
+            ],
+            [
+              {
+                "x": 2,
+                "y": -2
+              },
+              {
+                "x": 2,
+                "y": -3
+              }
+            ]
+          ]
+        },
+        {
+          "segments": [
+            [
+              {
+                "x": 0,
+                "y": -6
+              },
+              {
+                "x": 2,
+                "y": -6
+              }
+            ]
+          ]
+        },
+        {
+          "segments": [
+            [
+              {
+                "x": -6,
+                "y": 0
+              },
+              {
+                "x": 1,
+                "y": 0
+              }
+            ],
+            [
+              {
+                "x": 1,
+                "y": 0
+              },
+              {
+                "x": 1,
+                "y": -4
+              }
+            ],
+            [
+              {
+                "x": 1,
+                "y": -4
+              },
+              {
+                "x": 2,
+                "y": -4
+              }
+            ],
+            [
+              {
+                "x": 1,
+                "y": -4
+              },
+              {
+                "x": 1,
+                "y": -5
+              }
+            ],
+            [
+              {
+                "x": 1,
+                "y": -5
+              },
+              {
+                "x": 2,
+                "y": -5
+              }
+            ]
+          ]
+        },
+        {
+          "segments": [
+            [
+              {
+                "x": 7,
+                "y": -4
+              },
+              {
+                "x": 10,
+                "y": -4
+              }
+            ]
+          ]
+        },
+        {
+          "segments": [
+            [
+              {
+                "x": 7,
+                "y": -6
+              },
+              {
+                "x": 9,
+                "y": -6
+              }
+            ],
+            [
+              {
+                "x": 9,
+                "y": -6
+              },
+              {
+                "x": 9,
+                "y": -3
+              }
+            ],
+            [
+              {
+                "x": 9,
+                "y": -3
+              },
+              {
+                "x": 10,
+                "y": -3
+              }
+            ]
+          ]
+        },
+        {
+          "segments": [
+            [
+              {
+                "x": -6,
+                "y": 2
+              },
+              {
+                "x": 8,
+                "y": 2
+              }
+            ],
+            [
+              {
+                "x": 8,
+                "y": 2
+              },
+              {
+                "x": 8,
+                "y": -2
+              }
+            ],
+            [
+              {
+                "x": 8,
+                "y": -2
+              },
+              {
+                "x": 20,
+                "y": -2
+              }
+            ],
+            [
+              {
+                "x": 20,
+                "y": -2
+              },
+              {
+                "x": 20,
+                "y": -4
+              }
+            ],
+            [
+              {
+                "x": 20,
+                "y": -4
+              },
+              {
+                "x": 17,
+                "y": -4
+              }
+            ]
+          ]
+        },
+        {
+          "segments": [
+            [
+              {
+                "x": 19,
+                "y": -3
+              },
+              {
+                "x": 19,
+                "y": -1
+              }
+            ],
+            [
+              {
+                "x": -6,
+                "y": 4
+              },
+              {
+                "x": 9,
+                "y": 4
+              }
+            ],
+            [
+              {
+                "x": 9,
+                "y": 4
+              },
+              {
+                "x": 9,
+                "y": -1
+              }
+            ],
+            [
+              {
+                "x": 9,
+                "y": -1
+              },
+              {
+                "x": 10,
+                "y": -1
+              }
+            ],
+            [
+              {
+                "x": 19,
+                "y": -3
+              },
+              {
+                "x": 17,
+                "y": -3
+              }
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "id": "eb672913-9fb0-42bb-8188-234ce9266e58",
+      "iterationID": "db01a984-16ba-480e-b360-81e85c86b6d9",
+      "name": "testing",
+      "components": [
+        {
+          "componentTypeID": "logix_builtin.script_type.PIN",
+          "data": {
+            "bits": 4,
+            "values": [
+              0,
+              0,
+              0,
+              0
+            ],
+            "label": "X",
+            "behaviour": 0,
+            "side": 2
+          },
+          "position": {
+            "x": -11,
+            "y": -4
+          }
+        },
+        {
+          "componentTypeID": "logix_builtin.script_type.PIN",
+          "data": {
+            "bits": 4,
+            "values": [
+              0,
+              0,
+              0,
+              0
+            ],
+            "label": "Y",
+            "behaviour": 1,
+            "side": 2
+          },
+          "position": {
+            "x": -11,
+            "y": -2
+          }
+        },
+        {
+          "componentTypeID": "logix_builtin.script_type.PIN",
+          "data": {
+            "bits": 4,
+            "values": [
+              0,
+              0,
+              0,
+              0
+            ],
+            "label": "Z",
+            "behaviour": 1,
+            "side": 2
+          },
+          "position": {
+            "x": -11,
+            "y": 0
+          }
+        },
+        {
+          "componentTypeID": "content_1.script_type.SPLITTER",
+          "data": {
+            "bitsToSplit": 4,
+            "direction": 0
+          },
+          "position": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "componentTypeID": "logix_builtin.script_type.PIN",
+          "data": {
+            "bits": 1,
+            "values": [
+              0
+            ],
+            "label": "D",
+            "behaviour": 1,
+            "side": 3
+          },
+          "position": {
+            "x": 9,
+            "y": -1
+          }
+        },
+        {
+          "componentTypeID": "logix_builtin.script_type.PIN",
+          "data": {
+            "bits": 1,
+            "values": [
+              0
+            ],
+            "label": "C",
+            "behaviour": 1,
+            "side": 3
+          },
+          "position": {
+            "x": 6,
+            "y": 1
+          }
+        },
+        {
+          "componentTypeID": "logix_builtin.script_type.PIN",
+          "data": {
+            "bits": 1,
+            "values": [
+              0
+            ],
+            "label": "B",
+            "behaviour": 1,
+            "side": 3
+          },
+          "position": {
+            "x": 3,
+            "y": 3
+          }
+        },
+        {
+          "componentTypeID": "logix_builtin.script_type.PIN",
+          "data": {
+            "bits": 1,
+            "values": [
+              0
+            ],
+            "label": "A",
+            "behaviour": 1,
+            "side": 3
+          },
+          "position": {
+            "x": 0,
+            "y": 5
+          }
+        }
+      ],
+      "wires": [
+        {
+          "segments": [
+            [
+              {
+                "x": -1,
+                "y": 0
+              },
+              {
+                "x": -1,
+                "y": -3
+              }
+            ],
+            [
+              {
+                "x": -5,
+                "y": -4
+              },
+              {
+                "x": -5,
+                "y": -3
+              }
+            ],
+            [
+              {
+                "x": -5,
+                "y": -3
+              },
+              {
+                "x": -5,
+                "y": -2
+              }
+            ],
+            [
+              {
+                "x": -5,
+                "y": -2
+              },
+              {
+                "x": -6,
+                "y": -2
+              }
+            ],
+            [
+              {
+                "x": -5,
+                "y": -3
+              },
+              {
+                "x": -1,
+                "y": -3
+              }
+            ],
+            [
+              {
+                "x": -1,
+                "y": 0
+              },
+              {
+                "x": -6,
+                "y": 0
+              }
+            ],
+            [
+              {
+                "x": -5,
+                "y": -4
+              },
+              {
+                "x": -6,
+                "y": -4
+              }
+            ]
+          ]
+        },
+        {
+          "segments": [
+            [
+              {
+                "x": 2,
+                "y": 5
+              },
+              {
+                "x": 2,
+                "y": 3
+              }
+            ]
+          ]
+        },
+        {
+          "segments": [
+            [
+              {
+                "x": 5,
+                "y": 3
+              },
+              {
+                "x": 5,
+                "y": 2
+              }
+            ],
+            [
+              {
+                "x": 5,
+                "y": 2
+              },
+              {
+                "x": 2,
+                "y": 2
+              }
+            ]
+          ]
+        },
+        {
+          "segments": [
+            [
+              {
+                "x": 8,
+                "y": 1
+              },
+              {
+                "x": 8,
+                "y": 0
+              }
+            ],
+            [
+              {
+                "x": 8,
+                "y": 0
+              },
+              {
+                "x": 5,
+                "y": 0
+              }
+            ],
+            [
+              {
+                "x": 5,
+                "y": 0
+              },
+              {
+                "x": 5,
+                "y": 1
+              }
+            ],
+            [
+              {
+                "x": 5,
+                "y": 1
+              },
+              {
+                "x": 2,
+                "y": 1
+              }
+            ]
+          ]
+        },
+        {
+          "segments": [
+            [
+              {
+                "x": 11,
+                "y": -1
+              },
+              {
+                "x": 11,
+                "y": -2
+              }
+            ],
+            [
+              {
+                "x": 11,
+                "y": -2
+              },
+              {
+                "x": 2,
+                "y": -2
+              }
+            ],
+            [
+              {
+                "x": 2,
+                "y": -2
+              },
+              {
+                "x": 2,
+                "y": 0
+              }
+            ]
+          ]
+        }
+      ]
+    }
+  ],
+  "lastOpenedCircuit": "721841ad-6ab1-4fbf-9b13-4774d7905423"
+}

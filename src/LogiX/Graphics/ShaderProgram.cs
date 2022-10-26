@@ -71,6 +71,40 @@ public class ShaderProgram : GLContentItem<ShaderProgramDescription>
     {
     }
 
+    private ShaderProgram(VertexShader vs, FragmentShader fs) : base("", null, new ShaderProgramDescription())
+    {
+        this.InitGL(vs, fs);
+    }
+
+    public static ShaderProgram Create(VertexShader vs, FragmentShader fs)
+    {
+        return new ShaderProgram(vs, fs);
+    }
+
+    public unsafe void InitGL(VertexShader vs, FragmentShader fs)
+    {
+        // Create program
+        uint programID = glCreateProgram();
+        glAttachShader(programID, vs.ShaderID);
+        glAttachShader(programID, fs.ShaderID);
+
+        // Link program
+        glLinkProgram(programID);
+        int* status = stackalloc int[1];
+        glGetProgramiv(programID, GL_LINK_STATUS, status);
+
+        if (*status == GL_FALSE)
+        {
+            int* length = stackalloc int[1];
+            glGetProgramiv(programID, GL_INFO_LOG_LENGTH, length);
+            string info = glGetProgramInfoLog(programID, *length);
+
+            throw new Exception($"Failed to link shader program: {info}");
+        }
+
+        this.ProgramID = programID;
+    }
+
     public unsafe override void InitGL(ShaderProgramDescription newContent)
     {
         var vertexShader = LogiX.ContentManager.GetContentItem<VertexShader>(newContent.VertexShader);

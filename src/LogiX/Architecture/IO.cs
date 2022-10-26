@@ -4,46 +4,58 @@ namespace LogiX;
 
 public class IO
 {
+    public string Identifier { get; set; }
     public string[] Tags { get; }
+    public ComponentSide Side { get; }
+    public int Bits { get; }
 
-    private LogicValue TrueValue { get; set; }
-    private LogicValue PushedValue { get; set; }
+    private LogicValue[] TrueValues { get; set; }
+    private LogicValue[] PushedValues { get; set; }
 
     private bool Pushing { get; set; }
 
-    public IO(params string[] tags)
+    public IO(string identifier, int bits, ComponentSide side, string[] tags)
     {
-        Tags = tags;
-        TrueValue = LogicValue.UNDEFINED;
-        PushedValue = LogicValue.UNDEFINED;
-        Pushing = false;
+        this.Identifier = identifier;
+        this.Bits = bits;
+        this.Side = side;
+        this.Tags = tags;
+        this.TrueValues = Enumerable.Repeat(LogicValue.UNDEFINED, bits).ToArray();
+        this.PushedValues = Enumerable.Repeat(LogicValue.UNDEFINED, bits).ToArray();
+        this.Pushing = false;
     }
 
-    public void Push(LogicValue value)
+    public void Push(params LogicValue[] values)
     {
-        PushedValue = value;
-        Pushing = true;
+        if (values.Length != Bits)
+            throw new ArgumentException("The number of values pushed must match the number of bits in the IO.");
+
+        if (values.All(v => v == LogicValue.UNDEFINED))
+            return;
+
+        this.PushedValues = values;
+        this.Pushing = true;
     }
 
     public void ResetPushed()
     {
-        PushedValue = LogicValue.UNDEFINED;
-        Pushing = false;
+        this.PushedValues = Enumerable.Repeat(LogicValue.UNDEFINED, this.Bits).ToArray();
+        this.Pushing = false;
     }
 
-    public LogicValue GetValue()
+    public LogicValue[] GetValues()
     {
-        return this.TrueValue;
+        return this.TrueValues;
     }
 
-    public LogicValue GetPushedValue()
+    public LogicValue[] GetPushedValues()
     {
-        return this.PushedValue;
+        return this.PushedValues;
     }
 
-    public void SetValue(LogicValue value)
+    public void SetValues(params LogicValue[] values)
     {
-        this.TrueValue = value;
+        this.TrueValues = values;
     }
 
     public bool IsPushing()

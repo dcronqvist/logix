@@ -3,36 +3,56 @@ using System.Drawing;
 using System.Linq;
 using System.Numerics;
 using LogiX.Architecture;
+using LogiX.Architecture.BuiltinComponents;
 using LogiX.Architecture.Serialization;
 using LogiX.Graphics;
 using LogiX.Rendering;
 
 namespace LogiX;
 
-public class ValueCollection : List<LogicValue[]>
+public class ValueCollection : List<(LogicValue[], IO, Component)>
 {
     public bool AnyPushed()
     {
         return this.Count > 0;
     }
 
-    public bool AllAgree()
+    public bool AllAgree(out LogicValue[] correctValues)
     {
         if (this.Count == 0)
         {
+            correctValues = null;
             return false;
         }
 
-        LogicValue[] values = this[0];
+        LogicValue[] agreedValues = this[0].Item1;
 
-        foreach (LogicValue[] pushedValues in this)
+        for (int i = 1; i < this.Count; i++)
         {
-            if (!Utilities.SameAs(pushedValues, values))
+            var arr = this[i].Item1;
+
+            for (int j = 0; j < arr.Length; j++)
             {
-                return false;
+                if (arr[j] != agreedValues[j])
+                {
+                    if (arr[j] == LogicValue.UNDEFINED)
+                    {
+                        agreedValues[j] = agreedValues[j];
+                    }
+                    else if (agreedValues[j] == LogicValue.UNDEFINED)
+                    {
+                        agreedValues[j] = arr[j];
+                    }
+                    else
+                    {
+                        correctValues = null;
+                        return false;
+                    }
+                }
             }
         }
 
+        correctValues = agreedValues;
         return true;
     }
 
@@ -43,9 +63,9 @@ public class ValueCollection : List<LogicValue[]>
             return false;
         }
 
-        int width = this[0].Length;
+        int width = this[0].Item1.Length;
 
-        foreach (LogicValue[] pushedValues in this)
+        foreach ((LogicValue[] pushedValues, _, _) in this)
         {
             if (pushedValues.Length != width)
             {
@@ -64,7 +84,6 @@ public enum LogicValueRetrievalStatus
     NOTHING_PUSHED,
     DISAGREE,
 }
-
 public abstract class SimulationError
 {
     public string Message { get; set; }
@@ -95,14 +114,13 @@ public class ReadWrongAmountOfBitsError : SimulationError
     public override void Render(Camera2D cam)
     {
         var shader = LogiX.ContentManager.GetContentItem<ShaderProgram>("content_1.shader_program.primitive");
-        PrimitiveRenderer.RenderCircle(shader, this.Pos.ToVector2(16), 8, 0f, ColorF.Red, cam);
+        PrimitiveRenderer.RenderCircle(shader, this.Pos.ToVector2(Constants.GRIDSIZE), 8, 0f, ColorF.Red, cam);
         var tShader = LogiX.ContentManager.GetContentItem<ShaderProgram>("content_1.shader_program.text");
         var font = LogiX.ContentManager.GetContentItem<Font>("content_1.font.default");
         var measure = font.MeasureString(this.Message, 1f);
-        TextRenderer.RenderText(tShader, font, this.Message, this.Pos.ToVector2(16) - measure / 2f, 1f, ColorF.Black, cam);
+        TextRenderer.RenderText(tShader, font, this.Message, this.Pos.ToVector2(Constants.GRIDSIZE) - measure / 2f, 1f, ColorF.Black, cam);
     }
 }
-
 public class PushingDifferentValuesError : SimulationError
 {
     public Wire Wire { get; set; }
@@ -120,8 +138,8 @@ public class PushingDifferentValuesError : SimulationError
         for (int i = 0; i < Wire.Segments.Count; i++)
         {
             var segment = Wire.Segments[i];
-            var a = segment.Item1.ToVector2(16);
-            var b = segment.Item2.ToVector2(16);
+            var a = segment.Item1.ToVector2(Constants.GRIDSIZE);
+            var b = segment.Item2.ToVector2(Constants.GRIDSIZE);
 
             PrimitiveRenderer.RenderLine(pShader, a, b, Constants.WIRE_WIDTH, color, cam);
         }
@@ -130,7 +148,7 @@ public class PushingDifferentValuesError : SimulationError
 
         foreach (var point in segmentPoints)
         {
-            var worldPos = point.ToVector2(16);
+            var worldPos = point.ToVector2(Constants.GRIDSIZE);
             //PrimitiveRenderer.RenderCircle(pShader, worldPos, Constants.WIRE_POINT_RADIUS, 0, color, cam);
             PrimitiveRenderer.RenderRectangle(pShader, new RectangleF(worldPos.X, worldPos.Y, 0, 0).Inflate(Constants.WIRE_WIDTH / 2f), Vector2.Zero, 0, color, cam);
         }
@@ -139,25 +157,46 @@ public class PushingDifferentValuesError : SimulationError
         var tShader = LogiX.ContentManager.GetContentItem<ShaderProgram>("content_1.shader_program.text");
         var font = LogiX.ContentManager.GetContentItem<Font>("content_1.font.default");
         var measure = font.MeasureString(this.Message, 0.5f);
-        TextRenderer.RenderText(tShader, font, this.Message, Utilities.GetMiddleOfVec2(firstSegment.Item1.ToVector2(16), firstSegment.Item2.ToVector2(16)) - measure / 2f, 0.5f, ColorF.Black, cam);
+        TextRenderer.RenderText(tShader, font, this.Message, Utilities.GetMiddleOfVec2(firstSegment.Item1.ToVector2(Constants.GRIDSIZE), firstSegment.Item2.ToVector2(Constants.GRIDSIZE)) - measure / 2f, 0.5f, ColorF.Black, cam);
+    }
+}
+
+public class ICIsOldError : SimulationError
+{
+    public Integrated IC { get; set; }
+
+    public ICIsOldError(Integrated ic) : base($"IC_IS_OLD")
+    {
+        this.IC = ic;
+    }
+
+    public override void Render(Camera2D cam)
+    {
+        var tShader = LogiX.ContentManager.GetContentItem<ShaderProgram>("content_1.shader_program.text");
+        var font = LogiX.ContentManager.GetContentItem<Font>("content_1.font.default");
+        var size = this.IC.GetBoundingBox(out _).GetSize();
+        var pos = this.IC.Position.ToVector2(Constants.GRIDSIZE);
+
+        var measure = font.MeasureString(this.Message, 1f);
+        TextRenderer.RenderText(tShader, font, this.Message, pos + new Vector2(size.X / 2f, -15) - measure / 2f, 1f, ColorF.Red, cam);
     }
 }
 
 public class Simulation
 {
     public List<Component> Components { get; private set; } = new();
-    public Dictionary<Vector2i, ValueCollection> NewValues { get; private set; } = new();
-    public Dictionary<Vector2i, ValueCollection> CurrentValues { get; private set; } = new();
+    public Dictionary<Vector2i, ValueCollection> NewValues { get; set; } = new();
+    public Dictionary<Vector2i, ValueCollection> CurrentValues { get; set; } = new();
     public List<Wire> Wires { get; private set; } = new();
     public List<Component> SelectedComponents { get; set; } = new();
-    public List<SimulationError> PreviousErrors { get; private set; } = new();
-    public List<SimulationError> Errors { get; private set; } = new();
+    public List<SimulationError> PreviousErrors { get; set; } = new();
+    public List<SimulationError> Errors { get; set; } = new();
 
     public Simulation()
     {
     }
 
-    public bool TryGetLogicValuesAtPosition(Vector2i position, int expectedWidth, [NotNullWhen(true)] out LogicValue[] values, [NotNullWhen(false)] out LogicValueRetrievalStatus status)
+    public bool TryGetLogicValuesAtPosition(Vector2i position, int expectedWidth, [NotNullWhen(true)] out LogicValue[] values, [NotNullWhen(false)] out LogicValueRetrievalStatus status, out IO fromIO, out Component fromComp)
     {
         // Find all driven values at that position, if any.
         // If there are no driven values, return UNDEFINED.
@@ -166,22 +205,28 @@ public class Simulation
         {
             values = Enumerable.Repeat(LogicValue.UNDEFINED, expectedWidth).ToArray();
             status = LogicValueRetrievalStatus.NOTHING_PUSHED;
+            fromIO = null;
+            fromComp = null;
             return false;
         }
 
         var pushedValues = CurrentValues[position];
-        if (pushedValues.AllAgree() && pushedValues.AllSameWidth())
+        if (pushedValues.AllAgree(out var agreedValues) && pushedValues.AllSameWidth())
         {
-            if (pushedValues[0].Length == expectedWidth)
+            if (agreedValues.Length == expectedWidth)
             {
-                values = pushedValues[0];
+                values = agreedValues;
                 status = LogicValueRetrievalStatus.SUCCESS;
+                fromIO = pushedValues[0].Item2;
+                fromComp = pushedValues[0].Item3;
                 return true;
             }
             else
             {
-                values = pushedValues[0];
+                values = agreedValues;
                 status = LogicValueRetrievalStatus.DIFF_WIDTH;
+                fromIO = null;
+                fromComp = null;
                 return false;
             }
         }
@@ -190,13 +235,17 @@ public class Simulation
         {
             values = Enumerable.Repeat(LogicValue.UNDEFINED, expectedWidth).ToArray();
             status = LogicValueRetrievalStatus.DIFF_WIDTH;
+            fromIO = null;
+            fromComp = null;
             return false;
         }
 
-        if (!pushedValues.AllAgree())
+        if (!pushedValues.AllAgree(out _))
         {
             values = Enumerable.Repeat(LogicValue.UNDEFINED, expectedWidth).ToArray();
             status = LogicValueRetrievalStatus.DISAGREE;
+            fromIO = null;
+            fromComp = null;
             return false;
         }
 
@@ -216,9 +265,9 @@ public class Simulation
         }
 
         var pushedValues = CurrentValues[position];
-        if (pushedValues.AllAgree() && pushedValues.AllSameWidth())
+        if (pushedValues.AllAgree(out var agreedValues) && pushedValues.AllSameWidth())
         {
-            values = pushedValues[0];
+            values = agreedValues;
             status = LogicValueRetrievalStatus.SUCCESS;
             return true;
         }
@@ -230,7 +279,7 @@ public class Simulation
             return false;
         }
 
-        if (!pushedValues.AllAgree())
+        if (!pushedValues.AllAgree(out _))
         {
             values = null;
             status = LogicValueRetrievalStatus.DISAGREE;
@@ -285,8 +334,8 @@ public class Simulation
         {
             foreach (var seg in w.Segments)
             {
-                var start = seg.Item1.ToVector2(16);
-                var end = seg.Item2.ToVector2(16);
+                var start = seg.Item1.ToVector2(Constants.GRIDSIZE);
+                var end = seg.Item2.ToVector2(Constants.GRIDSIZE);
 
                 if (Vector2.Distance(start, worldPosition) <= Constants.WIRE_POINT_RADIUS)
                 {
@@ -309,7 +358,7 @@ public class Simulation
         return false;
     }
 
-    public void PushValuesAt(Vector2i position, params LogicValue[] values)
+    public void PushValuesAt(Vector2i position, IO fromIO, Component fromComponent, params LogicValue[] values)
     {
         // Attempt to push values to this grid position.
         if (!NewValues.ContainsKey(position))
@@ -322,16 +371,16 @@ public class Simulation
             var positions = wire.GetPoints();
             foreach (var pos in positions)
             {
-                if (this.TryGetIOGroupFromPosition(pos.ToVector2(16), out var group, out var comp))
+                if (this.TryGetIOFromPosition(pos.ToVector2(Constants.GRIDSIZE), out var group, out var comp) || wire.HasEdgeVertexAt(pos))
                 {
                     if (!NewValues.ContainsKey(pos))
                     {
                         NewValues[pos] = new ValueCollection();
                     }
 
-                    NewValues[pos].Add(values);
+                    NewValues[pos].Add((values, fromIO, fromComponent));
 
-                    if (!NewValues[pos].AllAgree())
+                    if (!NewValues[pos].AllAgree(out _))
                     {
                         this.AddError(new PushingDifferentValuesError(wire));
                     }
@@ -340,7 +389,7 @@ public class Simulation
         }
         else
         {
-            NewValues[position].Add(values);
+            NewValues[position].Add((values, fromIO, fromComponent));
         }
     }
 
@@ -369,7 +418,12 @@ public class Simulation
         this.Wires.Add(wire);
     }
 
-    public void Tick()
+    public T[] GetComponentsOfType<T>()
+    {
+        return this.Components.OfType<T>().ToArray();
+    }
+
+    public void Tick(params Type[] noUpdate)
     {
         this.PreviousErrors = Errors;
         this.Errors.Clear();
@@ -377,7 +431,10 @@ public class Simulation
         // Allow components to perform their logic
         foreach (Component component in Components)
         {
-            component.Update(this);
+            if (!noUpdate.Contains(component.GetType()))
+            {
+                component.Update(this);
+            }
         }
 
         // Swap pushed values
@@ -418,48 +475,28 @@ public class Simulation
         {
             error.Render(cam);
         }
-
-        // var font = LogiX.ContentManager.GetContentItem<Font>("content_1.font.default");
-        // var tShader = LogiX.ContentManager.GetContentItem<ShaderProgram>("content_1.shader_program.text");
-        // var pShader = LogiX.ContentManager.GetContentItem<ShaderProgram>("content_1.shader_program.primitive");
-
-        // foreach (var kvp in this.CurrentValues)
-        // {
-        //     var pos = kvp.Key;
-        //     var values = kvp.Value;
-
-        //     var worldPos = pos.ToVector2(16);
-
-        //     if (this.TryGetLogicValuesAtPosition(pos, out var vs, out var status))
-        //     {
-        //         var color = Utilities.GetValueColor(vs);
-        //         var amountOfValues = values.Count;
-
-        //         var text = vs.Select(x => x.ToString().Substring(0, 1)).Aggregate((x, y) => x + y);
-
-        //         PrimitiveRenderer.RenderCircle(pShader, worldPos, 7f, 0f, color, cam);
-        //         TextRenderer.RenderText(tShader, font, text, worldPos - new Vector2(5, 8), 1f, ColorF.Black, cam);
-        //     }
-        // }
     }
 
-    public Circuit GetCircuitInSimulation()
+    public Circuit GetCircuitInSimulation(string name)
     {
-        return new Circuit(this.Components, this.Wires);
+        return new Circuit(name, this.Components, this.Wires);
     }
 
-    public static Simulation FromCircuit(Circuit circuit)
+    public static Simulation FromCircuit(Circuit circuit, params string[] excludeComps)
     {
         var sim = new Simulation();
         foreach (var component in circuit.Components)
         {
+            if (excludeComps.Contains(component.ComponentTypeID))
+                continue;
+
             var c = component.CreateComponent();
             sim.AddComponent(c, c.Position);
         }
 
         foreach (var wire in circuit.Wires)
         {
-
+            sim.AddWire(wire.CreateWire());
         }
 
         return sim;
@@ -482,27 +519,47 @@ public class Simulation
         }
     }
 
-    public bool TryGetIOGroupFromPosition(Vector2 worldPosition, out IOGroup ioGroup, out Component component)
+    public bool TryGetIOFromPosition(Vector2i gridPosition, out IO io, out Component component)
     {
         foreach (var c in this.Components)
         {
-            var positions = c.GetAllGroupPositions();
-
-            for (int i = 0; i < positions.Length; i++)
+            foreach (var i in c.IOs)
             {
-                var pos = positions[i].ToVector2(16);
-                var group = c.GetIOGroup(i);
-
-                if (Vector2.Distance(pos, worldPosition) <= Constants.IO_GROUP_RADIUS)
+                if (c.GetPositionForIO(i, out _) == gridPosition)
                 {
-                    ioGroup = group;
+                    io = i;
                     component = c;
                     return true;
                 }
             }
         }
 
-        ioGroup = null;
+        io = null;
+        component = null;
+        return false;
+    }
+
+    public bool TryGetIOFromPosition(Vector2 worldPosition, out IO io, out Component component)
+    {
+        foreach (var c in this.Components)
+        {
+            var positions = c.GetAllIOPositions();
+
+            for (int i = 0; i < positions.Length; i++)
+            {
+                var pos = positions[i].ToVector2(Constants.GRIDSIZE);
+                var _io = c.GetIO(i);
+
+                if (Vector2.Distance(pos, worldPosition) <= Constants.IO_GROUP_RADIUS)
+                {
+                    io = _io;
+                    component = c;
+                    return true;
+                }
+            }
+        }
+
+        io = null;
         component = null;
         return false;
     }
@@ -588,7 +645,7 @@ public class Simulation
     {
         foreach (var c in this.Components)
         {
-            if (c.GetBoundingBox(out var tz).Contains(pos.ToVector2(16)))
+            if (c.GetBoundingBox(out var tz).Contains(pos.ToVector2(Constants.GRIDSIZE)))
             {
                 component = c;
                 return true;

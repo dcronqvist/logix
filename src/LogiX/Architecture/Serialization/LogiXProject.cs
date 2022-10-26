@@ -1,0 +1,103 @@
+using System.Text.Json;
+using LogiX.Architecture.Serialization;
+
+namespace LogiX.Architecture.Serialization;
+
+public class LogiXProject
+{
+    public string Name { get; set; }
+    public List<Circuit> Circuits { get; set; }
+    public Guid LastOpenedCircuit { get; set; }
+
+    public LogiXProject()
+    {
+        this.Circuits = new List<Circuit>();
+    }
+
+    public static LogiXProject New(string name)
+    {
+        var proj = new LogiXProject()
+        {
+            Name = name
+        };
+
+        proj.AddCircuit(new Circuit("main"));
+        return proj;
+    }
+
+    public void AddCircuit(Circuit circuit)
+    {
+        if (this.Circuits.Any(c => c.Name == circuit.Name))
+        {
+            throw new Exception($"A circuit with the name {circuit.Name} already exists in this project.");
+        }
+
+        this.Circuits.Add(circuit);
+    }
+
+    public void RemoveCircuit(Guid id)
+    {
+        var circuit = this.Circuits.FirstOrDefault(c => c.ID == id);
+        if (circuit == null)
+        {
+            throw new Exception($"A circuit with the ID {id} does not exist in this project.");
+        }
+
+        this.Circuits.Remove(circuit);
+
+        foreach (var c in this.Circuits)
+        {
+            c.RemoveOccurencesOf(id);
+        }
+    }
+
+    public void SetLastOpenedCircuit(Guid circuitID)
+    {
+        this.LastOpenedCircuit = circuitID;
+    }
+
+    public Circuit GetCircuit(Guid id)
+    {
+        return this.Circuits.Find(c => c.ID == id);
+    }
+
+    public void UpdateCircuit(Circuit circuit)
+    {
+        var index = this.Circuits.FindIndex(c => c.ID == circuit.ID);
+        var oldCircuit = this.Circuits[index];
+        this.Circuits[index].Update(circuit);
+        circuit.IterationID = Guid.NewGuid();
+    }
+
+    public void SaveProjectToFile(string path)
+    {
+        var options = new JsonSerializerOptions()
+        {
+            WriteIndented = true,
+            PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+            Converters = { new IComponentDescriptionDataConverter() }
+        };
+
+        string json = JsonSerializer.Serialize(this, options);
+
+        using (var file = new StreamWriter(path))
+        {
+            file.Write(json);
+        }
+    }
+
+    public static LogiXProject FromFile(string path)
+    {
+        using (var file = new StreamReader(path))
+        {
+            var options = new JsonSerializerOptions()
+            {
+                WriteIndented = true,
+                PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+                Converters = { new IComponentDescriptionDataConverter() }
+            };
+
+            return JsonSerializer.Deserialize<LogiXProject>(file.ReadToEnd(), options);
+        }
+    }
+}

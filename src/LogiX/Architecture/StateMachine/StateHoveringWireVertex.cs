@@ -4,9 +4,9 @@ using LogiX.Rendering;
 
 namespace LogiX.Architecture.StateMachine;
 
-public class StateHoveringWireVertex : State<EditorTab, int>
+public class StateHoveringWireVertex : State<Editor, int>
 {
-    public override void Update(EditorTab arg)
+    public override void Update(Editor arg)
     {
         var mouseWorldPos = Input.GetMousePosition(arg.Camera);
 
@@ -31,7 +31,7 @@ public class StateHoveringWireVertex : State<EditorTab, int>
         });
     }
 
-    public override void Render(EditorTab arg)
+    public override void Render(Editor arg)
     {
         var mouseWorld = Input.GetMousePosition(arg.Camera);
         var pShader = LogiX.ContentManager.GetContentItem<ShaderProgram>("content_1.shader_program.primitive");
@@ -39,7 +39,7 @@ public class StateHoveringWireVertex : State<EditorTab, int>
         {
             // if (s.TryGetWireVertexAtPos(mouseWorld, out var pos, out var wire))
             // {
-            PrimitiveRenderer.RenderCircle(pShader, mouseWorld.ToVector2i(16).ToVector2(16), Constants.WIRE_POINT_RADIUS, 0, Constants.COLOR_SELECTED, arg.Camera);
+            PrimitiveRenderer.RenderCircle(pShader, mouseWorld.ToVector2i(Constants.GRIDSIZE).ToVector2(Constants.GRIDSIZE), Constants.WIRE_POINT_RADIUS, 0, Constants.COLOR_SELECTED, arg.Camera);
             // }
         });
     }

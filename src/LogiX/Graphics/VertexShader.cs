@@ -1,4 +1,5 @@
 using System.Diagnostics.CodeAnalysis;
+using LogiX.Graphics;
 using Symphony;
 using static LogiX.OpenGL.GL;
 

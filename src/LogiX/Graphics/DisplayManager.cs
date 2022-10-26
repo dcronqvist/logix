@@ -88,10 +88,16 @@ public static class DisplayManager
     {
         lock (_glLock)
         {
+            var oldContext = Glfw.CurrentContext;
             Glfw.MakeContextCurrent(WindowHandle);
             action();
-            Glfw.MakeContextCurrent(Window.None);
+            Glfw.MakeContextCurrent(oldContext);
         }
+    }
+
+    public static bool HasGLContext()
+    {
+        return Glfw.CurrentContext == WindowHandle;
     }
 
     public unsafe static void InitWindow(int width, int height, string title)

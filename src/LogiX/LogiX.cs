@@ -20,79 +20,11 @@ public class LogiX : Game
     public static ContentManager<ContentMeta> ContentManager { get; private set; }
     bool allContentLoaded = false;
     bool coreLoaded = false;
-
-    // Camera2D cam;
-    // ThreadSafe<Simulation> sim;
-    // Mutex simTickMutex = new();
-    // Task simTickTask;
-    // Framebuffer gui;
-    // double currentDiff = 0;
-    // float ticksPerSecond = 0;
-    // bool ticking = true;
+    public Editor Editor { get; private set; }
 
     public override void Initialize(string[] args)
     {
-        // sim = new(new());
 
-        // sim.LockedAction(s =>
-        // {
-        //     // s.AddComponent(new ANDGate(mapping, 2), new Vector2i(35, 20));
-        //     // s.AddComponent(new ANDGate(mapping, 2), new Vector2i(45, 20));
-
-        //     // var w1 = new Wire(new Vector2i(38, 20), new Vector2i(42, 20));
-        //     // w1.RootNode.Children[0].AddChild(new WireNode(new Vector2i(44, 20)));
-        //     // var w2 = new WireNode(new Vector2i(42, 21));
-        //     // w1.RootNode.Children[0].AddChild(w2);
-        //     // w2.AddChild(new WireNode(new Vector2i(44, 21)));
-
-        //     // var desc = w1.GetDescriptionOfInstance();
-
-        //     // s.AddWire(w1);
-        //     // s.AddComponent(new ANDGate(m1, 2), new Vector2i(35, 30));
-
-        //     // s.AddComponent(new Architecture.Switch(new IOMapping(new IOGroup("g1", ComponentSide.RIGHT, 0))), new Vector2i(30, 20));
-        //     // s.AddComponent(new Architecture.Switch(new IOMapping(new IOGroup("g1", ComponentSide.RIGHT, 0))), new Vector2i(30, 24));
-
-        //     // var w3 = new Wire(new Vector2i(32, 20), new Vector2i(34, 20));
-        //     // s.AddWire(w3);
-
-        //     // var w4 = new Wire(new Vector2i(32, 24), new Vector2i(34, 24));
-        //     // w4.RootNode.Children[0].AddChild(new WireNode(new Vector2i(34, 21)));
-        //     // s.AddWire(w4);
-
-        //     // s.AddComponent(new Architecture.Switch(new IOMapping(new IOGroup("g1", ComponentSide.TOP, 0))), new Vector2i(34, 25));
-        // });
-
-
-        // simTickTask = new Task(async () =>
-        // {
-        //     Stopwatch sw = new();
-        //     sw.Start();
-
-        //     while (true)
-        //     {
-        //         long start = sw.Elapsed.Ticks;
-        //         this.simTickMutex.WaitOne();
-        //         sim.LockedAction(s =>
-        //         {
-        //             s.Tick();
-        //         });
-
-        //         int targetTps = this.tickRates[this.selectedTickRate];
-        //         long targetDiff = TimeSpan.TicksPerSecond / targetTps;
-
-        //         this.simTickMutex.ReleaseMutex();
-
-        //         while (sw.Elapsed.Ticks < start + targetDiff)
-        //         {
-        //             await Task.Delay(TimeSpan.FromTicks(targetDiff / 10));
-        //         }
-
-        //         long diff = sw.Elapsed.Ticks - start;
-        //         double seconds = diff / (double)TimeSpan.TicksPerSecond;
-        //         this.ticksPerSecond = this.ticksPerSecond + (1f / (float)seconds - this.ticksPerSecond) * (0.8f / MathF.Sqrt(targetTps));
-        //     }
-        // });
     }
 
     public override void LoadContent(string[] args)
@@ -147,7 +79,7 @@ public class LogiX : Game
             ScriptManager.Initialize(ContentManager);
             ComponentDescription.RegisterComponentTypes();
 
-            tab = new EditorTab("TestTab");
+            this.Editor = new Editor();
             allContentLoaded = true;
         };
 
@@ -216,11 +148,9 @@ public class LogiX : Game
     {
         if (allContentLoaded)
         {
-            tab.Update();
+            this.Editor.Update();
         }
     }
-
-    private EditorTab tab;
 
     public override void Render()
     {
@@ -249,7 +179,7 @@ public class LogiX : Game
                 Framebuffer.Clear(ColorF.Transparent);
 
                 // TODO: Render editor
-                tab.Render();
+                this.Editor.Render();
 
                 DisplayManager.SwapBuffers(-1);
             }

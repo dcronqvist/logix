@@ -10,6 +10,14 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\..\..\..\modules\Symphony\Symphony\Symphony.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="ImGui.NET" Version="1.86.0" />
+  </ItemGroup>
+
+  <ItemGroup>
     <Reference Include="LogiX">
       <HintPath>../../../../src/LogiX/bin/Debug/net6.0/LogiX.dll</HintPath>
     </Reference>

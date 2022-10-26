@@ -5,6 +5,7 @@ using System.Numerics;
 using LogiX.Architecture.Serialization;
 using LogiX.GLFW;
 using LogiX.Graphics;
+using LogiX.Graphics.UI;
 using LogiX.Rendering;
 
 namespace LogiX.Architecture;
@@ -88,8 +89,6 @@ public abstract class Component
     // There are no implicit inputs or outputs, since all IOs can be driven to a value.
     private Dictionary<string, IO> _ioDict = new();
     public IO[] IOs => _ioDict.Values.ToArray();
-    private IOMapping _mapping;
-    private Dictionary<IO, Wire> _connections = new();
 
     public Vector2i Position { get; set; }
     public abstract string Name { get; }
@@ -97,81 +96,32 @@ public abstract class Component
     public abstract bool DisplayIOGroupIdentifiers { get; }
     public abstract bool ShowPropertyWindow { get; }
 
-    public Component(IOMapping mapping)
+    public Component()
     {
-        _mapping = mapping;
+
     }
 
-    private Vector2 _textSize = Vector2.Zero;
-    private Vector2i _size = Vector2i.Zero;
-
-    public Vector2i GetSize(out Vector2 textSize)
-    {
-        if (_size != Vector2i.Zero)
-        {
-            textSize = _textSize;
-            return _size;
-        }
-
-        // Otherwise, calculate the size of the component.
-        // In order to trigger a recalculation of the component's size, set _size to Vector2i.Zero.
-
-        var font = LogiX.ContentManager.GetContentItem<Font>("content_1.font.default");
-        var pShader = LogiX.ContentManager.GetContentItem<ShaderProgram>("content_1.shaderprogram.primitive");
-        var tShader = LogiX.ContentManager.GetContentItem<ShaderProgram>("content_1.shaderprogram.text");
-
-        var textScale = 1f;
-        var gridSize = 16;
-        var textMeasure = font.MeasureString(Name, textScale);
-        var textWidth = textMeasure.X.CeilToMultipleOf(gridSize);
-        var textHeight = textMeasure.Y.CeilToMultipleOf(gridSize);
-
-        var topIOGroups = this.GetIOGroupsOnSide(ComponentSide.TOP);
-        var bottomIOGroups = this.GetIOGroupsOnSide(ComponentSide.BOTTOM);
-        var leftIOGroups = this.GetIOGroupsOnSide(ComponentSide.LEFT);
-        var rightIOGroups = this.GetIOGroupsOnSide(ComponentSide.RIGHT);
-
-        var maxHorizontalIOs = Math.Max(topIOGroups.Length, bottomIOGroups.Length) - 1;
-        var maxVerticalIOs = Math.Max(leftIOGroups.Length, rightIOGroups.Length) - 1;
-
-        var ioWith = maxHorizontalIOs * gridSize;
-        var ioHeight = maxVerticalIOs * gridSize;
-
-        var width = Math.Max(textWidth, ioWith);
-        var height = Math.Max(textHeight, ioHeight);
-
-        _size = new Vector2i((int)(width / gridSize), (int)(height / gridSize));
-        _textSize = textMeasure;
-        textSize = _textSize;
-
-        if (this.DisplayIOGroupIdentifiers)
-        {
-            float ioGroupTextScale = 1f;
-
-            var horizontalIOs = leftIOGroups.Concat(rightIOGroups).ToArray();
-            var horizontalWidths = horizontalIOs.Select(io => font.MeasureString(io.Identifier, ioGroupTextScale).X);
-            var maxHorizontalWidth = (horizontalWidths.Max() * 2f).CeilToMultipleOf(gridSize);
-
-            _size = new Vector2i((int)((width + maxHorizontalWidth) / gridSize), (int)(height / gridSize));
-        }
-
-
-        return _size;
-    }
-
-    public Vector2i GetSize()
-    {
-        return GetSize(out _);
-    }
+    protected Vector2 _textSize;
+    protected RectangleF _bounds;
 
     public void TriggerSizeRecalculation()
     {
-        _size = Vector2i.Zero;
+        _bounds = RectangleF.Empty;
     }
 
-    public void RegisterIO(string identifier, params string[] tags)
+    public void ClearIOs()
     {
-        _ioDict.Add(identifier, new IO(tags));
+        _ioDict.Clear();
+    }
+
+    public void RegisterIO(string identifier, int bits, ComponentSide side, params string[] tags)
+    {
+        _ioDict.Add(identifier, new IO(identifier, bits, side, tags));
+    }
+
+    public IO[] GetIOsOnSide(ComponentSide side)
+    {
+        return this.IOs.Where(io => io.Side == side).ToArray();
     }
 
     public IO[] GetIOsWithTag(string tag)
@@ -184,83 +134,51 @@ public abstract class Component
         return this.IOs[index];
     }
 
-    public IOGroup GetGroupForIO(IO io, out int groupIndex)
-    {
-        int ioIndex = Array.IndexOf(this.IOs, io);
-
-        for (int i = 0; i < _mapping.GetAmountOfGroups(); i++)
-        {
-            var group = _mapping.GetGroup(i);
-            if (group.IOIndices.Contains(ioIndex))
-            {
-                groupIndex = i;
-                return group;
-            }
-        }
-        groupIndex = -1;
-        return null;
-    }
-
-    public IOGroup GetGroupForIO(IO io)
-    {
-        return this.GetGroupForIO(io, out _);
-    }
-
-    public IOGroup[] GetIOGroupsOnSide(ComponentSide side)
-    {
-        var groups = new List<IOGroup>();
-        for (int i = 0; i < _mapping.GetAmountOfGroups(); i++)
-        {
-            var group = _mapping.GetGroup(i);
-            if (group.Side == side)
-            {
-                groups.Add(group);
-            }
-        }
-        return groups.ToArray();
-    }
-
-    public IO[] GetIOsOnSide(ComponentSide side)
-    {
-        return _ioDict.Values.Where(io => GetGroupForIO(io).Side == side).ToArray();
-    }
-
-    public void ConnectIO(int ioIndexThis, Wire wire)
-    {
-        IO thisIO = this.GetIO(ioIndexThis);
-        _connections.Add(thisIO, wire);
-    }
-
     public IO GetIOFromIdentifier(string id)
     {
         return _ioDict[id];
     }
 
-    public ColorF GetGroupColor(int groupIndex)
+    public ColorF GetIOColor(int ioIndex)
     {
-        var group = _mapping.GetGroup(groupIndex);
-        var iosInGroup = group.IOIndices.Select(x => this.GetIO(x)).ToArray();
-        var valuesInGroup = iosInGroup.Select(x => x.GetValue()).ToArray();
-
-        return Utilities.GetValueColor(valuesInGroup);
+        var io = this.GetIO(ioIndex);
+        return Utilities.GetValueColor(io.GetValues());
     }
 
-    public Vector2i GetPositionForGroup(IOGroup group, out Vector2i lineEndPosition)
+    public Vector2i[] GetAllIOPositions()
     {
-        var index = Array.IndexOf(_mapping.Groups, group);
-        return this.GetPositionForGroup(index, out lineEndPosition);
+        var positions = new List<Vector2i>();
+        for (int i = 0; i < this.IOs.Length; i++)
+        {
+            positions.Add(this.GetPositionForIO(i, out var lineEnd));
+        }
+        return positions.ToArray();
     }
 
-    public Vector2i GetPositionForGroup(int groupIndex, out Vector2i lineEndPosition)
+    public virtual void Interact(Camera2D cam) { }
+
+    public abstract void PerformLogic();
+
+    public int GetIndexOfIO(IO io)
     {
-        var group = this._mapping.GetGroup(groupIndex);
+        return Array.IndexOf(this.IOs, io);
+    }
+
+    public Vector2i GetPositionForIO(IO io, out Vector2i lineEndPosition)
+    {
+        return GetPositionForIO(GetIndexOfIO(io), out lineEndPosition);
+    }
+
+    public Vector2i GetPositionForIO(int index, out Vector2i lineEndPosition)
+    {
+        var io = this.GetIO(index);
         var basePosition = this.Position;
-        var size = this.GetSize();
+        var size = this.GetBoundingBox(out _).GetSize().ToVector2i(Constants.GRIDSIZE);
 
-        int onSide = this._mapping.Groups.Where(g => g.Side == group.Side).Count();
-        var sideIndex = this._mapping.Groups.Where(g => g.Side == group.Side).ToList().IndexOf(group);
+        int onSide = this.IOs.Where(i => i.Side == io.Side).Count();
+        var sideIndex = this.IOs.Where(i => i.Side == io.Side).ToList().IndexOf(io);
 
-        var side = group.Side;
+        var side = io.Side;
 
         if (side == ComponentSide.LEFT)
         {
@@ -288,153 +206,168 @@ public abstract class Component
         }
     }
 
-    public Vector2i[] GetAllGroupPositions()
+    public virtual void Update(Simulation simulation, bool performLogic = true)
     {
-        var positions = new List<Vector2i>();
-        for (int i = 0; i < _mapping.GetAmountOfGroups(); i++)
+        var ios = this.IOs;
+        var amountOfIOs = ios.Length;
+        for (int i = 0; i < amountOfIOs; i++)
         {
-            positions.Add(this.GetPositionForGroup(i, out _));
-        }
-        return positions.ToArray();
-    }
+            var io = ios[i];
+            var ioPos = this.GetPositionForIO(i, out var lineEnd);
 
-    public virtual void Interact(Camera2D cam) { }
-
-    public abstract void PerformLogic();
-
-    public void Update(Simulation simulation)
-    {
-        var amountOfGroups = this._mapping.GetAmountOfGroups();
-        for (int i = 0; i < amountOfGroups; i++)
-        {
-            var group = this._mapping.GetGroup(i);
-            var iosInGroup = group.IOIndices.Select(i => this.GetIO(i)).ToArray();
-            var groupPos = this.GetPositionForGroup(i, out var lineEnd);
-
-            if (simulation.TryGetLogicValuesAtPosition(groupPos, iosInGroup.Length, out var values, out var status))
+            if (simulation.TryGetLogicValuesAtPosition(ioPos, io.Bits, out var values, out var status, out var fromIO, out var fromComp))
             {
-                for (int j = 0; j < values.Length; j++)
-                {
-                    iosInGroup[j].SetValue(values[j]);
-                }
+                if (fromIO != io)
+                    io.SetValues(values);
             }
             else
             {
-                for (int j = 0; j < iosInGroup.Length; j++)
-                {
-                    iosInGroup[j].SetValue(LogicValue.UNDEFINED);
-                }
+                io.SetValues(Enumerable.Repeat(LogicValue.UNDEFINED, io.Bits).ToArray());
 
                 if (status == LogicValueRetrievalStatus.DIFF_WIDTH)
                 {
-                    simulation.AddError(new ReadWrongAmountOfBitsError(this, groupPos, iosInGroup.Length, values.Length));
+                    simulation.AddError(new ReadWrongAmountOfBitsError(this, ioPos, io.Bits, values.Length));
                 }
             }
         }
 
-        PerformLogic();
-
-        amountOfGroups = this._mapping.GetAmountOfGroups();
-        for (int i = 0; i < amountOfGroups; i++)
+        if (performLogic)
         {
-            var group = this._mapping.GetGroup(i);
-            var iosInGroup = group.IOIndices.Select(i => this.GetIO(i)).ToArray();
+            PerformLogic();
+        }
+
+        for (int i = 0; i < amountOfIOs; i++)
+        {
+            var io = ios[i];
+            var ioPos = this.GetPositionForIO(i, out var lineEnd);
 
             // Process group of IO
-            List<LogicValue> values = new();
-            foreach (IO io in iosInGroup)
+            if (io.IsPushing())
             {
-                if (io.IsPushing())
-                {
-                    values.Add(io.GetPushedValue());
-                    io.SetValue(io.GetPushedValue());
-                    io.ResetPushed();
-                }
-            }
-
-            var groupPos = this.GetPositionForGroup(i, out var lineEnd);
-
-            if (values.Count > 0)
-            {
-                simulation.PushValuesAt(groupPos, values.ToArray());
+                simulation.PushValuesAt(ioPos, io, this, io.GetPushedValues());
+                io.SetValues(io.GetPushedValues());
+                io.ResetPushed();
             }
         }
     }
 
-    public RectangleF GetBoundingBox(out Vector2 textSize)
+    public virtual RectangleF GetBoundingBox(out Vector2 textSize)
     {
-        var pos = this.Position.ToVector2(16);
-        var size = this.GetSize(out textSize).ToVector2(16);
-        var rect = pos.CreateRect(size);
-
-        if (this.DisplayIOGroupIdentifiers)
+        if (this._bounds != RectangleF.Empty)
         {
-            return Utilities.Inflate(rect, 0, 5);
+            textSize = _textSize;
+            return this._bounds;
         }
 
-        return Utilities.Inflate(rect, 0, 1);
+        // Otherwise, calculate the size of the component.
+        // In order to trigger a recalculation of the component's size, set _size to Vector2i.Zero.
+        var font = LogiX.ContentManager.GetContentItem<Font>("content_1.font.default");
+        var pShader = LogiX.ContentManager.GetContentItem<ShaderProgram>("content_1.shaderprogram.primitive");
+        var tShader = LogiX.ContentManager.GetContentItem<ShaderProgram>("content_1.shaderprogram.text");
+
+        var textScale = 1f;
+        var gridSize = Constants.GRIDSIZE;
+        var textMeasure = font.MeasureString(Name, textScale);
+        var textWidth = textMeasure.X.CeilToMultipleOf(gridSize);
+        var textHeight = textMeasure.Y.CeilToMultipleOf(gridSize);
+
+        var topIOs = this.GetIOsOnSide(ComponentSide.TOP);
+        var bottomIOs = this.GetIOsOnSide(ComponentSide.BOTTOM);
+        var leftIOs = this.GetIOsOnSide(ComponentSide.LEFT);
+        var rightIOs = this.GetIOsOnSide(ComponentSide.RIGHT);
+
+        var maxHorizontalIOs = Math.Max(topIOs.Length, bottomIOs.Length) - 1;
+        var maxVerticalIOs = Math.Max(leftIOs.Length, rightIOs.Length) - 1;
+
+        var ioWith = maxHorizontalIOs * gridSize;
+        var ioHeight = maxVerticalIOs * gridSize;
+
+        var width = Math.Max(textWidth, ioWith);
+        var height = Math.Max(textHeight, ioHeight);
+
+        var size = new Vector2i((int)(width / gridSize), (int)(height / gridSize));
+        textSize = textMeasure;
+        this._textSize = textMeasure;
+
+        // if (this.DisplayIOGroupIdentifiers)
+        // {
+        //     float ioGroupTextScale = 1f;
+
+        //     var horizontalIOs = leftIOs.Concat(rightIOs).ToArray();
+        //     var horizontalWidths = horizontalIOs.Select(io => font.MeasureString(io.Identifier, ioGroupTextScale).X);
+        //     var maxHorizontalWidth = (horizontalWidths.Max() * 2f).CeilToMultipleOf(gridSize);
+
+        //     size = new Vector2i((int)((width + maxHorizontalWidth) / gridSize), (int)(height / gridSize));
+        // }
+
+        size = new Vector2i(Math.Max(size.X, 1), Math.Max(size.Y, 1));
+
+        var pos = this.Position.ToVector2(Constants.GRIDSIZE);
+        var sizeWorld = size.ToVector2(Constants.GRIDSIZE);
+        var rect = pos.CreateRect(sizeWorld).Inflate(1);
+
+        this._bounds = rect;
+
+        return rect;
     }
 
     public virtual void Render(Camera2D camera)
     {
+        //this.TriggerSizeRecalculation();
         // Position of component
 
         var font = LogiX.ContentManager.GetContentItem<Font>("content_1.font.default");
         var pShader = LogiX.ContentManager.GetContentItem<ShaderProgram>("content_1.shader_program.primitive");
         var tShader = LogiX.ContentManager.GetContentItem<ShaderProgram>("content_1.shader_program.text");
 
-        var pos = this.Position.ToVector2(16);
+        var pos = this.Position.ToVector2(Constants.GRIDSIZE);
         var rect = this.GetBoundingBox(out var textSize);
-        var size = this.GetSize();
-        var realSize = size.ToVector2(16);
+        var size = rect.GetSize().ToVector2i(Constants.GRIDSIZE);
+        var realSize = size.ToVector2(Constants.GRIDSIZE);
+
         // Draw the component
         var textPos = pos + realSize / 2f - textSize / 2f - new Vector2(0, 1);
-        PrimitiveRenderer.RenderRectangle(pShader, rect, Vector2.Zero, 0f, ColorF.White, camera);
-        //PrimitiveRenderer.RenderRectangle(pShader, textPos.CreateRect(textSize), Vector2.Zero, 0f, ColorF.Red, camera);
-        TextRenderer.RenderText(tShader, font, this.Name, textPos, 1, ColorF.Black, camera);
 
-        var amountOfGroups = this._mapping.GetAmountOfGroups();
-        for (int i = 0; i < amountOfGroups; i++)
+        var ios = this.IOs;
+        for (int i = 0; i < ios.Length; i++)
         {
-            var group = this._mapping.GetGroup(i);
-            var iosInGroup = group.IOIndices.Select(i => this.GetIO(i)).ToArray();
-            var groupPos = this.GetPositionForGroup(i, out var lineEnd);
-            var lineEndPos = new Vector2(lineEnd.X * 16, lineEnd.Y * 16);
+            var io = ios[i];
+            var ioPos = this.GetPositionForIO(io, out var lineEnd);
+            var lineEndPos = new Vector2(lineEnd.X * Constants.GRIDSIZE, lineEnd.Y * Constants.GRIDSIZE);
 
             // Draw the group
-            var gPos = new Vector2(groupPos.X * 16, groupPos.Y * 16);
+            var gPos = new Vector2(ioPos.X * Constants.GRIDSIZE, ioPos.Y * Constants.GRIDSIZE);
             int lineThickness = 2;
-            var groupCol = this.GetGroupColor(i);
+            var groupCol = this.GetIOColor(i);
 
             PrimitiveRenderer.RenderLine(pShader, gPos, lineEndPos, lineThickness, groupCol.Darken(0.5f), camera);
             PrimitiveRenderer.RenderCircle(pShader, gPos, Constants.IO_GROUP_RADIUS, 0f, groupCol, camera);
 
-            if (this.DisplayIOGroupIdentifiers)
-            {
-                var measure = font.MeasureString(group.Identifier, 0.5f);
-                var offset = new Vector2(0, 0);
+            // if (this.DisplayIOGroupIdentifiers)
+            // {
+            //     var measure = font.MeasureString(io.Identifier, 0.5f);
+            //     var offset = new Vector2(2, 0);
 
-                if (group.Side == ComponentSide.RIGHT)
-                {
-                    offset = new Vector2(-measure.X, 0);
-                }
+            //     if (io.Side == ComponentSide.RIGHT)
+            //     {
+            //         offset = new Vector2(-measure.X - 2, 0);
+            //     }
 
-                TextRenderer.RenderText(tShader, font, group.Identifier, lineEndPos + new Vector2(0, -measure.Y / 2f) + offset, 1, ColorF.Black, camera);
-            }
+            //     TextRenderer.RenderText(tShader, font, io.Identifier, gPos - measure / 2f, 0.5f, ColorF.Black, camera);
+            // }
         }
+
+        PrimitiveRenderer.RenderRectangle(pShader, rect, Vector2.Zero, 0f, ColorF.White, camera);
+        //PrimitiveRenderer.RenderRectangle(pShader, textPos.CreateRect(textSize), Vector2.Zero, 0f, ColorF.Red, camera);
+        TextRenderer.RenderText(tShader, font, this.Name, textPos, 1, ColorF.Black, camera);
 
         //this.TriggerSizeRecalculation();
     }
 
-    public IOGroup GetIOGroup(int index)
-    {
-        return this._mapping.GetGroup(index);
-    }
-
     public bool IsPositionOn(Vector2 mouseWorldPosition)
     {
-        var pos = this.Position.ToVector2(16);
-        var size = this.GetSize().ToVector2(16);
+        var pos = this.Position.ToVector2(Constants.GRIDSIZE);
+        var size = this.GetBoundingBox(out _).GetSize();
         var rect = pos.CreateRect(size);
 
         return rect.Contains(mouseWorldPosition);
@@ -443,22 +376,20 @@ public abstract class Component
     public void Move(Vector2i delta)
     {
         this.Position += delta;
+        this.TriggerSizeRecalculation();
     }
 
     public void RenderSelected(Camera2D camera)
     {
         // Position of component
-        var pos = new Vector2(this.Position.X * 16, this.Position.Y * 16);
-        var size = this.GetSize();
-
         var font = LogiX.ContentManager.GetContentItem<Font>("content_1.font.default");
         var pShader = LogiX.ContentManager.GetContentItem<ShaderProgram>("content_1.shader_program.primitive");
         var tShader = LogiX.ContentManager.GetContentItem<ShaderProgram>("content_1.shader_program.text");
 
-        var rect = new RectangleF(pos.X, pos.Y, size.X * 16, size.Y * 16);
+        var rect = this.GetBoundingBox(out _);
 
         // Draw the component
-        PrimitiveRenderer.RenderRectangle(pShader, rect.Inflate(3), Vector2.Zero, 0f, Constants.COLOR_SELECTED, camera);
+        PrimitiveRenderer.RenderRectangle(pShader, rect.Inflate(1), Vector2.Zero, 0f, Constants.COLOR_SELECTED, camera);
     }
 
     public abstract IComponentDescriptionData GetDescriptionData();
@@ -472,18 +403,19 @@ public abstract class Component
 
     public ComponentDescription GetDescriptionOfInstance()
     {
-        return new ComponentDescription(this.GetComponentTypeID(), this.Position, this.GetDescriptionData(), this._mapping);
+        return new ComponentDescription(this.GetComponentTypeID(), this.Position, this.GetDescriptionData());
     }
 
-    public abstract void SubmitUISelected();
+    public abstract void SubmitUISelected(int componentIndex);
+
+    public string GetUniqueIdentifier()
+    {
+        return Utilities.GetHash($"{this.GetComponentTypeID()}{this.Position.X}{this.Position.Y}{this.GetHashCode()}");
+    }
 }
 
 public abstract class Component<TData> : Component where TData : IComponentDescriptionData
 {
-    protected Component(IOMapping mapping) : base(mapping)
-    {
-    }
-
     public override void Initialize(IComponentDescriptionData data)
     {
         this.Initialize((TData)data);
@@ -491,96 +423,3 @@ public abstract class Component<TData> : Component where TData : IComponentDescr
 
     public abstract void Initialize(TData data);
 }
-
-// public class ANDGate : Component
-// {
-//     public override string Name => "AND";
-
-//     public ANDGate(IOMapping mapping, int inputBits = 2) : base(mapping)
-//     {
-//         for (int i = 0; i < inputBits; i++)
-//         {
-//             this.RegisterIO($"A{i}", "in");
-//         }
-
-
-//         this.RegisterIO("Y", "out");
-//     }
-
-//     public override void PerformLogic()
-//     {
-//         IO[] inputs = this.GetIOsWithTag("in");
-//         IO output = this.GetIOsWithTag("out").First();
-
-//         if (inputs.Any(io => io.GetValue() == LogicValue.UNDEFINED))
-//         {
-//             return;
-//         }
-
-//         int highs = 0;
-
-//         foreach (IO input in inputs)
-//         {
-//             if (input.GetValue() == LogicValue.HIGH)
-//             {
-//                 highs++;
-//             }
-//         }
-
-//         output.Push(highs == inputs.Length ? LogicValue.HIGH : LogicValue.LOW);
-//     }
-
-//     public override IComponentDescriptionData GetDescriptionData()
-//     {
-//         throw new NotImplementedException();
-//     }
-
-//     public override void Initialize(IComponentDescriptionData data)
-//     {
-//         throw new NotImplementedException();
-//     }
-// }
-
-// public class Switch : Component
-// {
-//     public override string Name => this._value.ToString().Substring(0, 1);
-
-//     private LogicValue _value = LogicValue.LOW;
-
-//     public Switch(IOMapping mapping) : base(mapping)
-//     {
-//         this.RegisterIO("Z", "out");
-//     }
-
-//     public override void PerformLogic()
-//     {
-//         var output = this.GetIOsWithTag("out").First();
-//         output.Push(this._value);
-//     }
-
-//     public override void Interact(Camera2D cam)
-//     {
-//         if (Input.IsMouseButtonPressed(MouseButton.Left))
-//         {
-//             var mousePos = Input.GetMousePosition(cam);
-//             var size = this.GetSize();
-
-//             var rect = new RectangleF(this.Position.X * 16, this.Position.Y * 16, size.X * 16, size.Y * 16);
-
-//             if (rect.Contains(mousePos))
-//             {
-//                 this._value = this._value == LogicValue.LOW ? LogicValue.HIGH : LogicValue.LOW;
-//             }
-//         }
-//     }
-
-//     public override IComponentDescriptionData GetDescriptionData()
-//     {
-//         throw new NotImplementedException();
-//     }
-
-//     public override void Initialize(IComponentDescriptionData data)
-//     {
-//         throw new NotImplementedException();
-//     }
-// }

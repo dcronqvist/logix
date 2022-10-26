@@ -1,4 +1,5 @@
 using System.Numerics;
+using ImGuiNET;
 using LogiX.GLFW;
 using LogiX.Graphics;
 using LogiX.Graphics.UI;
@@ -6,9 +7,9 @@ using LogiX.Rendering;
 
 namespace LogiX.Architecture.StateMachine;
 
-public class StateIdle : State<EditorTab, int>
+public class StateIdle : State<Editor, int>
 {
-    public override void Update(EditorTab arg)
+    public override void Update(Editor arg)
     {
         // Pan around with mouse
         if (Input.IsMouseButtonDown(MouseButton.Middle))
@@ -18,13 +19,13 @@ public class StateIdle : State<EditorTab, int>
 
         var mouseWorldPosition = Input.GetMousePosition(arg.Camera);
 
-        if (!NewGUI.AnyWindowHovered())
+        if (!ImGui.GetIO().WantCaptureMouse)
         {
             arg.Sim.LockedAction(s =>
             {
                 s.Interact(arg.Camera);
 
-                if (s.TryGetIOGroupFromPosition(mouseWorldPosition, out var group, out var comp))
+                if (s.TryGetIOFromPosition(mouseWorldPosition, out var group, out var comp))
                 {
                     this.GoToState<StateHoveringIOGroup>(0);
                     return;

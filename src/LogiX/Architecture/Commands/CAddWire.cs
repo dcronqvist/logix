@@ -1,6 +1,6 @@
 namespace LogiX.Architecture.Commands;
 
-public class CAddWire : Command<EditorTab>
+public class CAddWire : Command<Editor>
 {
     private Vector2i _startPos;
     private Vector2i _endPos;
@@ -11,7 +11,7 @@ public class CAddWire : Command<EditorTab>
         _endPos = endPos;
     }
 
-    public override void Execute(EditorTab arg)
+    public override void Execute(Editor arg)
     {
         arg.Sim.LockedAction(s =>
         {
@@ -19,7 +19,7 @@ public class CAddWire : Command<EditorTab>
         });
     }
 
-    public override void Undo(EditorTab arg)
+    public override void Undo(Editor arg)
     {
         arg.Sim.LockedAction(s =>
         {

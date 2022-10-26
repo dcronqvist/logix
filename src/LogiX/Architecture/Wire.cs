@@ -50,6 +50,19 @@ public class Wire
         return Utilities.GetHash(hash.ToString());
     }
 
+    public bool HasEdgeVertexAt(Vector2i point)
+    {
+        foreach (var segment in this.Segments)
+        {
+            if (segment.Item1 == point || segment.Item2 == point)
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     public Vector2i[] GetPoints()
     {
         var points = new List<Vector2i>();
@@ -69,8 +82,8 @@ public class Wire
 
         foreach (var segment in this.Segments)
         {
-            var a = segment.Item1.ToVector2(16);
-            var b = segment.Item2.ToVector2(16);
+            var a = segment.Item1.ToVector2(Constants.GRIDSIZE);
+            var b = segment.Item2.ToVector2(Constants.GRIDSIZE);
 
             PrimitiveRenderer.RenderLine(pShader, a, b, Constants.WIRE_WIDTH, color, cam);
         }
@@ -79,7 +92,7 @@ public class Wire
 
         foreach (var point in segmentPoints)
         {
-            var worldPos = point.ToVector2(16);
+            var worldPos = point.ToVector2(Constants.GRIDSIZE);
             //PrimitiveRenderer.RenderCircle(pShader, worldPos, Constants.WIRE_POINT_RADIUS, 0, color, cam);
             PrimitiveRenderer.RenderRectangle(pShader, new RectangleF(worldPos.X, worldPos.Y, 0, 0).Inflate(Constants.WIRE_WIDTH / 2f), Vector2.Zero, 0, color, cam);
         }

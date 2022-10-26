@@ -1,6 +1,6 @@
 namespace LogiX.Architecture.Commands;
 
-public class CMoveSelection : Command<EditorTab>
+public class CMoveSelection : Command<Editor>
 {
     public List<Component> Components { get; set; }
     public Vector2i Delta { get; set; }
@@ -11,7 +11,7 @@ public class CMoveSelection : Command<EditorTab>
         this.Delta = delta;
     }
 
-    public override void Execute(EditorTab arg)
+    public override void Execute(Editor arg)
     {
         arg.Sim.LockedAction(s =>
         {
@@ -26,7 +26,7 @@ public class CMoveSelection : Command<EditorTab>
         });
     }
 
-    public override void Undo(EditorTab arg)
+    public override void Undo(Editor arg)
     {
         arg.Sim.LockedAction(s =>
         {

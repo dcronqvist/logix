@@ -1,8 +1,8 @@
 namespace LogiX.Architecture.StateMachine;
 
-public class TabFSM : FSM<EditorTab, int>
+public class EditorFSM : FSM<Editor, int>
 {
-    public TabFSM()
+    public EditorFSM()
     {
         this.AddNewState(new StateIdle());
         this.AddNewState(new StateHoveringIOGroup());

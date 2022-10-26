@@ -6,7 +6,7 @@ public abstract class Command<TArg>
     public abstract void Undo(TArg arg);
     public virtual void Redo(TArg arg) { Execute(arg); }
 
-    public virtual string ToString()
+    public new virtual string ToString()
     {
         return $"{GetType().Name}";
     }

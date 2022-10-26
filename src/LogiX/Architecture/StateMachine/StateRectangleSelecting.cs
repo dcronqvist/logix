@@ -5,16 +5,16 @@ using LogiX.Rendering;
 
 namespace LogiX.Architecture.StateMachine;
 
-public class StateRectangleSelecting : State<EditorTab, int>
+public class StateRectangleSelecting : State<Editor, int>
 {
     private Vector2 _startWorldPos;
 
-    public override void OnEnter(EditorTab updateArg, int arg)
+    public override void OnEnter(Editor updateArg, int arg)
     {
         this._startWorldPos = Input.GetMousePosition(updateArg.Camera);
     }
 
-    public override void Update(EditorTab arg)
+    public override void Update(Editor arg)
     {
         var currentPos = Input.GetMousePosition(arg.Camera);
 
@@ -31,7 +31,7 @@ public class StateRectangleSelecting : State<EditorTab, int>
         }
     }
 
-    public override void Render(EditorTab arg)
+    public override void Render(Editor arg)
     {
         var currentPos = Input.GetMousePosition(arg.Camera);
         var shader = LogiX.ContentManager.GetContentItem<ShaderProgram>("content_1.shader_program.primitive");

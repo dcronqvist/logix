@@ -3,6 +3,7 @@ using System.Numerics;
 using System.Reflection;
 using System.Security.Cryptography;
 using System.Text;
+using ImGuiNET;
 using LogiX.Architecture;
 using LogiX.Graphics;
 
@@ -87,7 +88,7 @@ public static class Utilities
         return new RectangleF(r.X - v.X, r.Y - v.Y, r.Width + v.X * 2, r.Height + v.Y * 2);
     }
 
-    public static Rectangle Inflate(this RectangleF r, float f)
+    public static RectangleF Inflate(this RectangleF r, float f)
     {
         return new Rectangle((int)(r.X - f), (int)(r.Y - f), (int)(r.Width + f * 2), (int)(r.Height + f * 2));
     }
@@ -150,6 +151,9 @@ public static class Utilities
 
         for (int i = 0; i < a.Length; i++)
         {
+            if (a[i] == LogicValue.UNDEFINED || b[i] == LogicValue.UNDEFINED)
+                continue;
+
             if (a[i] != b[i])
                 return false;
         }
@@ -176,9 +180,9 @@ public static class Utilities
     {
         return value switch
         {
-            LogicValue.LOW => ColorF.White,
-            LogicValue.HIGH => ColorF.RoyalBlue,
-            _ => ColorF.Gray
+            LogicValue.LOW => Constants.COLOR_LOW,
+            LogicValue.HIGH => Constants.COLOR_HIGH,
+            _ => Constants.COLOR_UNDEFINED
         };
     }
 
@@ -479,8 +483,8 @@ public static class Utilities
     public static RectangleF GetWireRectangle(Vector2i start, Vector2i end)
     {
         var wireWidth = Constants.WIRE_WIDTH;
-        var wStart = start.ToVector2(16);
-        var wEnd = end.ToVector2(16);
+        var wStart = start.ToVector2(Constants.GRIDSIZE);
+        var wEnd = end.ToVector2(Constants.GRIDSIZE);
 
         if (start.X == end.X)
         {
@@ -526,5 +530,44 @@ public static class Utilities
                 return new RectangleF(b.X - padding, b.Y - padding, (a.X - b.X) + padding * 2, (a.Y - b.Y) + padding * 2);
             }
         }
+    }
+
+    public static Type RecursivelyCheckBaseclassUntilRawGeneric(Type generic, Type toCheck)
+    {
+        var previousType = toCheck;
+        while (toCheck != null && toCheck != typeof(object))
+        {
+            var cur = toCheck.IsGenericType ? toCheck.GetGenericTypeDefinition() : toCheck;
+            if (generic == cur)
+            {
+                return previousType;
+            }
+            previousType = toCheck;
+            toCheck = toCheck.BaseType;
+        }
+        return null;
+    }
+
+    public static void ImGuiHelp(string text)
+    {
+        ImGui.TextDisabled("(?)");
+        if (ImGui.IsItemHovered())
+        {
+            ImGui.BeginTooltip();
+            ImGui.Text(text);
+            ImGui.EndTooltip();
+        }
+    }
+
+    public static void MouseToolTip(string text)
+    {
+        ImGui.BeginTooltip();
+        ImGui.Text(text);
+        ImGui.EndTooltip();
+    }
+
+    public static Vector2 GetSize(this RectangleF rec)
+    {
+        return new Vector2(rec.Width, rec.Height);
     }
 }

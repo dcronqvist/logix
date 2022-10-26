@@ -6,7 +6,7 @@ using LogiX.Rendering;
 
 namespace LogiX.Architecture.StateMachine;
 
-public class StateDraggingWire : State<EditorTab, int>
+public class StateDraggingWire : State<Editor, int>
 {
     private Vector2i _startPos;
     private Vector2i _cornerPos;
@@ -14,19 +14,19 @@ public class StateDraggingWire : State<EditorTab, int>
 
     private Vector2 _determinedDirection;
 
-    public override void OnEnter(EditorTab updateArg, int arg)
+    public override void OnEnter(Editor updateArg, int arg)
     {
         var mouseWorldPos = Input.GetMousePosition(updateArg.Camera);
-        _startPos = mouseWorldPos.ToVector2i(16);
+        _startPos = mouseWorldPos.ToVector2i(Constants.GRIDSIZE);
         _cornerPos = _startPos;
         _endPos = _startPos;
         _determinedDirection = Vector2.Zero;
     }
 
-    public override void Update(EditorTab arg)
+    public override void Update(Editor arg)
     {
         var mouseWorldPos = Input.GetMousePosition(arg.Camera);
-        var mouseGridPos = mouseWorldPos.ToVector2i(16);
+        var mouseGridPos = mouseWorldPos.ToVector2i(Constants.GRIDSIZE);
 
         if (Input.IsMouseButtonDown(MouseButton.Left))
         {
@@ -101,11 +101,11 @@ public class StateDraggingWire : State<EditorTab, int>
         return _cornerPos.X != _endPos.X || _cornerPos.Y != _endPos.Y;
     }
 
-    public override void Render(EditorTab arg)
+    public override void Render(Editor arg)
     {
-        var startWorld = _startPos.ToVector2(16);
-        var cornerWorld = _cornerPos.ToVector2(16);
-        var endWorld = _endPos.ToVector2(16);
+        var startWorld = _startPos.ToVector2(Constants.GRIDSIZE);
+        var cornerWorld = _cornerPos.ToVector2(Constants.GRIDSIZE);
+        var endWorld = _endPos.ToVector2(Constants.GRIDSIZE);
 
         var pShader = LogiX.ContentManager.GetContentItem<ShaderProgram>("content_1.shader_program.primitive");
         PrimitiveRenderer.RenderLine(pShader, startWorld, cornerWorld, Constants.WIRE_WIDTH, ColorF.Green, arg.Camera);

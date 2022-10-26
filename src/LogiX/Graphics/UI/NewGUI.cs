@@ -5,6 +5,13 @@ using LogiX.Rendering;
 
 namespace LogiX.Graphics.UI;
 
+[Flags]
+public enum ButtonFlags
+{
+    None = 1 << 0,
+    Disabled = 1 << 1,
+}
+
 public static class NewGUI
 {
     private static Font Font { get; set; }
@@ -629,7 +636,7 @@ public static class NewGUI
         RenderText(label, position + padded / 2f - size / 2f, NewGUI.TextColor);
     }
 
-    public static bool Button(string label)
+    public static bool Button(string label, ButtonFlags flags = ButtonFlags.None)
     {
         var id = GetNextID(label);
         var env = CurrentEnvironment;
@@ -648,39 +655,47 @@ public static class NewGUI
 
         bool pressed = false;
 
-        if (IsActive(id))
+        if (!flags.HasFlag(ButtonFlags.Disabled))
         {
-            if (Input.IsMouseButtonReleased(MouseButton.Left))
+            if (IsActive(id))
+            {
+                if (Input.IsMouseButtonReleased(MouseButton.Left))
+                {
+                    if (IsHot(id))
+                    {
+                        pressed = true;
+                    }
+
+                    ActiveID = null;
+                }
+            }
+            else if (IsHot(id))
+            {
+                if (Input.IsMouseButtonDown(MouseButton.Left))
+                {
+                    TryBecomeActive(id);
+                }
+            }
+
+            if (rect.Contains(Input.GetMousePositionInWindow()))
+            {
+                TryBecomeHot(id);
+            }
+            else
             {
                 if (IsHot(id))
                 {
-                    pressed = true;
+                    HotID = null;
                 }
-
-                ActiveID = null;
-            }
-        }
-        else if (IsHot(id))
-        {
-            if (Input.IsMouseButtonDown(MouseButton.Left))
-            {
-                TryBecomeActive(id);
-            }
-        }
-
-        if (rect.Contains(Input.GetMousePositionInWindow()))
-        {
-            TryBecomeHot(id);
-        }
-        else
-        {
-            if (IsHot(id))
-            {
-                HotID = null;
             }
         }
 
         var color = GetItemColor(id);
+
+        if (flags.HasFlag(ButtonFlags.Disabled))
+        {
+            color = color * 0.5f;
+        }
 
         RenderRectangle(rect, color);
         RenderText(label, position + (padded - textSize) / 2f, ColorF.White);
@@ -775,6 +790,7 @@ public static class NewGUI
         if (pressed)
         {
             CurrentEnvironment.DirectChildReturnedTrue();
+            // Release active and hot
         }
 
         return pressed;

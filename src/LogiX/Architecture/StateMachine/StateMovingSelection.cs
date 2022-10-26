@@ -4,25 +4,25 @@ using LogiX.GLFW;
 
 namespace LogiX.Architecture.StateMachine;
 
-public class StateMovingSelection : State<EditorTab, int>
+public class StateMovingSelection : State<Editor, int>
 {
     private Vector2 startWorldPos;
     private Vector2 originalStartWorldPos;
 
-    public override void OnEnter(EditorTab updateArg, int arg)
+    public override void OnEnter(Editor updateArg, int arg)
     {
         this.startWorldPos = Input.GetMousePosition(updateArg.Camera);
         this.originalStartWorldPos = this.startWorldPos;
     }
 
-    public override void Update(EditorTab arg)
+    public override void Update(Editor arg)
     {
         var currentMouse = Input.GetMousePosition(arg.Camera);
 
         if (Input.IsMouseButtonDown(MouseButton.Left))
         {
-            var startSnap = this.startWorldPos.ToVector2i(16);
-            var currentSnap = currentMouse.ToVector2i(16);
+            var startSnap = this.startWorldPos.ToVector2i(Constants.GRIDSIZE);
+            var currentSnap = currentMouse.ToVector2i(Constants.GRIDSIZE);
 
             var delta = currentSnap - startSnap;
 
@@ -37,10 +37,10 @@ public class StateMovingSelection : State<EditorTab, int>
         }
         else
         {
-            var currentSnap = currentMouse.ToVector2i(16);
+            var currentSnap = currentMouse.ToVector2i(Constants.GRIDSIZE);
             arg.Sim.LockedAction(s =>
             {
-                arg.Execute(new CMoveSelection(s.SelectedComponents, currentSnap - this.originalStartWorldPos.ToVector2i(16)), arg, false);
+                arg.Execute(new CMoveSelection(s.SelectedComponents, currentSnap - this.originalStartWorldPos.ToVector2i(Constants.GRIDSIZE)), arg, false);
             });
             this.GoToState<StateIdle>(0);
         }

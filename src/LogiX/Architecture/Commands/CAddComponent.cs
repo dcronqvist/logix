@@ -2,7 +2,7 @@ using LogiX.Architecture.Serialization;
 
 namespace LogiX.Architecture.Commands;
 
-public class CAddComponent : Command<EditorTab>
+public class CAddComponent : Command<Editor>
 {
     public Component Component { get; set; }
     public Vector2i Position { get; set; }
@@ -13,7 +13,7 @@ public class CAddComponent : Command<EditorTab>
         this.Position = position;
     }
 
-    public override void Execute(EditorTab arg)
+    public override void Execute(Editor arg)
     {
         arg.Sim.LockedAction(s =>
         {
@@ -23,7 +23,7 @@ public class CAddComponent : Command<EditorTab>
         });
     }
 
-    public override void Undo(EditorTab arg)
+    public override void Undo(Editor arg)
     {
         arg.Sim.LockedAction(s =>
         {

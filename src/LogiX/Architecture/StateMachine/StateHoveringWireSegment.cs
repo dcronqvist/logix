@@ -5,15 +5,15 @@ using LogiX.Rendering;
 
 namespace LogiX.Architecture.StateMachine;
 
-public class StateHoveringWireSegment : State<EditorTab, int>
+public class StateHoveringWireSegment : State<Editor, int>
 {
-    public override void Update(EditorTab arg)
+    public override void Update(Editor arg)
     {
         var mouseWorldPos = Input.GetMousePosition(arg.Camera);
 
         arg.Sim.LockedAction(s =>
         {
-            if (s.TryGetIOGroupFromPosition(mouseWorldPos, out var group, out var comp))
+            if (s.TryGetIOFromPosition(mouseWorldPos, out var group, out var comp))
             {
                 this.GoToState<StateHoveringIOGroup>(0);
             }
@@ -29,13 +29,13 @@ public class StateHoveringWireSegment : State<EditorTab, int>
                 }
                 else if (Input.IsMouseButtonPressed(MouseButton.Right))
                 {
-                    arg.OpenContextMenu(() =>
-                    {
-                        if (NewGUI.MenuItem("Delete"))
-                        {
-                            s.DisconnectPoints(edge.Item1, edge.Item2);
-                        }
-                    });
+                    // arg.OpenContextMenu(() =>
+                    // {
+                    //     if (NewGUI.MenuItem("Delete"))
+                    //     {
+                    //         s.DisconnectPoints(edge.Item1, edge.Item2);
+                    //     }
+                    // });
                 }
             }
             else
@@ -46,19 +46,14 @@ public class StateHoveringWireSegment : State<EditorTab, int>
         });
     }
 
-    public override void Render(EditorTab arg)
+    public override void Render(Editor arg)
     {
         var mouseWorld = Input.GetMousePosition(arg.Camera);
-        var mouseGrid = Input.GetMousePosition(arg.Camera).ToVector2i(16);
+        var mouseGrid = Input.GetMousePosition(arg.Camera).ToVector2i(Constants.GRIDSIZE);
         var pShader = LogiX.ContentManager.GetContentItem<ShaderProgram>("content_1.shader_program.primitive");
         arg.Sim.LockedAction(s =>
         {
-            // if (s.TryGetWireSegmentAtPos(mouseWorld, out var edge, out var wire))
-            // {
-            //     PrimitiveRenderer.RenderLine(pShader, edge.Item1.ToVector2(16), edge.Item2.ToVector2(16), Constants.WIRE_WIDTH, Constants.COLOR_SELECTED, arg.Camera);
-            // }
-
-            PrimitiveRenderer.RenderCircle(pShader, mouseGrid.ToVector2(16), Constants.WIRE_POINT_RADIUS, 0f, Constants.COLOR_SELECTED, arg.Camera);
+            PrimitiveRenderer.RenderCircle(pShader, mouseGrid.ToVector2(Constants.GRIDSIZE), Constants.WIRE_POINT_RADIUS, 0f, Constants.COLOR_SELECTED, arg.Camera);
         });
     }
 }

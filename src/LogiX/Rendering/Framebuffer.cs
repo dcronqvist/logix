@@ -11,7 +11,7 @@ public class Framebuffer
     private static uint _quadVAO;
     private uint renderedTexture;
 
-    public Framebuffer()
+    public Framebuffer(bool acquireGLContext = false)
     {
         DisplayManager.OnFramebufferResize += (window, size) =>
         {
@@ -21,7 +21,17 @@ public class Framebuffer
             });
         };
 
-        this.InitGL();
+        if (acquireGLContext)
+        {
+            DisplayManager.LockedGLContext(() =>
+            {
+                this.InitGL();
+            });
+        }
+        else
+        {
+            this.InitGL();
+        }
     }
 
     private static Camera2D _defaultCam;
@@ -103,17 +113,30 @@ public class Framebuffer
         _defaultCam = new Camera2D(new Vector2(width / 2f, height / 2f), 1f);
     }
 
+    public uint GetTexture()
+    {
+        return this.renderedTexture;
+    }
+
     public void Bind(Action performInBuffer)
     {
+        var prev = GetCurrentBoundBuffer();
         glBindFramebuffer(GL_FRAMEBUFFER, this._framebuffer);
         performInBuffer();
-        glBindFramebuffer(GL_FRAMEBUFFER, 0);
+        glBindFramebuffer(GL_FRAMEBUFFER, prev);
     }
 
     // STATIC STUFF
     public static void BindDefaultFramebuffer()
     {
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    }
+
+    public static uint GetCurrentBoundBuffer()
+    {
+        int[] buffer = new int[1];
+        glGetIntegerv(GL_FRAMEBUFFER_BINDING, 1);
+        return (uint)buffer[0];
     }
 
     public static void Clear(ColorF color)
@@ -137,6 +160,8 @@ public class Framebuffer
             throw new ArgumentException($"Shader is invalid! Missing attributes: {string.Join(", ", missingAttribs)}, missing uniforms: {string.Join(", ", missingUn)}");
         }
 
+        var oldBuffer = GetCurrentBoundBuffer();
+
         BindDefaultFramebuffer();
 
         shader.Use(() =>
@@ -149,5 +174,7 @@ public class Framebuffer
             glDrawArrays(GL_TRIANGLES, 0, 6);
             glBindVertexArray(0);
         });
+
+        glBindFramebuffer(GL_FRAMEBUFFER, oldBuffer);
     }
 }
