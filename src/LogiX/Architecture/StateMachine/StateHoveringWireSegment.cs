@@ -1,3 +1,5 @@
+using ImGuiNET;
+using LogiX.Architecture.Commands;
 using LogiX.GLFW;
 using LogiX.Graphics;
 using LogiX.Graphics.UI;
@@ -29,13 +31,15 @@ public class StateHoveringWireSegment : State<Editor, int>
                 }
                 else if (Input.IsMouseButtonPressed(MouseButton.Right))
                 {
-                    // arg.OpenContextMenu(() =>
-                    // {
-                    //     if (NewGUI.MenuItem("Delete"))
-                    //     {
-                    //         s.DisconnectPoints(edge.Item1, edge.Item2);
-                    //     }
-                    // });
+                    arg.OpenContextMenu(() =>
+                    {
+                        if (ImGui.MenuItem("Delete"))
+                        {
+                            var disconnect = new CDisconnectPoints(edge.Item1, edge.Item2);
+                            arg.Execute(disconnect, arg);
+                            ImGui.CloseCurrentPopup();
+                        }
+                    });
                 }
             }
             else

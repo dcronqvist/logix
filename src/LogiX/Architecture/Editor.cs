@@ -27,7 +27,6 @@ public class Editor : Invoker<Editor>
     public Camera2D Camera { get; private set; }
     public ThreadSafe<Simulation> Sim { get; private set; }
     public Task SimTickTask { get; set; }
-    private Mutex SimTickMutex { get; set; }
     public float CurrentTicksPerSecond { get; set; }
     public int[] AvailableTickRates { get; } = new int[] { 1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024, 2048, 4096, 8192, 16384 };
     public int CurrentlySelectedTickRate { get; set; } = 8;
@@ -38,21 +37,23 @@ public class Editor : Invoker<Editor>
     public string RequestedPopupModalTitle { get; set; }
     public Action RequestedPopupModalSubmit { get; set; }
 
+    public bool RequestedPopupContext { get; set; }
+    public Action RequestedPopupContextSubmit { get; set; }
+    public Vector2 MouseStartPosition { get; set; }
+
     public Editor()
     {
         this.GUIFramebuffer = new(true);
-        this.SimTickMutex = new();
         this.WorkspaceFramebuffer = new(true);
-        NewGUI.Init(LogiX.ContentManager.GetContentItem<Font>("content_1.font.default"));
 
         DisplayManager.LockedGLContext(() =>
         {
-            this.ImGuiController = new((int)DisplayManager.GetWindowSizeInPixels().X, (int)DisplayManager.GetWindowSizeInPixels().Y);
+            this.ImGuiController = new((int)DisplayManager.GetWindowSizeInPixels().X, (int)DisplayManager.GetWindowSizeInPixels().Y, LogiX.ContentManager.GetContentItem<Font>("content_1.font.opensans"));
         });
 
         Input.OnScroll += (sender, e) =>
         {
-            if (!DisplayManager.IsWindowFocused())
+            if (!DisplayManager.IsWindowFocused() || ImGui.GetIO().WantCaptureMouse)
             {
                 return; // Early return if the window is not focused.
             }
@@ -86,6 +87,7 @@ public class Editor : Invoker<Editor>
 
             while (true)
             {
+                long start = sw.Elapsed.Ticks;
                 if (this.Sim is null || !this.SimulationRunning)
                 {
                     this.CurrentTicksPerSecond = 0;
@@ -93,8 +95,6 @@ public class Editor : Invoker<Editor>
                     continue;
                 }
 
-                long start = sw.Elapsed.Ticks;
-                this.SimTickMutex.WaitOne();
                 this.Sim.LockedAction(s =>
                 {
                     s.Tick();
@@ -102,9 +102,6 @@ public class Editor : Invoker<Editor>
 
                 int targetTps = this.AvailableTickRates[this.CurrentlySelectedTickRate];
                 long targetDiff = TimeSpan.TicksPerSecond / targetTps;
-
-                this.SimTickMutex.ReleaseMutex();
-
                 while (sw.Elapsed.Ticks < start + targetDiff)
                 {
                     await Task.Delay(TimeSpan.FromTicks(targetDiff / 10));
@@ -116,6 +113,8 @@ public class Editor : Invoker<Editor>
             }
         });
 
+        thread.IsBackground = true;
+        thread.Priority = ThreadPriority.Highest;
         thread.Start();
     }
 
@@ -124,6 +123,13 @@ public class Editor : Invoker<Editor>
         this.RequestedPopupModal = true;
         this.RequestedPopupModalTitle = title;
         this.RequestedPopupModalSubmit = submit;
+    }
+
+    public void OpenContextMenu(Action submit)
+    {
+        this.RequestedPopupContext = true;
+        this.RequestedPopupContextSubmit = submit;
+        this.MouseStartPosition = Input.GetMousePositionInWindow();
     }
 
     public void SetProject(LogiXProject project)
@@ -144,9 +150,9 @@ public class Editor : Invoker<Editor>
 
     }
 
-    public void OpenCircuit(Guid id)
+    public void OpenCircuit(Guid id, bool save = true)
     {
-        if (this.CurrentlyOpenCircuit is not null)
+        if (this.CurrentlyOpenCircuit is not null && save)
         {
             var newCircuit = this.Sim.LockedAction(s => s.GetCircuitInSimulation(this.CurrentlyOpenCircuit.Name));
             newCircuit.ID = this.CurrentlyOpenCircuit.ID;
@@ -170,8 +176,6 @@ public class Editor : Invoker<Editor>
 
     public void Update()
     {
-        //this.Sim?.LockedAction(s => s.Tick());
-
         if (this.Sim is not null)
         {
             this.FSM?.Update(this);
@@ -230,13 +234,15 @@ public class Editor : Invoker<Editor>
             this.GUIFramebuffer.Bind(() =>
             {
                 Framebuffer.Clear(ColorF.Transparent);
+                ImGui.PushFont(ImGui.GetIO().Fonts.Fonts[1]);
                 this.SubmitGUI();
                 this.FSM?.SubmitUI(this);
+                ImGui.PopFont();
                 this.ImGuiController.Render();
             });
 
             glEnable(GL_BLEND);
-            glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
+            glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
             Framebuffer.RenderFrameBufferToScreen(fShader, this.WorkspaceFramebuffer);
             Framebuffer.RenderFrameBufferToScreen(fShader, this.GUIFramebuffer);
         }
@@ -245,7 +251,9 @@ public class Editor : Invoker<Editor>
             this.GUIFramebuffer.Bind(() =>
             {
                 Framebuffer.Clear(ColorF.Transparent);
+                ImGui.PushFont(ImGui.GetIO().Fonts.Fonts[1]);
                 this.SubmitGUI();
+                ImGui.PopFont();
                 this.ImGuiController.Render();
             });
 
@@ -297,6 +305,11 @@ public class Editor : Invoker<Editor>
             {
                 this.Redo(this);
             }
+            if (ImGui.MenuItem("Delete Selection", "", false, this.Sim.LockedAction(s => s.SelectedComponents.Count > 0)))
+            {
+                var commands = this.Sim.LockedAction(s => s.SelectedComponents.Select(c => new CDeleteComponent(c)));
+                this.Execute(new CMulti(commands.ToArray()), this);
+            }
 
             ImGui.EndMenu();
         }
@@ -343,11 +356,13 @@ public class Editor : Invoker<Editor>
         }
 
         ImGui.Text($"TPS: {this.CurrentTicksPerSecond.GetAsHertzString()}");
+        ImGui.Text($"State: {this.FSM.CurrentState.GetType().Name}");
 
+        var mainMenuBarSize = ImGui.GetWindowSize();
         ImGui.EndMainMenuBar();
 
-        ImGui.SetNextWindowPos(new Vector2(0, 18));
-        ImGui.SetNextWindowSize(new Vector2(140, DisplayManager.GetWindowSizeInPixels().Y - 18));
+        ImGui.SetNextWindowPos(new Vector2(0, mainMenuBarSize.Y));
+        ImGui.SetNextWindowSize(new Vector2(180, DisplayManager.GetWindowSizeInPixels().Y - mainMenuBarSize.Y));
         if (ImGui.Begin("Components", ImGuiWindowFlags.NoCollapse | ImGuiWindowFlags.NoTitleBar | ImGuiWindowFlags.NoResize | ImGuiWindowFlags.NoMove))
         {
             if (ImGui.CollapsingHeader("Project"))
@@ -378,11 +393,33 @@ public class Editor : Invoker<Editor>
                                 if (ImGui.Button("Yes"))
                                 {
                                     this.Project.RemoveCircuit(circuit.ID);
-                                    this.OpenCircuit(this.CurrentlyOpenCircuit.ID);
+                                    this.OpenCircuit(this.CurrentlyOpenCircuit.ID, false);
                                     ImGui.CloseCurrentPopup();
                                 }
                                 ImGui.SameLine();
                                 if (ImGui.Button("No"))
+                                {
+                                    ImGui.CloseCurrentPopup();
+                                }
+                            });
+                        }
+                        if (ImGui.MenuItem("Rename"))
+                        {
+                            this.NewCircuitName = "";
+                            this.OpenPopup("Rename Circuit", () =>
+                            {
+                                ImGui.Text($"Rename circuit '{circuit.Name}' to:");
+                                var circName = this.NewCircuitName;
+                                ImGui.SetKeyboardFocusHere();
+                                ImGui.InputText("##RenameCircuit", ref circName, 16);
+                                this.NewCircuitName = circName;
+                                if (ImGui.Button("Rename") || Input.IsKeyPressed(Keys.Enter))
+                                {
+                                    circuit.Name = circName;
+                                    ImGui.CloseCurrentPopup();
+                                }
+                                ImGui.SameLine();
+                                if (ImGui.Button("Cancel"))
                                 {
                                     ImGui.CloseCurrentPopup();
                                 }
@@ -451,7 +488,8 @@ public class Editor : Invoker<Editor>
             {
                 ImGui.OpenPopup(this.RequestedPopupModalTitle);
 
-                if (ImGui.BeginPopupModal(this.RequestedPopupModalTitle))
+                var open = true;
+                if (ImGui.BeginPopupModal(this.RequestedPopupModalTitle, ref open, ImGuiWindowFlags.AlwaysAutoResize))
                 {
                     this.RequestedPopupModalSubmit.Invoke();
                     ImGui.EndPopup();
@@ -460,6 +498,32 @@ public class Editor : Invoker<Editor>
                 if (!ImGui.IsPopupOpen(this.RequestedPopupModalTitle))
                 {
                     this.RequestedPopupModal = false;
+                }
+            }
+
+            if (this.RequestedPopupContext)
+            {
+                ImGui.OpenPopup("MAINCONTEXT");
+
+                if (ImGui.BeginPopupContextWindow("MAINCONTEXT"))
+                {
+                    this.RequestedPopupContextSubmit.Invoke();
+
+                    var size = ImGui.GetWindowSize();
+                    var position = ImGui.GetWindowPos();
+
+                    if (!position.CreateRect(size).Inflate(20).Contains(Input.GetMousePositionInWindow()))
+                    {
+                        ImGui.CloseCurrentPopup();
+                        this.RequestedPopupContext = false;
+                    }
+
+                    ImGui.EndPopup();
+                }
+
+                if (!ImGui.IsPopupOpen("MAINCONTEXT"))
+                {
+                    this.RequestedPopupContext = false;
                 }
             }
         }

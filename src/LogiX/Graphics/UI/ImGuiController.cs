@@ -38,7 +38,7 @@ namespace LogiX.Graphics.UI
         /// <summary>
         /// Constructs a new ImGuiController.
         /// </summary>
-        public ImGuiController(int width, int height)
+        public unsafe ImGuiController(int width, int height, params Font[] fonts)
         {
             _windowWidth = width;
             _windowHeight = height;
@@ -47,6 +47,14 @@ namespace LogiX.Graphics.UI
             ImGui.SetCurrentContext(context);
             var io = ImGui.GetIO();
             io.Fonts.AddFontDefault();
+
+            foreach (var font in fonts)
+            {
+                fixed (byte* pFontData = &font.Content.Data[0])
+                {
+                    var f = io.Fonts.AddFontFromMemoryTTF((IntPtr)pFontData, font.Content.Data.Length, font.Content.Size);
+                }
+            }
 
             io.BackendFlags |= ImGuiBackendFlags.RendererHasVtxOffset;
 

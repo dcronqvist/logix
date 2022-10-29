@@ -63,7 +63,7 @@ public class Wire
         return false;
     }
 
-    public Vector2i[] GetPoints()
+    public IEnumerable<Vector2i> GetPoints()
     {
         var points = new List<Vector2i>();
         foreach (var segment in this.Segments)
@@ -72,13 +72,13 @@ public class Wire
             points.AddRange(ps);
         }
 
-        return points.Distinct().ToArray();
+        return points.Distinct();
     }
 
     public void Render(Simulation simulation, Camera2D cam)
     {
         var pShader = LogiX.ContentManager.GetContentItem<ShaderProgram>("content_1.shader_program.primitive");
-        var color = GetWireColor(this.GetPoints(), simulation);
+        var color = GetWireColor(this.GetPoints().ToArray(), simulation);
 
         foreach (var segment in this.Segments)
         {

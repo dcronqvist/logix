@@ -89,6 +89,13 @@ public static class DisplayManager
         lock (_glLock)
         {
             var oldContext = Glfw.CurrentContext;
+
+            if (oldContext == WindowHandle)
+            {
+                action();
+                return;
+            }
+
             Glfw.MakeContextCurrent(WindowHandle);
             action();
             Glfw.MakeContextCurrent(oldContext);

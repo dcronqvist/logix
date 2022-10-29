@@ -90,7 +90,7 @@ public class Pin : Component<PinData>
     public override void SubmitUISelected(int componentIndex)
     {
         int bits = this.CurrentValues.Length;
-        ImGui.InputTextWithHint("##label", "Label", ref this._label, 6);
+        ImGui.InputTextWithHint($"Label##{this.GetUniqueIdentifier()}", "Label", ref this._label, 6);
         var currentBehaviour = (int)this._data.Behaviour;
         ImGui.Combo($"Behaviour##{this.GetUniqueIdentifier()}", ref currentBehaviour, new string[] { "Input", "Output" }, 2);
         this._data.Behaviour = (PinBehaviour)currentBehaviour;

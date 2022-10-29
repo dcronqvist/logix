@@ -4,7 +4,7 @@
     {
       "id": "004d91c4-a081-4ce4-8a78-96f7642cb7ab",
       "iterationID": "95184d4d-739f-41e9-b3cf-0ae165eb2ad4",
-      "name": "main",
+      "name": "Main Circuit",
       "components": [
         {
           "componentTypeID": "logix_builtin.script_type.INTEGRATED",
@@ -37,7 +37,7 @@
           "data": {
             "bits": 1,
             "values": [
-              1
+              0
             ],
             "label": "",
             "behaviour": 1,
@@ -96,7 +96,7 @@
           "data": {
             "bits": 1,
             "values": [
-              1
+              0
             ],
             "label": "",
             "behaviour": 1,
@@ -123,7 +123,7 @@
             "bits": 4,
             "values": [
               0,
-              0,
+              1,
               0,
               0
             ],
@@ -142,7 +142,7 @@
             "bits": 4,
             "values": [
               0,
-              0,
+              1,
               0,
               0
             ],
@@ -160,7 +160,7 @@
           "data": {
             "bits": 1,
             "values": [
-              0
+              -1
             ],
             "label": "",
             "behaviour": 1,
@@ -169,6 +169,17 @@
           "position": {
             "x": -19,
             "y": 19
+          }
+        },
+        {
+          "componentTypeID": "content_1.script_type.SPLITTER",
+          "data": {
+            "bitsToSplit": 4,
+            "direction": 0
+          },
+          "position": {
+            "x": -12,
+            "y": 15
           }
         }
       ],
@@ -377,8 +388,38 @@
                 "y": 20
               },
               {
+                "x": -14,
+                "y": 20
+              }
+            ],
+            [
+              {
+                "x": -14,
+                "y": 20
+              },
+              {
                 "x": -10,
                 "y": 20
+              }
+            ],
+            [
+              {
+                "x": -14,
+                "y": 20
+              },
+              {
+                "x": -14,
+                "y": 15
+              }
+            ],
+            [
+              {
+                "x": -14,
+                "y": 15
+              },
+              {
+                "x": -13,
+                "y": 15
               }
             ]
           ]
@@ -405,18 +446,164 @@
                 "y": 20
               },
               {
-                "x": -3,
+                "x": -4,
+                "y": 20
+              }
+            ]
+          ]
+        },
+        {
+          "segments": [
+            [
+              {
+                "x": -10,
+                "y": 24
+              },
+              {
+                "x": -14,
+                "y": 24
+              }
+            ],
+            [
+              {
+                "x": -14,
+                "y": 24
+              },
+              {
+                "x": -14,
+                "y": 26
+              }
+            ],
+            [
+              {
+                "x": -14,
+                "y": 26
+              },
+              {
+                "x": -7,
+                "y": 26
+              }
+            ],
+            [
+              {
+                "x": -7,
+                "y": 26
+              },
+              {
+                "x": -7,
+                "y": 17
+              }
+            ],
+            [
+              {
+                "x": -7,
+                "y": 17
+              },
+              {
+                "x": -10,
+                "y": 17
+              }
+            ]
+          ]
+        },
+        {
+          "segments": [
+            [
+              {
+                "x": -1,
+                "y": 20
+              },
+              {
+                "x": -1,
                 "y": 19
               }
             ],
             [
               {
-                "x": -3,
+                "x": -1,
                 "y": 19
               },
               {
-                "x": -17,
+                "x": -6,
                 "y": 19
+              }
+            ]
+          ]
+        },
+        {
+          "segments": [
+            [
+              {
+                "x": -9,
+                "y": 19
+              },
+              {
+                "x": -9,
+                "y": 15
+              }
+            ],
+            [
+              {
+                "x": -9,
+                "y": 15
+              },
+              {
+                "x": -10,
+                "y": 15
+              }
+            ]
+          ]
+        },
+        {
+          "segments": [
+            [
+              {
+                "x": -10,
+                "y": 16
+              },
+              {
+                "x": -8,
+                "y": 16
+              }
+            ],
+            [
+              {
+                "x": -8,
+                "y": 16
+              },
+              {
+                "x": -8,
+                "y": 25
+              }
+            ],
+            [
+              {
+                "x": -8,
+                "y": 25
+              },
+              {
+                "x": -16,
+                "y": 25
+              }
+            ],
+            [
+              {
+                "x": -16,
+                "y": 25
+              },
+              {
+                "x": -16,
+                "y": 23
+              }
+            ],
+            [
+              {
+                "x": -10,
+                "y": 23
+              },
+              {
+                "x": -14,
+                "y": 23
               }
             ]
           ]
@@ -426,7 +613,7 @@
     {
       "id": "721841ad-6ab1-4fbf-9b13-4774d7905423",
       "iterationID": "504c5880-31e1-4f2b-a256-42ee09101fd5",
-      "name": "sr latch",
+      "name": "SR Latch",
       "components": [
         {
           "componentTypeID": "logix_builtin.script_type.PIN",
@@ -481,7 +668,7 @@
           "data": {
             "bits": 1,
             "values": [
-              1
+              -1
             ],
             "label": "Q",
             "behaviour": 1,
@@ -497,7 +684,7 @@
           "data": {
             "bits": 1,
             "values": [
-              0
+              -1
             ],
             "label": "!Q",
             "behaviour": 1,
@@ -520,20 +707,6 @@
               {
                 "x": -6,
                 "y": -6
-              }
-            ]
-          ]
-        },
-        {
-          "segments": [
-            [
-              {
-                "x": -10,
-                "y": 1
-              },
-              {
-                "x": -6,
-                "y": 1
               }
             ]
           ]
@@ -655,13 +828,27 @@
               }
             ]
           ]
+        },
+        {
+          "segments": [
+            [
+              {
+                "x": -10,
+                "y": 1
+              },
+              {
+                "x": -6,
+                "y": 1
+              }
+            ]
+          ]
         }
       ]
     },
     {
       "id": "5783773d-ee3d-41c0-b132-e2684d8040e7",
       "iterationID": "b3cc9114-8835-4958-a262-45a61768d7ed",
-      "name": "d latch",
+      "name": "D Latch",
       "components": [
         {
           "componentTypeID": "logix_builtin.script_type.PIN",
@@ -1056,7 +1243,7 @@
     {
       "id": "eb672913-9fb0-42bb-8188-234ce9266e58",
       "iterationID": "db01a984-16ba-480e-b360-81e85c86b6d9",
-      "name": "testing",
+      "name": "Weird Test",
       "components": [
         {
           "componentTypeID": "logix_builtin.script_type.PIN",
@@ -1131,15 +1318,15 @@
           "data": {
             "bits": 1,
             "values": [
-              0
+              -1
             ],
             "label": "D",
             "behaviour": 1,
             "side": 3
           },
           "position": {
-            "x": 9,
-            "y": -1
+            "x": 10,
+            "y": 0
           }
         },
         {
@@ -1147,7 +1334,7 @@
           "data": {
             "bits": 1,
             "values": [
-              0
+              -1
             ],
             "label": "C",
             "behaviour": 1,
@@ -1188,6 +1375,407 @@
           "position": {
             "x": 0,
             "y": 5
+          }
+        },
+        {
+          "componentTypeID": "logix_builtin.script_type.TRISTATE_BUFFER",
+          "data": {},
+          "position": {
+            "x": 3,
+            "y": -4
+          }
+        },
+        {
+          "componentTypeID": "logix_builtin.script_type.PIN",
+          "data": {
+            "bits": 1,
+            "values": [
+              0
+            ],
+            "label": "",
+            "behaviour": 0,
+            "side": 2
+          },
+          "position": {
+            "x": -8,
+            "y": -6
+          }
+        },
+        {
+          "componentTypeID": "logix_builtin.script_type.PIN",
+          "data": {
+            "bits": 1,
+            "values": [
+              -1
+            ],
+            "label": "",
+            "behaviour": 1,
+            "side": 0
+          },
+          "position": {
+            "x": 12,
+            "y": -3
+          }
+        },
+        {
+          "componentTypeID": "logix_builtin.script_type.TRISTATE_BUFFER",
+          "data": {},
+          "position": {
+            "x": 5,
+            "y": -1
+          }
+        },
+        {
+          "componentTypeID": "logix_builtin.script_type.PIN",
+          "data": {
+            "bits": 1,
+            "values": [
+              0
+            ],
+            "label": "",
+            "behaviour": 0,
+            "side": 2
+          },
+          "position": {
+            "x": -8,
+            "y": -8
+          }
+        },
+        {
+          "componentTypeID": "logix_builtin.script_type.MULTIPLEXER",
+          "data": {
+            "dataBits": 1,
+            "selectBits": 2
+          },
+          "position": {
+            "x": -5,
+            "y": 16
+          }
+        },
+        {
+          "componentTypeID": "content_1.script_type.SPLITTER",
+          "data": {
+            "bitsToSplit": 4,
+            "direction": 0
+          },
+          "position": {
+            "x": -9,
+            "y": 16
+          }
+        },
+        {
+          "componentTypeID": "logix_builtin.script_type.PIN",
+          "data": {
+            "bits": 4,
+            "values": [
+              0,
+              0,
+              0,
+              0
+            ],
+            "label": "",
+            "behaviour": 0,
+            "side": 2
+          },
+          "position": {
+            "x": -16,
+            "y": 16
+          }
+        },
+        {
+          "componentTypeID": "logix_builtin.script_type.PIN",
+          "data": {
+            "bits": 2,
+            "values": [
+              0,
+              0
+            ],
+            "label": "",
+            "behaviour": 0,
+            "side": 2
+          },
+          "position": {
+            "x": -14,
+            "y": 13
+          }
+        },
+        {
+          "componentTypeID": "content_1.script_type.SPLITTER",
+          "data": {
+            "bitsToSplit": 2,
+            "direction": 0
+          },
+          "position": {
+            "x": -9,
+            "y": 13
+          }
+        },
+        {
+          "componentTypeID": "logix_builtin.script_type.PIN",
+          "data": {
+            "bits": 1,
+            "values": [
+              0
+            ],
+            "label": "",
+            "behaviour": 1,
+            "side": 2
+          },
+          "position": {
+            "x": 2,
+            "y": 17
+          }
+        },
+        {
+          "componentTypeID": "logix_builtin.script_type.REGISTER",
+          "data": {
+            "dataBits": 8
+          },
+          "position": {
+            "x": -6,
+            "y": 28
+          }
+        },
+        {
+          "componentTypeID": "logix_builtin.script_type.PIN",
+          "data": {
+            "bits": 8,
+            "values": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ],
+            "label": "",
+            "behaviour": 0,
+            "side": 2
+          },
+          "position": {
+            "x": -21,
+            "y": 28
+          }
+        },
+        {
+          "componentTypeID": "logix_builtin.script_type.PIN",
+          "data": {
+            "bits": 1,
+            "values": [
+              0
+            ],
+            "label": "",
+            "behaviour": 0,
+            "side": 2
+          },
+          "position": {
+            "x": -13,
+            "y": 30
+          }
+        },
+        {
+          "componentTypeID": "logix_builtin.script_type.PIN",
+          "data": {
+            "bits": 1,
+            "values": [
+              0
+            ],
+            "label": "",
+            "behaviour": 0,
+            "side": 2
+          },
+          "position": {
+            "x": -10,
+            "y": 25
+          }
+        },
+        {
+          "componentTypeID": "logix_builtin.script_type.PIN",
+          "data": {
+            "bits": 1,
+            "values": [
+              0
+            ],
+            "label": "",
+            "behaviour": 0,
+            "side": 2
+          },
+          "position": {
+            "x": -10,
+            "y": 23
+          }
+        },
+        {
+          "componentTypeID": "logix_builtin.script_type.PIN",
+          "data": {
+            "bits": 8,
+            "values": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ],
+            "label": "",
+            "behaviour": 1,
+            "side": 2
+          },
+          "position": {
+            "x": -1,
+            "y": 34
+          }
+        },
+        {
+          "componentTypeID": "logix_builtin.script_type.ADDER",
+          "data": {
+            "dataBits": 8
+          },
+          "position": {
+            "x": -5,
+            "y": 33
+          }
+        },
+        {
+          "componentTypeID": "logix_builtin.script_type.PIN",
+          "data": {
+            "bits": 1,
+            "values": [
+              0
+            ],
+            "label": "",
+            "behaviour": 0,
+            "side": 2
+          },
+          "position": {
+            "x": -13,
+            "y": 32
+          }
+        },
+        {
+          "componentTypeID": "logix_builtin.script_type.SUBTRACTOR",
+          "data": {
+            "dataBits": 8
+          },
+          "position": {
+            "x": -5,
+            "y": 39
+          }
+        },
+        {
+          "componentTypeID": "logix_builtin.script_type.PIN",
+          "data": {
+            "bits": 8,
+            "values": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ],
+            "label": "",
+            "behaviour": 1,
+            "side": 2
+          },
+          "position": {
+            "x": -1,
+            "y": 40
+          }
+        },
+        {
+          "componentTypeID": "logix_builtin.script_type.DIVIDER",
+          "data": {
+            "dataBits": 8
+          },
+          "position": {
+            "x": -5,
+            "y": 45
+          }
+        },
+        {
+          "componentTypeID": "logix_builtin.script_type.PIN",
+          "data": {
+            "bits": 8,
+            "values": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ],
+            "label": "",
+            "behaviour": 0,
+            "side": 2
+          },
+          "position": {
+            "x": -20,
+            "y": 44
+          }
+        },
+        {
+          "componentTypeID": "logix_builtin.script_type.PIN",
+          "data": {
+            "bits": 8,
+            "values": [
+              -1,
+              -1,
+              -1,
+              -1,
+              -1,
+              -1,
+              -1,
+              -1
+            ],
+            "label": "",
+            "behaviour": 1,
+            "side": 2
+          },
+          "position": {
+            "x": -1,
+            "y": 46
+          }
+        },
+        {
+          "componentTypeID": "logix_builtin.script_type.PIN",
+          "data": {
+            "bits": 8,
+            "values": [
+              -1,
+              -1,
+              -1,
+              -1,
+              -1,
+              -1,
+              -1,
+              -1
+            ],
+            "label": "",
+            "behaviour": 1,
+            "side": 2
+          },
+          "position": {
+            "x": -1,
+            "y": 49
+          }
+        },
+        {
+          "componentTypeID": "logix_builtin.script_type.COMPARATOR",
+          "data": {
+            "dataBits": 8
+          },
+          "position": {
+            "x": -5,
+            "y": 53
           }
         }
       ],
@@ -1308,42 +1896,22 @@
           "segments": [
             [
               {
-                "x": 8,
-                "y": 1
+                "x": -6,
+                "y": -6
               },
               {
-                "x": 8,
-                "y": 0
+                "x": 3,
+                "y": -6
               }
             ],
             [
               {
-                "x": 8,
-                "y": 0
+                "x": 3,
+                "y": -6
               },
               {
-                "x": 5,
-                "y": 0
-              }
-            ],
-            [
-              {
-                "x": 5,
-                "y": 0
-              },
-              {
-                "x": 5,
-                "y": 1
-              }
-            ],
-            [
-              {
-                "x": 5,
-                "y": 1
-              },
-              {
-                "x": 2,
-                "y": 1
+                "x": 3,
+                "y": -5
               }
             ]
           ]
@@ -1352,28 +1920,52 @@
           "segments": [
             [
               {
-                "x": 11,
+                "x": 14,
+                "y": -4
+              },
+              {
+                "x": 14,
+                "y": -3
+              }
+            ],
+            [
+              {
+                "x": 7,
+                "y": -4
+              },
+              {
+                "x": 9,
+                "y": -4
+              }
+            ],
+            [
+              {
+                "x": 9,
+                "y": -4
+              },
+              {
+                "x": 14,
+                "y": -4
+              }
+            ],
+            [
+              {
+                "x": 9,
+                "y": -4
+              },
+              {
+                "x": 9,
                 "y": -1
-              },
-              {
-                "x": 11,
-                "y": -2
               }
-            ],
-            [
-              {
-                "x": 11,
-                "y": -2
-              },
-              {
-                "x": 2,
-                "y": -2
-              }
-            ],
+            ]
+          ]
+        },
+        {
+          "segments": [
             [
               {
                 "x": 2,
-                "y": -2
+                "y": -4
               },
               {
                 "x": 2,
@@ -1381,9 +1973,711 @@
               }
             ]
           ]
+        },
+        {
+          "segments": [
+            [
+              {
+                "x": 2,
+                "y": 1
+              },
+              {
+                "x": 4,
+                "y": 1
+              }
+            ],
+            [
+              {
+                "x": 4,
+                "y": 1
+              },
+              {
+                "x": 4,
+                "y": -1
+              }
+            ]
+          ]
+        },
+        {
+          "segments": [
+            [
+              {
+                "x": -6,
+                "y": -8
+              },
+              {
+                "x": 5,
+                "y": -8
+              }
+            ],
+            [
+              {
+                "x": 5,
+                "y": -8
+              },
+              {
+                "x": 5,
+                "y": -2
+              }
+            ]
+          ]
+        },
+        {
+          "segments": [
+            [
+              {
+                "x": 12,
+                "y": -1
+              },
+              {
+                "x": 12,
+                "y": 0
+              }
+            ]
+          ]
+        },
+        {
+          "segments": [
+            [
+              {
+                "x": -7,
+                "y": 16
+              },
+              {
+                "x": -6,
+                "y": 16
+              }
+            ]
+          ]
+        },
+        {
+          "segments": [
+            [
+              {
+                "x": -7,
+                "y": 17
+              },
+              {
+                "x": -6,
+                "y": 17
+              }
+            ]
+          ]
+        },
+        {
+          "segments": [
+            [
+              {
+                "x": -7,
+                "y": 18
+              },
+              {
+                "x": -6,
+                "y": 18
+              }
+            ]
+          ]
+        },
+        {
+          "segments": [
+            [
+              {
+                "x": -7,
+                "y": 19
+              },
+              {
+                "x": -6,
+                "y": 19
+              }
+            ]
+          ]
+        },
+        {
+          "segments": [
+            [
+              {
+                "x": -11,
+                "y": 16
+              },
+              {
+                "x": -10,
+                "y": 16
+              }
+            ]
+          ]
+        },
+        {
+          "segments": [
+            [
+              {
+                "x": -11,
+                "y": 13
+              },
+              {
+                "x": -10,
+                "y": 13
+              }
+            ]
+          ]
+        },
+        {
+          "segments": [
+            [
+              {
+                "x": -7,
+                "y": 13
+              },
+              {
+                "x": -5,
+                "y": 13
+              }
+            ],
+            [
+              {
+                "x": -5,
+                "y": 13
+              },
+              {
+                "x": -5,
+                "y": 15
+              }
+            ]
+          ]
+        },
+        {
+          "segments": [
+            [
+              {
+                "x": -7,
+                "y": 14
+              },
+              {
+                "x": -4,
+                "y": 14
+              }
+            ],
+            [
+              {
+                "x": -4,
+                "y": 14
+              },
+              {
+                "x": -4,
+                "y": 15
+              }
+            ]
+          ]
+        },
+        {
+          "segments": [
+            [
+              {
+                "x": -1,
+                "y": 16
+              },
+              {
+                "x": 4,
+                "y": 16
+              }
+            ],
+            [
+              {
+                "x": 4,
+                "y": 16
+              },
+              {
+                "x": 4,
+                "y": 17
+              }
+            ]
+          ]
+        },
+        {
+          "segments": [
+            [
+              {
+                "x": -11,
+                "y": 29
+              },
+              {
+                "x": -7,
+                "y": 29
+              }
+            ],
+            [
+              {
+                "x": -11,
+                "y": 29
+              },
+              {
+                "x": -11,
+                "y": 30
+              }
+            ]
+          ]
+        },
+        {
+          "segments": [
+            [
+              {
+                "x": -8,
+                "y": 25
+              },
+              {
+                "x": -6,
+                "y": 25
+              }
+            ],
+            [
+              {
+                "x": -6,
+                "y": 25
+              },
+              {
+                "x": -6,
+                "y": 27
+              }
+            ]
+          ]
+        },
+        {
+          "segments": [
+            [
+              {
+                "x": -8,
+                "y": 23
+              },
+              {
+                "x": -5,
+                "y": 23
+              }
+            ],
+            [
+              {
+                "x": -5,
+                "y": 23
+              },
+              {
+                "x": -5,
+                "y": 27
+              }
+            ]
+          ]
+        },
+        {
+          "segments": [
+            [
+              {
+                "x": -1,
+                "y": 33
+              },
+              {
+                "x": 8,
+                "y": 33
+              }
+            ],
+            [
+              {
+                "x": 8,
+                "y": 33
+              },
+              {
+                "x": 8,
+                "y": 34
+              }
+            ]
+          ]
+        },
+        {
+          "segments": [
+            [
+              {
+                "x": -12,
+                "y": 28
+              },
+              {
+                "x": -8,
+                "y": 28
+              }
+            ],
+            [
+              {
+                "x": -8,
+                "y": 28
+              },
+              {
+                "x": -7,
+                "y": 28
+              }
+            ],
+            [
+              {
+                "x": -8,
+                "y": 28
+              },
+              {
+                "x": -8,
+                "y": 34
+              }
+            ],
+            [
+              {
+                "x": -8,
+                "y": 34
+              },
+              {
+                "x": -6,
+                "y": 34
+              }
+            ],
+            [
+              {
+                "x": -8,
+                "y": 34
+              },
+              {
+                "x": -8,
+                "y": 40
+              }
+            ],
+            [
+              {
+                "x": -8,
+                "y": 40
+              },
+              {
+                "x": -6,
+                "y": 40
+              }
+            ],
+            [
+              {
+                "x": -8,
+                "y": 40
+              },
+              {
+                "x": -8,
+                "y": 46
+              }
+            ],
+            [
+              {
+                "x": -8,
+                "y": 46
+              },
+              {
+                "x": -6,
+                "y": 46
+              }
+            ],
+            [
+              {
+                "x": -8,
+                "y": 46
+              },
+              {
+                "x": -8,
+                "y": 54
+              }
+            ],
+            [
+              {
+                "x": -8,
+                "y": 54
+              },
+              {
+                "x": -6,
+                "y": 54
+              }
+            ]
+          ]
+        },
+        {
+          "segments": [
+            [
+              {
+                "x": -3,
+                "y": 30
+              },
+              {
+                "x": -3,
+                "y": 28
+              }
+            ],
+            [
+              {
+                "x": -6,
+                "y": 30
+              },
+              {
+                "x": -3,
+                "y": 30
+              }
+            ],
+            [
+              {
+                "x": -6,
+                "y": 33
+              },
+              {
+                "x": -6,
+                "y": 30
+              }
+            ],
+            [
+              {
+                "x": -3,
+                "y": 30
+              },
+              {
+                "x": -3,
+                "y": 37
+              }
+            ],
+            [
+              {
+                "x": -3,
+                "y": 37
+              },
+              {
+                "x": -6,
+                "y": 37
+              }
+            ],
+            [
+              {
+                "x": -6,
+                "y": 37
+              },
+              {
+                "x": -6,
+                "y": 39
+              }
+            ],
+            [
+              {
+                "x": -3,
+                "y": 37
+              },
+              {
+                "x": -3,
+                "y": 43
+              }
+            ],
+            [
+              {
+                "x": -3,
+                "y": 43
+              },
+              {
+                "x": -6,
+                "y": 43
+              }
+            ],
+            [
+              {
+                "x": -6,
+                "y": 43
+              },
+              {
+                "x": -6,
+                "y": 45
+              }
+            ],
+            [
+              {
+                "x": -3,
+                "y": 43
+              },
+              {
+                "x": -3,
+                "y": 52
+              }
+            ],
+            [
+              {
+                "x": -3,
+                "y": 52
+              },
+              {
+                "x": -6,
+                "y": 52
+              }
+            ],
+            [
+              {
+                "x": -6,
+                "y": 52
+              },
+              {
+                "x": -6,
+                "y": 53
+              }
+            ]
+          ]
+        },
+        {
+          "segments": [
+            [
+              {
+                "x": -1,
+                "y": 39
+              },
+              {
+                "x": 8,
+                "y": 39
+              }
+            ],
+            [
+              {
+                "x": 8,
+                "y": 39
+              },
+              {
+                "x": 8,
+                "y": 40
+              }
+            ]
+          ]
+        },
+        {
+          "segments": [
+            [
+              {
+                "x": -7,
+                "y": 36
+              },
+              {
+                "x": -7,
+                "y": 42
+              }
+            ],
+            [
+              {
+                "x": -7,
+                "y": 32
+              },
+              {
+                "x": -7,
+                "y": 36
+              }
+            ],
+            [
+              {
+                "x": -7,
+                "y": 36
+              },
+              {
+                "x": -5,
+                "y": 36
+              }
+            ],
+            [
+              {
+                "x": -11,
+                "y": 32
+              },
+              {
+                "x": -7,
+                "y": 32
+              }
+            ],
+            [
+              {
+                "x": -7,
+                "y": 32
+              },
+              {
+                "x": -5,
+                "y": 32
+              }
+            ],
+            [
+              {
+                "x": -5,
+                "y": 36
+              },
+              {
+                "x": -5,
+                "y": 38
+              }
+            ]
+          ]
+        },
+        {
+          "segments": [
+            [
+              {
+                "x": -11,
+                "y": 44
+              },
+              {
+                "x": -5,
+                "y": 44
+              }
+            ]
+          ]
+        },
+        {
+          "segments": [
+            [
+              {
+                "x": -2,
+                "y": 45
+              },
+              {
+                "x": 8,
+                "y": 45
+              }
+            ],
+            [
+              {
+                "x": 8,
+                "y": 45
+              },
+              {
+                "x": 8,
+                "y": 46
+              }
+            ]
+          ]
+        },
+        {
+          "segments": [
+            [
+              {
+                "x": 8,
+                "y": 49
+              },
+              {
+                "x": 8,
+                "y": 48
+              }
+            ],
+            [
+              {
+                "x": 8,
+                "y": 48
+              },
+              {
+                "x": -5,
+                "y": 48
+              }
+            ],
+            [
+              {
+                "x": -5,
+                "y": 48
+              },
+              {
+                "x": -5,
+                "y": 47
+              }
+            ]
+          ]
         }
       ]
     }
   ],
-  "lastOpenedCircuit": "721841ad-6ab1-4fbf-9b13-4774d7905423"
+  "lastOpenedCircuit": "eb672913-9fb0-42bb-8188-234ce9266e58"
 }

@@ -107,6 +107,7 @@ public abstract class Component
     public void TriggerSizeRecalculation()
     {
         _bounds = RectangleF.Empty;
+        this._ioPositions.Clear();
     }
 
     public void ClearIOs()
@@ -145,8 +146,13 @@ public abstract class Component
         return Utilities.GetValueColor(io.GetValues());
     }
 
-    public Vector2i[] GetAllIOPositions()
+    public IEnumerable<Vector2i> GetAllIOPositions()
     {
+        if (this._ioPositions.Count == this.IOs.Length)
+        {
+            return this._ioPositions.Select(x => x.Value.Item1);
+        }
+
         var positions = new List<Vector2i>();
         for (int i = 0; i < this.IOs.Length; i++)
         {
@@ -169,8 +175,15 @@ public abstract class Component
         return GetPositionForIO(GetIndexOfIO(io), out lineEndPosition);
     }
 
+    private Dictionary<int, (Vector2i, Vector2i)> _ioPositions = new();
     public Vector2i GetPositionForIO(int index, out Vector2i lineEndPosition)
     {
+        if (_ioPositions.TryGetValue(index, out var pos))
+        {
+            lineEndPosition = pos.Item2;
+            return pos.Item1;
+        }
+
         var io = this.GetIO(index);
         var basePosition = this.Position;
         var size = this.GetBoundingBox(out _).GetSize().ToVector2i(Constants.GRIDSIZE);
@@ -183,21 +196,25 @@ public abstract class Component
         if (side == ComponentSide.LEFT)
         {
             lineEndPosition = new Vector2i(basePosition.X, basePosition.Y + sideIndex);
+            this._ioPositions[index] = (new Vector2i(basePosition.X - 1, basePosition.Y + sideIndex), lineEndPosition);
             return new Vector2i(basePosition.X - 1, basePosition.Y + sideIndex);
         }
         else if (side == ComponentSide.RIGHT)
         {
             lineEndPosition = new Vector2i(basePosition.X + size.X, basePosition.Y + sideIndex);
+            this._ioPositions[index] = (new Vector2i(basePosition.X + size.X + 1, basePosition.Y + sideIndex), lineEndPosition);
             return new Vector2i(basePosition.X + size.X + 1, basePosition.Y + sideIndex);
         }
         else if (side == ComponentSide.TOP)
         {
             lineEndPosition = new Vector2i(basePosition.X + sideIndex, basePosition.Y);
+            this._ioPositions[index] = (new Vector2i(basePosition.X + sideIndex, basePosition.Y - 1), lineEndPosition);
             return new Vector2i(basePosition.X + sideIndex, basePosition.Y - 1);
         }
         else if (side == ComponentSide.BOTTOM)
         {
             lineEndPosition = new Vector2i(basePosition.X + sideIndex, basePosition.Y + size.Y);
+            this._ioPositions[index] = (new Vector2i(basePosition.X + sideIndex, basePosition.Y + size.Y + 1), lineEndPosition);
             return new Vector2i(basePosition.X + sideIndex, basePosition.Y + 1 + size.Y);
         }
         else
@@ -376,6 +393,7 @@ public abstract class Component
     public void Move(Vector2i delta)
     {
         this.Position += delta;
+        this._ioPositions = this._ioPositions.ToDictionary(kvp => kvp.Key, kvp => (kvp.Value.Item1 + delta, kvp.Value.Item2 + delta));
         this.TriggerSizeRecalculation();
     }
 

@@ -62,6 +62,8 @@ public class Font : GLContentItem<FontData>
 
     public unsafe override void InitGL(FontData newContent)
     {
+        this.Characters.Clear();
+
         // Have to init the freetype2 lib.
         this.Lib = new FreeTypeLibrary();
 

@@ -1,5 +1,6 @@
 using System.Numerics;
 using ImGuiNET;
+using LogiX.Architecture.Commands;
 using LogiX.GLFW;
 using LogiX.Graphics;
 using LogiX.Graphics.UI;
@@ -21,32 +22,48 @@ public class StateIdle : State<Editor, int>
 
         if (!ImGui.GetIO().WantCaptureMouse)
         {
-            arg.Sim.LockedAction(s =>
-            {
-                s.Interact(arg.Camera);
+            arg.Sim.LockedAction(s => s.Interact(arg.Camera));
 
+            var done = arg.Sim.LockedAction(s =>
+            {
                 if (s.TryGetIOFromPosition(mouseWorldPosition, out var group, out var comp))
                 {
                     this.GoToState<StateHoveringIOGroup>(0);
-                    return;
+                    return true;
                 }
 
+                return false;
+            });
+            if (done) return;
+
+            done = arg.Sim.LockedAction(s =>
+            {
                 if (s.TryGetWireVertexAtPos(mouseWorldPosition, out var pos, out var wire))
                 {
                     this.GoToState<StateHoveringWireVertex>(0);
-                    return;
+                    return true;
                 }
+                return false;
+            });
+            if (done) return;
 
-                if (s.TryGetWireSegmentAtPos(mouseWorldPosition, out var edge, out wire))
+            done = arg.Sim.LockedAction(s =>
+            {
+                if (s.TryGetWireSegmentAtPos(mouseWorldPosition, out var edge, out var wire))
                 {
                     this.GoToState<StateHoveringWireSegment>(0);
-                    return;
+                    return true;
                 }
+                return false;
+            });
+            if (done) return;
 
-                if (Input.IsMouseButtonPressed(MouseButton.Left))
+            if (Input.IsMouseButtonPressed(MouseButton.Left))
+            {
+                arg.Sim.LockedAction(s =>
                 {
                     // Check if we clicked on a component
-                    if (s.TryGetComponentAtPos(mouseWorldPosition, out comp))
+                    if (s.TryGetComponentAtPos(mouseWorldPosition, out var comp))
                     {
                         // If we clicked on a component and it isn't selected, select it.
                         if (!s.IsComponentSelected(comp))
@@ -80,8 +97,29 @@ public class StateIdle : State<Editor, int>
                         s.ClearSelection(); // Clear selection
                         this.GoToState<StateRectangleSelecting>(0);
                     }
-                }
-            });
+                });
+            }
+            if (Input.IsMouseButtonPressed(MouseButton.Right))
+            {
+                done = arg.Sim.LockedAction(s =>
+                {
+                    if (s.SelectedComponents.Count > 0 && s.TryGetComponentAtPos(mouseWorldPosition, out var comp))
+                    {
+                        arg.OpenContextMenu(() =>
+                        {
+                            if (ImGui.MenuItem("Delete Selection"))
+                            {
+                                var deleteSelection = s.SelectedComponents.Select(c => new CDeleteComponent(c)).ToArray();
+                                var multi = new CMulti(deleteSelection);
+                                arg.Execute(multi, arg);
+                            }
+                        });
+                        return true;
+                    }
+
+                    return false;
+                });
+            }
         }
     }
 }

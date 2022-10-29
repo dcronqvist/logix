@@ -188,16 +188,15 @@ public static class Utilities
 
     public static ColorF GetValueColor(LogicValue[] values)
     {
-        if (values.Length == 1)
-            return GetValueColor(values[0]);
-
-        var color = GetValueColor(values[0]);
-        foreach (var value in values)
+        if (values.All(v => v == LogicValue.UNDEFINED))
         {
-            color = ColorF.Lerp(color, GetValueColor(value), 0.5f);
+            return Constants.COLOR_UNDEFINED;
         }
 
-        return color;
+        var highs = values.Count(v => v == LogicValue.HIGH);
+        var total = values.Length;
+
+        return ColorF.Lerp(Constants.COLOR_LOW, Constants.COLOR_HIGH, highs / (float)total);
     }
 
     public static string GetAsHertzString(this int ticksPerSeconds)
@@ -569,5 +568,46 @@ public static class Utilities
     public static Vector2 GetSize(this RectangleF rec)
     {
         return new Vector2(rec.Width, rec.Height);
+    }
+
+    public static int GetAsInt(this IEnumerable<LogicValue> values)
+    {
+        int result = 0;
+        for (int i = 0; i < values.Count(); i++)
+        {
+            result += values.ElementAt(i) == LogicValue.HIGH ? 1 << i : 0;
+        }
+        return result;
+    }
+
+    public static uint GetAsUInt(this IEnumerable<LogicValue> values)
+    {
+        uint result = 0;
+        for (int i = 0; i < values.Count(); i++)
+        {
+            result += values.ElementAt(i) == LogicValue.HIGH ? 1u << i : 0;
+        }
+        return result;
+    }
+
+    public static LogicValue[] GetAsLogicValues(this uint value, int bitCount)
+    {
+        var result = new LogicValue[bitCount];
+        for (int i = 0; i < bitCount; i++)
+        {
+            result[i] = (value & (1u << i)) != 0 ? LogicValue.HIGH : LogicValue.LOW;
+        }
+        return result.ToList().Reverse<LogicValue>().ToArray();
+    }
+
+    public static string GetAsHexString(this IEnumerable<LogicValue> values)
+    {
+        var symbols = (int)Math.Ceiling(values.Count() / 4f);
+        return GetAsUInt(values).ToString($"X{symbols}");
+    }
+
+    public static bool AnyUndefined(this IEnumerable<LogicValue> values)
+    {
+        return values.Any(v => v == LogicValue.UNDEFINED);
     }
 }

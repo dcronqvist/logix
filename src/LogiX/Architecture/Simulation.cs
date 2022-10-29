@@ -189,8 +189,11 @@ public class Simulation
     public Dictionary<Vector2i, ValueCollection> CurrentValues { get; set; } = new();
     public List<Wire> Wires { get; private set; } = new();
     public List<Component> SelectedComponents { get; set; } = new();
+    public List<(Vector2i, Vector2i)> SelectedWireSegments { get; set; } = new();
     public List<SimulationError> PreviousErrors { get; set; } = new();
     public List<SimulationError> Errors { get; set; } = new();
+    public Dictionary<Vector2i, (Component, IO)> ComponentIOPositions { get; set; } = new();
+    public Dictionary<Vector2i, Wire> WirePositions { get; set; } = new();
 
     public Simulation()
     {
@@ -291,11 +294,18 @@ public class Simulation
 
     public bool TryGetWireAtPos(Vector2i position, [NotNullWhen(true)] out Wire wire)
     {
-        foreach (Wire w in Wires)
+        if (this.WirePositions.TryGetValue(position, out var w))
         {
-            if (w.GetPoints().Contains(position))
+            wire = w;
+            return true;
+        }
+
+        foreach (Wire ww in Wires)
+        {
+            if (ww.GetPoints().Contains(position))
             {
-                wire = w;
+                wire = ww;
+                this.WirePositions[position] = ww;
                 return true;
             }
         }
@@ -371,7 +381,7 @@ public class Simulation
             var positions = wire.GetPoints();
             foreach (var pos in positions)
             {
-                if (this.TryGetIOFromPosition(pos.ToVector2(Constants.GRIDSIZE), out var group, out var comp) || wire.HasEdgeVertexAt(pos))
+                if (this.TryGetIOFromPosition(pos, out var group, out var comp) || wire.HasEdgeVertexAt(pos))
                 {
                     if (!NewValues.ContainsKey(pos))
                     {
@@ -402,6 +412,12 @@ public class Simulation
     {
         component.Position = position;
         this.Components.Add(component);
+
+        foreach (var io in component.IOs)
+        {
+            var ioPos = component.GetPositionForIO(io, out _);
+            this.ComponentIOPositions.Add(ioPos, (component, io));
+        }
     }
 
     public void RemoveComponent(Component component)
@@ -521,22 +537,34 @@ public class Simulation
 
     public bool TryGetIOFromPosition(Vector2i gridPosition, out IO io, out Component component)
     {
-        foreach (var c in this.Components)
+        if (this.ComponentIOPositions.TryGetValue(gridPosition, out var found))
         {
-            foreach (var i in c.IOs)
-            {
-                if (c.GetPositionForIO(i, out _) == gridPosition)
-                {
-                    io = i;
-                    component = c;
-                    return true;
-                }
-            }
+            io = found.Item2;
+            component = found.Item1;
+            return true;
         }
 
         io = null;
         component = null;
         return false;
+
+        // foreach (var c in this.Components)
+        // {
+        //     foreach (var i in c.IOs)
+        //     {
+        //         if (c.GetPositionForIO(i, out _) == gridPosition)
+        //         {
+        //             io = i;
+        //             component = c;
+        //             this.ComponentIOPositions.Add(gridPosition, (c, i));
+        //             return true;
+        //         }
+        //     }
+        // }
+
+        // io = null;
+        // component = null;
+        // return false;
     }
 
     public bool TryGetIOFromPosition(Vector2 worldPosition, out IO io, out Component component)
@@ -545,9 +573,10 @@ public class Simulation
         {
             var positions = c.GetAllIOPositions();
 
-            for (int i = 0; i < positions.Length; i++)
+            int i = 0;
+            foreach (var p in positions)
             {
-                var pos = positions[i].ToVector2(Constants.GRIDSIZE);
+                var pos = p.ToVector2(Constants.GRIDSIZE);
                 var _io = c.GetIO(i);
 
                 if (Vector2.Distance(pos, worldPosition) <= Constants.IO_GROUP_RADIUS)
@@ -556,6 +585,8 @@ public class Simulation
                     component = c;
                     return true;
                 }
+
+                i++;
             }
         }
 
@@ -608,6 +639,8 @@ public class Simulation
                 this.AddWire(wire);
             }
         }
+
+        this.WirePositions.Clear();
     }
 
     public bool TryGetWireSegmentAtPos(Vector2i pos, out (Vector2i, Vector2i) edge, out Wire wire)
@@ -683,6 +716,7 @@ public class Simulation
                     Wire[] newWires = Wire.RemoveSegmentFromWire(w1, (point1, point2));
                     this.Wires.Remove(w1);
                     this.Wires.AddRange(newWires);
+                    this.WirePositions.Clear();
                 }
                 else
                 {
@@ -742,6 +776,7 @@ public class Simulation
     public void ClearSelection()
     {
         this.SelectedComponents.Clear();
+        this.SelectedWireSegments.Clear();
     }
 
     public void SelectAllComponents()
@@ -774,5 +809,6 @@ public class Simulation
         {
             c.Move(delta);
         }
+        this.ComponentIOPositions.Clear();
     }
 }

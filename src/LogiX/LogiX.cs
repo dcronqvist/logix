@@ -138,8 +138,6 @@ public class LogiX : Game
         PrimitiveRenderer.InitGL(500);
         TextRenderer.InitGL();
 
-        GUI.Init("content_1.font.default", "content_1.shader_program.text");
-
         DisplayManager.ReleaseGLContext();
         _ = ContentManager.LoadAsync();
     }
