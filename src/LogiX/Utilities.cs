@@ -610,4 +610,9 @@ public static class Utilities
     {
         return values.Any(v => v == LogicValue.UNDEFINED);
     }
+
+    public static bool IsUndefined(this LogicValue value)
+    {
+        return value == LogicValue.UNDEFINED;
+    }
 }

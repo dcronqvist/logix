@@ -53,6 +53,8 @@ public class Editor : Invoker<Editor>
 
         Input.OnScroll += (sender, e) =>
         {
+            this.ImGuiController.MouseScroll(new Vector2(0, e));
+
             if (!DisplayManager.IsWindowFocused() || ImGui.GetIO().WantCaptureMouse)
             {
                 return; // Early return if the window is not focused.
@@ -64,8 +66,6 @@ public class Editor : Invoker<Editor>
                 Camera.Zoom /= 1.1f;
 
             Camera.Zoom = Math.Clamp(Camera.Zoom, 0.3f, 10f);
-
-            this.ImGuiController.MouseScroll(new Vector2(0, e));
         };
 
         Input.OnChar += (sender, e) =>
@@ -425,7 +425,7 @@ public class Editor : Invoker<Editor>
 
         ImGui.SetNextWindowPos(new Vector2(0, mainMenuBarSize.Y));
         ImGui.SetNextWindowSize(new Vector2(180, DisplayManager.GetWindowSizeInPixels().Y - mainMenuBarSize.Y));
-        if (ImGui.Begin("Components", ImGuiWindowFlags.NoCollapse | ImGuiWindowFlags.NoTitleBar | ImGuiWindowFlags.NoResize | ImGuiWindowFlags.NoMove))
+        if (ImGui.Begin("Components", ImGuiWindowFlags.NoCollapse | ImGuiWindowFlags.NoTitleBar | ImGuiWindowFlags.NoResize | ImGuiWindowFlags.NoMove | ImGuiWindowFlags.AlwaysVerticalScrollbar))
         {
             if (ImGui.CollapsingHeader("Project"))
             {

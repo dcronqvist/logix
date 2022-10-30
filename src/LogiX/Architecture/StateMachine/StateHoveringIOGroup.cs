@@ -49,7 +49,7 @@ public class StateHoveringIOGroup : State<Editor, int>
             if (s.TryGetIOFromPosition(mouseWorld, out var io, out var comp))
             {
                 if (comp.DisplayIOGroupIdentifiers)
-                    Utilities.MouseToolTip(io.Identifier);
+                    Utilities.MouseToolTip($"{io.Identifier} : {io.Bits}");
             }
         });
     }

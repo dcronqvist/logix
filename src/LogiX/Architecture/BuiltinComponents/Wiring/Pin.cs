@@ -24,6 +24,7 @@ public class PinData : IComponentDescriptionData
     public string Label { get; set; }
     public PinBehaviour Behaviour { get; set; }
     public ComponentSide Side { get; set; }
+    public bool IsExternal { get; set; }
 
     public static IComponentDescriptionData GetDefault()
     {
@@ -33,7 +34,8 @@ public class PinData : IComponentDescriptionData
             Values = new LogicValue[] { LogicValue.UNDEFINED },
             Label = "",
             Behaviour = PinBehaviour.INPUT,
-            Side = ComponentSide.LEFT
+            Side = ComponentSide.LEFT,
+            IsExternal = true
         };
     }
 }
@@ -46,7 +48,6 @@ public class Pin : Component<PinData>
     public override bool ShowPropertyWindow => true;
 
     public LogicValue[] CurrentValues { get; set; }
-    private string _label;
     private PinData _data;
 
     public override IComponentDescriptionData GetDescriptionData()
@@ -55,9 +56,10 @@ public class Pin : Component<PinData>
         {
             Bits = CurrentValues.Length,
             Values = CurrentValues,
-            Label = this._label,
+            Label = this._data.Label,
             Behaviour = this._data.Behaviour,
-            Side = this._data.Side
+            Side = this._data.Side,
+            IsExternal = this._data.IsExternal
         };
     }
 
@@ -66,7 +68,6 @@ public class Pin : Component<PinData>
         this.ClearIOs();
 
         this._data = data;
-        this._label = data.Label;
         this.CurrentValues = data.Values;
         this.RegisterIO($"io", data.Bits, ComponentSide.RIGHT, "io");
     }
@@ -90,7 +91,12 @@ public class Pin : Component<PinData>
     public override void SubmitUISelected(int componentIndex)
     {
         int bits = this.CurrentValues.Length;
-        ImGui.InputTextWithHint($"Label##{this.GetUniqueIdentifier()}", "Label", ref this._label, 6);
+        var label = this._data.Label;
+        if (ImGui.InputTextWithHint($"Label##{this.GetUniqueIdentifier()}", "Label", ref label, 10))
+        {
+            this._data.Label = label;
+            this.Initialize(this._data);
+        }
         var currentBehaviour = (int)this._data.Behaviour;
         ImGui.Combo($"Behaviour##{this.GetUniqueIdentifier()}", ref currentBehaviour, new string[] { "Input", "Output" }, 2);
         this._data.Behaviour = (PinBehaviour)currentBehaviour;
@@ -107,6 +113,12 @@ public class Pin : Component<PinData>
             this.Initialize(this._data);
             this.TriggerSizeRecalculation();
         }
+        var external = this._data.IsExternal;
+        if (ImGui.Checkbox($"External##{this.GetUniqueIdentifier()}", ref external))
+        {
+            this._data.IsExternal = external;
+            this.TriggerSizeRecalculation();
+        }
     }
 
     public override void Interact(Camera2D cam)
@@ -117,9 +129,9 @@ public class Pin : Component<PinData>
             var mousePos = Input.GetMousePosition(cam);
             var pos = this.Position.ToVector2(Constants.GRIDSIZE);
 
-            if (Input.IsMouseButtonPressed(MouseButton.Right))
+            if (rect.Contains(mousePos))
             {
-                if (rect.Contains(mousePos))
+                if (Input.IsMouseButtonPressed(MouseButton.Right))
                 {
                     // Get which bit was clicked
                     for (int i = 0; i < this._data.Bits; i++)
@@ -170,9 +182,10 @@ public class Pin : Component<PinData>
             var rect = this.GetBoundingBox(out var textSize);
             var size = rect.GetSize().ToVector2i(Constants.GRIDSIZE);
             var realSize = size.ToVector2(Constants.GRIDSIZE);
+            var measure = font.MeasureString(this._data.Label, 1f);
 
             // Draw the component
-            var textPos = pos + realSize / 2f - textSize / 2f - new Vector2(0, 1);
+            var textPos = pos - new Vector2(measure.X + 2, 0) + new Vector2(0, realSize.Y / 2f - measure.Y / 2f);
 
             var io = this.IOs[0];
             var ioPos = this.GetPositionForIO(io, out var lineEnd);
@@ -195,6 +208,8 @@ public class Pin : Component<PinData>
                 var bitCol = Utilities.GetValueColor(this.CurrentValues[i]);
                 PrimitiveRenderer.RenderRectangle(bitRect, Vector2.Zero, 0f, bitCol);
             }
+
+            TextRenderer.RenderText(tShader, font, this._data.Label, textPos, 1f, ColorF.Black, camera);
         }
         else
         {
@@ -206,9 +221,10 @@ public class Pin : Component<PinData>
             var rect = this.GetBoundingBox(out var textSize);
             var size = rect.GetSize().ToVector2i(Constants.GRIDSIZE);
             var realSize = size.ToVector2(Constants.GRIDSIZE);
+            var measure = font.MeasureString(this._data.Label, 1f);
 
             // Draw the component
-            var textPos = pos + realSize / 2f - textSize / 2f - new Vector2(0, 1);
+            var textPos = pos - new Vector2(measure.X + 2, 0) + new Vector2(0, realSize.Y / 2f - measure.Y / 2f);
 
             var io = this.IOs[0];
             var ioPos = this.GetPositionForIO(io, out var lineEnd);
@@ -231,6 +247,8 @@ public class Pin : Component<PinData>
                 var bitCol = Utilities.GetValueColor(this.CurrentValues[i]);
                 PrimitiveRenderer.RenderCircle(bitPos + new Vector2(Constants.GRIDSIZE / 2f), Constants.GRIDSIZE / 2f - 1, 0f, bitCol);
             }
+
+            TextRenderer.RenderText(tShader, font, this._data.Label, textPos, 1f, ColorF.Black, camera);
         }
     }
 }

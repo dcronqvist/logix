@@ -39,6 +39,7 @@ public class Constant : Component<ConstantData>
         this._data = data;
 
         this.RegisterIO("Y", data.DataBits, ComponentSide.RIGHT);
+        this.TriggerSizeRecalculation();
     }
 
     public override void PerformLogic()
@@ -49,15 +50,23 @@ public class Constant : Component<ConstantData>
         y.Push(asBits);
     }
 
+    private bool IsInputValid(uint value, int bits)
+    {
+        return value <= (uint)Math.Pow(2, bits) - 1;
+    }
+
     public override void SubmitUISelected(int componentIndex)
     {
         var id = this.GetUniqueIdentifier();
         var symbols = (int)Math.Ceiling(this._data.DataBits / 4f);
-        var value = this._data.Value.ToString($"X{symbols}");
-        if (ImGui.InputText($"Value##{id}", ref value, (uint)symbols, ImGuiInputTextFlags.CharsHexadecimal | ImGuiInputTextFlags.CharsUppercase))
+        var currVal = (int)this._data.Value;
+        if (ImGui.InputInt($"Value##{id}", ref currVal, 1, 1, ImGuiInputTextFlags.CharsHexadecimal | ImGuiInputTextFlags.CharsUppercase))
         {
-            this._data.Value = Convert.ToUInt32(value, 16);
-            this.Initialize(this._data);
+            if (IsInputValid((uint)currVal, this._data.DataBits))
+            {
+                this._data.Value = (uint)currVal;
+                this.Initialize(this._data);
+            }
         }
         var currBits = this._data.DataBits;
         if (ImGui.InputInt($"Data Bits##{id}", ref currBits))
