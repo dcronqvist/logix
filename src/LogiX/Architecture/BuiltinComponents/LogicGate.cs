@@ -237,3 +237,47 @@ public class XNORGate : LogicGate<GateData>
         return new XNORGateLogic();
     }
 }
+
+[ScriptType("NOT_GATE"), ComponentInfo("NOT Gate", "Gates")]
+public class NOTGate : Component<GateData>
+{
+    public override string Name => "NOT";
+    public override bool DisplayIOGroupIdentifiers => true;
+    public override bool ShowPropertyWindow => false;
+
+    private GateData _data;
+
+    public override IComponentDescriptionData GetDescriptionData()
+    {
+        return _data;
+    }
+
+    public override void Initialize(GateData data)
+    {
+        this.ClearIOs();
+        this._data = data;
+
+        this.RegisterIO("X", 1, ComponentSide.LEFT);
+        this.RegisterIO("Y", 1, ComponentSide.RIGHT);
+    }
+
+    public override void PerformLogic()
+    {
+        var x = this.GetIOFromIdentifier("X");
+        var y = this.GetIOFromIdentifier("Y");
+
+        var xVal = x.GetValues().First();
+
+        if (xVal == LogicValue.UNDEFINED)
+        {
+            return;
+        }
+
+        y.Push(xVal == LogicValue.HIGH ? LogicValue.LOW : LogicValue.HIGH);
+    }
+
+    public override void SubmitUISelected(int componentIndex)
+    {
+
+    }
+}

@@ -1,10 +1,13 @@
 using System.Text.Json;
+using System.Text.Json.Serialization;
 using LogiX.Architecture.Serialization;
 
 namespace LogiX.Architecture.Serialization;
 
 public class LogiXProject
 {
+    [JsonIgnore]
+    public string LoadedFromPath { get; set; }
     public string Name { get; set; }
     public List<Circuit> Circuits { get; set; }
     public Guid LastOpenedCircuit { get; set; }
@@ -18,7 +21,8 @@ public class LogiXProject
     {
         var proj = new LogiXProject()
         {
-            Name = name
+            Name = name,
+            LoadedFromPath = "",
         };
 
         proj.AddCircuit(new Circuit("main"));
@@ -84,6 +88,8 @@ public class LogiXProject
         {
             file.Write(json);
         }
+
+        this.LoadedFromPath = Path.GetFullPath(path);
     }
 
     public static LogiXProject FromFile(string path)
@@ -97,7 +103,9 @@ public class LogiXProject
                 Converters = { new IComponentDescriptionDataConverter() }
             };
 
-            return JsonSerializer.Deserialize<LogiXProject>(file.ReadToEnd(), options);
+            var proj = JsonSerializer.Deserialize<LogiXProject>(file.ReadToEnd(), options);
+            proj.LoadedFromPath = Path.GetFullPath(path);
+            return proj;
         }
     }
 }

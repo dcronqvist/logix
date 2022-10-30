@@ -85,7 +85,7 @@ public class Wire
             var a = segment.Item1.ToVector2(Constants.GRIDSIZE);
             var b = segment.Item2.ToVector2(Constants.GRIDSIZE);
 
-            PrimitiveRenderer.RenderLine(pShader, a, b, Constants.WIRE_WIDTH, color, cam);
+            PrimitiveRenderer.RenderLine(a, b, Constants.WIRE_WIDTH, color);
         }
 
         var segmentPoints = this.Segments.SelectMany(s => new Vector2i[] { s.Item1, s.Item2 }).Distinct().ToArray();
@@ -94,7 +94,7 @@ public class Wire
         {
             var worldPos = point.ToVector2(Constants.GRIDSIZE);
             //PrimitiveRenderer.RenderCircle(pShader, worldPos, Constants.WIRE_POINT_RADIUS, 0, color, cam);
-            PrimitiveRenderer.RenderRectangle(pShader, new RectangleF(worldPos.X, worldPos.Y, 0, 0).Inflate(Constants.WIRE_WIDTH / 2f), Vector2.Zero, 0, color, cam);
+            PrimitiveRenderer.RenderRectangle(new RectangleF(worldPos.X, worldPos.Y, 0, 0).Inflate(Constants.WIRE_WIDTH / 2f), Vector2.Zero, 0, color);
         }
     }
 

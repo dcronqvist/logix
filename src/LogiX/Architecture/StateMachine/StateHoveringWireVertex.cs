@@ -39,7 +39,7 @@ public class StateHoveringWireVertex : State<Editor, int>
         {
             // if (s.TryGetWireVertexAtPos(mouseWorld, out var pos, out var wire))
             // {
-            PrimitiveRenderer.RenderCircle(pShader, mouseWorld.ToVector2i(Constants.GRIDSIZE).ToVector2(Constants.GRIDSIZE), Constants.WIRE_POINT_RADIUS, 0, Constants.COLOR_SELECTED, arg.Camera);
+            PrimitiveRenderer.RenderCircle(mouseWorld.ToVector2i(Constants.GRIDSIZE).ToVector2(Constants.GRIDSIZE), Constants.WIRE_POINT_RADIUS, 0, Constants.COLOR_SELECTED);
             // }
         });
     }

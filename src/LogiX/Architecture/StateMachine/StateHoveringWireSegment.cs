@@ -57,7 +57,7 @@ public class StateHoveringWireSegment : State<Editor, int>
         var pShader = LogiX.ContentManager.GetContentItem<ShaderProgram>("content_1.shader_program.primitive");
         arg.Sim.LockedAction(s =>
         {
-            PrimitiveRenderer.RenderCircle(pShader, mouseGrid.ToVector2(Constants.GRIDSIZE), Constants.WIRE_POINT_RADIUS, 0f, Constants.COLOR_SELECTED, arg.Camera);
+            PrimitiveRenderer.RenderCircle(mouseGrid.ToVector2(Constants.GRIDSIZE), Constants.WIRE_POINT_RADIUS, 0f, Constants.COLOR_SELECTED);
         });
     }
 }

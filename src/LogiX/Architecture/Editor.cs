@@ -78,7 +78,19 @@ public class Editor : Invoker<Editor>
             this.ImGuiController.WindowResized((int)e.X, (int)e.Y);
         };
 
-        this.SetProject(LogiXProject.New("Untitled"));
+        // INITIALIZE PROJECT AND STUFF
+        var lastOpenProject = Settings.GetSetting<string>(Settings.LAST_OPEN_PROJECT);
+
+        if (lastOpenProject is null || lastOpenProject.Length == 0)
+        {
+            // No project was open last time, so we assume an empty one.
+            this.SetProject(LogiXProject.New("Untitled"));
+        }
+        else
+        {
+            // Load the last open project
+            this.SetProject(LogiXProject.FromFile(lastOpenProject));
+        }
 
         var thread = new Thread(async () =>
         {
@@ -97,7 +109,21 @@ public class Editor : Invoker<Editor>
 
                 this.Sim.LockedAction(s =>
                 {
-                    s.Tick();
+                    try
+                    {
+                        s.Tick();
+                    }
+                    catch (System.Exception ex)
+                    {
+                        this.OpenErrorPopup("Simulation Error", true, () =>
+                        {
+                            ImGui.Text(ex.Message);
+                            if (ImGui.Button("OK"))
+                            {
+                                ImGui.CloseCurrentPopup();
+                            }
+                        });
+                    }
                 });
 
                 int targetTps = this.AvailableTickRates[this.CurrentlySelectedTickRate];
@@ -130,6 +156,15 @@ public class Editor : Invoker<Editor>
         this.RequestedPopupContext = true;
         this.RequestedPopupContextSubmit = submit;
         this.MouseStartPosition = Input.GetMousePositionInWindow();
+    }
+
+    public void OpenErrorPopup(string title, bool stopSim, Action submit)
+    {
+        this.RequestedPopupModal = true;
+        this.RequestedPopupModalTitle = title;
+        this.RequestedPopupModalSubmit = submit;
+
+        this.SimulationRunning = !stopSim;
     }
 
     public void SetProject(LogiXProject project)
@@ -202,7 +237,7 @@ public class Editor : Invoker<Editor>
             int lineYstart = (int)(camPos.Y - viewSize.Y / 2.0F);
             int lineYend = (int)(camPos.Y + viewSize.Y / 2.0F);
 
-            PrimitiveRenderer.RenderLine(pShader, new Vector2(lineX, lineYstart), new Vector2(lineX, lineYend), 1, color, Camera);
+            PrimitiveRenderer.RenderLine(new Vector2(lineX, lineYstart), new Vector2(lineX, lineYend), 1, color);
         }
 
         // Draw horizontal lines
@@ -212,7 +247,7 @@ public class Editor : Invoker<Editor>
             int lineXstart = (int)(camPos.X - viewSize.X / 2.0F);
             int lineXend = (int)(camPos.X + viewSize.X / 2.0F);
 
-            PrimitiveRenderer.RenderLine(pShader, new Vector2(lineXstart, lineY - 0.5f), new Vector2(lineXend, lineY - 0.5f), 1, color, Camera);
+            PrimitiveRenderer.RenderLine(new Vector2(lineXstart, lineY - 0.5f), new Vector2(lineXend, lineY - 0.5f), 1, color);
         }
     }
 
@@ -220,6 +255,7 @@ public class Editor : Invoker<Editor>
     {
         this.ImGuiController.Update(GameTime.DeltaTime);
         var fShader = LogiX.ContentManager.GetContentItem<ShaderProgram>("content_1.shader_program.fb_default");
+        var pShader = LogiX.ContentManager.GetContentItem<ShaderProgram>("content_1.shader_program.primitive");
 
         if (this.CurrentlyOpenCircuit is not null)
         {
@@ -229,13 +265,29 @@ public class Editor : Invoker<Editor>
                 this.DrawGrid();
                 this.Sim.LockedAction(s => s.Render(this.Camera));
                 this.FSM.Render(this);
+                PrimitiveRenderer.FinalizeRender(pShader, this.Camera);
+                TextRenderer.FinalizeRender();
             });
 
             this.GUIFramebuffer.Bind(() =>
             {
                 Framebuffer.Clear(ColorF.Transparent);
                 ImGui.PushFont(ImGui.GetIO().Fonts.Fonts[1]);
-                this.SubmitGUI();
+                try
+                {
+                    this.SubmitGUI();
+                }
+                catch (Exception e)
+                {
+                    this.OpenErrorPopup("Error", true, () =>
+                    {
+                        ImGui.Text(e.Message);
+                        if (ImGui.Button("OK"))
+                        {
+                            ImGui.CloseCurrentPopup();
+                        }
+                    });
+                }
                 this.FSM?.SubmitUI(this);
                 ImGui.PopFont();
                 this.ImGuiController.Render();
@@ -252,20 +304,25 @@ public class Editor : Invoker<Editor>
             {
                 Framebuffer.Clear(ColorF.Transparent);
                 ImGui.PushFont(ImGui.GetIO().Fonts.Fonts[1]);
-                this.SubmitGUI();
+                try
+                {
+                    this.SubmitGUI();
+                }
+                catch (Exception e)
+                {
+                    this.OpenErrorPopup("Error", true, () =>
+                    {
+                        ImGui.Text(e.Message);
+                        if (ImGui.Button("OK"))
+                        {
+                            ImGui.CloseCurrentPopup();
+                        }
+                    });
+                }
                 ImGui.PopFont();
                 this.ImGuiController.Render();
             });
 
-            Framebuffer.BindDefaultFramebuffer();
-            var tShader = LogiX.ContentManager.GetContentItem<ShaderProgram>("content_1.shader_program.text");
-            var font = LogiX.ContentManager.GetContentItem<Font>("content_1.font.default");
-            var windowSize = DisplayManager.GetWindowSizeInPixels();
-            string text = "No circuit open";
-            float scale = 3f;
-            var textMeasure = font.MeasureString(text, scale);
-
-            TextRenderer.RenderText(tShader, font, text, windowSize / 2f - textMeasure / 2f, scale, ColorF.White, Framebuffer.GetDefaultCamera());
             Framebuffer.RenderFrameBufferToScreen(fShader, this.GUIFramebuffer);
         }
     }
@@ -291,6 +348,11 @@ public class Editor : Invoker<Editor>
             {
                 var project = LogiXProject.FromFile("test.lxprojj");
                 this.SetProject(project);
+                Settings.SetSetting(Settings.LAST_OPEN_PROJECT, project.LoadedFromPath);
+            }
+            if (ImGui.MenuItem("Intentional Exception", "", false, true))
+            {
+                throw new Exception("Intentional Exception");
             }
 
             ImGui.EndMenu();

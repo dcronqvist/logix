@@ -24,7 +24,7 @@ public class LogiX : Game
 
     public override void Initialize(string[] args)
     {
-
+        Settings.LoadSettings();
     }
 
     public override void LoadContent(string[] args)
@@ -103,7 +103,7 @@ public class LogiX : Game
             Console.WriteLine($"Finished stage {e.Stage.StageName}!");
             if (e.Stage is CoreLoadingStage)
             {
-                var tex = e.CurrentlyLoaded.GetContentItem<Texture2D>("content_1.texture.gravel");
+                var tex = e.CurrentlyLoaded.GetContentItem<Texture2D>("content_1.texture.icon");
                 tex.ContentUpdated += (sender, e) =>
                 {
                     DisplayManager.SetWindowIcon(tex);
@@ -135,7 +135,7 @@ public class LogiX : Game
         };
 
         TextureRenderer.InitGL();
-        PrimitiveRenderer.InitGL(500);
+        PrimitiveRenderer.InitGL();
         TextRenderer.InitGL();
 
         DisplayManager.ReleaseGLContext();
@@ -168,6 +168,7 @@ public class LogiX : Game
                     var measure = font.MeasureString("Loading...", 2f);
 
                     TextRenderer.RenderText(shader, font, "Loading...", DisplayManager.GetWindowSizeInPixels() / 2f - measure / 2f, 2f, ColorF.White, Framebuffer.GetDefaultCamera());
+                    TextRenderer.FinalizeRender();
                     DisplayManager.SwapBuffers(-1);
                 }
             }

@@ -36,7 +36,7 @@ public class StateHoveringIOGroup : State<Editor, int>
         {
             if (s.TryGetIOFromPosition(mouseWorld, out var io, out var comp))
             {
-                PrimitiveRenderer.RenderCircle(pShader, comp.GetPositionForIO(io, out var le).ToVector2(Constants.GRIDSIZE), Constants.IO_GROUP_RADIUS, 0, Constants.COLOR_SELECTED, arg.Camera);
+                PrimitiveRenderer.RenderCircle(comp.GetPositionForIO(io, out var le).ToVector2(Constants.GRIDSIZE), Constants.IO_GROUP_RADIUS, 0, Constants.COLOR_SELECTED);
             }
         });
     }

@@ -183,17 +183,17 @@ public class Pin : Component<PinData>
             int lineThickness = 2;
             var groupCol = this.GetIOColor(0);
 
-            PrimitiveRenderer.RenderLine(pShader, gPos, lineEndPos, lineThickness, groupCol.Darken(0.5f), camera);
-            PrimitiveRenderer.RenderCircle(pShader, gPos, Constants.IO_GROUP_RADIUS, 0f, groupCol, camera);
+            PrimitiveRenderer.RenderLine(gPos, lineEndPos, lineThickness, groupCol.Darken(0.5f));
+            PrimitiveRenderer.RenderCircle(gPos, Constants.IO_GROUP_RADIUS, 0f, groupCol);
 
-            PrimitiveRenderer.RenderRectangle(pShader, rect, Vector2.Zero, 0f, ColorF.White, camera);
+            PrimitiveRenderer.RenderRectangle(rect, Vector2.Zero, 0f, ColorF.White);
 
             for (int i = 0; i < this._data.Bits; i++)
             {
                 var bitPos = pos + new Vector2(i * Constants.GRIDSIZE, 0);
                 var bitRect = bitPos.CreateRect(new Vector2(Constants.GRIDSIZE, Constants.GRIDSIZE)).Inflate(-1);
                 var bitCol = Utilities.GetValueColor(this.CurrentValues[i]);
-                PrimitiveRenderer.RenderRectangle(pShader, bitRect, Vector2.Zero, 0f, bitCol, camera);
+                PrimitiveRenderer.RenderRectangle(bitRect, Vector2.Zero, 0f, bitCol);
             }
         }
         else
@@ -219,17 +219,17 @@ public class Pin : Component<PinData>
             int lineThickness = 2;
             var groupCol = this.GetIOColor(0);
 
-            PrimitiveRenderer.RenderLine(pShader, gPos, lineEndPos, lineThickness, groupCol.Darken(0.5f), camera);
-            PrimitiveRenderer.RenderCircle(pShader, gPos, Constants.IO_GROUP_RADIUS, 0f, groupCol, camera);
+            PrimitiveRenderer.RenderLine(gPos, lineEndPos, lineThickness, groupCol.Darken(0.5f));
+            PrimitiveRenderer.RenderCircle(gPos, Constants.IO_GROUP_RADIUS, 0f, groupCol);
 
-            PrimitiveRenderer.RenderRectangle(pShader, rect, Vector2.Zero, 0f, ColorF.White, camera);
+            PrimitiveRenderer.RenderRectangle(rect, Vector2.Zero, 0f, ColorF.White);
 
             for (int i = 0; i < this._data.Bits; i++)
             {
                 var bitPos = pos + new Vector2(i * Constants.GRIDSIZE, 0);
                 var bitRect = bitPos.CreateRect(new Vector2(Constants.GRIDSIZE, Constants.GRIDSIZE));
                 var bitCol = Utilities.GetValueColor(this.CurrentValues[i]);
-                PrimitiveRenderer.RenderCircle(pShader, bitPos + new Vector2(Constants.GRIDSIZE / 2f), Constants.GRIDSIZE / 2f - 1, 0f, bitCol, camera);
+                PrimitiveRenderer.RenderCircle(bitPos + new Vector2(Constants.GRIDSIZE / 2f), Constants.GRIDSIZE / 2f - 1, 0f, bitCol);
             }
         }
     }

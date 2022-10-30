@@ -9,6 +9,8 @@ public static class TextRenderer
     private static uint fontVAO;
     private static uint fontVBO;
 
+    private static List<(ShaderProgram, Font, string, Vector2, float, ColorF, Camera2D, bool)> renderQueue = new();
+
     public static unsafe void InitGL()
     {
         // Create VAO
@@ -36,7 +38,23 @@ public static class TextRenderer
         glBindVertexArray(0);
     }
 
+    public static void FinalizeRender()
+    {
+        while (renderQueue.Count > 0)
+        {
+            var (shader, font, text, position, scale, color, camera, align) = renderQueue[0];
+            renderQueue.RemoveAt(0);
+
+            RenderTextInternal(shader, font, text, position, scale, color, camera, align);
+        }
+    }
+
     public static unsafe void RenderText(ShaderProgram shader, Font f, string s, Vector2 position, float scale, ColorF color, Camera2D cam, bool pixelAlign = true)
+    {
+        renderQueue.Add((shader, f, s, position, scale, color, cam, pixelAlign));
+    }
+
+    private static unsafe void RenderTextInternal(ShaderProgram shader, Font f, string s, Vector2 position, float scale, ColorF color, Camera2D cam, bool pixelAlign = true)
     {
         if (s.Length == 0)
         {

@@ -114,7 +114,7 @@ public class ReadWrongAmountOfBitsError : SimulationError
     public override void Render(Camera2D cam)
     {
         var shader = LogiX.ContentManager.GetContentItem<ShaderProgram>("content_1.shader_program.primitive");
-        PrimitiveRenderer.RenderCircle(shader, this.Pos.ToVector2(Constants.GRIDSIZE), 8, 0f, ColorF.Red, cam);
+        PrimitiveRenderer.RenderCircle(this.Pos.ToVector2(Constants.GRIDSIZE), 8, 0f, ColorF.Red);
         var tShader = LogiX.ContentManager.GetContentItem<ShaderProgram>("content_1.shader_program.text");
         var font = LogiX.ContentManager.GetContentItem<Font>("content_1.font.default");
         var measure = font.MeasureString(this.Message, 1f);
@@ -141,7 +141,7 @@ public class PushingDifferentValuesError : SimulationError
             var a = segment.Item1.ToVector2(Constants.GRIDSIZE);
             var b = segment.Item2.ToVector2(Constants.GRIDSIZE);
 
-            PrimitiveRenderer.RenderLine(pShader, a, b, Constants.WIRE_WIDTH, color, cam);
+            PrimitiveRenderer.RenderLine(a, b, Constants.WIRE_WIDTH, color);
         }
 
         var segmentPoints = Wire.Segments.SelectMany(s => new Vector2i[] { s.Item1, s.Item2 }).Distinct().ToArray();
@@ -150,7 +150,7 @@ public class PushingDifferentValuesError : SimulationError
         {
             var worldPos = point.ToVector2(Constants.GRIDSIZE);
             //PrimitiveRenderer.RenderCircle(pShader, worldPos, Constants.WIRE_POINT_RADIUS, 0, color, cam);
-            PrimitiveRenderer.RenderRectangle(pShader, new RectangleF(worldPos.X, worldPos.Y, 0, 0).Inflate(Constants.WIRE_WIDTH / 2f), Vector2.Zero, 0, color, cam);
+            PrimitiveRenderer.RenderRectangle(new RectangleF(worldPos.X, worldPos.Y, 0, 0).Inflate(Constants.WIRE_WIDTH / 2f), Vector2.Zero, 0, color);
         }
 
         var firstSegment = Wire.Segments[0];
@@ -214,6 +214,16 @@ public class Simulation
         }
 
         var pushedValues = CurrentValues[position];
+
+        if (!pushedValues.AnyPushed())
+        {
+            values = Enumerable.Repeat(LogicValue.UNDEFINED, expectedWidth).ToArray();
+            status = LogicValueRetrievalStatus.NOTHING_PUSHED;
+            fromIO = null;
+            fromComp = null;
+            return false;
+        }
+
         if (pushedValues.AllAgree(out var agreedValues) && pushedValues.AllSameWidth())
         {
             if (agreedValues.Length == expectedWidth)

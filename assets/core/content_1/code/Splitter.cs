@@ -155,13 +155,13 @@ public class Splitter : Component<SplitterData>
             int lineThickness = 2;
             var groupCol = this.GetIOColor(i);
 
-            PrimitiveRenderer.RenderLine(pShader, gPos, lineEndPos, lineThickness, groupCol.Darken(0.5f), camera);
-            PrimitiveRenderer.RenderCircle(pShader, gPos, Constants.IO_GROUP_RADIUS, 0f, groupCol, camera);
+            PrimitiveRenderer.RenderLine(gPos, lineEndPos, lineThickness, groupCol.Darken(0.5f));
+            PrimitiveRenderer.RenderCircle(gPos, Constants.IO_GROUP_RADIUS, 0f, groupCol);
         }
 
         var col = this.GetIOColor(0);
-        PrimitiveRenderer.RenderLine(pShader, inputPos, halfWay, 2, col.Darken(0.5f), camera);
-        PrimitiveRenderer.RenderCircle(pShader, inputPos, Constants.IO_GROUP_RADIUS, 0f, col, camera);
-        PrimitiveRenderer.RenderLine(pShader, halfWay - new Vector2(0, 1), new Vector2(halfWay.X, halfWay.Y + bits * Constants.GRIDSIZE + 1), 2, ColorF.Black, camera);
+        PrimitiveRenderer.RenderLine(inputPos, halfWay, 2, col.Darken(0.5f));
+        PrimitiveRenderer.RenderCircle(inputPos, Constants.IO_GROUP_RADIUS, 0f, col);
+        PrimitiveRenderer.RenderLine(halfWay - new Vector2(0, 1), new Vector2(halfWay.X, halfWay.Y + bits * Constants.GRIDSIZE + 1), 2, ColorF.Black);
     }
 }

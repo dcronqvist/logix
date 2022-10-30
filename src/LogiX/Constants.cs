@@ -8,7 +8,7 @@ public static class Constants
 
     public static int WIRE_WIDTH => 2;
     public static float WIRE_POINT_RADIUS => 2f;
-    public static float IO_GROUP_RADIUS => 2;
+    public static float IO_GROUP_RADIUS => 2f;
     public static int GRIDSIZE => 10;
 
     public static ColorF COLOR_HIGH => ColorF.Green;

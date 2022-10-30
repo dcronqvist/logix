@@ -357,8 +357,8 @@ public abstract class Component
             int lineThickness = 2;
             var groupCol = this.GetIOColor(i);
 
-            PrimitiveRenderer.RenderLine(pShader, gPos, lineEndPos, lineThickness, groupCol.Darken(0.5f), camera);
-            PrimitiveRenderer.RenderCircle(pShader, gPos, Constants.IO_GROUP_RADIUS, 0f, groupCol, camera);
+            PrimitiveRenderer.RenderLine(gPos, lineEndPos, lineThickness, groupCol.Darken(0.5f));
+            PrimitiveRenderer.RenderCircle(gPos, Constants.IO_GROUP_RADIUS, 0f, groupCol);
 
             // if (this.DisplayIOGroupIdentifiers)
             // {
@@ -374,7 +374,7 @@ public abstract class Component
             // }
         }
 
-        PrimitiveRenderer.RenderRectangle(pShader, rect, Vector2.Zero, 0f, ColorF.White, camera);
+        PrimitiveRenderer.RenderRectangle(rect, Vector2.Zero, 0f, ColorF.White);
         //PrimitiveRenderer.RenderRectangle(pShader, textPos.CreateRect(textSize), Vector2.Zero, 0f, ColorF.Red, camera);
         TextRenderer.RenderText(tShader, font, this.Name, textPos, 1, ColorF.Black, camera);
 
@@ -407,7 +407,7 @@ public abstract class Component
         var rect = this.GetBoundingBox(out _);
 
         // Draw the component
-        PrimitiveRenderer.RenderRectangle(pShader, rect.Inflate(1), Vector2.Zero, 0f, Constants.COLOR_SELECTED, camera);
+        PrimitiveRenderer.RenderRectangle(rect.Inflate(1), Vector2.Zero, 0f, Constants.COLOR_SELECTED);
     }
 
     public abstract IComponentDescriptionData GetDescriptionData();

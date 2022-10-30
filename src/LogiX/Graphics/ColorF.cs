@@ -46,6 +46,11 @@ public struct ColorF
         return new ColorF(left.R, left.G, left.B, left.A * right);
     }
 
+    public float[] ToFloatArray()
+    {
+        return new float[] { R, G, B, A };
+    }
+
     public static ColorF Lerp(ColorF from, ColorF to, float amt)
     {
         return new ColorF(
