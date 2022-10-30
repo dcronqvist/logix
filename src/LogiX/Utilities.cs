@@ -600,6 +600,16 @@ public static class Utilities
         return result.ToList().Reverse<LogicValue>().ToArray();
     }
 
+    public static LogicValue[] GetAsLogicValues(this byte value, int bitCount)
+    {
+        var result = new LogicValue[bitCount];
+        for (int i = 0; i < bitCount; i++)
+        {
+            result[i] = (value & (1 << i)) != 0 ? LogicValue.HIGH : LogicValue.LOW;
+        }
+        return result.ToList().Reverse<LogicValue>().ToArray();
+    }
+
     public static string GetAsHexString(this IEnumerable<LogicValue> values)
     {
         var symbols = (int)Math.Ceiling(values.Count() / 4f);

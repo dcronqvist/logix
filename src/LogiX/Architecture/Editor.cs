@@ -327,6 +327,9 @@ public class Editor : Invoker<Editor>
         }
     }
 
+    private MemoryEditor me = new(true);
+    private ByteAddressableMemory bam = new((int)Math.Pow(2, 24));
+
     public void SubmitGUI()
     {
         ImGui.BeginMainMenuBar();
@@ -588,6 +591,10 @@ public class Editor : Invoker<Editor>
                     this.RequestedPopupContext = false;
                 }
             }
+
+            ImGui.PushFont(ImGui.GetIO().FontDefault);
+            me.DrawWindow("Memory Viewer", this.bam);
+            ImGui.PopFont();
         }
     }
 }

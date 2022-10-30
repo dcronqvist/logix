@@ -1,4 +1,5 @@
 using System;
+using System.Numerics;
 
 namespace LogiX.Graphics;
 
@@ -49,6 +50,11 @@ public struct ColorF
     public float[] ToFloatArray()
     {
         return new float[] { R, G, B, A };
+    }
+
+    public Vector4 ToVector4()
+    {
+        return new Vector4(R, G, B, A);
     }
 
     public static ColorF Lerp(ColorF from, ColorF to, float amt)
