@@ -34,8 +34,7 @@ public class Editor : Invoker<Editor>
     public EditorFSM FSM { get; private set; }
 
     public bool RequestedPopupModal { get; set; }
-    public string RequestedPopupModalTitle { get; set; }
-    public Action RequestedPopupModalSubmit { get; set; }
+    public Modal PopupModal { get; set; }
 
     public bool RequestedPopupContext { get; set; }
     public Action RequestedPopupContextSubmit { get; set; }
@@ -144,11 +143,15 @@ public class Editor : Invoker<Editor>
         thread.Start();
     }
 
-    public void OpenPopup(string title, Action submit)
+    public void OpenPopup(Modal modal)
     {
         this.RequestedPopupModal = true;
-        this.RequestedPopupModalTitle = title;
-        this.RequestedPopupModalSubmit = submit;
+        this.PopupModal = modal;
+    }
+
+    public void OpenPopup(string title, Action<Editor> submit)
+    {
+        this.OpenPopup(new DynamicModal(title, ImGuiWindowFlags.AlwaysAutoResize, ImGuiPopupFlags.None, submit));
     }
 
     public void OpenContextMenu(Action submit)
@@ -161,8 +164,8 @@ public class Editor : Invoker<Editor>
     public void OpenErrorPopup(string title, bool stopSim, Action submit)
     {
         this.RequestedPopupModal = true;
-        this.RequestedPopupModalTitle = title;
-        this.RequestedPopupModalSubmit = submit;
+        // this.RequestedPopupModalTitle = title;
+        // this.RequestedPopupModalSubmit = submit;
 
         this.SimulationRunning = !stopSim;
     }
@@ -336,6 +339,14 @@ public class Editor : Invoker<Editor>
 
         if (ImGui.BeginMenu("File"))
         {
+            if (ImGui.MenuItem("FILEDIALOG"))
+            {
+                this.OpenPopup(new FileDialog(".", FileDialogType.SelectFile, (s) =>
+                {
+                    Console.WriteLine(s);
+                }));
+            }
+
             if (ImGui.MenuItem("New Project...", "Ctrl+N", false, true))
             {
 
@@ -452,7 +463,7 @@ public class Editor : Invoker<Editor>
                         }
                         if (ImGui.MenuItem("Delete", this.CurrentlyOpenCircuit is null ? true : this.CurrentlyOpenCircuit.ID != circuit.ID))
                         {
-                            this.OpenPopup("Delete Circuit", () =>
+                            this.OpenPopup("Delete Circuit", (e) =>
                             {
                                 ImGui.Text($"Are you sure you want to delete circuit '{circuit.Name}'?");
                                 if (ImGui.Button("Yes"))
@@ -471,7 +482,7 @@ public class Editor : Invoker<Editor>
                         if (ImGui.MenuItem("Rename"))
                         {
                             this.NewCircuitName = "";
-                            this.OpenPopup("Rename Circuit", () =>
+                            this.OpenPopup("Rename Circuit", (e) =>
                             {
                                 ImGui.Text($"Rename circuit '{circuit.Name}' to:");
                                 var circName = this.NewCircuitName;
@@ -551,16 +562,16 @@ public class Editor : Invoker<Editor>
 
             if (this.RequestedPopupModal)
             {
-                ImGui.OpenPopup(this.RequestedPopupModalTitle);
+                ImGui.OpenPopup(this.PopupModal.Title, this.PopupModal.PopupFlags);
 
                 var open = true;
-                if (ImGui.BeginPopupModal(this.RequestedPopupModalTitle, ref open, ImGuiWindowFlags.AlwaysAutoResize))
+                if (ImGui.BeginPopupModal(this.PopupModal.Title, ref open, this.PopupModal.WindowFlags))
                 {
-                    this.RequestedPopupModalSubmit.Invoke();
+                    this.PopupModal.SubmitUI(this);
                     ImGui.EndPopup();
                 }
 
-                if (!ImGui.IsPopupOpen(this.RequestedPopupModalTitle))
+                if (!ImGui.IsPopupOpen(this.PopupModal.Title))
                 {
                     this.RequestedPopupModal = false;
                 }
