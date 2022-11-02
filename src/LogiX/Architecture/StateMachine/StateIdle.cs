@@ -103,7 +103,7 @@ public class StateIdle : State<Editor, int>
             {
                 done = arg.Sim.LockedAction(s =>
                 {
-                    if (s.SelectedComponents.Count > 0 && s.TryGetComponentAtPos(mouseWorldPosition, out var comp))
+                    if (s.SelectedComponents.Count > 0 && s.TryGetComponentAtPos(mouseWorldPosition, out var comp) && s.IsComponentSelected(comp))
                     {
                         arg.OpenContextMenu(() =>
                         {

@@ -67,7 +67,7 @@ public class SRLatch : Component<SRLatchData>
         qNot.Push(this._currentState == LogicValue.UNDEFINED ? LogicValue.UNDEFINED : this._currentState == LogicValue.HIGH ? LogicValue.LOW : LogicValue.HIGH);
     }
 
-    public override void SubmitUISelected(int componentIndex)
+    public override void SubmitUISelected(Editor editor, int componentIndex)
     {
         // Nothing yet.
         // var id = this.GetUniqueIdentifier();

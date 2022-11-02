@@ -1,5 +1,6 @@
 using System.Globalization;
 using System.Numerics;
+using System.Text.Json.Serialization;
 using ImGuiNET;
 using LogiX.GLFW;
 
@@ -9,14 +10,19 @@ public class ByteAddressableMemory
 {
     public byte[] Data { get; set; }
 
+    [JsonConstructor]
     public ByteAddressableMemory(byte[] data)
     {
         this.Data = data;
     }
 
-    public ByteAddressableMemory(int size)
+    public ByteAddressableMemory(int size, bool randomize = true)
     {
         this.Data = new byte[size];
+        if (randomize)
+        {
+            this.Randomize();
+        }
     }
 
     public byte this[int index]
@@ -105,7 +111,7 @@ public class MemoryEditor
         return size;
     }
 
-    public void DrawWindow(string title, ByteAddressableMemory memory)
+    public void DrawWindow(string title, ByteAddressableMemory memory, int bytesPerAddress, int currentlySelectedAddress = -1, Action beforeContent = null, Action afterContent = null)
     {
         var s = CalcSizes(memory);
         ImGui.SetNextWindowSize(new Vector2(s.WindowWidth, s.WindowWidth * 0.60f), ImGuiCond.FirstUseEver);
@@ -113,15 +119,24 @@ public class MemoryEditor
 
         if (ImGui.Begin(title, ImGuiWindowFlags.NoScrollbar))
         {
-            DrawContents(memory);
+            if (beforeContent is not null)
+            {
+                beforeContent();
+            }
+            DrawContents(memory, bytesPerAddress, currentlySelectedAddress);
+            if (afterContent is not null)
+            {
+                afterContent();
+            }
         }
         ImGui.End();
     }
 
-    private unsafe void DrawContents(ByteAddressableMemory memory)
+    public unsafe void DrawContents(ByteAddressableMemory memory, int bytesPerAddress, int currentlySelectedAddress)
     {
         var s = CalcSizes(memory);
         var style = ImGui.GetStyle();
+        this.Cols = 8;
 
         float heightSeparator = style.ItemSpacing.Y;
         float footerHeight = 0f;
@@ -147,13 +162,20 @@ public class MemoryEditor
             for (int line = clipper.DisplayStart; line < clipper.DisplayEnd; line++)
             {
                 var addr = line * Cols;
-                ImGui.Text($"{addr.ToString("X" + s.AddressDigitsCount)}");
+
+                ImGui.Text($"{(addr / bytesPerAddress).ToString("X" + s.AddressDigitsCount)}");
 
                 for (int n = 0; n < Cols && addr < memory.Data.Length; n++, addr++)
                 {
                     float bytePosX = s.PosHexStart + s.HexCellWidth * n;
                     bytePosX += (float)(n / 8) * s.SpacingBetweenMidCols;
                     ImGui.SameLine(bytePosX);
+
+                    if (addr >= currentlySelectedAddress && addr < currentlySelectedAddress + bytesPerAddress)
+                    {
+                        var currentPos = ImGui.GetCursorScreenPos();
+                        drawList.AddRectFilled(currentPos - new Vector2(s.SpacingBetweenMidCols / 2f, 0), currentPos + new Vector2(s.GlyphWidth * 2 + 1, s.LineHeight), ImGui.GetColorU32(Constants.COLOR_SELECTED.ToVector4()));
+                    }
 
                     if (this.Editing && this.EditingAddress == addr)
                     {

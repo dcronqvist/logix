@@ -55,7 +55,7 @@ public class Constant : Component<ConstantData>
         return value <= (uint)Math.Pow(2, bits) - 1;
     }
 
-    public override void SubmitUISelected(int componentIndex)
+    public override void SubmitUISelected(Editor editor, int componentIndex)
     {
         var id = this.GetUniqueIdentifier();
         var symbols = (int)Math.Ceiling(this._data.DataBits / 4f);

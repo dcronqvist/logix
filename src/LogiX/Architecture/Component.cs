@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Numerics;
+using ImGuiNET;
 using LogiX.Architecture.Serialization;
 using LogiX.GLFW;
 using LogiX.Graphics;
@@ -424,7 +425,16 @@ public abstract class Component
         return new ComponentDescription(this.GetComponentTypeID(), this.Position, this.GetDescriptionData());
     }
 
-    public abstract void SubmitUISelected(int componentIndex);
+    public virtual void CompleteSubmitUISelected(Editor editor, int componentIndex)
+    {
+        if (this.ShowPropertyWindow && ImGui.Begin($"Component Properties", ImGuiWindowFlags.AlwaysAutoResize))
+        {
+            this.SubmitUISelected(editor, componentIndex);
+        }
+        ImGui.End();
+    }
+
+    public abstract void SubmitUISelected(Editor editor, int componentIndex);
 
     public string GetUniqueIdentifier()
     {

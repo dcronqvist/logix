@@ -71,7 +71,7 @@ public class Demultiplexer : Component<DemultiplexerData>
         outputs[select].Push(input);
     }
 
-    public override void SubmitUISelected(int componentIndex)
+    public override void SubmitUISelected(Editor editor, int componentIndex)
     {
         // Nothing yet.
         var id = this.GetUniqueIdentifier();

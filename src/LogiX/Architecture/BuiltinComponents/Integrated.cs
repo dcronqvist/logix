@@ -180,7 +180,7 @@ public class Integrated : Component<IntegratedData>
         base.Render(camera);
     }
 
-    public override void SubmitUISelected(int componentIndex)
+    public override void SubmitUISelected(Editor editor, int componentIndex)
     {
         ImGui.Text($"ID: {this._circuit.ID}");
         ImGui.Text($"ITERATION: {this._circuit.IterationID}");

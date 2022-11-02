@@ -5,7 +5,7 @@ using LogiX.Graphics.UI;
 
 namespace LogiX.Architecture.BuiltinComponents;
 
-public class RomData : IComponentDescriptionData
+public class RamData : IComponentDescriptionData
 {
     public ByteAddressableMemory Memory { get; set; }
     public int AddressBits { get; set; }
@@ -13,7 +13,7 @@ public class RomData : IComponentDescriptionData
 
     public static IComponentDescriptionData GetDefault()
     {
-        return new RomData()
+        return new RamData()
         {
             AddressBits = 8,
             DataBits = 8,
@@ -22,14 +22,14 @@ public class RomData : IComponentDescriptionData
     }
 }
 
-[ScriptType("ROM"), ComponentInfo("ROM", "Memory")]
-public class ROM : Component<RomData>
+[ScriptType("RAM"), ComponentInfo("RAM", "Memory")]
+public class RAM : Component<RamData>
 {
-    public override string Name => "ROM";
+    public override string Name => "RAM";
     public override bool DisplayIOGroupIdentifiers => true;
     public override bool ShowPropertyWindow => true;
 
-    private RomData _data;
+    private RamData _data;
     private int bytesPerAddress;
 
     public override IComponentDescriptionData GetDescriptionData()
@@ -37,7 +37,7 @@ public class ROM : Component<RomData>
         return _data;
     }
 
-    public override void Initialize(RomData data)
+    public override void Initialize(RamData data)
     {
         this.ClearIOs();
         this._data = data;
@@ -46,23 +46,34 @@ public class ROM : Component<RomData>
         this._data.Memory = new ByteAddressableMemory((int)Math.Pow(2, this._data.AddressBits) * bytesPerAddress, false);
 
         this.RegisterIO("A", data.AddressBits, ComponentSide.LEFT, "address");
-        this.RegisterIO("EN", 1, ComponentSide.LEFT, "enable");
-        this.RegisterIO("Q", data.DataBits, ComponentSide.RIGHT);
+        this.RegisterIO("EN", 1, ComponentSide.BOTTOM, "enable");
+        this.RegisterIO("CLK", 1, ComponentSide.BOTTOM, "clock");
+        this.RegisterIO("LD", 1, ComponentSide.BOTTOM, "load");
+        this.RegisterIO("CLR", 1, ComponentSide.BOTTOM, "clear");
+        this.RegisterIO("D", data.DataBits, ComponentSide.RIGHT);
 
         this.TriggerSizeRecalculation();
     }
 
+    private bool previousClk = false;
     private int currentlySelectedAddress = -1;
     public override void PerformLogic()
     {
         var a = this.GetIOFromIdentifier("A").GetValues();
         var en = this.GetIOFromIdentifier("EN").GetValues().First();
-        var q = this.GetIOFromIdentifier("Q");
+        var clk = this.GetIOFromIdentifier("CLK").GetValues().First();
+        var ld = this.GetIOFromIdentifier("LD").GetValues().First();
+        var clr = this.GetIOFromIdentifier("CLR").GetValues().First();
+        var d = this.GetIOFromIdentifier("D");
 
-        if (a.AnyUndefined() || en.IsUndefined() || en == LogicValue.LOW)
+        if (a.AnyUndefined() || en.IsUndefined() || clk.IsUndefined() || ld.IsUndefined() || clr.IsUndefined() || en != LogicValue.HIGH)
         {
             return; // Do nothing
         }
+
+        bool clockHigh = clk == LogicValue.HIGH;
+        bool load = ld == LogicValue.HIGH;
+        bool reset = clr == LogicValue.HIGH;
 
         var address = a.Reverse().GetAsUInt();
         var realAddress = (int)(address * bytesPerAddress);
@@ -84,7 +95,35 @@ public class ROM : Component<RomData>
             }
         }
 
-        q.Push(values.Reverse<LogicValue>().ToArray());
+        if (clockHigh && !previousClk)
+        {
+            if (load)
+            {
+                // Load from D into memory
+                var dValues = d.GetValues();
+                var dval = dValues.GetAsUInt();
+
+                for (int i = 0; i < this.bytesPerAddress; i++)
+                {
+                    var value = (byte)((dval >> (i * 8)) & 0xFF);
+                    this._data.Memory[realAddress + i] = value;
+                }
+            }
+        }
+
+        if (reset)
+        {
+            for (int i = 0; i < this.bytesPerAddress; i++)
+            {
+                this._data.Memory[realAddress + i] = 0;
+            }
+        }
+
+        if (!load)
+        {
+            d.Push(values);
+        }
+        previousClk = clockHigh;
     }
 
     private MemoryEditor memoryEditor = new MemoryEditor(false);

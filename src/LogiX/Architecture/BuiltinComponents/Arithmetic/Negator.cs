@@ -65,7 +65,7 @@ public class Negator : Component<NegatorData>
         y.Push(yVal);
     }
 
-    public override void SubmitUISelected(int componentIndex)
+    public override void SubmitUISelected(Editor editor, int componentIndex)
     {
         var id = this.GetUniqueIdentifier();
         var databits = this._data.DataBits;

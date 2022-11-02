@@ -73,7 +73,7 @@ public class Adder : Component<AdderData>
         cout.Push(coutAsBits);
     }
 
-    public override void SubmitUISelected(int componentIndex)
+    public override void SubmitUISelected(Editor editor, int componentIndex)
     {
         var id = this.GetUniqueIdentifier();
         var databits = this._data.DataBits;

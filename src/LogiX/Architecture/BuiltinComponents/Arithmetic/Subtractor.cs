@@ -73,7 +73,7 @@ public class Subtractor : Component<SubtractorData>
         bout.Push(boutAsBits);
     }
 
-    public override void SubmitUISelected(int componentIndex)
+    public override void SubmitUISelected(Editor editor, int componentIndex)
     {
         var id = this.GetUniqueIdentifier();
         var databits = this._data.DataBits;

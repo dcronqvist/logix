@@ -1,3 +1,4 @@
+using ImGuiNET;
 using LogiX.Architecture.Serialization;
 using LogiX.Content.Scripting;
 
@@ -5,9 +6,14 @@ namespace LogiX.Architecture.BuiltinComponents;
 
 public class NoData : IComponentDescriptionData
 {
+    public int DataBits { get; set; }
+
     public static IComponentDescriptionData GetDefault()
     {
-        return new NoData();
+        return new NoData()
+        {
+            DataBits = 1
+        };
     }
 }
 
@@ -16,19 +22,22 @@ public class TriStateBuffer : Component<NoData>
 {
     public override string Name => "TSB";
     public override bool DisplayIOGroupIdentifiers => true;
-    public override bool ShowPropertyWindow => false;
+    public override bool ShowPropertyWindow => true;
+
+    private NoData _data;
 
     public override IComponentDescriptionData GetDescriptionData()
     {
-        return NoData.GetDefault();
+        return this._data;
     }
 
     public override void Initialize(NoData data)
     {
         this.ClearIOs();
+        this._data = data;
 
-        this.RegisterIO("in", 1, ComponentSide.LEFT);
-        this.RegisterIO("out", 1, ComponentSide.RIGHT);
+        this.RegisterIO("in", data.DataBits, ComponentSide.LEFT);
+        this.RegisterIO("out", data.DataBits, ComponentSide.RIGHT);
         this.RegisterIO("enabled", 1, ComponentSide.TOP);
     }
 
@@ -49,8 +58,14 @@ public class TriStateBuffer : Component<NoData>
         this.TriggerSizeRecalculation();
     }
 
-    public override void SubmitUISelected(int componentIndex)
+    public override void SubmitUISelected(Editor editor, int componentIndex)
     {
-        // Nothing
+        var id = this.GetUniqueIdentifier();
+        var databits = this._data.DataBits;
+        if (ImGui.InputInt($"Data Bits##{id}", ref databits, 1, 1))
+        {
+            this._data.DataBits = databits;
+            this.Initialize(this._data);
+        }
     }
 }

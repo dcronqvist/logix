@@ -72,7 +72,7 @@ public class DFlipFlop : Component<DFlipFlopData>
         previousClk = clk;
     }
 
-    public override void SubmitUISelected(int componentIndex)
+    public override void SubmitUISelected(Editor editor, int componentIndex)
     {
         // Nothing yet.
         // var id = this.GetUniqueIdentifier();

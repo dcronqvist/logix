@@ -49,7 +49,7 @@ public abstract class LogicGate<TData> : Component<TData> where TData : ICompone
         o.Push(this.Logic.GetValueToPush(new LogicValue[] { aVal, bVal }));
     }
 
-    public override void SubmitUISelected(int componentIndex)
+    public override void SubmitUISelected(Editor editor, int componentIndex)
     {
 
     }
@@ -276,7 +276,7 @@ public class NOTGate : Component<GateData>
         y.Push(xVal == LogicValue.HIGH ? LogicValue.LOW : LogicValue.HIGH);
     }
 
-    public override void SubmitUISelected(int componentIndex)
+    public override void SubmitUISelected(Editor editor, int componentIndex)
     {
 
     }

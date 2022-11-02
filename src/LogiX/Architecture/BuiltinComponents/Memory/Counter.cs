@@ -106,7 +106,7 @@ public class Counter : Component<CounterData>
         _previousClock = clock;
     }
 
-    public override void SubmitUISelected(int componentIndex)
+    public override void SubmitUISelected(Editor editor, int componentIndex)
     {
         var id = this.GetUniqueIdentifier();
         var databits = this._data.DataBits;

@@ -636,4 +636,24 @@ public static class Utilities
         double num = Math.Round(bytes / Math.Pow(1024, place), 1);
         return (Math.Sign(byteCount) * num).ToString() + " " + suf[place];
     }
+
+    public static byte[] GetByteArray(this IEnumerable<LogicValue> values, int bytes)
+    {
+        var result = new byte[bytes];
+        for (int i = 0; i < bytes; i++)
+        {
+            result[i] = (byte)values.Skip(i * 8).Take(8).GetAsInt();
+        }
+        return result;
+    }
+
+    public static LogicValue[] GetLogicValues(this byte[] bytes)
+    {
+        var result = new List<LogicValue>();
+        foreach (var b in bytes)
+        {
+            result.AddRange(b.GetAsLogicValues(8));
+        }
+        return result.ToArray();
+    }
 }

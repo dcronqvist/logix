@@ -88,7 +88,7 @@ public class Pin : Component<PinData>
         }
     }
 
-    public override void SubmitUISelected(int componentIndex)
+    public override void SubmitUISelected(Editor editor, int componentIndex)
     {
         int bits = this.CurrentValues.Length;
         var label = this._data.Label;

@@ -6,6 +6,9 @@
 libs/
 .vscode/
 /omnisharp.json
+*.dat
+**/settings.json
+**/imgui.ini
 
 # User-specific files
 *.rsuser

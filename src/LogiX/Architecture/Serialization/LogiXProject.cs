@@ -92,6 +92,16 @@ public class LogiXProject
         this.LoadedFromPath = Path.GetFullPath(path);
     }
 
+    public void Quicksave()
+    {
+        if (this.LoadedFromPath == "")
+        {
+            throw new Exception("Cannot quicksave a project that has not been saved to a file yet.");
+        }
+
+        this.SaveProjectToFile(this.LoadedFromPath);
+    }
+
     public static LogiXProject FromFile(string path)
     {
         using (var file = new StreamReader(path))

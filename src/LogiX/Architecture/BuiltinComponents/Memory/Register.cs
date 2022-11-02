@@ -81,21 +81,15 @@ public class Register : Component<RegisterData>
         previousClk = clk;
     }
 
-    public override void SubmitUISelected(int componentIndex)
+    public override void SubmitUISelected(Editor editor, int componentIndex)
     {
         // Nothing yet.
-        // var id = this.GetUniqueIdentifier();
-        // var currSelectBits = this._data.SelectBits;
-        // if (ImGui.InputInt($"Select Bits##{id}", ref currSelectBits, 1, 1))
-        // {
-        //     this._data.SelectBits = currSelectBits;
-        //     this.Initialize(this._data);
-        // }
-        // var databits = this._data.DataBits;
-        // if (ImGui.InputInt($"Data Bits##{id}", ref databits, 1, 1))
-        // {
-        //     this._data.DataBits = databits;
-        //     this.Initialize(this._data);
-        // }
+        var id = this.GetUniqueIdentifier();
+        var databits = this._data.DataBits;
+        if (ImGui.InputInt($"Data Bits##{id}", ref databits, 1, 1))
+        {
+            this._data.DataBits = databits;
+            this.Initialize(this._data);
+        }
     }
 }
