@@ -6,14 +6,9 @@
         "**/CVS": true,
         "**/.DS_Store": true,
         "**/Thumbs.db": true,
-        "**/imgui.ini": true,
+        "**/libs": true,
+        "**/bin": true,
+        "**/obj": true
     },
-    "explorer.compactFolders": false,
-    "antlr4.generation": {
-        "mode": "external",
-        "language": "CSharp",
-        "listeners": false,
-        "visitors": true,
-        "package": "LogiX.GateAlgebra",
-    }
+    "explorer.compactFolders": false
 }

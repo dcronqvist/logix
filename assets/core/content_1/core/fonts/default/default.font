@@ -1,0 +1,6 @@
+{
+    "file": "default.ttf",
+    "size": 8,
+    "magFilter": "nearestNeighbour",
+    "minFilter": "nearestNeighbour"
+}
