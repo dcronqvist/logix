@@ -45,7 +45,7 @@ public class IntegratedError : SimulationError
     }
 }
 
-[ScriptType("INTEGRATED"), ComponentInfo("INTEGRATED", "BuiltIn", true)]
+[ScriptType("INTEGRATED"), ComponentInfo("INTEGRATED", "BuiltIn", "", true)]
 public class Integrated : Component<IntegratedData>
 {
     public override string Name => this._circuit.Name;

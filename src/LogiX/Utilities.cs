@@ -1,17 +1,32 @@
+using System.Diagnostics;
 using System.Drawing;
 using System.Numerics;
 using System.Reflection;
+using System.Runtime.InteropServices;
 using System.Security.Cryptography;
 using System.Text;
 using ImGuiNET;
 using LogiX.Architecture;
 using LogiX.Graphics;
+using Markdig;
+using Markdig.Syntax;
 
 namespace LogiX;
 
 public static class Utilities
 {
     static Random RNG = new();
+    static Dictionary<string, ImFontPtr> _imguiFonts = new();
+
+    public static void ClearImGuiFonts()
+    {
+        _imguiFonts.Clear();
+    }
+
+    public static void AddImGuiFont(Font font, ImFontPtr ptr)
+    {
+        _imguiFonts.Add(font.Identifier, ptr);
+    }
 
     public static void CopyPropsAndFields<T1, T2>(T1 a, ref T2 b)
     {
@@ -655,5 +670,49 @@ public static class Utilities
             result.AddRange(b.GetAsLogicValues(8));
         }
         return result.ToArray();
+    }
+
+    public static void WithImGuiFont(string identifier, Action action)
+    {
+        ImFontPtr oldFont = ImGui.GetFont();
+        ImGui.PushFont(_imguiFonts[identifier]);
+        action();
+        ImGui.PopFont();
+    }
+
+    public static void RenderMarkdown(string markdown)
+    {
+        MarkdownDocument md = Markdown.Parse(markdown);
+        ImGuiMarkdownRenderer igmr = new ImGuiMarkdownRenderer();
+        igmr.Render(md);
+    }
+
+    public static void OpenURL(string url)
+    {
+        try
+        {
+            Process.Start(url);
+        }
+        catch
+        {
+            // hack because of this: https://github.com/dotnet/corefx/issues/10361
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+            {
+                url = url.Replace("&", "^&");
+                Process.Start(new ProcessStartInfo(url) { UseShellExecute = true });
+            }
+            else if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
+            {
+                Process.Start("xdg-open", url);
+            }
+            else if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
+            {
+                Process.Start("open", url);
+            }
+            else
+            {
+                throw;
+            }
+        }
     }
 }

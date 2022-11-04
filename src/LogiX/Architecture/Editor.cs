@@ -18,6 +18,7 @@ public class Editor : Invoker<Editor>
     // Currently loaded project and the currently open circuit from that project
     public LogiXProject Project { get; private set; }
     public Circuit CurrentlyOpenCircuit { get; private set; }
+    public ComponentInfoAttribute CurrentlyOpenCircuitInfoDocumentation { get; private set; }
 
     // GUI stuff, ImGui controller and framebuffers for both the circuit and the GUI
     public ImGuiController ImGuiController { get; private set; }
@@ -65,7 +66,7 @@ public class Editor : Invoker<Editor>
         {
             // Create the ImGui controller
             // Loads with a custom font "opensans"
-            this.ImGuiController = new((int)DisplayManager.GetWindowSizeInPixels().X, (int)DisplayManager.GetWindowSizeInPixels().Y, LogiX.ContentManager.GetContentItem<Font>("content_1.font.opensans"));
+            this.ImGuiController = new((int)DisplayManager.GetWindowSizeInPixels().X, (int)DisplayManager.GetWindowSizeInPixels().Y, LogiX.ContentManager.GetContentItems().Where(x => x is Font).Cast<Font>().ToArray());
         });
 
         // This event is called every time the mouse wheel is scrolled
@@ -212,9 +213,9 @@ public class Editor : Invoker<Editor>
     /// <summary>
     /// Opens a dynamic popup with a given title and content.
     /// </summary>
-    public void OpenPopup(string title, Action<Editor> submit)
+    public void OpenPopup(string title, Action<Editor> submit, ImGuiWindowFlags windowFlags = ImGuiWindowFlags.AlwaysAutoResize)
     {
-        this.OpenPopup(new DynamicModal(title, ImGuiWindowFlags.AlwaysAutoResize, ImGuiPopupFlags.None, submit));
+        this.OpenPopup(new DynamicModal(title, windowFlags, ImGuiPopupFlags.None, submit));
     }
 
     /// <summary>
@@ -382,24 +383,25 @@ public class Editor : Invoker<Editor>
             this.GUIFramebuffer.Bind(() =>
             {
                 Framebuffer.Clear(ColorF.Transparent);
-                ImGui.PushFont(ImGui.GetIO().Fonts.Fonts[1]);
-                try
+                Utilities.WithImGuiFont("content_1.font.opensans", () =>
                 {
-                    this.SubmitGUI();
-                }
-                catch (Exception e)
-                {
-                    this.OpenErrorPopup("Error", true, () =>
+                    try
                     {
-                        ImGui.Text(e.Message);
-                        if (ImGui.Button("OK"))
+                        this.SubmitGUI();
+                    }
+                    catch (Exception e)
+                    {
+                        this.OpenErrorPopup("Error", true, () =>
                         {
-                            ImGui.CloseCurrentPopup();
-                        }
-                    });
-                }
-                this.FSM?.SubmitUI(this);
-                ImGui.PopFont();
+                            ImGui.Text(e.Message);
+                            if (ImGui.Button("OK"))
+                            {
+                                ImGui.CloseCurrentPopup();
+                            }
+                        });
+                    }
+                    this.FSM?.SubmitUI(this);
+                });
                 this.ImGuiController.Render();
             });
 
@@ -413,23 +415,24 @@ public class Editor : Invoker<Editor>
             this.GUIFramebuffer.Bind(() =>
             {
                 Framebuffer.Clear(ColorF.Transparent);
-                ImGui.PushFont(ImGui.GetIO().Fonts.Fonts[1]);
-                try
+                Utilities.WithImGuiFont("content_1.font.opensans", () =>
                 {
-                    this.SubmitGUI();
-                }
-                catch (Exception e)
-                {
-                    this.OpenErrorPopup("Error", true, () =>
+                    try
                     {
-                        ImGui.Text(e.Message);
-                        if (ImGui.Button("OK"))
+                        this.SubmitGUI();
+                    }
+                    catch (Exception e)
+                    {
+                        this.OpenErrorPopup("Error", true, () =>
                         {
-                            ImGui.CloseCurrentPopup();
-                        }
-                    });
-                }
-                ImGui.PopFont();
+                            ImGui.Text(e.Message);
+                            if (ImGui.Button("OK"))
+                            {
+                                ImGui.CloseCurrentPopup();
+                            }
+                        });
+                    }
+                });
                 this.ImGuiController.Render();
             });
 
@@ -440,6 +443,37 @@ public class Editor : Invoker<Editor>
     #endregion
 
     #region GUI METHODS
+
+    private bool _displayAboutWindow = false;
+    public void SubmitAboutLogiXWindow()
+    {
+        if (!_displayAboutWindow)
+        {
+            return;
+        }
+
+        ImGui.SetNextWindowSizeConstraints(new Vector2(200, 200), new Vector2(600, 600));
+        ImGui.SetNextWindowSize(new Vector2(400, 200), ImGuiCond.FirstUseEver);
+        var open = true;
+        if (ImGui.Begin("About LogiX", ref open))
+        {
+            Utilities.RenderMarkdown(@"
+# LogiX ![icon](content_1.texture.icon)
+A logic gate simulator and circuit editor.
+
+Source available at [github](https://github.com/dcronqvist/logix)
+
+Developed and maintained by [Daniel Cronqvist](https://dcronqvist.se)
+            ");
+        }
+
+        if (!open)
+        {
+            _displayAboutWindow = false;
+        }
+
+        ImGui.End();
+    }
 
     public void SubmitMainMenuBar()
     {
@@ -540,6 +574,16 @@ public class Editor : Invoker<Editor>
             if (ImGui.MenuItem("Tick Once", "", false, !this.SimulationRunning))
             {
                 this.Sim.LockedAction(s => s.Tick());
+            }
+
+            ImGui.EndMenu();
+        }
+
+        if (ImGui.BeginMenu("View"))
+        {
+            if (ImGui.MenuItem("About LogiX"))
+            {
+                this._displayAboutWindow = true;
             }
 
             ImGui.EndMenu();
@@ -656,6 +700,22 @@ public class Editor : Invoker<Editor>
                         {
                             this.AddNewComponent(ComponentDescription.CreateDefaultComponentDescription(c), Input.GetMousePosition(this.Camera).ToVector2i(Constants.GRIDSIZE));
                         }
+
+                        if (ImGui.BeginPopupContextItem())
+                        {
+                            if (ImGui.MenuItem("Show Help"))
+                            {
+                                if (cInfo.Documentation == "")
+                                {
+                                    this.OpenErrorPopup("Missing documentation", false, () => ImGui.Text("No documentation available for this component."));
+                                }
+                                else
+                                {
+                                    this.CurrentlyOpenCircuitInfoDocumentation = cInfo;
+                                }
+                            }
+                            ImGui.EndPopup();
+                        }
                     }
                     ImGui.TreePop();
                 }
@@ -733,6 +793,23 @@ public class Editor : Invoker<Editor>
             ImGui.ShowStyleEditor();
             ImGui.End();
         }
+
+        if (this.CurrentlyOpenCircuitInfoDocumentation is not null)
+        {
+            var open = true;
+            if (ImGui.Begin("Component Documentation", ref open, ImGuiWindowFlags.None))
+            {
+                Utilities.RenderMarkdown(this.CurrentlyOpenCircuitInfoDocumentation.Documentation);
+            }
+
+            if (!open)
+            {
+                this.CurrentlyOpenCircuitInfoDocumentation = null;
+            }
+            ImGui.End();
+        }
+
+        this.SubmitAboutLogiXWindow();
 
         // Show the main menu bar
         ImGui.BeginMainMenuBar();

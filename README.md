@@ -43,18 +43,3 @@ Plugins are an easy way to create components which are very flexible and operate
 ### Plugin Methods
 
 Plugins also allow you to create **Plugin Methods** which are void methods that can be run from the editor UI, allowing you access to the entire editor. With access to the editor, you can add/delete/copy components in the simulation, change the UI, whatever you feel like.
-
-###### NOTES
-
-Making component rendering and looks more customizable
-
-Components have a position and need to have a size which also should be customizable.
-A `Render` method should then be called to render the component, and it should have a default implementation
-which renders the component with the default look. The default implementation should also be overridable.
-
-To get the component's size, the GetSize() method also needs to be overridable.
-
-No!
-
-A Component should always have a `GetBoundingBox()` method which is the rectangleF that the component can be selected by in the world.
-The Render method should then render the component using this bounding box.

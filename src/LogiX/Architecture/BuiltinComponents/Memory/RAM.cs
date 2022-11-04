@@ -135,7 +135,7 @@ public class RAM : Component<RamData>
     public override void CompleteSubmitUISelected(Editor editor, int componentIndex)
     {
         var id = this.GetUniqueIdentifier();
-        this.memoryEditor.DrawWindow("Read Only Memory Editor", this._data.Memory, this.bytesPerAddress, this.currentlySelectedAddress, () =>
+        this.memoryEditor.DrawWindow($"Random Access Memory Editor##{id}", this._data.Memory, this.bytesPerAddress, this.currentlySelectedAddress, () =>
         {
             var currAddressBits = this._data.AddressBits;
             if (ImGui.InputInt($"Address Bits##{id}", ref currAddressBits, 1, 1))

@@ -48,11 +48,14 @@ namespace LogiX.Graphics.UI
             var io = ImGui.GetIO();
             io.Fonts.AddFontDefault();
 
+            Utilities.ClearImGuiFonts();
+
             foreach (var font in fonts)
             {
                 fixed (byte* pFontData = &font.Content.Data[0])
                 {
                     var f = io.Fonts.AddFontFromMemoryTTF((IntPtr)pFontData, font.Content.Data.Length, font.Content.Size);
+                    Utilities.AddImGuiFont(font, f);
                 }
             }
 

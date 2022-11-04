@@ -96,7 +96,7 @@ public class ROM : Component<RomData>
     public override void CompleteSubmitUISelected(Editor editor, int componentIndex)
     {
         var id = this.GetUniqueIdentifier();
-        this.memoryEditor.DrawWindow("Read Only Memory Editor", this._data.Memory, this.bytesPerAddress, this.currentlySelectedAddress, () =>
+        this.memoryEditor.DrawWindow($"Read Only Memory Editor##{id}", this._data.Memory, this.bytesPerAddress, this.currentlySelectedAddress, () =>
         {
             var currAddressBits = this._data.AddressBits;
             if (ImGui.InputInt($"Address Bits##{id}", ref currAddressBits, 1, 1))
@@ -110,6 +110,40 @@ public class ROM : Component<RomData>
                 this._data.DataBits = currDataBits;
                 this.Initialize(this._data);
             }
+
+            if (ImGui.Button("Load From File"))
+            {
+                var fileDialog = new FileDialog(".", FileDialogType.SelectFile, (path) =>
+                {
+                    using (BinaryReader sr = new BinaryReader(File.Open(path, FileMode.Open)))
+                    {
+                        var data = sr.ReadBytes((int)sr.BaseStream.Length);
+                        var addressBits = (int)Math.Ceiling(Math.Log(data.Length, 2));
+
+                        this._data.AddressBits = addressBits;
+
+                        this.Initialize(this._data);
+
+                        this._data.Memory = new ByteAddressableMemory(data);
+                    }
+
+                }, ".bin");
+                editor.OpenPopup(fileDialog);
+            }
+            ImGui.SameLine();
+            if (ImGui.Button("Dump To File"))
+            {
+                var fileDialog = new FileDialog(".", FileDialogType.SaveFile, (path) =>
+                {
+                    using (BinaryWriter bw = new BinaryWriter(File.Open(path, FileMode.Open)))
+                    {
+                        bw.Write(this._data.Memory.Data);
+                    }
+
+                }, ".bin");
+                editor.OpenPopup(fileDialog);
+            }
+
             ImGui.PushFont(ImGui.GetIO().FontDefault);
         });
         ImGui.PopFont();

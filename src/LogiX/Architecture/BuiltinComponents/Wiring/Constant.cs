@@ -19,7 +19,11 @@ public class ConstantData : IComponentDescriptionData
     }
 }
 
-[ScriptType("CONSTANT"), ComponentInfo("Constant", "Wiring")]
+[ScriptType("CONSTANT"), ComponentInfo("Constant", "Wiring", @"
+# Constant
+
+A component that allows you to output a constant value with a given bit width.
+")]
 public class Constant : Component<ConstantData>
 {
     public override string Name => this._data.Value.ToString($"X{(int)Math.Ceiling(this._data.DataBits / 4f)}");

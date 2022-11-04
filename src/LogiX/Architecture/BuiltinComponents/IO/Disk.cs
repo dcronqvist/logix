@@ -22,7 +22,7 @@ public class DiskData : IComponentDescriptionData
     }
 }
 
-[ScriptType("DISK"), ComponentInfo("Disk", "Memory")]
+[ScriptType("DISK"), ComponentInfo("Disk", "Input/Output")]
 public class Disk : Component<DiskData>
 {
     public override string Name => "DISK";
