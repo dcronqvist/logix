@@ -5,6 +5,7 @@ using LogiX.Architecture.BuiltinComponents;
 using LogiX.Architecture.Commands;
 using LogiX.Architecture.Serialization;
 using LogiX.Architecture.StateMachine;
+using LogiX.Content;
 using LogiX.GLFW;
 using LogiX.Graphics;
 using LogiX.Graphics.UI;
@@ -457,14 +458,8 @@ public class Editor : Invoker<Editor>
         var open = true;
         if (ImGui.Begin("About LogiX", ref open))
         {
-            Utilities.RenderMarkdown(@"
-# LogiX ![icon](content_1.texture.icon)
-A logic gate simulator and circuit editor.
-
-Source available at [github](https://github.com/dcronqvist/logix)
-
-Developed and maintained by [Daniel Cronqvist](https://dcronqvist.se)
-            ");
+            var about = LogiX.ContentManager.GetContentItem<MarkdownFile>("content_1.markdown.about");
+            Utilities.RenderMarkdown(about.Text);
         }
 
         if (!open)
@@ -705,7 +700,7 @@ Developed and maintained by [Daniel Cronqvist](https://dcronqvist.se)
                         {
                             if (ImGui.MenuItem("Show Help"))
                             {
-                                if (cInfo.Documentation == "")
+                                if (cInfo.DocumentationAsset is null)
                                 {
                                     this.OpenErrorPopup("Missing documentation", false, () => ImGui.Text("No documentation available for this component."));
                                 }
@@ -799,7 +794,8 @@ Developed and maintained by [Daniel Cronqvist](https://dcronqvist.se)
             var open = true;
             if (ImGui.Begin("Component Documentation", ref open, ImGuiWindowFlags.None))
             {
-                Utilities.RenderMarkdown(this.CurrentlyOpenCircuitInfoDocumentation.Documentation);
+                var docAsset = LogiX.ContentManager.GetContentItem<MarkdownFile>(this.CurrentlyOpenCircuitInfoDocumentation.DocumentationAsset);
+                Utilities.RenderMarkdown(docAsset.Text);
             }
 
             if (!open)

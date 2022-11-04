@@ -17,12 +17,7 @@ public class NoData : IComponentDescriptionData
     }
 }
 
-[ScriptType("TRISTATE_BUFFER"), ComponentInfo("TriState Buffer", "Wiring", @"
-
-# Tri-state buffer
-
-A tri-state buffer is a buffer that can be enabled or disabled. When disabled, the output is basically equivalent to high-impedance or disconnected.
-")]
+[ScriptType("TRISTATE_BUFFER"), ComponentInfo("TriState Buffer", "Wiring")]
 public class TriStateBuffer : Component<NoData>
 {
     public override string Name => "TSB";

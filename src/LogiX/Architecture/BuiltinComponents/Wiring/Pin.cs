@@ -40,13 +40,7 @@ public class PinData : IComponentDescriptionData
     }
 }
 
-[ScriptType("PIN"), ComponentInfo("Pin", "Wiring", @"
-# Pin
-
-A pin is one of the most basic components in LogiX. It allows for the user to interact with it by right clicking it, which will toggle the clicked bit on the pin.
-
-It is very useful since it also shows up on the component's integrated version when used in other circuits, which allows other circuits to interact with the inside of this circuit.
-")]
+[ScriptType("PIN"), ComponentInfo("Pin", "Wiring")]
 public class Pin : Component<PinData>
 {
     public override string Name => this.CurrentValues.Select(x => x.ToString().Substring(0, 1)).Aggregate((x, y) => x + y);

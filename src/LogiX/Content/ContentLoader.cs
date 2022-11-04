@@ -14,6 +14,7 @@ public class ContentLoader : IContentLoader<ContentMeta>
         _loaders.Add(".shader", new ShaderProgramLoader());
         _loaders.Add(".dll", new AssemblyLoader());
         _loaders.Add(".font", new FontLoader());
+        _loaders.Add(".md", new MarkdownFileLoader());
     }
 
     public IEnumerable<IContentLoadingStage> GetLoadingStages()
@@ -22,6 +23,6 @@ public class ContentLoader : IContentLoader<ContentMeta>
         yield return new ShaderProgramLoadingStage(_loaders, ".shader");
 
         yield return new CoreLoadingStage(_loaders, ".png", ".font");
-        yield return new NormalLoadingStage(_loaders, ".png", ".dll", ".font");
+        yield return new NormalLoadingStage(_loaders, ".png", ".dll", ".font", ".md");
     }
 }
