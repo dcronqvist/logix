@@ -40,7 +40,7 @@ public class PinData : IComponentDescriptionData
     }
 }
 
-[ScriptType("PIN"), ComponentInfo("Pin", "Wiring")]
+[ScriptType("PIN"), ComponentInfo("Pin", "Wiring", "content_1.markdown.pin")]
 public class Pin : Component<PinData>
 {
     public override string Name => this.CurrentValues.Select(x => x.ToString().Substring(0, 1)).Aggregate((x, y) => x + y);

@@ -16,8 +16,10 @@ public class ImGuiMarkdownRenderer : RendererBase
         this.ObjectRenderers.Add(new ParagraphRenderer());
         this.ObjectRenderers.Add(new LinkRenderer());
         this.ObjectRenderers.Add(new LiteralInlineRenderer());
+        this.ObjectRenderers.Add(new EmphasisInlineRenderer());
         this.ObjectRenderers.Add(new ListItemRenderer());
         this.ObjectRenderers.Add(new BlankLineRenderer());
+
     }
 
     public override object Render(MarkdownObject markdownObject)
@@ -78,7 +80,9 @@ public class HeadingRenderer : MarkdownObjectRenderer<ImGuiMarkdownRenderer, Hea
                 renderer.Render(child);
             }
             ImGui.NewLine();
-            ImGui.Separator();
+
+            if (obj.Level < 2)
+                ImGui.Separator();
         });
     }
 }
@@ -102,6 +106,35 @@ public class LiteralInlineRenderer : MarkdownObjectRenderer<ImGuiMarkdownRendere
     {
         ImGuiMarkdownRenderer.RenderWrappedString(obj.ToString());
         ImGui.SameLine(0, 0);
+    }
+}
+
+public class EmphasisInlineRenderer : MarkdownObjectRenderer<ImGuiMarkdownRenderer, EmphasisInline>
+{
+    protected override void Write(ImGuiMarkdownRenderer renderer, EmphasisInline obj)
+    {
+        if (obj.DelimiterCount == 2)
+        {
+            // BOLD FONT
+            Utilities.WithImGuiFont("content_1.font.opensans-bold-16", () =>
+            {
+                foreach (var child in obj)
+                {
+                    renderer.Render(child);
+                }
+            });
+        }
+        else
+        {
+            // ITALIC FONT
+            Utilities.WithImGuiFont("content_1.font.opensans-italic", () =>
+            {
+                foreach (var child in obj)
+                {
+                    renderer.Render(child);
+                }
+            });
+        }
     }
 }
 
