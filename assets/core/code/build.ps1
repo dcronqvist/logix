@@ -1,4 +1,4 @@
-$modName = "content_1"
+$modName = "core"
 
 dotnet build -c Release
 

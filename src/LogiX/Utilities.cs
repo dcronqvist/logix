@@ -17,6 +17,7 @@ public static class Utilities
 {
     static Random RNG = new();
     static Dictionary<string, ImFontPtr> _imguiFonts = new();
+    static Font _currentImGuiFont = null;
 
     public static void ClearImGuiFonts()
     {
@@ -672,19 +673,83 @@ public static class Utilities
         return result.ToArray();
     }
 
-    public static void WithImGuiFont(string identifier, Action action)
+    public static void WithImGuiFont(Font font, Action action)
     {
         ImFontPtr oldFont = ImGui.GetFont();
-        ImGui.PushFont(_imguiFonts[identifier]);
+        _currentImGuiFont = font;
+        ImGui.PushFont(_imguiFonts[font.Identifier]);
         action();
         ImGui.PopFont();
+    }
+
+    public static void PushFontBold()
+    {
+        var currBase = _currentImGuiFont.GetFontBaseName();
+        var currSize = _currentImGuiFont.Content.Size;
+        var currBold = _currentImGuiFont.IsBold;
+        var currItalic = _currentImGuiFont.IsItalic;
+
+        var newFont = GetFont(currBase, (int)currSize, true, currItalic);
+        _currentImGuiFont = newFont;
+        ImGui.PushFont(_imguiFonts[newFont.Identifier]);
+    }
+
+    public static void PushFontItalic()
+    {
+        var currBase = _currentImGuiFont.GetFontBaseName();
+        var currSize = _currentImGuiFont.Content.Size;
+        var currBold = _currentImGuiFont.IsBold;
+        var currItalic = _currentImGuiFont.IsItalic;
+
+        var newFont = GetFont(currBase, (int)currSize, currBold, true);
+        _currentImGuiFont = newFont;
+        ImGui.PushFont(_imguiFonts[newFont.Identifier]);
+    }
+
+    public static void PushFontSize(int size)
+    {
+        var currBase = _currentImGuiFont.GetFontBaseName();
+        var currSize = _currentImGuiFont.Content.Size;
+        var currBold = _currentImGuiFont.IsBold;
+        var currItalic = _currentImGuiFont.IsItalic;
+
+        var newFont = GetFont(currBase, size, currBold, currItalic);
+        _currentImGuiFont = newFont;
+        ImGui.PushFont(_imguiFonts[newFont.Identifier]);
+    }
+
+    public unsafe static void PopFontStyle(int n = 1)
+    {
+        for (int i = 0; i < n; i++)
+        {
+            ImGui.PopFont();
+            var font = ImGui.GetFont();
+            var back = _imguiFonts.FirstOrDefault(f => f.Value.NativePtr == font.NativePtr).Key;
+            var realFont = LogiX.ContentManager.GetContentItem<Font>(back);
+            _currentImGuiFont = realFont;
+        }
     }
 
     public static void RenderMarkdown(string markdown)
     {
         MarkdownDocument md = Markdown.Parse(markdown);
         ImGuiMarkdownRenderer igmr = new ImGuiMarkdownRenderer();
-        igmr.Render(md);
+
+        WithImGuiFont(GetFont("core.font.opensans", 16, false, false), () =>
+        {
+            igmr.Render(md);
+        });
+    }
+
+    public static void RenderMarkdown(string markdown, Font font)
+    {
+        MarkdownDocument md = Markdown.Parse(markdown);
+        ImGuiMarkdownRenderer igmr = new ImGuiMarkdownRenderer();
+
+        WithImGuiFont(font, () =>
+        {
+            igmr.Render(md);
+        });
     }
 
     public static void OpenURL(string url)
@@ -714,5 +779,12 @@ public static class Utilities
                 throw;
             }
         }
+    }
+
+    public static Font GetFont(string identifier, int size, bool bold = false, bool italic = false)
+    {
+        var final = bold && italic ? "bold-italic" : (bold ? "bold" : (italic ? "italic" : "regular"));
+        var font = LogiX.ContentManager.GetContentItem<Font>($"{identifier}-{final}-{size}");
+        return font;
     }
 }

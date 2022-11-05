@@ -1,6 +1,9 @@
 {
-    "file": "opensans.ttf",
-    "size": 16,
+    "fileRegular": "opensans.ttf",
+	"fileBold": "opensans-bold.ttf",
+	"fileItalic": "opensans-italic.ttf",
+	"fileBoldItalic": "opensans-bolditalic.ttf",
+    "sizes": [16, 18, 20, 22, 24, 26, 28, 30, 32],
     "magFilter": "linear",
-    "minFilter": "linear"
+    "minFilter": "nearestNeighbour"
 }

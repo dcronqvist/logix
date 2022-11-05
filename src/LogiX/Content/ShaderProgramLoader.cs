@@ -8,33 +8,23 @@ namespace LogiX.Content;
 
 public class ShaderProgramLoader : IContentItemLoader
 {
-    public async Task<LoadEntryResult> TryLoad(IContentSource source, IContentStructure structure, string pathToItem)
+    public async IAsyncEnumerable<LoadEntryResult> TryLoadAsync(IContentSource source, IContentStructure structure, string pathToItem)
     {
-        return await Task.Run(() =>
+        var fileName = Path.GetFileNameWithoutExtension(pathToItem);
+        using (var stream = structure.GetEntryStream(pathToItem, out var entry))
         {
-            try
+            using (StreamReader sr = new StreamReader(stream))
             {
-                var fileName = Path.GetFileNameWithoutExtension(pathToItem);
-                using (var stream = structure.GetEntryStream(pathToItem, out var entry))
+                var json = sr.ReadToEnd();
+                var options = new JsonSerializerOptions()
                 {
-                    using (StreamReader sr = new StreamReader(stream))
-                    {
-                        var json = sr.ReadToEnd();
-                        var options = new JsonSerializerOptions()
-                        {
-                            PropertyNamingPolicy = JsonNamingPolicy.CamelCase
-                        };
-                        var programDescription = JsonSerializer.Deserialize<ShaderProgramDescription>(json, options);
+                    PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+                };
+                var programDescription = JsonSerializer.Deserialize<ShaderProgramDescription>(json, options);
 
-                        var sp = new ShaderProgram($"{source.GetIdentifier()}.shader_program.{fileName}", source, programDescription);
-                        return LoadEntryResult.CreateSuccess(sp);
-                    }
-                }
+                var sp = new ShaderProgram($"{source.GetIdentifier()}.shader_program.{fileName}", source, programDescription);
+                yield return await LoadEntryResult.CreateSuccessAsync(sp);
             }
-            catch (System.Exception ex)
-            {
-                return LoadEntryResult.CreateFailure(ex.Message);
-            }
-        });
+        }
     }
 }

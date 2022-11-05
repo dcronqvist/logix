@@ -39,7 +39,7 @@ public class IntegratedError : SimulationError
 
         var middle = new Vector2i(pos.X + size.X / 2, pos.Y + size.Y / 2).ToVector2(Constants.GRIDSIZE);
         var tShader = LogiX.ContentManager.GetContentItem<ShaderProgram>("core.shader_program.text");
-        var font = LogiX.ContentManager.GetContentItem<Font>("core.font.default");
+        var font = Utilities.GetFont("core.font.default", 8); //LogiX.ContentManager.GetContentItem<Font>("core.font.default-regular-8");
 
         TextRenderer.RenderText(tShader, font, this.Message, middle, 0.5f, ColorF.Red, cam);
     }

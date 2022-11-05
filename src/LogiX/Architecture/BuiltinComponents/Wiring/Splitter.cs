@@ -8,7 +8,7 @@ using LogiX.Content.Scripting;
 using LogiX.Graphics;
 using LogiX.Rendering;
 
-namespace content_1;
+namespace LogiX.Architecture.BuiltinComponents;
 
 public enum SplitterDirection
 {
@@ -50,11 +50,11 @@ public class Splitter : Component<SplitterData>
         this.ClearIOs();
 
         this._data = data;
-        this.RegisterIO("in", data.BitsToSplit, LogiX.ComponentSide.LEFT);
+        this.RegisterIO("in", data.BitsToSplit, ComponentSide.LEFT);
 
         for (int i = 0; i < data.BitsToSplit; i++)
         {
-            this.RegisterIO($"O{i}", 1, LogiX.ComponentSide.RIGHT, "out");
+            this.RegisterIO($"O{i}", 1, ComponentSide.RIGHT, "out");
         }
     }
 
@@ -89,7 +89,7 @@ public class Splitter : Component<SplitterData>
         }
     }
 
-    public override void SubmitUISelected(int componentIndex)
+    public override void SubmitUISelected(Editor editor, int componentIndex)
     {
         var uid = this.GetUniqueIdentifier();
         var currBits = this._data.BitsToSplit;
@@ -129,7 +129,7 @@ public class Splitter : Component<SplitterData>
     {
         //this.TriggerSizeRecalculation();
         // Position of component
-        var pShader = LogiX.LogiX.ContentManager.GetContentItem<ShaderProgram>("content_1.shader_program.primitive");
+        var pShader = LogiX.ContentManager.GetContentItem<ShaderProgram>("content_1.shader_program.primitive");
 
         var pos = this.Position.ToVector2(Constants.GRIDSIZE);
         var rect = this.GetBoundingBox(out var textSize);

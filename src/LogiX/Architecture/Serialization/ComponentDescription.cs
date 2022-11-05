@@ -175,7 +175,7 @@ public class ComponentDescription
         }
     }
 
-    public static Dictionary<string, string[]> GetAllComponentCategories()
+    public static SortedDictionary<string, string[]> GetAllComponentCategories()
     {
         var categories = new Dictionary<string, List<string>>();
         foreach (var t in _componentTypes)
@@ -192,9 +192,11 @@ public class ComponentDescription
                 }
                 categories[info.Category].Add(t.Key);
             }
+
+            categories[info.Category].Sort();
         }
 
-        var result = new Dictionary<string, string[]>();
+        var result = new SortedDictionary<string, string[]>();
         foreach (var c in categories)
         {
             result.Add(c.Key, c.Value.ToArray());

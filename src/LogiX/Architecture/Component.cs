@@ -279,7 +279,7 @@ public abstract class Component
 
         // Otherwise, calculate the size of the component.
         // In order to trigger a recalculation of the component's size, set _size to Vector2i.Zero.
-        var font = LogiX.ContentManager.GetContentItem<Font>("core.font.default");
+        var font = Utilities.GetFont("core.font.default", 8); //LogiX.ContentManager.GetContentItem<Font>("core.font.default-regular-8");
         var pShader = LogiX.ContentManager.GetContentItem<ShaderProgram>("core.shaderprogram.primitive");
         var tShader = LogiX.ContentManager.GetContentItem<ShaderProgram>("core.shaderprogram.text");
 
@@ -334,7 +334,7 @@ public abstract class Component
         //this.TriggerSizeRecalculation();
         // Position of component
 
-        var font = LogiX.ContentManager.GetContentItem<Font>("core.font.default");
+        var font = Utilities.GetFont("core.font.default", 8); //LogiX.ContentManager.GetContentItem<Font>("core.font.default-regular-8");
         var pShader = LogiX.ContentManager.GetContentItem<ShaderProgram>("core.shader_program.primitive");
         var tShader = LogiX.ContentManager.GetContentItem<ShaderProgram>("core.shader_program.text");
 
@@ -401,7 +401,7 @@ public abstract class Component
     public void RenderSelected(Camera2D camera)
     {
         // Position of component
-        var font = LogiX.ContentManager.GetContentItem<Font>("core.font.default");
+        var font = Utilities.GetFont("core.font.default", 8); //LogiX.ContentManager.GetContentItem<Font>("core.font.default-regular-8");
         var pShader = LogiX.ContentManager.GetContentItem<ShaderProgram>("core.shader_program.primitive");
         var tShader = LogiX.ContentManager.GetContentItem<ShaderProgram>("core.shader_program.text");
 

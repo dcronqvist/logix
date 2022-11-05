@@ -174,7 +174,7 @@ public class Pin : Component<PinData>
     {
         if (this._data.Behaviour == PinBehaviour.INPUT)
         {
-            var font = LogiX.ContentManager.GetContentItem<Font>("core.font.default");
+            var font = Utilities.GetFont("core.font.default", 8); //LogiX.ContentManager.GetContentItem<Font>("core.font.default-regular-8");
             var pShader = LogiX.ContentManager.GetContentItem<ShaderProgram>("core.shader_program.primitive");
             var tShader = LogiX.ContentManager.GetContentItem<ShaderProgram>("core.shader_program.text");
 
@@ -213,7 +213,7 @@ public class Pin : Component<PinData>
         }
         else
         {
-            var font = LogiX.ContentManager.GetContentItem<Font>("core.font.default");
+            var font = Utilities.GetFont("core.font.default", 8); //LogiX.ContentManager.GetContentItem<Font>("core.font.default-regular-8");
             var pShader = LogiX.ContentManager.GetContentItem<ShaderProgram>("core.shader_program.primitive");
             var tShader = LogiX.ContentManager.GetContentItem<ShaderProgram>("core.shader_program.text");
 

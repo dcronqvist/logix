@@ -384,7 +384,8 @@ public class Editor : Invoker<Editor>
             this.GUIFramebuffer.Bind(() =>
             {
                 Framebuffer.Clear(ColorF.Transparent);
-                Utilities.WithImGuiFont("core.font.opensans", () =>
+                var font = Utilities.GetFont("core.font.opensans", 16);
+                Utilities.WithImGuiFont(font, () =>
                 {
                     try
                     {
@@ -416,7 +417,8 @@ public class Editor : Invoker<Editor>
             this.GUIFramebuffer.Bind(() =>
             {
                 Framebuffer.Clear(ColorF.Transparent);
-                Utilities.WithImGuiFont("core.font.opensans", () =>
+                var font = Utilities.GetFont("core.font.opensans", 16);
+                Utilities.WithImGuiFont(font, () =>
                 {
                     try
                     {

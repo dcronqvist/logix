@@ -116,7 +116,7 @@ public class ReadWrongAmountOfBitsError : SimulationError
         var shader = LogiX.ContentManager.GetContentItem<ShaderProgram>("core.shader_program.primitive");
         PrimitiveRenderer.RenderCircle(this.Pos.ToVector2(Constants.GRIDSIZE), 8, 0f, ColorF.Red);
         var tShader = LogiX.ContentManager.GetContentItem<ShaderProgram>("core.shader_program.text");
-        var font = LogiX.ContentManager.GetContentItem<Font>("core.font.default");
+        var font = Utilities.GetFont("core.font.default", 8); //LogiX.ContentManager.GetContentItem<Font>("core.font.default-regular-8");
         var measure = font.MeasureString(this.Message, 1f);
         TextRenderer.RenderText(tShader, font, this.Message, this.Pos.ToVector2(Constants.GRIDSIZE) - measure / 2f, 1f, ColorF.Black, cam);
     }
@@ -155,7 +155,7 @@ public class PushingDifferentValuesError : SimulationError
 
         var firstSegment = Wire.Segments[0];
         var tShader = LogiX.ContentManager.GetContentItem<ShaderProgram>("core.shader_program.text");
-        var font = LogiX.ContentManager.GetContentItem<Font>("core.font.default");
+        var font = Utilities.GetFont("core.font.default", 8); //LogiX.ContentManager.GetContentItem<Font>("core.font.default-regular-8");
         var measure = font.MeasureString(this.Message, 0.5f);
         TextRenderer.RenderText(tShader, font, this.Message, Utilities.GetMiddleOfVec2(firstSegment.Item1.ToVector2(Constants.GRIDSIZE), firstSegment.Item2.ToVector2(Constants.GRIDSIZE)) - measure / 2f, 0.5f, ColorF.Black, cam);
     }
@@ -173,7 +173,7 @@ public class ICIsOldError : SimulationError
     public override void Render(Camera2D cam)
     {
         var tShader = LogiX.ContentManager.GetContentItem<ShaderProgram>("core.shader_program.text");
-        var font = LogiX.ContentManager.GetContentItem<Font>("core.font.default");
+        var font = Utilities.GetFont("core.font.default", 8); //LogiX.ContentManager.GetContentItem<Font>("core.font.default-regular-8");
         var size = this.IC.GetBoundingBox(out _).GetSize();
         var pos = this.IC.Position.ToVector2(Constants.GRIDSIZE);
 

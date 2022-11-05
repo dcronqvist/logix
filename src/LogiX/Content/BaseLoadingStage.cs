@@ -1,4 +1,5 @@
 using System.Diagnostics.CodeAnalysis;
+using LogiX.Graphics;
 using Symphony;
 
 namespace LogiX.Content;
@@ -28,5 +29,33 @@ public abstract class BaseLoadingStage : IContentLoadingStage
 
     public abstract void OnStageStarted();
     public abstract void OnStageCompleted();
-    public abstract Task<LoadEntryResult> TryLoadEntry(IContentSource source, IContentStructure structure, ContentEntry entry);
+
+    public async IAsyncEnumerable<LoadEntryResult> TryLoadEntry(IContentSource source, IContentStructure structure, ContentEntry entry)
+    {
+        var extension = Path.GetExtension(entry.EntryPath);
+
+        if (!this._loaders.ContainsKey(extension))
+        {
+            yield return await LoadEntryResult.CreateFailureAsync($"No loader found for {extension}");
+        }
+
+        var loader = this._loaders[extension];
+        var results = loader.TryLoadAsync(source, structure, entry.EntryPath);
+
+        await foreach (var result in results)
+        {
+            if (result.Success)
+            {
+                if (result.Item is GLContentItem glItem)
+                {
+                    DisplayManager.LockedGLContext(() =>
+                    {
+                        glItem.InitGL(glItem.Content);
+                    });
+                }
+            }
+
+            yield return result;
+        }
+    }
 }

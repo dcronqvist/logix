@@ -6,8 +6,10 @@ namespace LogiX.Content;
 
 public class AssemblyLoader : IContentItemLoader
 {
-    public async Task<LoadEntryResult> TryLoad(IContentSource source, IContentStructure structure, string pathToItem)
+    public async IAsyncEnumerable<LoadEntryResult> TryLoadAsync(IContentSource source, IContentStructure structure, string pathToItem)
     {
+        LoadEntryResult result = LoadEntryResult.CreateFailure("Failed to load assembly");
+
         try
         {
             await Task.Delay(1000);
@@ -19,11 +21,13 @@ public class AssemblyLoader : IContentItemLoader
             var defs = assembly.DefinedTypes;
 
             var fileName = Path.GetFileNameWithoutExtension(pathToItem);
-            return LoadEntryResult.CreateSuccess(new AssemblyContentItem($"{source.GetIdentifier()}.assembly.{fileName}", source, assembly));
+            result = await LoadEntryResult.CreateSuccessAsync(new AssemblyContentItem($"{source.GetIdentifier()}.assembly.{fileName}", source, assembly));
         }
         catch (System.Exception ex)
         {
-            return LoadEntryResult.CreateFailure(ex.Message);
+            result = await LoadEntryResult.CreateFailureAsync(ex.Message);
         }
+
+        yield return result;
     }
 }

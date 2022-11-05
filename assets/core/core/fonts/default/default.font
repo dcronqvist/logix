@@ -1,6 +1,9 @@
 {
-    "file": "default.ttf",
-    "size": 8,
+    "fileRegular": "default.ttf",
+	"fileBold": "default.ttf",
+	"fileItalic": "default.ttf",
+	"fileBoldItalic": "default.ttf",
+    "sizes": [8, 16, 24],
     "magFilter": "nearestNeighbour",
     "minFilter": "nearestNeighbour"
 }

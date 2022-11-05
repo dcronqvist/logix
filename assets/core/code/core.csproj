@@ -10,7 +10,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\..\..\modules\Symphony\Symphony\Symphony.csproj" />
+    <ProjectReference Include="..\..\..\modules\Symphony\Symphony\Symphony.csproj" />
   </ItemGroup>
 
   <ItemGroup>
@@ -19,7 +19,7 @@
 
   <ItemGroup>
     <Reference Include="LogiX">
-      <HintPath>../../../../src/LogiX/bin/Debug/net6.0/LogiX.dll</HintPath>
+      <HintPath>../../../src/LogiX/bin/Debug/net6.0/LogiX.dll</HintPath>
     </Reference>
   </ItemGroup>
 

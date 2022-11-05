@@ -55,6 +55,23 @@ public class Font : GLContentItem<FontData>
         this.Characters = new Dictionary<char, FontCharacter>();
     }
 
+    public string GetFontBaseName()
+    {
+        var split = this.Identifier.Split('.');
+        var contentFont = split.Take(2);
+        var rest = split[2];
+
+        return string.Join(".", contentFont) + "." + rest.Split("-")[0];
+    }
+
+    public bool IsBold => this.Identifier.Contains("bold");
+    public bool IsItalic => this.Identifier.Contains("italic");
+
+    public int GetSize()
+    {
+        return int.Parse(this.Identifier.Split("-").Last());
+    }
+
     public override void DestroyGL()
     {
         glDeleteTexture(this.TextureID);

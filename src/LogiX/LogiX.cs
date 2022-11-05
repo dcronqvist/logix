@@ -164,7 +164,7 @@ public class LogiX : Game
                     Framebuffer.Clear(ColorF.Black);
 
                     var shader = ContentManager.GetContentItem<ShaderProgram>("core.shader_program.text");
-                    var font = ContentManager.GetContentItem<Font>("core.font.default");
+                    var font = Utilities.GetFont("core.font.default", 8);
 
                     var measure = font.MeasureString("Loading...", 2f);
 

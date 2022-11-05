@@ -19,7 +19,6 @@ public class ImGuiMarkdownRenderer : RendererBase
         this.ObjectRenderers.Add(new EmphasisInlineRenderer());
         this.ObjectRenderers.Add(new ListItemRenderer());
         this.ObjectRenderers.Add(new BlankLineRenderer());
-
     }
 
     public override object Render(MarkdownObject markdownObject)
@@ -49,6 +48,8 @@ public class ImGuiMarkdownRenderer : RendererBase
             words = words.Skip(1).ToArray();
         }
 
+        currentLine.Trim();
+
         if (currentLine != "")
         {
             ImGui.Text(currentLine);
@@ -60,8 +61,6 @@ public class HeadingRenderer : MarkdownObjectRenderer<ImGuiMarkdownRenderer, Hea
 {
     protected override void Write(ImGuiMarkdownRenderer renderer, HeadingBlock obj)
     {
-        var basefont = "core.font.opensans-bold-";
-
         var size = obj.Level switch
         {
             1 => 32,
@@ -73,17 +72,19 @@ public class HeadingRenderer : MarkdownObjectRenderer<ImGuiMarkdownRenderer, Hea
             _ => 16
         };
 
-        Utilities.WithImGuiFont($"{basefont}{size}", () =>
-        {
-            foreach (var child in obj.Inline)
-            {
-                renderer.Render(child);
-            }
-            ImGui.NewLine();
+        Utilities.PushFontSize(size);
+        Utilities.PushFontBold();
 
-            if (obj.Level < 2)
-                ImGui.Separator();
-        });
+        foreach (var child in obj.Inline)
+        {
+            renderer.Render(child);
+        }
+        ImGui.NewLine();
+
+        if (obj.Level < 2)
+            ImGui.Separator();
+
+        Utilities.PopFontStyle(2);
     }
 }
 
@@ -116,24 +117,22 @@ public class EmphasisInlineRenderer : MarkdownObjectRenderer<ImGuiMarkdownRender
         if (obj.DelimiterCount == 2)
         {
             // BOLD FONT
-            Utilities.WithImGuiFont("core.font.opensans-bold-16", () =>
+            Utilities.PushFontBold();
+            foreach (var child in obj)
             {
-                foreach (var child in obj)
-                {
-                    renderer.Render(child);
-                }
-            });
+                renderer.Render(child);
+            }
+            Utilities.PopFontStyle();
         }
         else
         {
             // ITALIC FONT
-            Utilities.WithImGuiFont("core.font.opensans-italic", () =>
+            Utilities.PushFontItalic();
+            foreach (var child in obj)
             {
-                foreach (var child in obj)
-                {
-                    renderer.Render(child);
-                }
-            });
+                renderer.Render(child);
+            }
+            Utilities.PopFontStyle();
         }
     }
 }
