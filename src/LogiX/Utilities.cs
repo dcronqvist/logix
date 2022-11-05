@@ -7,6 +7,7 @@ using System.Security.Cryptography;
 using System.Text;
 using ImGuiNET;
 using LogiX.Architecture;
+using LogiX.GLFW;
 using LogiX.Graphics;
 using Markdig;
 using Markdig.Syntax;
@@ -581,6 +582,13 @@ public static class Utilities
         ImGui.EndTooltip();
     }
 
+    public static void MouseToolTip(Action action)
+    {
+        ImGui.BeginTooltip();
+        action();
+        ImGui.EndTooltip();
+    }
+
     public static Vector2 GetSize(this RectangleF rec)
     {
         return new Vector2(rec.Width, rec.Height);
@@ -803,5 +811,13 @@ public static class Utilities
         };
 
         return newSide.ApplyRotation(amount - 1);
+    }
+
+    public static string PrettifyKey(this Keys key)
+    {
+        return new Dictionary<Keys, string>() {
+            { Keys.LeftControl, "Ctrl" },
+            { Keys.LeftSuper, "Cmd"}
+        }.GetValueOrDefault(key, key.ToString());
     }
 }

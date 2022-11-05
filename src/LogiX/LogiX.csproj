@@ -1,11 +1,14 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <OutputType>Exe</OutputType>
+    <LogiXOutputType>Exe</LogiXOutputType>
+    <OutputType>$(LogiXOutputType)</OutputType>
     <TargetFramework>net6.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <LangVersion>preview</LangVersion>
     <EnablePreviewFeatures>True</EnablePreviewFeatures>
+    <ApplicationIcon>../../assets/core/core/icon.ico</ApplicationIcon>
+    <PublishSingleFile>true</PublishSingleFile>
   </PropertyGroup>
 
   <PropertyGroup Condition=" '$(OS)' == 'WINDOWS_NT'">
@@ -15,7 +18,6 @@
   <PropertyGroup Condition=" '$(OS)' == 'OSX'">
     <DefineConstants>_OSX</DefineConstants>
   </PropertyGroup>
-
 
   <ItemGroup>
     <LibDlls Include="$(ProjectDir)\libs\win\**\*.*" />
@@ -33,9 +35,9 @@
   </ItemGroup>
 
   <Target Name="CopyLibDlls" AfterTargets="Build">
-    <Message Text="Copying dlls to output directory..." Importance="High" />
+    <Message Text="Copying @(LibDlls) to output directory $(OutDir)..." Importance="High" />
 
-    <Copy SourceFiles="@(LibDlls)" DestinationFolder="$(OutDir)" SkipUnchangedFiles="true" />
+    <Copy SourceFiles="@(LibDlls)" DestinationFolder="$(OutputPath)" SkipUnchangedFiles="true" />
   </Target>
 
 </Project>

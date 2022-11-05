@@ -89,11 +89,11 @@ public static class TextRenderer
 
                 FontCharacter ch = f.Characters[c];
 
-                float xPos = x + ch.Bearing.X * scale;
-                float yPos = y + (f.MaxY - ch.Bearing.Y) * scale;
+                float xPos = x + ch.Bearing.X;
+                float yPos = y + (f.MaxY - ch.Bearing.Y);
 
-                float w = ch.Size.X * scale;
-                float h = ch.Size.Y * scale;
+                float w = ch.Size.X;
+                float h = ch.Size.Y;
 
                 float uvXLeft = ch.Rectangle.X / f.AtlasWidth;
                 float uvXRight = (ch.Rectangle.X + ch.Rectangle.Width) / f.AtlasWidth;
@@ -116,7 +116,7 @@ public static class TextRenderer
                     data[i * 8 * 6 + j] = verticesForCharacter[j];
                 }
 
-                x += ch.Advance * scale;
+                x += ch.Advance;
             }
 
             glBindBuffer(GL_ARRAY_BUFFER, fontVBO);

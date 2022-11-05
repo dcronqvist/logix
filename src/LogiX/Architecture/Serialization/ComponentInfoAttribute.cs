@@ -8,7 +8,7 @@ public class ComponentInfoAttribute : Attribute
     public string DocumentationAsset { get; set; }
     public bool Hidden { get; set; }
 
-    public ComponentInfoAttribute(string displayName, string category, string documentationAsset = null, bool hidden = false)
+    public ComponentInfoAttribute(string displayName, string category, string documentationAsset = "core.markdown.template", bool hidden = false)
     {
         this.DocumentationAsset = documentationAsset;
         DisplayName = displayName;

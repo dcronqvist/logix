@@ -9,6 +9,7 @@ libs/
 *.dat
 **/settings.json
 **/imgui.ini
+build/
 
 # User-specific files
 *.rsuser

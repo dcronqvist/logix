@@ -1,3 +1,4 @@
+using System.Collections;
 using System.Diagnostics;
 using System.Numerics;
 using ImGuiNET;
@@ -50,10 +51,16 @@ public class Editor : Invoker<Editor>
     public bool RequestedPopupModal { get; set; }
     public Modal PopupModal { get; set; }
 
+    // Top right current message 
+    public string CurrentMessage { get; set; }
+
     // Some variables for a context menu that pops up when someone calls the "OpenContextMenu" method
     public bool RequestedPopupContext { get; set; }
     public Action RequestedPopupContextSubmit { get; set; }
     public Vector2 MouseStartPosition { get; set; }
+
+    // All editor actions that should be visible in the main menu bar, and have shortcuts etc.
+    public List<(string, List<(string, EditorAction)>)> EditorActions { get; private set; }
 
     public Editor()
     {
@@ -198,6 +205,51 @@ public class Editor : Invoker<Editor>
         thread.Priority = ThreadPriority.Highest;
         thread.Start();
         #endregion
+
+        #region INITIALIZE EDITOR ACTIONS
+
+        this.AddMainMenuItem("File", "New Project", new EditorAction((e) => true, (e) => false, (e) =>
+        {
+            // Verify that the user wants to create a new project
+            // Currently very unforgiving, and should be changed later.
+            this.SetProject(LogiXProject.New("Untitled"));
+        }, Keys.LeftControl, Keys.N));
+
+        this.AddMainMenuItem("File", "Open Project", new EditorAction((e) => true, (e) => false, (e) =>
+        {
+            var fileDialog = new FileDialog(".", FileDialogType.SelectFile, (s) =>
+            {
+                // On select
+                if (this.Project is not null)
+                {
+                    this.QuickSaveProject();
+                }
+
+                var project = LogiXProject.FromFile(s);
+                this.SetProject(project);
+                Settings.SetSetting(Settings.LAST_OPEN_PROJECT, project.LoadedFromPath);
+
+            }, ".lxprojj");
+
+            this.OpenPopup(fileDialog);
+        }, Keys.LeftControl, Keys.O));
+
+        this.AddMainMenuItem("File", "Save Project", new EditorAction((e) => this.Project is not null, (e) => false, (e) =>
+        {
+            var newCircuit = this.Sim.LockedAction(s => s.GetCircuitInSimulation(this.CurrentlyOpenCircuit.Name));
+            newCircuit.ID = this.CurrentlyOpenCircuit.ID;
+            this.Project.UpdateCircuit(newCircuit);
+            this.QuickSaveProject();
+        }, Keys.LeftControl, Keys.S));
+
+        this.AddMainMenuItem("File", "Test MessageThing", new EditorAction((e) => true, (e) => false, (e) =>
+        {
+            this.SetMessage(NStageProvider(() => "Hello World!",
+            () => { Task.Delay(1000).Wait(); return "Waiting"; },
+            () => { Task.Delay(1000).Wait(); return "Done!"; }));
+        }, Keys.LeftShift, Keys.T));
+
+        #endregion
     }
 
     #region POPUP METHODS
@@ -236,6 +288,25 @@ public class Editor : Invoker<Editor>
     {
         this.OpenPopup(new DynamicModal(title, ImGuiWindowFlags.AlwaysAutoResize, ImGuiPopupFlags.None, (e) => submit()));
         this.SimulationRunning = !stopSim;
+    }
+
+    public IEnumerable<string> NStageProvider(params Func<string>[] stages)
+    {
+        foreach (var stage in stages)
+        {
+            yield return stage.Invoke();
+        }
+    }
+
+    public void SetMessage(IEnumerable<string> provider)
+    {
+        Task.Run(() =>
+        {
+            foreach (var message in provider)
+            {
+                this.CurrentMessage = message;
+            }
+        });
     }
 
     #endregion
@@ -330,9 +401,16 @@ public class Editor : Invoker<Editor>
         this.FSM.SetState<StateMovingSelection>(this, 0);
     }
 
-
     public void Update()
     {
+        foreach (var (category, actionList) in this.EditorActions)
+        {
+            foreach (var (actionName, action) in actionList)
+            {
+                action.Update(this);
+            }
+        }
+
         if (this.Sim is not null)
         {
             this.FSM?.Update(this);
@@ -464,6 +542,29 @@ public class Editor : Invoker<Editor>
 
     #region GUI METHODS
 
+    private List<(string, EditorAction)> GetEditorActionCategory(string category)
+    {
+        if (this.EditorActions.Any(x => x.Item1 == category))
+        {
+            return this.EditorActions.First(x => x.Item1 == category).Item2;
+        }
+
+        var list = new List<(string, EditorAction)>();
+        this.EditorActions.Add((category, list));
+        return list;
+    }
+
+    public void AddMainMenuItem(string category, string name, EditorAction action)
+    {
+        if (this.EditorActions is null)
+        {
+            this.EditorActions = new();
+        }
+
+        var categoryList = this.GetEditorActionCategory(category);
+        categoryList.Add((name, action));
+    }
+
     private bool _displayAboutWindow = false;
     public void SubmitAboutLogiXWindow()
     {
@@ -491,138 +592,126 @@ public class Editor : Invoker<Editor>
 
     public void SubmitMainMenuBar()
     {
-        if (ImGui.BeginMenu("File"))
+        foreach (var (category, actionList) in this.EditorActions)
         {
-            if (ImGui.MenuItem("New Project...", "Ctrl+N", false, true))
+            if (ImGui.BeginMenu(category))
             {
-
-            }
-            if (ImGui.MenuItem("Save Project", "Ctrl+S", false, true))
-            {
-                var newCircuit = this.Sim.LockedAction(s => s.GetCircuitInSimulation(this.CurrentlyOpenCircuit.Name));
-                newCircuit.ID = this.CurrentlyOpenCircuit.ID;
-                this.Project.UpdateCircuit(newCircuit);
-                this.QuickSaveProject();
-            }
-            if (ImGui.MenuItem("Open Project...", "Ctrl+O", false, true))
-            {
-                var fileDialog = new FileDialog(".", FileDialogType.SelectFile, (s) =>
+                foreach (var (actionName, action) in actionList)
                 {
-                    // On select
-                    if (this.Project is not null)
+                    if (ImGui.MenuItem(actionName, action.GetShortcutString(), action.Selected.Invoke(this), action.Condition.Invoke(this)))
                     {
-                        this.QuickSaveProject();
-                    }
-
-                    var project = LogiXProject.FromFile(s);
-                    this.SetProject(project);
-                    Settings.SetSetting(Settings.LAST_OPEN_PROJECT, project.LoadedFromPath);
-
-                }, ".lxprojj");
-
-                this.OpenPopup(fileDialog);
-            }
-            if (ImGui.MenuItem("Intentional Exception", "", false, true))
-            {
-                throw new Exception("Intentional Exception");
-            }
-
-            ImGui.EndMenu();
-        }
-        if (ImGui.BeginMenu("Edit"))
-        {
-            if (ImGui.MenuItem("Undo", "Ctrl+Z", false, this.CurrentCommandIndex >= 0))
-            {
-                this.Undo(this);
-            }
-            if (ImGui.MenuItem("Redo", "Ctrl+Y", false, this.CurrentCommandIndex < this.Commands.Count - 1))
-            {
-                this.Redo(this);
-            }
-            if (ImGui.MenuItem("Delete Selection", "", false, this.Sim.LockedAction(s => s.SelectedComponents.Count > 0)))
-            {
-                var commands = this.Sim.LockedAction(s => s.SelectedComponents.Select(c => new CDeleteComponent(c)));
-                this.Execute(new CMulti(commands.ToArray()), this);
-            }
-            if (ImGui.MenuItem("Style Editor", "", ref styleEditorOpen))
-            {
-
-            }
-            if (ImGui.MenuItem("Rotate Selection Clockwise"))
-            {
-                // Testing rotations
-                var selection = this.Sim.LockedAction(s => s.SelectedComponents);
-                foreach (var c in selection)
-                {
-                    c.RotateClockwise();
-                }
-            }
-            if (ImGui.MenuItem("Rotate Selection Counter Clockwise"))
-            {
-                // Testing rotations
-                var selection = this.Sim.LockedAction(s => s.SelectedComponents);
-                foreach (var c in selection)
-                {
-                    c.RotateCounterClockwise();
-                }
-            }
-
-            ImGui.EndMenu();
-        }
-
-        if (ImGui.BeginMenu("Circuits"))
-        {
-            if (ImGui.MenuItem("New Circuit...", "Ctrl+Shift+N", false, true))
-            {
-                this.WritingNewCircuitName = true;
-                this.NewCircuitName = "";
-            }
-
-            ImGui.EndMenu();
-        }
-
-        if (ImGui.BeginMenu("Simulation"))
-        {
-            var running = this.SimulationRunning;
-            ImGui.MenuItem("Simulating", "", ref running);
-            this.SimulationRunning = running;
-
-            if (ImGui.BeginMenu("Tick Rate"))
-            {
-                Utilities.ImGuiHelp("High tick rates can cause severe performance issues. Adjust with caution.");
-                for (int i = 0; i < this.AvailableTickRates.Length; i++)
-                {
-                    if (ImGui.Selectable(this.AvailableTickRates[i].GetAsHertzString(), this.CurrentlySelectedTickRate == i))
-                    {
-                        this.CurrentlySelectedTickRate = i;
+                        action.Execute.Invoke(this);
                     }
                 }
 
                 ImGui.EndMenu();
             }
-
-            ImGui.Separator();
-
-            if (ImGui.MenuItem("Tick Once", "", false, !this.SimulationRunning))
-            {
-                this.Sim.LockedAction(s => s.Tick());
-            }
-
-            ImGui.EndMenu();
-        }
-
-        if (ImGui.BeginMenu("View"))
-        {
-            if (ImGui.MenuItem("About LogiX"))
-            {
-                this._displayAboutWindow = true;
-            }
-
-            ImGui.EndMenu();
         }
 
         ImGui.Text($"TPS: {this.CurrentTicksPerSecond.GetAsHertzString()}");
         ImGui.Text($"State: {this.FSM.CurrentState.GetType().Name}");
+
+        if (this.CurrentMessage is not null && this.CurrentMessage != "")
+        {
+            var cursorX = ImGui.GetCursorPosX();
+            var width = ImGui.GetWindowWidth();
+            var text = this.CurrentMessage;
+            var size = ImGui.CalcTextSize(text);
+            ImGui.Dummy(new Vector2(width - size.X - cursorX - 10, 0));
+            ImGui.Text(CurrentMessage);
+        }
+
+        // if (ImGui.BeginMenu("Edit"))
+        // {
+        //     if (ImGui.MenuItem("Undo", "Ctrl+Z", false, this.CurrentCommandIndex >= 0))
+        //     {
+        //         this.Undo(this);
+        //     }
+        //     if (ImGui.MenuItem("Redo", "Ctrl+Y", false, this.CurrentCommandIndex < this.Commands.Count - 1))
+        //     {
+        //         this.Redo(this);
+        //     }
+        //     if (ImGui.MenuItem("Delete Selection", "", false, this.Sim.LockedAction(s => s.SelectedComponents.Count > 0)))
+        //     {
+        //         var commands = this.Sim.LockedAction(s => s.SelectedComponents.Select(c => new CDeleteComponent(c)));
+        //         this.Execute(new CMulti(commands.ToArray()), this);
+        //     }
+        //     if (ImGui.MenuItem("Style Editor", "", ref styleEditorOpen))
+        //     {
+
+        //     }
+        //     if (ImGui.MenuItem("Rotate Selection Clockwise"))
+        //     {
+        //         // Testing rotations
+        //         var selection = this.Sim.LockedAction(s => s.SelectedComponents);
+        //         foreach (var c in selection)
+        //         {
+        //             c.RotateClockwise();
+        //         }
+        //     }
+        //     if (ImGui.MenuItem("Rotate Selection Counter Clockwise"))
+        //     {
+        //         // Testing rotations
+        //         var selection = this.Sim.LockedAction(s => s.SelectedComponents);
+        //         foreach (var c in selection)
+        //         {
+        //             c.RotateCounterClockwise();
+        //         }
+        //     }
+
+        //     ImGui.EndMenu();
+        // }
+
+        // if (ImGui.BeginMenu("Circuits"))
+        // {
+        //     if (ImGui.MenuItem("New Circuit...", "Ctrl+Shift+N", false, true))
+        //     {
+        //         this.WritingNewCircuitName = true;
+        //         this.NewCircuitName = "";
+        //     }
+
+        //     ImGui.EndMenu();
+        // }
+
+        // if (ImGui.BeginMenu("Simulation"))
+        // {
+        //     var running = this.SimulationRunning;
+        //     ImGui.MenuItem("Simulating", "", ref running);
+        //     this.SimulationRunning = running;
+
+        //     if (ImGui.BeginMenu("Tick Rate"))
+        //     {
+        //         Utilities.ImGuiHelp("High tick rates can cause severe performance issues. Adjust with caution.");
+        //         for (int i = 0; i < this.AvailableTickRates.Length; i++)
+        //         {
+        //             if (ImGui.Selectable(this.AvailableTickRates[i].GetAsHertzString(), this.CurrentlySelectedTickRate == i))
+        //             {
+        //                 this.CurrentlySelectedTickRate = i;
+        //             }
+        //         }
+
+        //         ImGui.EndMenu();
+        //     }
+
+        //     ImGui.Separator();
+
+        //     if (ImGui.MenuItem("Tick Once", "", false, !this.SimulationRunning))
+        //     {
+        //         this.Sim.LockedAction(s => s.Tick());
+        //     }
+
+        //     ImGui.EndMenu();
+        // }
+
+        // if (ImGui.BeginMenu("View"))
+        // {
+        //     if (ImGui.MenuItem("About LogiX"))
+        //     {
+        //         this._displayAboutWindow = true;
+        //     }
+
+        //     ImGui.EndMenu();
+        // }
     }
 
     public void SubmitComponentsWindow(Vector2 mainMenuBarSize)

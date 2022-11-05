@@ -44,7 +44,15 @@ public class LogiX : Game
             }
         };
 
-        var coreSource = new DirectoryContentSource(Path.GetFullPath("../../assets/core"));
+        var basePath = "";
+
+#if DEBUG
+        basePath = "../../assets";
+#else
+        basePath = "assets";
+#endif
+
+        var coreSource = new DirectoryContentSource(Path.GetFullPath($"{basePath}/core"));
         var validator = new ContentValidator();
         var collection = IContentCollectionProvider.FromListOfSources(coreSource); //new DirectoryCollectionProvider(@"C:\Users\RichieZ\repos\logix\assets\core", factory);
         var loader = new ContentLoader();
@@ -67,6 +75,7 @@ public class LogiX : Game
                 Console.WriteLine($"Loaded {entry.Identifier}");
             }
 
+#if DEBUG // Only start the polling if we are in DEBUG mode
             // The following background task will poll for content that is changed and then reloads it
             Task.Run(async () =>
             {
@@ -76,6 +85,7 @@ public class LogiX : Game
                     await Task.Delay(1000); // No more than 1 check per second is needed
                 }
             });
+#endif
 
             ScriptManager.Initialize(ContentManager);
             ComponentDescription.RegisterComponentTypes();
