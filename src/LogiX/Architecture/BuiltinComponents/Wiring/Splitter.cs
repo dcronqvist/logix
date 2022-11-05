@@ -82,7 +82,7 @@ public class Splitter : Component<SplitterData>
 
             for (int i = 0; i < inputs.Length; i++)
             {
-                values[i] = inputs[i].GetValues()[0];
+                values[values.Length - i - 1] = inputs[i].GetValues()[0];
             }
 
             output.Push(values);
@@ -120,9 +120,16 @@ public class Splitter : Component<SplitterData>
         var height = (bits - 1) * Constants.GRIDSIZE;
         var pos = this.Position.ToVector2(Constants.GRIDSIZE);
 
-        this._bounds = pos.CreateRect(new Vector2(Constants.GRIDSIZE, height)).Inflate(1);
-
-        return this._bounds;
+        if (this.Rotation == 0 || this.Rotation == 2)
+        {
+            this._bounds = pos.CreateRect(new Vector2(Constants.GRIDSIZE, height)).Inflate(1);
+            return this._bounds;
+        }
+        else
+        {
+            this._bounds = pos.CreateRect(new Vector2(height, Constants.GRIDSIZE)).Inflate(1);
+            return this._bounds;
+        }
     }
 
     public override void Render(Camera2D camera)
@@ -130,14 +137,19 @@ public class Splitter : Component<SplitterData>
         //this.TriggerSizeRecalculation();
         // Position of component
         var pShader = LogiX.ContentManager.GetContentItem<ShaderProgram>("content_1.shader_program.primitive");
-
         var pos = this.Position.ToVector2(Constants.GRIDSIZE);
         var rect = this.GetBoundingBox(out var textSize);
         var size = rect.GetSize().ToVector2i(Constants.GRIDSIZE);
         var realSize = size.ToVector2(Constants.GRIDSIZE);
 
         var inputPos = this.GetPositionForIO(this.GetIOFromIdentifier("in"), out var end).ToVector2(Constants.GRIDSIZE);
-        var halfWay = end.ToVector2(Constants.GRIDSIZE) + new Vector2(Constants.GRIDSIZE / 2f, 0);
+        var halfWay = this.Rotation switch
+        {
+            0 => end.ToVector2(Constants.GRIDSIZE) + new Vector2(Constants.GRIDSIZE / 2f, 0f),
+            1 => end.ToVector2(Constants.GRIDSIZE) + new Vector2(0f, Constants.GRIDSIZE / 2f),
+            2 => end.ToVector2(Constants.GRIDSIZE) - new Vector2(Constants.GRIDSIZE / 2f, 0f),
+            3 => end.ToVector2(Constants.GRIDSIZE) - new Vector2(0f, Constants.GRIDSIZE / 2f),
+        };
 
         var bits = this._data.BitsToSplit - 1;
 
@@ -148,7 +160,15 @@ public class Splitter : Component<SplitterData>
         {
             var io = ios[i];
             var ioPos = this.GetPositionForIO(io, out var lineEnd);
-            var lineEndPos = new Vector2(lineEnd.X * Constants.GRIDSIZE, lineEnd.Y * Constants.GRIDSIZE) - new Vector2(Constants.GRIDSIZE / 2f, 0);
+            var offset = this.Rotation switch
+            {
+                0 => -new Vector2(Constants.GRIDSIZE / 2f, 0),
+                1 => -new Vector2(0f, Constants.GRIDSIZE / 2f),
+                2 => new Vector2(Constants.GRIDSIZE / 2f, 0),
+                3 => new Vector2(0f, Constants.GRIDSIZE / 2f),
+                _ => Vector2.Zero
+            };
+            var lineEndPos = new Vector2(lineEnd.X * Constants.GRIDSIZE, lineEnd.Y * Constants.GRIDSIZE) + offset;
 
             // Draw the group
             var gPos = new Vector2(ioPos.X * Constants.GRIDSIZE, ioPos.Y * Constants.GRIDSIZE);
@@ -162,6 +182,14 @@ public class Splitter : Component<SplitterData>
         var col = this.GetIOColor(0);
         PrimitiveRenderer.RenderLine(inputPos, halfWay, 2, col.Darken(0.5f));
         PrimitiveRenderer.RenderCircle(inputPos, Constants.IO_GROUP_RADIUS, 0f, col);
-        PrimitiveRenderer.RenderLine(halfWay - new Vector2(0, 1), new Vector2(halfWay.X, halfWay.Y + bits * Constants.GRIDSIZE + 1), 2, ColorF.Black);
+
+        if (this.Rotation == 0 || this.Rotation == 2)
+        {
+            PrimitiveRenderer.RenderLine(halfWay - new Vector2(0, 1), new Vector2(halfWay.X, halfWay.Y + bits * Constants.GRIDSIZE + 1), 2, ColorF.Black);
+        }
+        else
+        {
+            PrimitiveRenderer.RenderLine(halfWay - new Vector2(1, 0), new Vector2(halfWay.X + bits * Constants.GRIDSIZE + 1, halfWay.Y), 2, ColorF.Black);
+        }
     }
 }

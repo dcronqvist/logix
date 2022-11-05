@@ -787,4 +787,21 @@ public static class Utilities
         var font = LogiX.ContentManager.GetContentItem<Font>($"{identifier}-{final}-{size}");
         return font;
     }
+
+    public static ComponentSide ApplyRotation(this ComponentSide side, int amount)
+    {
+        if (amount == 0)
+            return side;
+
+        var newSide = side switch
+        {
+            ComponentSide.TOP => ComponentSide.RIGHT,
+            ComponentSide.RIGHT => ComponentSide.BOTTOM,
+            ComponentSide.BOTTOM => ComponentSide.LEFT,
+            ComponentSide.LEFT => ComponentSide.TOP,
+            _ => side
+        };
+
+        return newSide.ApplyRotation(amount - 1);
+    }
 }

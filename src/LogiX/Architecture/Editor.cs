@@ -276,10 +276,27 @@ public class Editor : Invoker<Editor>
     /// </summary>
     public void QuickSaveProject()
     {
-        var newCircuit = this.Sim.LockedAction(s => s.GetCircuitInSimulation(this.CurrentlyOpenCircuit.Name));
-        newCircuit.ID = this.CurrentlyOpenCircuit.ID;
-        this.Project.UpdateCircuit(newCircuit);
-        this.Project.Quicksave();
+        if (this.Project.HasFileToSaveTo())
+        {
+            var newCircuit = this.Sim.LockedAction(s => s.GetCircuitInSimulation(this.CurrentlyOpenCircuit.Name));
+            newCircuit.ID = this.CurrentlyOpenCircuit.ID;
+            this.Project.UpdateCircuit(newCircuit);
+            this.Project.Quicksave();
+        }
+        else
+        {
+            var fileDialog = new FileDialog(".", FileDialogType.SaveFile, (path) =>
+            {
+                var newCircuit = this.Sim.LockedAction(s => s.GetCircuitInSimulation(this.CurrentlyOpenCircuit.Name));
+                newCircuit.ID = this.CurrentlyOpenCircuit.ID;
+                this.Project.LoadedFromPath = Path.GetFullPath(path);
+                Settings.SetSetting(Settings.LAST_OPEN_PROJECT, Path.GetFullPath(path));
+                this.Project.UpdateCircuit(newCircuit);
+                this.Project.Quicksave();
+            });
+
+            this.OpenPopup(fileDialog);
+        }
     }
 
     /// <summary>
@@ -485,7 +502,7 @@ public class Editor : Invoker<Editor>
                 var newCircuit = this.Sim.LockedAction(s => s.GetCircuitInSimulation(this.CurrentlyOpenCircuit.Name));
                 newCircuit.ID = this.CurrentlyOpenCircuit.ID;
                 this.Project.UpdateCircuit(newCircuit);
-                this.Project.Quicksave();
+                this.QuickSaveProject();
             }
             if (ImGui.MenuItem("Open Project...", "Ctrl+O", false, true))
             {
@@ -530,6 +547,24 @@ public class Editor : Invoker<Editor>
             if (ImGui.MenuItem("Style Editor", "", ref styleEditorOpen))
             {
 
+            }
+            if (ImGui.MenuItem("Rotate Selection Clockwise"))
+            {
+                // Testing rotations
+                var selection = this.Sim.LockedAction(s => s.SelectedComponents);
+                foreach (var c in selection)
+                {
+                    c.RotateClockwise();
+                }
+            }
+            if (ImGui.MenuItem("Rotate Selection Counter Clockwise"))
+            {
+                // Testing rotations
+                var selection = this.Sim.LockedAction(s => s.SelectedComponents);
+                foreach (var c in selection)
+                {
+                    c.RotateCounterClockwise();
+                }
             }
 
             ImGui.EndMenu();

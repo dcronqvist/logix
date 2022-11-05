@@ -94,12 +94,12 @@ public class LogiXProject
 
     public void Quicksave()
     {
-        if (this.LoadedFromPath == "")
-        {
-            throw new Exception("Cannot quicksave a project that has not been saved to a file yet.");
-        }
-
         this.SaveProjectToFile(this.LoadedFromPath);
+    }
+
+    public bool HasFileToSaveTo()
+    {
+        return this.LoadedFromPath != "" && File.Exists(this.LoadedFromPath);
     }
 
     public static LogiXProject FromFile(string path)

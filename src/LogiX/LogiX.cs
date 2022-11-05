@@ -168,7 +168,7 @@ public class LogiX : Game
 
                     var measure = font.MeasureString("Loading...", 2f);
 
-                    TextRenderer.RenderText(shader, font, "Loading...", DisplayManager.GetWindowSizeInPixels() / 2f - measure / 2f, 2f, ColorF.White, Framebuffer.GetDefaultCamera());
+                    TextRenderer.RenderText(shader, font, "Loading...", DisplayManager.GetWindowSizeInPixels() / 2f - measure / 2f, 2f, 0f, ColorF.White, Framebuffer.GetDefaultCamera());
                     TextRenderer.FinalizeRender();
                     DisplayManager.SwapBuffers(-1);
                 }

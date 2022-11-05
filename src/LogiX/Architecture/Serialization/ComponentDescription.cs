@@ -14,12 +14,14 @@ public class ComponentDescription
     public string ComponentTypeID { get; set; }
     public IComponentDescriptionData Data { get; set; }
     public Vector2i Position { get; set; }
+    public int Rotation { get; set; }
 
-    public ComponentDescription(string componentTypeID, Vector2i position, IComponentDescriptionData data)
+    public ComponentDescription(string componentTypeID, Vector2i position, int rotation, IComponentDescriptionData data)
     {
         this.ComponentTypeID = componentTypeID;
         this.Data = data;
         this.Position = position;
+        this.Rotation = rotation;
     }
 
     private static Dictionary<string, ScriptType> _componentTypes;
@@ -69,6 +71,7 @@ public class ComponentDescription
         var component = type.CreateInstance<Component>();
         component.Initialize(this.Data);
         component.Position = this.Position;
+        component.Rotation = this.Rotation;
         return component;
     }
 
@@ -216,7 +219,7 @@ public class ComponentDescription<TData> : ComponentDescription where TData : IC
 {
     public new TData Data { get; set; }
 
-    public ComponentDescription(string componentTypeID, Vector2i position, TData data) : base(componentTypeID, position, data)
+    public ComponentDescription(string componentTypeID, Vector2i position, int rotation, TData data) : base(componentTypeID, position, rotation, data)
     {
         Data = data;
     }

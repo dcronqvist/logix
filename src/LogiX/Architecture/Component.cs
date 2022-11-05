@@ -97,6 +97,8 @@ public abstract class Component
     public abstract bool DisplayIOGroupIdentifiers { get; }
     public abstract bool ShowPropertyWindow { get; }
 
+    public int Rotation { get; set; }
+
     public Component()
     {
 
@@ -104,6 +106,22 @@ public abstract class Component
 
     protected Vector2 _textSize;
     protected RectangleF _bounds;
+
+    public void RotateClockwise(int amount = 1)
+    {
+        this.Rotation = (this.Rotation + amount) % 4;
+        this.TriggerSizeRecalculation();
+    }
+
+    public void RotateCounterClockwise(int amount = 1)
+    {
+        this.Rotation = (this.Rotation - amount) % 4;
+        if (this.Rotation < 0)
+        {
+            this.Rotation += 4;
+        }
+        this.TriggerSizeRecalculation();
+    }
 
     public void TriggerSizeRecalculation()
     {
@@ -189,10 +207,10 @@ public abstract class Component
         var basePosition = this.Position;
         var size = this.GetBoundingBox(out _).GetSize().ToVector2i(Constants.GRIDSIZE);
 
-        int onSide = this.IOs.Where(i => i.Side == io.Side).Count();
-        var sideIndex = this.IOs.Where(i => i.Side == io.Side).ToList().IndexOf(io);
+        int onSide = this.IOs.Where(i => i.Side.ApplyRotation(this.Rotation) == io.Side.ApplyRotation(Rotation)).Count();
+        var sideIndex = this.IOs.Where(i => i.Side.ApplyRotation(this.Rotation) == io.Side.ApplyRotation(Rotation)).ToList().IndexOf(io);
 
-        var side = io.Side;
+        var side = io.Side.ApplyRotation(this.Rotation);
 
         if (side == ComponentSide.LEFT)
         {
@@ -324,9 +342,16 @@ public abstract class Component
         var sizeWorld = size.ToVector2(Constants.GRIDSIZE);
         var rect = pos.CreateRect(sizeWorld).Inflate(1);
 
-        this._bounds = rect;
-
-        return rect;
+        if (this.Rotation == 0 || this.Rotation == 2)
+        {
+            this._bounds = rect;
+            return rect;
+        }
+        else
+        {
+            this._bounds = new RectangleF(rect.X, rect.Y, rect.Height, rect.Width);
+            return this._bounds;
+        }
     }
 
     public virtual void Render(Camera2D camera)
@@ -344,7 +369,7 @@ public abstract class Component
         var realSize = size.ToVector2(Constants.GRIDSIZE);
 
         // Draw the component
-        var textPos = pos + realSize / 2f - textSize / 2f - new Vector2(0, 1);
+        var textPos = (this.Rotation == 0 || this.Rotation == 2) ? pos + new Vector2((realSize.X - textSize.X) / 2f, (realSize.Y - textSize.Y) / 2f) : pos + new Vector2((realSize.X + textSize.Y) / 2f, (realSize.Y - textSize.X) / 2f);
 
         var ios = this.IOs;
         for (int i = 0; i < ios.Length; i++)
@@ -377,7 +402,7 @@ public abstract class Component
 
         PrimitiveRenderer.RenderRectangle(rect, Vector2.Zero, 0f, ColorF.White);
         //PrimitiveRenderer.RenderRectangle(pShader, textPos.CreateRect(textSize), Vector2.Zero, 0f, ColorF.Red, camera);
-        TextRenderer.RenderText(tShader, font, this.Name, textPos, 1, ColorF.Black, camera);
+        TextRenderer.RenderText(tShader, font, this.Name, textPos, 1, this.Rotation == 0 || this.Rotation == 2 ? 0f : MathF.PI / 2f, ColorF.Black, camera);
 
         //this.TriggerSizeRecalculation();
     }
@@ -422,7 +447,7 @@ public abstract class Component
 
     public ComponentDescription GetDescriptionOfInstance()
     {
-        return new ComponentDescription(this.GetComponentTypeID(), this.Position, this.GetDescriptionData());
+        return new ComponentDescription(this.GetComponentTypeID(), this.Position, this.Rotation, this.GetDescriptionData());
     }
 
     public virtual void CompleteSubmitUISelected(Editor editor, int componentIndex)

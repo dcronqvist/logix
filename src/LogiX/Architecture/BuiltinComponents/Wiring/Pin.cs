@@ -136,7 +136,7 @@ public class Pin : Component<PinData>
                     // Get which bit was clicked
                     for (int i = 0; i < this._data.Bits; i++)
                     {
-                        var bitPos = pos + new Vector2(i * Constants.GRIDSIZE, 0);
+                        var bitPos = pos + GetBitPosition(i);
                         var bitRect = bitPos.CreateRect(new Vector2(Constants.GRIDSIZE, Constants.GRIDSIZE)).Inflate(-1);
                         if (bitRect.Contains(mousePos))
                         {
@@ -161,13 +161,34 @@ public class Pin : Component<PinData>
         var gridSize = Constants.GRIDSIZE;
 
         var needsWidth = amountOfBits * gridSize;
-        var position = this.Position.ToVector2(gridSize); ;
+        var position = this.Position.ToVector2(gridSize);
         var rect = position.CreateRect(new Vector2(needsWidth, gridSize)).Inflate(1);
 
         textSize = Vector2.Zero;
         this._textSize = textSize;
-        this._bounds = rect;
-        return rect;
+
+        if (this.Rotation == 0 || this.Rotation == 2)
+        {
+            this._bounds = rect;
+            return rect;
+        }
+        else
+        {
+            this._bounds = new RectangleF(rect.X, rect.Y, rect.Height, rect.Width);
+            return _bounds;
+        }
+    }
+
+    private Vector2 GetBitPosition(int index)
+    {
+        if (this.Rotation == 0 || this.Rotation == 2)
+        {
+            return new Vector2(index * Constants.GRIDSIZE, 0);
+        }
+        else
+        {
+            return new Vector2(0, index * Constants.GRIDSIZE);
+        }
     }
 
     public override void Render(Camera2D camera)
@@ -203,13 +224,13 @@ public class Pin : Component<PinData>
 
             for (int i = 0; i < this._data.Bits; i++)
             {
-                var bitPos = pos + new Vector2(i * Constants.GRIDSIZE, 0);
+                var bitPos = pos + GetBitPosition(i);
                 var bitRect = bitPos.CreateRect(new Vector2(Constants.GRIDSIZE, Constants.GRIDSIZE)).Inflate(-1);
                 var bitCol = Utilities.GetValueColor(this.CurrentValues[i]);
                 PrimitiveRenderer.RenderRectangle(bitRect, Vector2.Zero, 0f, bitCol);
             }
 
-            TextRenderer.RenderText(tShader, font, this._data.Label, textPos, 1f, ColorF.Black, camera);
+            TextRenderer.RenderText(tShader, font, this._data.Label, textPos, 1f, this.Rotation * MathF.PI / 2f, ColorF.Black, camera);
         }
         else
         {
@@ -242,13 +263,13 @@ public class Pin : Component<PinData>
 
             for (int i = 0; i < this._data.Bits; i++)
             {
-                var bitPos = pos + new Vector2(i * Constants.GRIDSIZE, 0);
+                var bitPos = pos + GetBitPosition(i);
                 var bitRect = bitPos.CreateRect(new Vector2(Constants.GRIDSIZE, Constants.GRIDSIZE));
                 var bitCol = Utilities.GetValueColor(this.CurrentValues[i]);
                 PrimitiveRenderer.RenderCircle(bitPos + new Vector2(Constants.GRIDSIZE / 2f), Constants.GRIDSIZE / 2f - 1, 0f, bitCol);
             }
 
-            TextRenderer.RenderText(tShader, font, this._data.Label, textPos, 1f, ColorF.Black, camera);
+            TextRenderer.RenderText(tShader, font, this._data.Label, textPos, 1f, this.Rotation * MathF.PI / 2f, ColorF.Black, camera);
         }
     }
 }

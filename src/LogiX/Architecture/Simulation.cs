@@ -118,7 +118,7 @@ public class ReadWrongAmountOfBitsError : SimulationError
         var tShader = LogiX.ContentManager.GetContentItem<ShaderProgram>("core.shader_program.text");
         var font = Utilities.GetFont("core.font.default", 8); //LogiX.ContentManager.GetContentItem<Font>("core.font.default-regular-8");
         var measure = font.MeasureString(this.Message, 1f);
-        TextRenderer.RenderText(tShader, font, this.Message, this.Pos.ToVector2(Constants.GRIDSIZE) - measure / 2f, 1f, ColorF.Black, cam);
+        TextRenderer.RenderText(tShader, font, this.Message, this.Pos.ToVector2(Constants.GRIDSIZE) - measure / 2f, 1f, 0f, ColorF.Black, cam);
     }
 }
 public class PushingDifferentValuesError : SimulationError
@@ -157,7 +157,7 @@ public class PushingDifferentValuesError : SimulationError
         var tShader = LogiX.ContentManager.GetContentItem<ShaderProgram>("core.shader_program.text");
         var font = Utilities.GetFont("core.font.default", 8); //LogiX.ContentManager.GetContentItem<Font>("core.font.default-regular-8");
         var measure = font.MeasureString(this.Message, 0.5f);
-        TextRenderer.RenderText(tShader, font, this.Message, Utilities.GetMiddleOfVec2(firstSegment.Item1.ToVector2(Constants.GRIDSIZE), firstSegment.Item2.ToVector2(Constants.GRIDSIZE)) - measure / 2f, 0.5f, ColorF.Black, cam);
+        TextRenderer.RenderText(tShader, font, this.Message, Utilities.GetMiddleOfVec2(firstSegment.Item1.ToVector2(Constants.GRIDSIZE), firstSegment.Item2.ToVector2(Constants.GRIDSIZE)) - measure / 2f, 0.5f, 0f, ColorF.Black, cam);
     }
 }
 
@@ -178,7 +178,7 @@ public class ICIsOldError : SimulationError
         var pos = this.IC.Position.ToVector2(Constants.GRIDSIZE);
 
         var measure = font.MeasureString(this.Message, 1f);
-        TextRenderer.RenderText(tShader, font, this.Message, pos + new Vector2(size.X / 2f, -15) - measure / 2f, 1f, ColorF.Red, cam);
+        TextRenderer.RenderText(tShader, font, this.Message, pos + new Vector2(size.X / 2f, -15) - measure / 2f, 1f, 0f, ColorF.Red, cam);
     }
 }
 

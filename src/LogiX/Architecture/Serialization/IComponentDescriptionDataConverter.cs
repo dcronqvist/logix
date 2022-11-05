@@ -29,7 +29,10 @@ public class IComponentDescriptionDataConverter : JsonConverter<ComponentDescrip
         document.RootElement.TryGetProperty("position", out JsonElement posEle);
         var position = (Vector2i)posEle.Deserialize(typeof(Vector2i), newOptions);
 
-        return new ComponentDescription(type, position, dataInstance);
+        document.RootElement.TryGetProperty("rotation", out JsonElement rotEle);
+        var rotation = rotEle.GetInt32();
+
+        return new ComponentDescription(type, position, rotation, dataInstance);
     }
 
     public override void Write(Utf8JsonWriter writer, ComponentDescription value, JsonSerializerOptions options)
@@ -43,6 +46,7 @@ public class IComponentDescriptionDataConverter : JsonConverter<ComponentDescrip
         JsonSerializer.Serialize(writer, value.Data, value.Data.GetType(), newOptions);
         writer.WritePropertyName("position");
         JsonSerializer.Serialize(writer, value.Position, newOptions);
+        writer.WriteNumber("rotation", value.Rotation);
         writer.WriteEndObject();
     }
 }
