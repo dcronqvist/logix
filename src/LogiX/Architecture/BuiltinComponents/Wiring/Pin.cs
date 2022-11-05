@@ -40,7 +40,7 @@ public class PinData : IComponentDescriptionData
     }
 }
 
-[ScriptType("PIN"), ComponentInfo("Pin", "Wiring", "content_1.markdown.pin")]
+[ScriptType("PIN"), ComponentInfo("Pin", "Wiring", "core.markdown.pin")]
 public class Pin : Component<PinData>
 {
     public override string Name => this.CurrentValues.Select(x => x.ToString().Substring(0, 1)).Aggregate((x, y) => x + y);
@@ -174,9 +174,9 @@ public class Pin : Component<PinData>
     {
         if (this._data.Behaviour == PinBehaviour.INPUT)
         {
-            var font = LogiX.ContentManager.GetContentItem<Font>("content_1.font.default");
-            var pShader = LogiX.ContentManager.GetContentItem<ShaderProgram>("content_1.shader_program.primitive");
-            var tShader = LogiX.ContentManager.GetContentItem<ShaderProgram>("content_1.shader_program.text");
+            var font = LogiX.ContentManager.GetContentItem<Font>("core.font.default");
+            var pShader = LogiX.ContentManager.GetContentItem<ShaderProgram>("core.shader_program.primitive");
+            var tShader = LogiX.ContentManager.GetContentItem<ShaderProgram>("core.shader_program.text");
 
             var pos = this.Position.ToVector2(Constants.GRIDSIZE);
             var rect = this.GetBoundingBox(out var textSize);
@@ -213,9 +213,9 @@ public class Pin : Component<PinData>
         }
         else
         {
-            var font = LogiX.ContentManager.GetContentItem<Font>("content_1.font.default");
-            var pShader = LogiX.ContentManager.GetContentItem<ShaderProgram>("content_1.shader_program.primitive");
-            var tShader = LogiX.ContentManager.GetContentItem<ShaderProgram>("content_1.shader_program.text");
+            var font = LogiX.ContentManager.GetContentItem<Font>("core.font.default");
+            var pShader = LogiX.ContentManager.GetContentItem<ShaderProgram>("core.shader_program.primitive");
+            var tShader = LogiX.ContentManager.GetContentItem<ShaderProgram>("core.shader_program.text");
 
             var pos = this.Position.ToVector2(Constants.GRIDSIZE);
             var rect = this.GetBoundingBox(out var textSize);

@@ -60,7 +60,7 @@ public class HeadingRenderer : MarkdownObjectRenderer<ImGuiMarkdownRenderer, Hea
 {
     protected override void Write(ImGuiMarkdownRenderer renderer, HeadingBlock obj)
     {
-        var basefont = "content_1.font.opensans-bold-";
+        var basefont = "core.font.opensans-bold-";
 
         var size = obj.Level switch
         {
@@ -116,7 +116,7 @@ public class EmphasisInlineRenderer : MarkdownObjectRenderer<ImGuiMarkdownRender
         if (obj.DelimiterCount == 2)
         {
             // BOLD FONT
-            Utilities.WithImGuiFont("content_1.font.opensans-bold-16", () =>
+            Utilities.WithImGuiFont("core.font.opensans-bold-16", () =>
             {
                 foreach (var child in obj)
                 {
@@ -127,7 +127,7 @@ public class EmphasisInlineRenderer : MarkdownObjectRenderer<ImGuiMarkdownRender
         else
         {
             // ITALIC FONT
-            Utilities.WithImGuiFont("content_1.font.opensans-italic", () =>
+            Utilities.WithImGuiFont("core.font.opensans-italic", () =>
             {
                 foreach (var child in obj)
                 {

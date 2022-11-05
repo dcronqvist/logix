@@ -77,7 +77,7 @@ public class Wire
 
     public void Render(Simulation simulation, Camera2D cam)
     {
-        var pShader = LogiX.ContentManager.GetContentItem<ShaderProgram>("content_1.shader_program.primitive");
+        var pShader = LogiX.ContentManager.GetContentItem<ShaderProgram>("core.shader_program.primitive");
         var color = GetWireColor(this.GetPoints().ToArray(), simulation);
 
         foreach (var segment in this.Segments)

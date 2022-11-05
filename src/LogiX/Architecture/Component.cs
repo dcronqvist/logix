@@ -279,9 +279,9 @@ public abstract class Component
 
         // Otherwise, calculate the size of the component.
         // In order to trigger a recalculation of the component's size, set _size to Vector2i.Zero.
-        var font = LogiX.ContentManager.GetContentItem<Font>("content_1.font.default");
-        var pShader = LogiX.ContentManager.GetContentItem<ShaderProgram>("content_1.shaderprogram.primitive");
-        var tShader = LogiX.ContentManager.GetContentItem<ShaderProgram>("content_1.shaderprogram.text");
+        var font = LogiX.ContentManager.GetContentItem<Font>("core.font.default");
+        var pShader = LogiX.ContentManager.GetContentItem<ShaderProgram>("core.shaderprogram.primitive");
+        var tShader = LogiX.ContentManager.GetContentItem<ShaderProgram>("core.shaderprogram.text");
 
         var textScale = 1f;
         var gridSize = Constants.GRIDSIZE;
@@ -334,9 +334,9 @@ public abstract class Component
         //this.TriggerSizeRecalculation();
         // Position of component
 
-        var font = LogiX.ContentManager.GetContentItem<Font>("content_1.font.default");
-        var pShader = LogiX.ContentManager.GetContentItem<ShaderProgram>("content_1.shader_program.primitive");
-        var tShader = LogiX.ContentManager.GetContentItem<ShaderProgram>("content_1.shader_program.text");
+        var font = LogiX.ContentManager.GetContentItem<Font>("core.font.default");
+        var pShader = LogiX.ContentManager.GetContentItem<ShaderProgram>("core.shader_program.primitive");
+        var tShader = LogiX.ContentManager.GetContentItem<ShaderProgram>("core.shader_program.text");
 
         var pos = this.Position.ToVector2(Constants.GRIDSIZE);
         var rect = this.GetBoundingBox(out var textSize);
@@ -401,9 +401,9 @@ public abstract class Component
     public void RenderSelected(Camera2D camera)
     {
         // Position of component
-        var font = LogiX.ContentManager.GetContentItem<Font>("content_1.font.default");
-        var pShader = LogiX.ContentManager.GetContentItem<ShaderProgram>("content_1.shader_program.primitive");
-        var tShader = LogiX.ContentManager.GetContentItem<ShaderProgram>("content_1.shader_program.text");
+        var font = LogiX.ContentManager.GetContentItem<Font>("core.font.default");
+        var pShader = LogiX.ContentManager.GetContentItem<ShaderProgram>("core.shader_program.primitive");
+        var tShader = LogiX.ContentManager.GetContentItem<ShaderProgram>("core.shader_program.text");
 
         var rect = this.GetBoundingBox(out _);
 

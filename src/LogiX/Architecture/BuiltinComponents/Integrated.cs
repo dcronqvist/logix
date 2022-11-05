@@ -38,8 +38,8 @@ public class IntegratedError : SimulationError
         var size = this.Comp.GetBoundingBox(out _).GetSize().ToVector2i(Constants.GRIDSIZE);
 
         var middle = new Vector2i(pos.X + size.X / 2, pos.Y + size.Y / 2).ToVector2(Constants.GRIDSIZE);
-        var tShader = LogiX.ContentManager.GetContentItem<ShaderProgram>("content_1.shader_program.text");
-        var font = LogiX.ContentManager.GetContentItem<Font>("content_1.font.default");
+        var tShader = LogiX.ContentManager.GetContentItem<ShaderProgram>("core.shader_program.text");
+        var font = LogiX.ContentManager.GetContentItem<Font>("core.font.default");
 
         TextRenderer.RenderText(tShader, font, this.Message, middle, 0.5f, ColorF.Red, cam);
     }

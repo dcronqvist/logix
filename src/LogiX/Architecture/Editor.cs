@@ -339,7 +339,7 @@ public class Editor : Invoker<Editor>
 
         int pixelsInBetweenLines = Constants.GRIDSIZE;
 
-        var pShader = LogiX.ContentManager.GetContentItem<ShaderProgram>("content_1.shader_program.primitive");
+        var pShader = LogiX.ContentManager.GetContentItem<ShaderProgram>("core.shader_program.primitive");
         var color = ColorF.Darken(ColorF.LightGray, 0.8f);
 
         // Draw vertical lines
@@ -366,8 +366,8 @@ public class Editor : Invoker<Editor>
     public void Render()
     {
         this.ImGuiController.Update(GameTime.DeltaTime);
-        var fShader = LogiX.ContentManager.GetContentItem<ShaderProgram>("content_1.shader_program.fb_default");
-        var pShader = LogiX.ContentManager.GetContentItem<ShaderProgram>("content_1.shader_program.primitive");
+        var fShader = LogiX.ContentManager.GetContentItem<ShaderProgram>("core.shader_program.fb_default");
+        var pShader = LogiX.ContentManager.GetContentItem<ShaderProgram>("core.shader_program.primitive");
 
         if (this.CurrentlyOpenCircuit is not null)
         {
@@ -384,7 +384,7 @@ public class Editor : Invoker<Editor>
             this.GUIFramebuffer.Bind(() =>
             {
                 Framebuffer.Clear(ColorF.Transparent);
-                Utilities.WithImGuiFont("content_1.font.opensans", () =>
+                Utilities.WithImGuiFont("core.font.opensans", () =>
                 {
                     try
                     {
@@ -416,7 +416,7 @@ public class Editor : Invoker<Editor>
             this.GUIFramebuffer.Bind(() =>
             {
                 Framebuffer.Clear(ColorF.Transparent);
-                Utilities.WithImGuiFont("content_1.font.opensans", () =>
+                Utilities.WithImGuiFont("core.font.opensans", () =>
                 {
                     try
                     {
@@ -458,7 +458,7 @@ public class Editor : Invoker<Editor>
         var open = true;
         if (ImGui.Begin("About LogiX", ref open))
         {
-            var about = LogiX.ContentManager.GetContentItem<MarkdownFile>("content_1.markdown.about");
+            var about = LogiX.ContentManager.GetContentItem<MarkdownFile>("core.markdown.about");
             Utilities.RenderMarkdown(about.Text);
         }
 

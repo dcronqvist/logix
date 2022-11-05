@@ -44,8 +44,9 @@ public class LogiX : Game
             }
         };
 
+        var coreSource = new DirectoryContentSource(Path.GetFullPath("../../assets/core"));
         var validator = new ContentValidator();
-        var collection = new DirectoryCollectionProvider(@"C:\Users\RichieZ\repos\logix\assets\core", factory);
+        var collection = IContentCollectionProvider.FromListOfSources(coreSource); //new DirectoryCollectionProvider(@"C:\Users\RichieZ\repos\logix\assets\core", factory);
         var loader = new ContentLoader();
 
         var config = new ContentManagerConfiguration<ContentMeta>(validator, collection, loader);
@@ -103,7 +104,7 @@ public class LogiX : Game
             Console.WriteLine($"Finished stage {e.Stage.StageName}!");
             if (e.Stage is CoreLoadingStage)
             {
-                var tex = e.CurrentlyLoaded.GetContentItem<Texture2D>("content_1.texture.icon");
+                var tex = e.CurrentlyLoaded.GetContentItem<Texture2D>("core.texture.icon");
                 tex.ContentUpdated += (sender, e) =>
                 {
                     DisplayManager.SetWindowIcon(tex);
@@ -162,8 +163,8 @@ public class LogiX : Game
                     Framebuffer.BindDefaultFramebuffer();
                     Framebuffer.Clear(ColorF.Black);
 
-                    var shader = ContentManager.GetContentItem<ShaderProgram>("content_1.shader_program.text");
-                    var font = ContentManager.GetContentItem<Font>("content_1.font.default");
+                    var shader = ContentManager.GetContentItem<ShaderProgram>("core.shader_program.text");
+                    var font = ContentManager.GetContentItem<Font>("core.font.default");
 
                     var measure = font.MeasureString("Loading...", 2f);
 

@@ -31,7 +31,7 @@ public class StateHoveringIOGroup : State<Editor, int>
     public override void Render(Editor arg)
     {
         var mouseWorld = Input.GetMousePosition(arg.Camera);
-        var pShader = LogiX.ContentManager.GetContentItem<ShaderProgram>("content_1.shader_program.primitive");
+        var pShader = LogiX.ContentManager.GetContentItem<ShaderProgram>("core.shader_program.primitive");
         arg.Sim.LockedAction(s =>
         {
             if (s.TryGetIOFromPosition(mouseWorld, out var io, out var comp))
