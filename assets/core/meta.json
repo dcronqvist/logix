@@ -1,6 +1,6 @@
 {
-    "name": "Content 2",
+    "name": "LogiX Core",
     "version": "1.0",
     "author": "dcronqvist",
-    "description": "Content 2 description"
+    "description": "The core plugin for LogiX containing all built-in components and assets."
 }
