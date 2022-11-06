@@ -77,7 +77,7 @@ public class LogiXProject
     {
         var options = new JsonSerializerOptions()
         {
-            WriteIndented = true,
+            WriteIndented = false,
             PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
             Converters = { new IComponentDescriptionDataConverter() }
         };
@@ -108,7 +108,6 @@ public class LogiXProject
         {
             var options = new JsonSerializerOptions()
             {
-                WriteIndented = true,
                 PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
                 Converters = { new IComponentDescriptionDataConverter() }
             };
