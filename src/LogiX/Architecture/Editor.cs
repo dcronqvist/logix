@@ -208,6 +208,7 @@ public class Editor : Invoker<Editor>
 
         #region INITIALIZE EDITOR ACTIONS
 
+        // ALL FILE ACTIONS
         this.AddMainMenuItem("File", "New Project", new EditorAction((e) => true, (e) => false, (e) =>
         {
             // Verify that the user wants to create a new project
@@ -239,15 +240,68 @@ public class Editor : Invoker<Editor>
             var newCircuit = this.Sim.LockedAction(s => s.GetCircuitInSimulation(this.CurrentlyOpenCircuit.Name));
             newCircuit.ID = this.CurrentlyOpenCircuit.ID;
             this.Project.UpdateCircuit(newCircuit);
-            this.QuickSaveProject();
+            this.SetMessage(this.QuickSaveProject());
         }, Keys.LeftControl, Keys.S));
 
-        this.AddMainMenuItem("File", "Test MessageThing", new EditorAction((e) => true, (e) => false, (e) =>
+        // ALL EDIT ACTIONS
+        this.AddMainMenuItem("Edit", "Undo", new EditorAction((e) => this.CurrentCommandIndex >= 0, (e) => false, (e) =>
         {
-            this.SetMessage(NStageProvider(() => "Hello World!",
-            () => { Task.Delay(1000).Wait(); return "Waiting"; },
-            () => { Task.Delay(1000).Wait(); return "Done!"; }));
-        }, Keys.LeftShift, Keys.T));
+            this.Undo(this);
+        }, Keys.LeftControl, Keys.Z));
+
+        this.AddMainMenuItem("Edit", "Redo", new EditorAction((e) => this.CurrentCommandIndex < this.Commands.Count - 1, (e) => false, (e) =>
+        {
+            this.Redo(this);
+        }, Keys.LeftControl, Keys.Y));
+
+        this.AddMainMenuItem("Edit", "Delete Selection", new EditorAction((e) => this.Sim.LockedAction(s => s.SelectedComponents).Count > 0, (e) => false, (e) =>
+        {
+            var commands = this.Sim.LockedAction(s => s.SelectedComponents.Select(c => new CDeleteComponent(c)));
+            this.Execute(new CMulti(commands.ToArray()), this);
+        }, Keys.Delete));
+
+        // ALL CIRCUIT ACTIONS
+        this.AddMainMenuItem("Circuits", "New Circuit...", new EditorAction((e) => true, (e) => false, (e) =>
+        {
+            this.WritingNewCircuitName = true;
+            this.NewCircuitName = "";
+            this._projectsOpen = true;
+        }, Keys.LeftControl, Keys.LeftShift, Keys.N));
+
+        // ALL SIMULATION ACTIONS
+        this.AddMainMenuItem("Simulation", "Simulation Enabled", new EditorAction((e) => this.CurrentlyOpenCircuit is not null, (e) => this.SimulationRunning, (e) =>
+        {
+            this.SimulationRunning = !this.SimulationRunning;
+        }, Keys.F5));
+
+        this.AddMainMenuItem("Simulation", "Tick Rate", new NestedEditorAction(this.AvailableTickRates.Select(tr => (tr.GetAsHertzString(), new EditorAction((e) => true, (e) => this.CurrentlySelectedTickRate == Array.IndexOf(this.AvailableTickRates, tr), (e) =>
+        {
+            this.CurrentlySelectedTickRate = Array.IndexOf(this.AvailableTickRates, tr);
+        }))).ToArray()));
+
+        // ALL HELP ACTIONS
+        this.AddMainMenuItem("Help", "About", new EditorAction((e) => true, (e) => false, (e) =>
+        {
+            this._displayAboutWindow = true;
+        }));
+
+        this.AddMainMenuItem("Help", "Documentation", new EditorAction((e) => true, (e) => false, (e) =>
+        {
+            this.OpenPopup(new DynamicModal("Documentation", ImGuiWindowFlags.None, ImGuiPopupFlags.None, (e) =>
+            {
+                Utilities.RenderMarkdown(@"
+# Docs
+
+This is a work in progress, and documentation will be added later, when stuff stops changing so much.
+
+For now, you can always right click a component in the left component window and click _**Show Help**_ to get help for that specific component.
+                ");
+                if (ImGui.Button("OK"))
+                {
+                    ImGui.CloseCurrentPopup();
+                }
+            }));
+        }));
 
         #endregion
     }
@@ -290,19 +344,11 @@ public class Editor : Invoker<Editor>
         this.SimulationRunning = !stopSim;
     }
 
-    public IEnumerable<string> NStageProvider(params Func<string>[] stages)
+    public void SetMessage(IAsyncEnumerable<string> provider)
     {
-        foreach (var stage in stages)
+        Task.Run(async () =>
         {
-            yield return stage.Invoke();
-        }
-    }
-
-    public void SetMessage(IEnumerable<string> provider)
-    {
-        Task.Run(() =>
-        {
-            foreach (var message in provider)
+            await foreach (var message in provider)
             {
                 this.CurrentMessage = message;
             }
@@ -345,25 +391,26 @@ public class Editor : Invoker<Editor>
     /// Saves the current project to it's given path.
     /// TODO: If the path is null or empty, we should instead open a save file dialog.
     /// </summary>
-    public void QuickSaveProject()
+    public async IAsyncEnumerable<string> QuickSaveProject()
     {
         if (this.Project.HasFileToSaveTo())
         {
+            yield return "Saving project...";
             var newCircuit = this.Sim.LockedAction(s => s.GetCircuitInSimulation(this.CurrentlyOpenCircuit.Name));
             newCircuit.ID = this.CurrentlyOpenCircuit.ID;
             this.Project.UpdateCircuit(newCircuit);
             this.Project.Quicksave();
+            yield return "Project saved!";
+            await Task.Delay(5000);
+            yield return "";
         }
         else
         {
             var fileDialog = new FileDialog(".", FileDialogType.SaveFile, (path) =>
             {
-                var newCircuit = this.Sim.LockedAction(s => s.GetCircuitInSimulation(this.CurrentlyOpenCircuit.Name));
-                newCircuit.ID = this.CurrentlyOpenCircuit.ID;
                 this.Project.LoadedFromPath = Path.GetFullPath(path);
                 Settings.SetSetting(Settings.LAST_OPEN_PROJECT, Path.GetFullPath(path));
-                this.Project.UpdateCircuit(newCircuit);
-                this.Project.Quicksave();
+                _ = this.QuickSaveProject();
             });
 
             this.OpenPopup(fileDialog);
@@ -598,14 +645,13 @@ public class Editor : Invoker<Editor>
             {
                 foreach (var (actionName, action) in actionList)
                 {
-                    if (ImGui.MenuItem(actionName, action.GetShortcutString(), action.Selected.Invoke(this), action.Condition.Invoke(this)))
-                    {
-                        action.Execute.Invoke(this);
-                    }
+                    action.SubmitGUI(this, actionName);
                 }
 
                 ImGui.EndMenu();
             }
+
+            ImGui.Spacing();
         }
 
         ImGui.Text($"TPS: {this.CurrentTicksPerSecond.GetAsHertzString()}");
@@ -623,23 +669,6 @@ public class Editor : Invoker<Editor>
 
         // if (ImGui.BeginMenu("Edit"))
         // {
-        //     if (ImGui.MenuItem("Undo", "Ctrl+Z", false, this.CurrentCommandIndex >= 0))
-        //     {
-        //         this.Undo(this);
-        //     }
-        //     if (ImGui.MenuItem("Redo", "Ctrl+Y", false, this.CurrentCommandIndex < this.Commands.Count - 1))
-        //     {
-        //         this.Redo(this);
-        //     }
-        //     if (ImGui.MenuItem("Delete Selection", "", false, this.Sim.LockedAction(s => s.SelectedComponents.Count > 0)))
-        //     {
-        //         var commands = this.Sim.LockedAction(s => s.SelectedComponents.Select(c => new CDeleteComponent(c)));
-        //         this.Execute(new CMulti(commands.ToArray()), this);
-        //     }
-        //     if (ImGui.MenuItem("Style Editor", "", ref styleEditorOpen))
-        //     {
-
-        //     }
         //     if (ImGui.MenuItem("Rotate Selection Clockwise"))
         //     {
         //         // Testing rotations
@@ -662,39 +691,8 @@ public class Editor : Invoker<Editor>
         //     ImGui.EndMenu();
         // }
 
-        // if (ImGui.BeginMenu("Circuits"))
-        // {
-        //     if (ImGui.MenuItem("New Circuit...", "Ctrl+Shift+N", false, true))
-        //     {
-        //         this.WritingNewCircuitName = true;
-        //         this.NewCircuitName = "";
-        //     }
-
-        //     ImGui.EndMenu();
-        // }
-
         // if (ImGui.BeginMenu("Simulation"))
         // {
-        //     var running = this.SimulationRunning;
-        //     ImGui.MenuItem("Simulating", "", ref running);
-        //     this.SimulationRunning = running;
-
-        //     if (ImGui.BeginMenu("Tick Rate"))
-        //     {
-        //         Utilities.ImGuiHelp("High tick rates can cause severe performance issues. Adjust with caution.");
-        //         for (int i = 0; i < this.AvailableTickRates.Length; i++)
-        //         {
-        //             if (ImGui.Selectable(this.AvailableTickRates[i].GetAsHertzString(), this.CurrentlySelectedTickRate == i))
-        //             {
-        //                 this.CurrentlySelectedTickRate = i;
-        //             }
-        //         }
-
-        //         ImGui.EndMenu();
-        //     }
-
-        //     ImGui.Separator();
-
         //     if (ImGui.MenuItem("Tick Once", "", false, !this.SimulationRunning))
         //     {
         //         this.Sim.LockedAction(s => s.Tick());
@@ -714,12 +712,18 @@ public class Editor : Invoker<Editor>
         // }
     }
 
+    private bool _projectsOpen = false;
     public void SubmitComponentsWindow(Vector2 mainMenuBarSize)
     {
         ImGui.SetNextWindowPos(new Vector2(0, mainMenuBarSize.Y));
         ImGui.SetNextWindowSize(new Vector2(180, DisplayManager.GetWindowSizeInPixels().Y - mainMenuBarSize.Y));
         if (ImGui.Begin("Components", ImGuiWindowFlags.NoCollapse | ImGuiWindowFlags.NoTitleBar | ImGuiWindowFlags.NoResize | ImGuiWindowFlags.NoMove | ImGuiWindowFlags.AlwaysVerticalScrollbar))
         {
+            if (_projectsOpen)
+            {
+                ImGui.SetNextItemOpen(true, ImGuiCond.Once);
+                this._projectsOpen = false;
+            }
             if (ImGui.CollapsingHeader("Project"))
             {
                 ImGui.TreePush();

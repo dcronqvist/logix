@@ -817,7 +817,9 @@ public static class Utilities
     {
         return new Dictionary<Keys, string>() {
             { Keys.LeftControl, "Ctrl" },
-            { Keys.LeftSuper, "Cmd"}
+            { Keys.LeftSuper, "Cmd" },
+            { Keys.LeftShift, "Shift"},
+            { Keys.LeftAlt, "Alt"},
         }.GetValueOrDefault(key, key.ToString());
     }
 }

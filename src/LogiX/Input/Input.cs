@@ -187,4 +187,21 @@ public static class Input
     {
         Glfw.SetCursorPosition(DisplayManager.WindowHandle, x, y);
     }
+
+    public static bool IsKeyComboPressed(params Keys[] keys)
+    {
+        foreach (var key in keys.Take(keys.Length - 1))
+        {
+            if (!IsKeyDown(key))
+            {
+                return false;
+            }
+        }
+
+        var lastPressed = IsKeyPressed(keys.Last());
+        var current = currentKeyboardState.Where(kvp => kvp.Value == true).Select(kvp => kvp.Key);
+
+        // Return lastPressed & NO OTHER KEY IS PRESSED
+        return lastPressed && current.Except(keys).Count() == 0;
+    }
 }

@@ -28,23 +28,18 @@ public class EditorAction
     {
         if (this.Keys.Length > 0)
         {
-            for (int i = 0; i < this.Keys.Length - 1; i++)
+            if (Input.IsKeyComboPressed(this.Keys))
             {
-                if (!Input.IsKeyDown(this.Keys[i]))
+                if (this.Condition(editor))
                 {
-                    return;
-                }
-            }
-
-            if (this.Condition(editor) && Input.IsKeyPressed(this.Keys.Last()))
-            {
-                try
-                {
-                    this.Execute(editor);
-                }
-                catch (Exception e)
-                {
-                    editor.OpenErrorPopup("Error", true, () => { ImGui.Text(e.Message); ImGui.Button("OK"); });
+                    try
+                    {
+                        this.Execute(editor);
+                    }
+                    catch (Exception e)
+                    {
+                        editor.OpenErrorPopup("Error", true, () => { ImGui.Text(e.Message); ImGui.Button("OK"); });
+                    }
                 }
             }
         }
@@ -62,5 +57,35 @@ public class EditorAction
             }
         }
         return s;
+    }
+
+    public virtual void SubmitGUI(Editor editor, string actionName)
+    {
+        if (ImGui.MenuItem(actionName, GetShortcutString(), Selected.Invoke(editor), Condition.Invoke(editor)))
+        {
+            Execute.Invoke(editor);
+        }
+    }
+}
+
+public class NestedEditorAction : EditorAction
+{
+    public (string, EditorAction)[] Actions { get; set; }
+
+    public NestedEditorAction(params (string, EditorAction)[] actions) : base((e) => true, (e) => false, (e) => { }, new Keys[0])
+    {
+        this.Actions = actions;
+    }
+
+    public override void SubmitGUI(Editor editor, string actionName)
+    {
+        if (ImGui.BeginMenu(actionName))
+        {
+            foreach (var (nestName, action) in this.Actions)
+            {
+                action.SubmitGUI(editor, nestName);
+            }
+            ImGui.EndMenu();
+        }
     }
 }

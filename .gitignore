@@ -9,6 +9,7 @@ libs/
 *.dat
 **/settings.json
 **/imgui.ini
+**/*.lxprojj
 build/
 
 # User-specific files
