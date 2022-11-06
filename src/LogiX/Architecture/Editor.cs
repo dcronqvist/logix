@@ -260,6 +260,24 @@ public class Editor : Invoker<Editor>
             this.Execute(new CMulti(commands.ToArray()), this);
         }, Keys.Delete));
 
+        this.AddMainMenuItem("Edit", "Rotate Clockwise", new EditorAction((e) => this.Sim.LockedAction(s => s.SelectedComponents).Count > 0, (e) => false, (e) =>
+        {
+            var selected = this.Sim.LockedAction(s => s.SelectedComponents);
+            foreach (var s in selected)
+            {
+                s.RotateClockwise();
+            }
+        }, Keys.LeftControl, Keys.Right));
+
+        this.AddMainMenuItem("Edit", "Rotate Counter Clockwise", new EditorAction((e) => this.Sim.LockedAction(s => s.SelectedComponents).Count > 0, (e) => false, (e) =>
+        {
+            var selected = this.Sim.LockedAction(s => s.SelectedComponents);
+            foreach (var s in selected)
+            {
+                s.RotateCounterClockwise();
+            }
+        }, Keys.LeftControl, Keys.Left));
+
         // ALL CIRCUIT ACTIONS
         this.AddMainMenuItem("Circuits", "New Circuit...", new EditorAction((e) => true, (e) => false, (e) =>
         {

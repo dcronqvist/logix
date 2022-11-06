@@ -247,6 +247,11 @@ public class Pin : Component<PinData>
             // Draw the component
             var textPos = pos - new Vector2(measure.X + 2, 0) + new Vector2(0, realSize.Y / 2f - measure.Y / 2f);
 
+            if (this.Rotation == 2)
+            {
+                textPos = pos + new Vector2(realSize.X + 2, 0) + new Vector2(0, realSize.Y / 2f - measure.Y / 2f);
+            }
+
             var io = this.IOs[0];
             var ioPos = this.GetPositionForIO(io, out var lineEnd);
             var lineEndPos = new Vector2(lineEnd.X * Constants.GRIDSIZE, lineEnd.Y * Constants.GRIDSIZE);
@@ -269,7 +274,7 @@ public class Pin : Component<PinData>
                 PrimitiveRenderer.RenderCircle(bitPos + new Vector2(Constants.GRIDSIZE / 2f), Constants.GRIDSIZE / 2f - 1, 0f, bitCol);
             }
 
-            TextRenderer.RenderText(tShader, font, this._data.Label, textPos, 1f, this.Rotation * MathF.PI / 2f, ColorF.Black, camera);
+            TextRenderer.RenderText(tShader, font, this._data.Label, textPos, 1f, 0f, ColorF.Black, camera);
         }
     }
 }
