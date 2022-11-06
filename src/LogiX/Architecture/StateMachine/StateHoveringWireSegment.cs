@@ -33,11 +33,15 @@ public class StateHoveringWireSegment : State<Editor, int>
                 {
                     arg.OpenContextMenu(() =>
                     {
-                        if (ImGui.MenuItem("Delete"))
+                        if (ImGui.MenuItem("Delete Segment"))
                         {
                             var disconnect = new CDisconnectPoints(edge.Item1, edge.Item2);
                             arg.Execute(disconnect, arg);
                             ImGui.CloseCurrentPopup();
+                        }
+                        if (ImGui.MenuItem("Delete Wire"))
+                        {
+                            s.RemoveWire(wire);
                         }
                     });
                 }

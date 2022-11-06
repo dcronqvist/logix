@@ -4,15 +4,23 @@ using LogiX.Content.Scripting;
 
 namespace LogiX.Architecture.BuiltinComponents;
 
+public enum ShiftDirection
+{
+    Left = 0,
+    Right = 1
+}
+
 public class ShifterData : IComponentDescriptionData
 {
     public int DataBits { get; set; }
+    public ShiftDirection Direction { get; set; }
 
     public static IComponentDescriptionData GetDefault()
     {
         return new ShifterData()
         {
-            DataBits = 4
+            DataBits = 4,
+            Direction = ShiftDirection.Left
         };
     }
 }
@@ -61,11 +69,22 @@ public class Shifter : Component<ShifterData>
         var xint = xBits.Reverse().GetAsUInt();
         var shift = sBits.Reverse().GetAsUInt();
 
-        var yint = xint << (int)shift;
+        if (this._data.Direction == ShiftDirection.Left)
+        {
+            var yint = xint << (int)shift;
 
-        var yBits = yint.GetAsLogicValues(y.Bits);
+            var yBits = yint.GetAsLogicValues(y.Bits);
 
-        y.Push(yBits);
+            y.Push(yBits);
+        }
+        else
+        {
+            var yint = xint >> (int)shift;
+
+            var yBits = yint.GetAsLogicValues(y.Bits);
+
+            y.Push(yBits);
+        }
     }
 
     public override void SubmitUISelected(Editor editor, int componentIndex)
@@ -77,5 +96,8 @@ public class Shifter : Component<ShifterData>
             this._data.DataBits = databits;
             this.Initialize(this._data);
         }
+        var currIndex = (int)this._data.Direction;
+        ImGui.Combo($"Shift Direction##{id}", ref currIndex, new string[] { "Left", "Right" }, 2);
+        this._data.Direction = (ShiftDirection)currIndex;
     }
 }

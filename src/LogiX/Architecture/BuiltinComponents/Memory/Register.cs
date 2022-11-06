@@ -22,7 +22,7 @@ public class Register : Component<RegisterData>
 {
     public override string Name => $"{this._currentState.Reverse().GetAsHexString()}";
     public override bool DisplayIOGroupIdentifiers => true;
-    public override bool ShowPropertyWindow => false;
+    public override bool ShowPropertyWindow => true;
 
     private RegisterData _data;
     private LogicValue[] _currentState;
@@ -58,23 +58,25 @@ public class Register : Component<RegisterData>
 
         var q = this.GetIOFromIdentifier("Q");
 
-        if (enable == LogicValue.HIGH)
-        {
-            if (clk == LogicValue.HIGH && previousClk == LogicValue.LOW)
-            {
-                _currentState = data;
-            }
-        }
-
         if (reset == LogicValue.HIGH)
         {
             this._currentState = Enumerable.Repeat(LogicValue.LOW, this._data.DataBits).ToArray();
         }
-
-        if (clk == LogicValue.UNDEFINED || enable == LogicValue.UNDEFINED || reset == LogicValue.UNDEFINED)
+        else
         {
-            this._currentState = Enumerable.Repeat(LogicValue.UNDEFINED, this._data.DataBits).ToArray();
-            return;
+            if (enable == LogicValue.HIGH)
+            {
+                if (clk == LogicValue.HIGH && previousClk == LogicValue.LOW)
+                {
+                    _currentState = data;
+                }
+            }
+
+            if (clk == LogicValue.UNDEFINED || enable == LogicValue.UNDEFINED || reset == LogicValue.UNDEFINED)
+            {
+                this._currentState = Enumerable.Repeat(LogicValue.UNDEFINED, this._data.DataBits).ToArray();
+                return;
+            }
         }
 
         q.Push(this._currentState);

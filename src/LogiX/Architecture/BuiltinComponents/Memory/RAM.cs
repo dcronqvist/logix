@@ -43,7 +43,7 @@ public class RAM : Component<RamData>
         this._data = data;
 
         this.bytesPerAddress = (int)Math.Ceiling(data.DataBits / 8f);
-        this._data.Memory = new ByteAddressableMemory((int)Math.Pow(2, this._data.AddressBits) * bytesPerAddress, false);
+        this._data.Memory = data.Memory;
 
         this.RegisterIO("A", data.AddressBits, ComponentSide.LEFT, "address");
         this.RegisterIO("EN", 1, ComponentSide.BOTTOM, "enable");
@@ -66,7 +66,7 @@ public class RAM : Component<RamData>
         var clr = this.GetIOFromIdentifier("CLR").GetValues().First();
         var d = this.GetIOFromIdentifier("D");
 
-        if (a.AnyUndefined() || en.IsUndefined() || clk.IsUndefined() || ld.IsUndefined() || clr.IsUndefined() || en != LogicValue.HIGH)
+        if (a.AnyUndefined() || en.IsUndefined() || clk.IsUndefined() || ld.IsUndefined() || clr.IsUndefined())
         {
             return; // Do nothing
         }
@@ -78,6 +78,20 @@ public class RAM : Component<RamData>
         var address = a.Reverse().GetAsUInt();
         var realAddress = (int)(address * bytesPerAddress);
         this.currentlySelectedAddress = realAddress;
+
+        if (reset)
+        {
+            for (int i = 0; i < this.bytesPerAddress; i++)
+            {
+                this._data.Memory[realAddress + i] = 0;
+            }
+        }
+
+
+        if (en != LogicValue.HIGH)
+        {
+            return; // DO nothing
+        }
 
         var values = new LogicValue[_data.DataBits];
 
@@ -111,17 +125,9 @@ public class RAM : Component<RamData>
             }
         }
 
-        if (reset)
-        {
-            for (int i = 0; i < this.bytesPerAddress; i++)
-            {
-                this._data.Memory[realAddress + i] = 0;
-            }
-        }
-
         if (!load)
         {
-            d.Push(values);
+            d.Push(values.Reverse<LogicValue>().ToArray());
         }
         previousClk = clockHigh;
     }
@@ -141,12 +147,16 @@ public class RAM : Component<RamData>
             if (ImGui.InputInt($"Address Bits##{id}", ref currAddressBits, 1, 1))
             {
                 this._data.AddressBits = currAddressBits;
+                this.bytesPerAddress = (int)Math.Ceiling(this._data.DataBits / 8f);
+                this._data.Memory = new ByteAddressableMemory((int)Math.Pow(2, this._data.AddressBits) * bytesPerAddress, false);
                 this.Initialize(this._data);
             }
             var currDataBits = this._data.DataBits;
             if (ImGui.InputInt($"Data Bits##{id}", ref currDataBits, 1, 1))
             {
                 this._data.DataBits = currDataBits;
+                this.bytesPerAddress = (int)Math.Ceiling(this._data.DataBits / 8f);
+                this._data.Memory = new ByteAddressableMemory((int)Math.Pow(2, this._data.AddressBits) * bytesPerAddress, false);
                 this.Initialize(this._data);
             }
             ImGui.PushFont(ImGui.GetIO().FontDefault);

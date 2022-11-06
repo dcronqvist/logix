@@ -43,7 +43,7 @@ public class ROM : Component<RomData>
         this._data = data;
 
         this.bytesPerAddress = (int)Math.Ceiling(data.DataBits / 8f);
-        this._data.Memory = new ByteAddressableMemory((int)Math.Pow(2, this._data.AddressBits) * bytesPerAddress, false);
+        this._data.Memory = data.Memory;
 
         this.RegisterIO("A", data.AddressBits, ComponentSide.LEFT, "address");
         this.RegisterIO("EN", 1, ComponentSide.LEFT, "enable");
@@ -102,12 +102,15 @@ public class ROM : Component<RomData>
             if (ImGui.InputInt($"Address Bits##{id}", ref currAddressBits, 1, 1))
             {
                 this._data.AddressBits = currAddressBits;
+                this._data.Memory = new ByteAddressableMemory((int)Math.Pow(2, this._data.AddressBits) * bytesPerAddress, false);
                 this.Initialize(this._data);
             }
             var currDataBits = this._data.DataBits;
             if (ImGui.InputInt($"Data Bits##{id}", ref currDataBits, 1, 1))
             {
                 this._data.DataBits = currDataBits;
+                this.bytesPerAddress = (int)Math.Ceiling(this._data.DataBits / 8f);
+                this._data.Memory = new ByteAddressableMemory((int)Math.Pow(2, this._data.AddressBits) * bytesPerAddress, false);
                 this.Initialize(this._data);
             }
 
@@ -118,7 +121,7 @@ public class ROM : Component<RomData>
                     using (BinaryReader sr = new BinaryReader(File.Open(path, FileMode.Open)))
                     {
                         var data = sr.ReadBytes((int)sr.BaseStream.Length);
-                        var addressBits = (int)Math.Ceiling(Math.Log(data.Length, 2));
+                        var addressBits = (int)Math.Ceiling(Math.Log(data.Length / this.bytesPerAddress, 2));
 
                         this._data.AddressBits = addressBits;
 

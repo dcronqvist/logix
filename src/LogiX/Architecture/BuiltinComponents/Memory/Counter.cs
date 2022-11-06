@@ -63,7 +63,7 @@ public class Counter : Component<CounterData>
 
         var q = this.GetIOFromIdentifier("Q");
 
-        if (ld.IsUndefined() || c.IsUndefined() || d.AnyUndefined() || en.IsUndefined() || clk.IsUndefined() || r.IsUndefined())
+        if (ld.IsUndefined() || c.IsUndefined() || en.IsUndefined() || clk.IsUndefined())
         {
             return; // Undefined values
         }

@@ -146,7 +146,7 @@ public class Integrated : Component<IntegratedData>
             var ioPos = this.GetPositionForIO(ioOutput, out _);
             var internalPos = this._switchPositions[ioOutput.Identifier];
 
-            if (this._simulation.TryGetLogicValuesAtPosition(internalPos, ioOutput.Bits, out var values, out var status, out var fromIO, out var fromComp))
+            if (this._simulation.TryGetLogicValuesAtPosition(internalPos, ioOutput.Bits, out var values, out var status, out var fromIO, out var fromComp) && fromIO != ioOutput)
             {
                 ioOutput.SetValues(values);
                 simulation.PushValuesAt(ioPos, ioOutput, this, values);

@@ -223,7 +223,7 @@ public class Editor : Invoker<Editor>
                 // On select
                 if (this.Project is not null)
                 {
-                    this.QuickSaveProject();
+                    this.SetMessage(this.QuickSaveProject());
                 }
 
                 var project = LogiXProject.FromFile(s);
@@ -296,6 +296,11 @@ public class Editor : Invoker<Editor>
         {
             this.CurrentlySelectedTickRate = Array.IndexOf(this.AvailableTickRates, tr);
         }))).ToArray()));
+
+        this.AddMainMenuItem("Simulation", "Tick Once", new EditorAction((e) => this.CurrentlyOpenCircuit is not null, (e) => false, (e) =>
+        {
+            this.Sim.LockedAction(s => s.Tick());
+        }, Keys.F6));
 
         // ALL HELP ACTIONS
         this.AddMainMenuItem("Help", "About", new EditorAction((e) => true, (e) => false, (e) =>
@@ -428,7 +433,8 @@ For now, you can always right click a component in the left component window and
             {
                 this.Project.LoadedFromPath = Path.GetFullPath(path);
                 Settings.SetSetting(Settings.LAST_OPEN_PROJECT, Path.GetFullPath(path));
-                _ = this.QuickSaveProject();
+                File.Create(path).Close();
+                this.SetMessage(this.QuickSaveProject());
             });
 
             this.OpenPopup(fileDialog);

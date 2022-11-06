@@ -44,7 +44,7 @@ public class TriStateBuffer : Component<NoData>
     public override void PerformLogic()
     {
         var enabled = this.GetIOFromIdentifier("enabled").GetValues().First() == LogicValue.HIGH;
-        var input = this.GetIOFromIdentifier("in").GetValues().First();
+        var input = this.GetIOFromIdentifier("in").GetValues();
 
         if (enabled)
         {
@@ -52,7 +52,7 @@ public class TriStateBuffer : Component<NoData>
         }
         else
         {
-            this.GetIOFromIdentifier("out").Push(LogicValue.UNDEFINED);
+            this.GetIOFromIdentifier("out").Push(Enumerable.Repeat(LogicValue.UNDEFINED, this._data.DataBits).ToArray());
         }
 
         this.TriggerSizeRecalculation();

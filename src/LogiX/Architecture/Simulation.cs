@@ -444,6 +444,12 @@ public class Simulation
         this.Wires.Add(wire);
     }
 
+    public void RemoveWire(Wire wire)
+    {
+        this.Wires.Remove(wire);
+        this.WirePositions.Where(x => x.Value == wire).ToList().ForEach(x => this.WirePositions.Remove(x.Key));
+    }
+
     public T[] GetComponentsOfType<T>()
     {
         return this.Components.OfType<T>().ToArray();
