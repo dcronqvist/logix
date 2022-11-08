@@ -75,10 +75,38 @@ public class Wire
         return points.Distinct();
     }
 
+    private List<Vector2i> _leafPoints;
+    public IEnumerable<Vector2i> GetLeafPoints()
+    {
+        if (_leafPoints is null)
+        {
+            var pointDegrees = new Dictionary<Vector2i, int>();
+            foreach (var segment in this.Segments)
+            {
+                if (!pointDegrees.ContainsKey(segment.Item1))
+                {
+                    pointDegrees.Add(segment.Item1, 0);
+                }
+
+                if (!pointDegrees.ContainsKey(segment.Item2))
+                {
+                    pointDegrees.Add(segment.Item2, 0);
+                }
+
+                pointDegrees[segment.Item1]++;
+                pointDegrees[segment.Item2]++;
+            }
+
+            _leafPoints = pointDegrees.Where(x => x.Value == 1).Select(x => x.Key).ToList();
+        }
+
+        return _leafPoints;
+    }
+
     public void Render(Simulation simulation, Camera2D cam)
     {
         var pShader = LogiX.ContentManager.GetContentItem<ShaderProgram>("core.shader_program.primitive");
-        var color = GetWireColor(this.GetPoints().ToArray(), simulation);
+        var color = GetWireColor(this.GetLeafPoints().ToArray(), simulation);
 
         foreach (var segment in this.Segments)
         {
@@ -153,12 +181,14 @@ public class Wire
         this.Segments.Add((startPos, endPos));
         this.MergeEdgesThatMeetAt(startPos);
         this.MergeEdgesThatMeetAt(endPos);
+        this._leafPoints = null;
     }
 
     public static Wire[] RemoveSegmentFromWire(Wire wire, (Vector2i, Vector2i) segment)
     {
         var newWires = new List<Wire>();
 
+        wire._leafPoints = null;
         wire.Segments.Remove(segment);
 
         if (wire.Segments.Count == 0)
@@ -257,6 +287,8 @@ public class Wire
 
     public Wire[] RemoveVertex(Vector2i position)
     {
+        this._leafPoints = null;
+
         if (Utilities.VertexOnlyHasOneEdge(this.Segments, position, out var edge))
         {
             // This is a dead end, we can just remove it

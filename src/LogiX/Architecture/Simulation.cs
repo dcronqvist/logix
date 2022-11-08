@@ -310,16 +310,6 @@ public class Simulation
             return true;
         }
 
-        foreach (Wire ww in Wires)
-        {
-            if (ww.GetPoints().Contains(position))
-            {
-                wire = ww;
-                this.WirePositions[position] = ww;
-                return true;
-            }
-        }
-
         wire = null;
         return false;
     }
@@ -388,7 +378,7 @@ public class Simulation
 
         if (this.TryGetWireAtPos(position, out var wire))
         {
-            var positions = wire.GetPoints();
+            var positions = wire.GetLeafPoints();
             foreach (var pos in positions)
             {
                 if (this.TryGetIOFromPosition(pos, out var group, out var comp) || wire.HasEdgeVertexAt(pos))
@@ -442,6 +432,11 @@ public class Simulation
     public void AddWire(Wire wire)
     {
         this.Wires.Add(wire);
+
+        foreach (var point in wire.GetLeafPoints())
+        {
+            this.WirePositions[point] = wire;
+        }
     }
 
     public void RemoveWire(Wire wire)
@@ -563,24 +558,6 @@ public class Simulation
         io = null;
         component = null;
         return false;
-
-        // foreach (var c in this.Components)
-        // {
-        //     foreach (var i in c.IOs)
-        //     {
-        //         if (c.GetPositionForIO(i, out _) == gridPosition)
-        //         {
-        //             io = i;
-        //             component = c;
-        //             this.ComponentIOPositions.Add(gridPosition, (c, i));
-        //             return true;
-        //         }
-        //     }
-        // }
-
-        // io = null;
-        // component = null;
-        // return false;
     }
 
     public bool TryGetIOFromPosition(Vector2 worldPosition, out IO io, out Component component)
@@ -609,6 +586,18 @@ public class Simulation
         io = null;
         component = null;
         return false;
+    }
+
+    public void RecalculateWirePositions()
+    {
+        this.WirePositions.Clear();
+        foreach (var wire in this.Wires)
+        {
+            foreach (var point in wire.GetPoints())
+            {
+                this.WirePositions[point] = wire;
+            }
+        }
     }
 
     public void ConnectPointsWithWire(Vector2i point1, Vector2i point2)
@@ -656,7 +645,7 @@ public class Simulation
             }
         }
 
-        this.WirePositions.Clear();
+        this.RecalculateWirePositions();
     }
 
     public bool TryGetWireSegmentAtPos(Vector2i pos, out (Vector2i, Vector2i) edge, out Wire wire)
@@ -732,7 +721,7 @@ public class Simulation
                     Wire[] newWires = Wire.RemoveSegmentFromWire(w1, (point1, point2));
                     this.Wires.Remove(w1);
                     this.Wires.AddRange(newWires);
-                    this.WirePositions.Clear();
+                    this.RecalculateWirePositions();
                 }
                 else
                 {
