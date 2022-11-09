@@ -149,6 +149,7 @@ public class Splitter : Component<SplitterData>
             1 => end.ToVector2(Constants.GRIDSIZE) + new Vector2(0f, Constants.GRIDSIZE / 2f),
             2 => end.ToVector2(Constants.GRIDSIZE) - new Vector2(Constants.GRIDSIZE / 2f, 0f),
             3 => end.ToVector2(Constants.GRIDSIZE) - new Vector2(0f, Constants.GRIDSIZE / 2f),
+            _ => throw new NotImplementedException("Received abnormal rotation for splitter.") // Should never happen
         };
 
         var bits = this._data.BitsToSplit - 1;
