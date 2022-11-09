@@ -42,6 +42,10 @@ public class Editor : Invoker<Editor>
     public int[] AvailableTickRates { get; } = new int[] { 1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024, 2048, 4096, 8192, 16384 };
     // The currently selected "target" ticks per second for the simulation, defaults to 64 ticks per second
     public int CurrentlySelectedTickRate { get; set; } = 6;
+    // The currently inputted custom tick rate
+    public int CustomTickRate { get; set; } = 64;
+    // Get the currently effective tick rate
+    public int CurrentEffectiveTickRate => this.CurrentlySelectedTickRate == -1 ? this.CustomTickRate : this.AvailableTickRates[this.CurrentlySelectedTickRate];
     // Whether or not the simulation is supposed to be running, basically pauses the simulation threads while loop
     public bool SimulationRunning { get; set; } = true;
     // The finite state machine that controls the editor and all the different "tools", moving components, etc.
@@ -183,7 +187,7 @@ public class Editor : Invoker<Editor>
                 });
 
                 // Get target tick rate
-                int targetTps = this.AvailableTickRates[this.CurrentlySelectedTickRate];
+                int targetTps = this.CurrentEffectiveTickRate;
 
                 // Get how much time that the target tick rate should take
                 long targetDiff = TimeSpan.TicksPerSecond / targetTps;
@@ -292,10 +296,31 @@ public class Editor : Invoker<Editor>
             this.SimulationRunning = !this.SimulationRunning;
         }, Keys.F5));
 
-        this.AddMainMenuItem("Simulation", "Tick Rate", new NestedEditorAction(this.AvailableTickRates.Select(tr => (tr.GetAsHertzString(), new EditorAction((e) => true, (e) => this.CurrentlySelectedTickRate == Array.IndexOf(this.AvailableTickRates, tr), (e) =>
+        this.AddMainMenuItem("Simulation", $"Tick Rate", new NestedEditorAction(this.AvailableTickRates.Select(tr => (tr.GetAsHertzString(), new EditorAction((e) => true, (e) => this.CurrentlySelectedTickRate == Array.IndexOf(this.AvailableTickRates, tr), (e) =>
         {
             this.CurrentlySelectedTickRate = Array.IndexOf(this.AvailableTickRates, tr);
-        }))).ToArray()));
+        }))).ToList().Concat(new (string, EditorAction)[] { ("Custom", new EditorAction((e) => true, (e) => this.CurrentlySelectedTickRate == -1, (e) => {
+            this.OpenPopup("Enter a custom tick rate", (s) => {
+                var custom = this.CustomTickRate;
+                if (ImGui.InputInt("Tick Rate", ref custom))
+                {
+                    this.CustomTickRate = Math.Clamp(custom, 1, this.AvailableTickRates.Max());
+                }
+
+                if (ImGui.Button("OK"))
+                {
+                    this.CurrentlySelectedTickRate = -1;
+                    ImGui.CloseCurrentPopup();
+                }
+
+                ImGui.SameLine();
+
+                if (ImGui.Button("Cancel"))
+                {
+                    ImGui.CloseCurrentPopup();
+                }
+            });
+        })) }).ToArray()));
 
         this.AddMainMenuItem("Simulation", "Tick Once", new EditorAction((e) => this.CurrentlyOpenCircuit is not null, (e) => false, (e) =>
         {

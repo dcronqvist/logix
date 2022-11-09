@@ -9,14 +9,12 @@ public class RamData : IComponentDescriptionData
 {
     public ByteAddressableMemory Memory { get; set; }
     public int AddressBits { get; set; }
-    public int DataBits { get; set; }
 
     public static IComponentDescriptionData GetDefault()
     {
         return new RamData()
         {
             AddressBits = 8,
-            DataBits = 8,
             Memory = new ByteAddressableMemory(256, false),
         };
     }
@@ -30,7 +28,6 @@ public class RAM : Component<RamData>
     public override bool ShowPropertyWindow => true;
 
     private RamData _data;
-    private int bytesPerAddress;
 
     public override IComponentDescriptionData GetDescriptionData()
     {
@@ -41,32 +38,33 @@ public class RAM : Component<RamData>
     {
         this.ClearIOs();
         this._data = data;
-
-        this.bytesPerAddress = (int)Math.Ceiling(data.DataBits / 8f);
         this._data.Memory = data.Memory;
 
-        this.RegisterIO("A", data.AddressBits, ComponentSide.LEFT, "address");
-        this.RegisterIO("EN", 1, ComponentSide.BOTTOM, "enable");
-        this.RegisterIO("CLK", 1, ComponentSide.BOTTOM, "clock");
-        this.RegisterIO("LD", 1, ComponentSide.BOTTOM, "load");
-        this.RegisterIO("CLR", 1, ComponentSide.BOTTOM, "clear");
-        this.RegisterIO("D", data.DataBits, ComponentSide.RIGHT);
+        this.RegisterIO("ADDRESS", data.AddressBits, ComponentSide.LEFT, "address");
+        this.RegisterIO("ENABLE", 1, ComponentSide.BOTTOM, "enable");
+        this.RegisterIO("CLOCK", 1, ComponentSide.BOTTOM, "clock");
+        this.RegisterIO("LOAD", 1, ComponentSide.BOTTOM, "load");
+        this.RegisterIO("CLEAR", 1, ComponentSide.BOTTOM, "clear");
+        this.RegisterIO("DATA", 8, ComponentSide.RIGHT);
 
         this.TriggerSizeRecalculation();
     }
 
     private bool previousClk = false;
-    private int currentlySelectedAddress = -1;
+    private bool hasSelectedAddress = false;
+    private uint currentlySelectedAddress = 0;
     public override void PerformLogic()
     {
-        var a = this.GetIOFromIdentifier("A").GetValues();
-        var en = this.GetIOFromIdentifier("EN").GetValues().First();
-        var clk = this.GetIOFromIdentifier("CLK").GetValues().First();
-        var ld = this.GetIOFromIdentifier("LD").GetValues().First();
-        var clr = this.GetIOFromIdentifier("CLR").GetValues().First();
-        var d = this.GetIOFromIdentifier("D");
+        var a = this.GetIOFromIdentifier("ADDRESS").GetValues();
+        var en = this.GetIOFromIdentifier("ENABLE").GetValues().First();
+        var clk = this.GetIOFromIdentifier("CLOCK").GetValues().First();
+        var ld = this.GetIOFromIdentifier("LOAD").GetValues().First();
+        var clr = this.GetIOFromIdentifier("CLEAR").GetValues().First();
+        var d = this.GetIOFromIdentifier("DATA");
 
-        if (a.AnyUndefined() || en.IsUndefined() || clk.IsUndefined() || ld.IsUndefined() || clr.IsUndefined())
+        this.hasSelectedAddress = false;
+
+        if (a.AnyUndefined())
         {
             return; // Do nothing
         }
@@ -76,38 +74,20 @@ public class RAM : Component<RamData>
         bool reset = clr == LogicValue.HIGH;
 
         var address = a.Reverse().GetAsUInt();
-        var realAddress = (int)(address * bytesPerAddress);
-        this.currentlySelectedAddress = realAddress;
+        this.currentlySelectedAddress = address;
+
+        this.hasSelectedAddress = true;
 
         if (reset)
         {
-            for (int i = 0; i < this.bytesPerAddress; i++)
-            {
-                this._data.Memory[realAddress + i] = 0;
-            }
+            this._data.Memory[address] = 0;
         }
-
 
         if (en != LogicValue.HIGH)
         {
             return; // DO nothing
         }
 
-        var values = new LogicValue[_data.DataBits];
-
-        for (int i = 0; i < this.bytesPerAddress; i++)
-        {
-            var value = this._data.Memory[realAddress + i];
-
-            for (int k = 0; k < 8; k++)
-            {
-                if (i * 8 + k >= _data.DataBits)
-                {
-                    break;
-                }
-                values[i * 8 + k] = (value & (1 << k)) != 0 ? LogicValue.HIGH : LogicValue.LOW;
-            }
-        }
 
         if (clockHigh && !previousClk)
         {
@@ -115,19 +95,16 @@ public class RAM : Component<RamData>
             {
                 // Load from D into memory
                 var dValues = d.GetValues();
-                var dval = dValues.GetAsUInt();
-
-                for (int i = 0; i < this.bytesPerAddress; i++)
-                {
-                    var value = (byte)((dval >> (i * 8)) & 0xFF);
-                    this._data.Memory[realAddress + i] = value;
-                }
+                var dval = dValues.Reverse<LogicValue>().GetAsByte();
+                this._data.Memory[address] = dval;
             }
         }
 
         if (!load)
         {
-            d.Push(values.Reverse<LogicValue>().ToArray());
+            var value = this._data.Memory[address];
+            var valueAsBits = value.GetAsLogicValues(8);
+            d.Push(valueAsBits);
         }
         previousClk = clockHigh;
     }
@@ -141,26 +118,53 @@ public class RAM : Component<RamData>
     public override void CompleteSubmitUISelected(Editor editor, int componentIndex)
     {
         var id = this.GetUniqueIdentifier();
-        this.memoryEditor.DrawWindow($"Random Access Memory Editor##{id}", this._data.Memory, this.bytesPerAddress, this.currentlySelectedAddress, () =>
+        this.memoryEditor.DrawWindow($"Random Access Memory Editor##{id}", this._data.Memory, 1, this.currentlySelectedAddress, this.hasSelectedAddress, () =>
         {
             var currAddressBits = this._data.AddressBits;
             if (ImGui.InputInt($"Address Bits##{id}", ref currAddressBits, 1, 1))
             {
                 this._data.AddressBits = currAddressBits;
-                this.bytesPerAddress = (int)Math.Ceiling(this._data.DataBits / 8f);
-                this._data.Memory = new ByteAddressableMemory((int)Math.Pow(2, this._data.AddressBits) * bytesPerAddress, false);
+                this._data.Memory = new ByteAddressableMemory((int)Math.Pow(2, this._data.AddressBits), false);
                 this.Initialize(this._data);
             }
-            var currDataBits = this._data.DataBits;
-            if (ImGui.InputInt($"Data Bits##{id}", ref currDataBits, 1, 1))
+
+            if (ImGui.Button($"Load From File##{id}"))
             {
-                this._data.DataBits = currDataBits;
-                this.bytesPerAddress = (int)Math.Ceiling(this._data.DataBits / 8f);
-                this._data.Memory = new ByteAddressableMemory((int)Math.Pow(2, this._data.AddressBits) * bytesPerAddress, false);
-                this.Initialize(this._data);
+                var fileDialog = new FileDialog(".", FileDialogType.SelectFile, (path) =>
+                {
+                    using (BinaryReader sr = new BinaryReader(File.Open(path, FileMode.Open)))
+                    {
+                        var data = sr.ReadBytes((int)sr.BaseStream.Length);
+                        var addressBits = (int)Math.Ceiling(Math.Log(data.Length, 2));
+
+                        this._data.AddressBits = addressBits;
+
+                        this.Initialize(this._data);
+
+                        this._data.Memory = new ByteAddressableMemory(data);
+                    }
+
+                }, ".bin");
+                editor.OpenPopup(fileDialog);
             }
+            ImGui.SameLine();
+            if (ImGui.Button($"Dump To File##{id}"))
+            {
+                var fileDialog = new FileDialog(".", FileDialogType.SaveFile, (path) =>
+                {
+                    using (BinaryWriter bw = new BinaryWriter(File.Open(path, FileMode.Open)))
+                    {
+                        bw.Write(this._data.Memory.Data);
+                    }
+
+                }, ".bin");
+                editor.OpenPopup(fileDialog);
+            }
+
             ImGui.PushFont(ImGui.GetIO().FontDefault);
+        }, () =>
+        {
+            ImGui.PopFont();
         });
-        ImGui.PopFont();
     }
 }

@@ -25,7 +25,7 @@ public class ByteAddressableMemory
         }
     }
 
-    public byte this[int index]
+    public byte this[uint index]
     {
         get => this.Data[index];
         set => this.Data[index] = value;
@@ -111,7 +111,7 @@ public class MemoryEditor
         return size;
     }
 
-    public void DrawWindow(string title, ByteAddressableMemory memory, int bytesPerAddress, int currentlySelectedAddress = -1, Action beforeContent = null, Action afterContent = null)
+    public void DrawWindow(string title, ByteAddressableMemory memory, int bytesPerAddress, uint currentlySelectedAddress = 0, bool displayCurrentlySelected = true, Action beforeContent = null, Action afterContent = null)
     {
         var s = CalcSizes(memory);
         ImGui.SetNextWindowSize(new Vector2(s.WindowWidth, s.WindowWidth * 0.60f), ImGuiCond.FirstUseEver);
@@ -123,7 +123,7 @@ public class MemoryEditor
             {
                 beforeContent();
             }
-            DrawContents(memory, bytesPerAddress, currentlySelectedAddress);
+            DrawContents(memory, bytesPerAddress, currentlySelectedAddress, displayCurrentlySelected);
             if (afterContent is not null)
             {
                 afterContent();
@@ -132,7 +132,7 @@ public class MemoryEditor
         ImGui.End();
     }
 
-    public unsafe void DrawContents(ByteAddressableMemory memory, int bytesPerAddress, int currentlySelectedAddress)
+    public unsafe void DrawContents(ByteAddressableMemory memory, int bytesPerAddress, uint currentlySelectedAddress, bool displayCurrentlySelected)
     {
         var s = CalcSizes(memory);
         var style = ImGui.GetStyle();
@@ -171,7 +171,7 @@ public class MemoryEditor
                     bytePosX += (float)(n / 8) * s.SpacingBetweenMidCols;
                     ImGui.SameLine(bytePosX);
 
-                    if (addr >= currentlySelectedAddress && addr < currentlySelectedAddress + bytesPerAddress)
+                    if (addr >= currentlySelectedAddress && addr < currentlySelectedAddress + bytesPerAddress && displayCurrentlySelected)
                     {
                         var currentPos = ImGui.GetCursorScreenPos();
                         drawList.AddRectFilled(currentPos - new Vector2(s.SpacingBetweenMidCols / 2f, 0), currentPos + new Vector2(s.GlyphWidth * 2 + 1, s.LineHeight), ImGui.GetColorU32(Constants.COLOR_SELECTED.ToVector4()));
@@ -200,7 +200,6 @@ public class MemoryEditor
 
                         if (!ReadOnly && ImGui.IsItemHovered() && ImGui.IsMouseClicked(ImGuiMouseButton.Left))
                         {
-                            Console.WriteLine($"Want to edit {addr:X}");
                             this.Editing = true;
                             this.EditingAddress = addr;
                             this.DataInputString = $"{memory.Data[addr]:X2}";

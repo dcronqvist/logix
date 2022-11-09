@@ -9,14 +9,12 @@ public class RomData : IComponentDescriptionData
 {
     public ByteAddressableMemory Memory { get; set; }
     public int AddressBits { get; set; }
-    public int DataBits { get; set; }
 
     public static IComponentDescriptionData GetDefault()
     {
         return new RomData()
         {
             AddressBits = 8,
-            DataBits = 8,
             Memory = new ByteAddressableMemory(256, false),
         };
     }
@@ -30,7 +28,6 @@ public class ROM : Component<RomData>
     public override bool ShowPropertyWindow => true;
 
     private RomData _data;
-    private int bytesPerAddress;
 
     public override IComponentDescriptionData GetDescriptionData()
     {
@@ -41,50 +38,43 @@ public class ROM : Component<RomData>
     {
         this.ClearIOs();
         this._data = data;
-
-        this.bytesPerAddress = (int)Math.Ceiling(data.DataBits / 8f);
         this._data.Memory = data.Memory;
 
-        this.RegisterIO("A", data.AddressBits, ComponentSide.LEFT, "address");
-        this.RegisterIO("EN", 1, ComponentSide.LEFT, "enable");
-        this.RegisterIO("Q", data.DataBits, ComponentSide.RIGHT);
+        this.RegisterIO("ADDRESS", data.AddressBits, ComponentSide.LEFT, "address");
+        this.RegisterIO("ENABLE", 1, ComponentSide.LEFT, "enable");
+        this.RegisterIO("DATA", 8, ComponentSide.RIGHT); // ALWAYS A BYTE
 
         this.TriggerSizeRecalculation();
     }
 
-    private int currentlySelectedAddress = -1;
+    private bool hasSelectedAddress = false;
+    private uint currentlySelectedAddress = 0;
     public override void PerformLogic()
     {
-        var a = this.GetIOFromIdentifier("A").GetValues();
-        var en = this.GetIOFromIdentifier("EN").GetValues().First();
-        var q = this.GetIOFromIdentifier("Q");
+        var a = this.GetIOFromIdentifier("ADDRESS").GetValues();
+        var en = this.GetIOFromIdentifier("ENABLE").GetValues().First();
+        var q = this.GetIOFromIdentifier("DATA");
 
-        if (a.AnyUndefined() || en.IsUndefined() || en == LogicValue.LOW)
+        this.hasSelectedAddress = false;
+
+        if (a.AnyUndefined())
         {
             return; // Do nothing
         }
 
         var address = a.Reverse().GetAsUInt();
-        var realAddress = (int)(address * bytesPerAddress);
-        this.currentlySelectedAddress = realAddress;
+        this.currentlySelectedAddress = address;
 
-        var values = new LogicValue[_data.DataBits];
+        this.hasSelectedAddress = true;
+        var value = this._data.Memory[address];
+        var valueAsBits = value.GetAsLogicValues(8);
 
-        for (int i = 0; i < this.bytesPerAddress; i++)
+        if (en.IsUndefined() || en == LogicValue.LOW)
         {
-            var value = this._data.Memory[realAddress + i];
-
-            for (int k = 0; k < 8; k++)
-            {
-                if (i * 8 + k >= _data.DataBits)
-                {
-                    break;
-                }
-                values[i * 8 + k] = (value & (1 << k)) != 0 ? LogicValue.HIGH : LogicValue.LOW;
-            }
+            return;
         }
 
-        q.Push(values.Reverse<LogicValue>().ToArray());
+        q.Push(valueAsBits);
     }
 
     private MemoryEditor memoryEditor = new MemoryEditor(false);
@@ -96,32 +86,24 @@ public class ROM : Component<RomData>
     public override void CompleteSubmitUISelected(Editor editor, int componentIndex)
     {
         var id = this.GetUniqueIdentifier();
-        this.memoryEditor.DrawWindow($"Read Only Memory Editor##{id}", this._data.Memory, this.bytesPerAddress, this.currentlySelectedAddress, () =>
+        this.memoryEditor.DrawWindow($"Read Only Memory Editor##{id}", this._data.Memory, 1, this.currentlySelectedAddress, this.hasSelectedAddress, () =>
         {
             var currAddressBits = this._data.AddressBits;
             if (ImGui.InputInt($"Address Bits##{id}", ref currAddressBits, 1, 1))
             {
                 this._data.AddressBits = currAddressBits;
-                this._data.Memory = new ByteAddressableMemory((int)Math.Pow(2, this._data.AddressBits) * bytesPerAddress, false);
-                this.Initialize(this._data);
-            }
-            var currDataBits = this._data.DataBits;
-            if (ImGui.InputInt($"Data Bits##{id}", ref currDataBits, 1, 1))
-            {
-                this._data.DataBits = currDataBits;
-                this.bytesPerAddress = (int)Math.Ceiling(this._data.DataBits / 8f);
-                this._data.Memory = new ByteAddressableMemory((int)Math.Pow(2, this._data.AddressBits) * bytesPerAddress, false);
+                this._data.Memory = new ByteAddressableMemory((int)Math.Pow(2, this._data.AddressBits), false);
                 this.Initialize(this._data);
             }
 
-            if (ImGui.Button("Load From File"))
+            if (ImGui.Button($"Load From File##{id}"))
             {
                 var fileDialog = new FileDialog(".", FileDialogType.SelectFile, (path) =>
                 {
                     using (BinaryReader sr = new BinaryReader(File.Open(path, FileMode.Open)))
                     {
                         var data = sr.ReadBytes((int)sr.BaseStream.Length);
-                        var addressBits = (int)Math.Ceiling(Math.Log(data.Length / this.bytesPerAddress, 2));
+                        var addressBits = (int)Math.Ceiling(Math.Log(data.Length, 2));
 
                         this._data.AddressBits = addressBits;
 
@@ -134,7 +116,7 @@ public class ROM : Component<RomData>
                 editor.OpenPopup(fileDialog);
             }
             ImGui.SameLine();
-            if (ImGui.Button("Dump To File"))
+            if (ImGui.Button($"Dump To File##{id}"))
             {
                 var fileDialog = new FileDialog(".", FileDialogType.SaveFile, (path) =>
                 {
@@ -148,7 +130,9 @@ public class ROM : Component<RomData>
             }
 
             ImGui.PushFont(ImGui.GetIO().FontDefault);
+        }, () =>
+        {
+            ImGui.PopFont();
         });
-        ImGui.PopFont();
     }
 }

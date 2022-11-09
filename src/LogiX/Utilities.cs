@@ -614,6 +614,16 @@ public static class Utilities
         return result;
     }
 
+    public static byte GetAsByte(this IEnumerable<LogicValue> values)
+    {
+        byte result = 0;
+        for (int i = 0; i < values.Count(); i++)
+        {
+            result += values.ElementAt(i) == LogicValue.HIGH ? (byte)(1 << i) : (byte)0;
+        }
+        return result;
+    }
+
     public static LogicValue[] GetAsLogicValues(this uint value, int bitCount)
     {
         var result = new LogicValue[bitCount];
