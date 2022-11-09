@@ -1,5 +1,8 @@
 # This is supposed to be a script to generate micro instruction code for the Beneater 8-bit computer.
 
+from copy import deepcopy
+
+
 def instr(opcode, step1, step2, step3):
     control_lines = {
         "HLT": 15,
@@ -43,53 +46,49 @@ def print_instr(instr):
     for i in instr:
         print(f"{i[0]:08b} {i[1]:016b}")
 
-i_nop = instr(0b0000, [], [], [])                                           # NOP
-i_lda = instr(0b0001, ["MI", "IO"], ["RO", "AI"], [])                       # LDA <addr>
-i_add = instr(0b0010, ["MI", "IO"], ["RO", "BI"], ["EO", "AI", "FI"])       # ADD <addr>
-i_sub = instr(0b0011, ["MI", "IO"], ["RO", "BI"], ["EO", "SU", "AI", "FI"]) # SUB <addr>
-i_sta = instr(0b0100, ["MI", "IO"], ["AO", "RI"], [])                       # STA <addr>
-i_ldi = instr(0b0101, ["IO", "AI"], [], [])                                 # LDI <data>
-i_jmp = instr(0b0110, ["IO", "J"], [], [])                                  # JMP <addr>
-i_hlt = instr(0b1111, ["HLT"], [], [])                                      # HLT 
-i_out = instr(0b1110, ["AO", "OI"], [], [])                                 # OUT
+instructions = [
+    instr(0b0000, [], [], []),                                              # NOP
+    instr(0b0001, ["MI", "IO"], ["RO", "AI"], []),                          # LDA <addr>
+    instr(0b0010, ["MI", "IO"], ["RO", "BI"], ["EO", "AI", "FI"]),          # ADD <addr>
+    instr(0b0011, ["MI", "IO"], ["RO", "BI"], ["EO", "SU", "AI", "FI"]),    # SUB <addr>
+    instr(0b0100, ["MI", "IO"], ["AO", "RI"], []),                          # STA <addr>
+    instr(0b0101, ["IO", "AI"], [], []),                                    # LDI <data>
+    instr(0b0110, ["IO", "J"], [], []),                                     # JMP <addr>
+    instr(0b0111, [], [], []),                                              # JC <addr>
+    instr(0b1000, [], [], []),                                              # JZ <addr>
+    instr(0b1001, [], [], []),                                              # NOP
+    instr(0b1010, [], [], []),                                              # NOP
+    instr(0b1011, [], [], []),                                              # NOP
+    instr(0b1100, [], [], []),                                              # NOP
+    instr(0b1101, [], [], []),                                              # NOP
+    instr(0b1110, ["AO", "OI"], [], []),                                    # OUT
+    instr(0b1111, ["HLT"], [], []),                                         # HLT 
+]
 
 all_bytes = [0x0] * 2**11 # want 11 address lines
 
-instructions = [
-    i_nop,
-    i_lda,
-    i_add,
-    i_sub,
-    i_sta,
-    i_ldi,
-    i_jmp,
-    i_hlt,
-    i_out
+microcode = [
+    deepcopy(instructions),   # Carry 0, Zero 0
+    deepcopy(instructions),   # Carry 0, Zero 1
+    deepcopy(instructions),   # Carry 1, Zero 0
+    deepcopy(instructions),   # Carry 1, Zero 1
 ]
 
-# carry 0, zero 0
-for i in instructions:
-    for j in i:
-        all_bytes[j[0]] = j[1] >> 8
-        all_bytes[j[0] + (1 << 7)] = j[1] & 0xFF
+microcode[0b01][0b1000] = instr(0b1000, ["IO", "J"], [], []) # JZ <addr>
+microcode[0b10][0b0111] = instr(0b0111, ["IO", "J"], [], []) # JC <addr>
+microcode[0b11][0b1000] = instr(0b1000, ["IO", "J"], [], []) # JZ <addr>
+microcode[0b11][0b0111] = instr(0b0111, ["IO", "J"], [], []) # JC <addr>
 
-# carry 1, zero 0
-for i in instructions:
-    for j in i:
-        all_bytes[j[0] + (1 << 8)] = j[1] >> 8
-        all_bytes[j[0] + (1 << 8) + (1 << 7)] = j[1] & 0xFF
+for address in range(0, 2**10):
+    flag_set = (address >> 8) & 0b11
+    opcode = (address >> 3) & 0b1111
+    sel_bit = (address >> 7) & 0b1
+    step = address & 0b111
 
-# carry 0, zero 1
-for i in instructions:
-    for j in i:
-        all_bytes[j[0] + (1 << 9)] = j[1] >> 8
-        all_bytes[j[0] + (1 << 9) + (1 << 7)] = j[1] & 0xFF
-
-# carry 1, zero 1
-for i in instructions:
-    for j in i:
-        all_bytes[j[0] + (1 << 8) + (1 << 9)] = j[1] >> 8
-        all_bytes[j[0] + (1 << 8) + (1 << 9) + (1 << 7)] = j[1] & 0xFF
+    if sel_bit == 0:
+        all_bytes[address] = microcode[flag_set][opcode][step][1] >> 8
+    else:
+        all_bytes[address] = microcode[flag_set][opcode][step][1] & 0xFF 
 
 # output to file
 with open("microcode.bin", "wb") as f:
