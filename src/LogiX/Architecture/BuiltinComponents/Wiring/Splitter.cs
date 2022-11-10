@@ -58,7 +58,6 @@ public class Splitter : Component<SplitterData>
         }
     }
 
-    private int _counter = 0;
     public override void PerformLogic()
     {
         if (this._data.Direction == SplitterDirection.Split)

@@ -82,7 +82,6 @@ public class RandomGen : Component<RandomGenData>
 
     private int _previousSeed = -1;
     private bool _previousClock;
-    private bool _previousReset;
     private Random _random;
     private uint _randomValue;
 

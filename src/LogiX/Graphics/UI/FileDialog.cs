@@ -76,9 +76,13 @@ public class FileDialog : Modal
         return fileExists && validExtension;
     }
 
-    string GetDownloadFolderPath()
+    private string GetDownloadFolderPath()
     {
+#if _WINDOWS
         return Registry.GetValue(@"HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Explorer\Shell Folders", "{374DE290-123F-4565-9164-39C4925E467B}", String.Empty).ToString();
+#else
+        return $"Environment.GetFolderPath(Environment.SpecialFolder.UserProfile)";
+#endif
     }
 
     public override void SubmitUI(Editor editor)
