@@ -134,9 +134,11 @@ public abstract class Component
         _ioDict.Clear();
     }
 
-    public void RegisterIO(string identifier, int bits, ComponentSide side, params string[] tags)
+    public IO RegisterIO(string identifier, int bits, ComponentSide side, params string[] tags)
     {
-        _ioDict.Add(identifier, new IO(identifier, bits, side, tags));
+        var io = new IO(identifier, bits, side, tags);
+        _ioDict.Add(identifier, io);
+        return io;
     }
 
     public IO[] GetIOsOnSide(ComponentSide side)
