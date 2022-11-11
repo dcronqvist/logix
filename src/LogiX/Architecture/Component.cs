@@ -423,7 +423,7 @@ public abstract class Component
         this.TriggerSizeRecalculation();
     }
 
-    public void RenderSelected(Camera2D camera)
+    public virtual void RenderSelected(Camera2D camera)
     {
         // Position of component
         var font = Utilities.GetFont("core.font.default", 8); //LogiX.ContentManager.GetContentItem<Font>("core.font.default-regular-8");

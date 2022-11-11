@@ -44,12 +44,10 @@ public class Shifter : Component<ShifterData>
         this.ClearIOs();
         this._data = data;
 
-        // 0000, 4 bits input, how many bits required to shift 4 bits? 2 bits, calculated by log2(4) = 2
-        // 00000, 5 bits input, how many bits required to shift 5 bits? 3 bits, calculated by log2(5) = 2.3219280948873623478703194294894
-
         this.RegisterIO("X", data.DataBits, ComponentSide.LEFT, "input");
         this.RegisterIO("Y", data.DataBits, ComponentSide.RIGHT, "output");
         this.RegisterIO("S", (int)Math.Ceiling(Math.Log2(data.DataBits)), ComponentSide.LEFT, "shift");
+        this.RegisterIO("IN", 1, ComponentSide.LEFT, "input");
     }
 
     public override void PerformLogic()
@@ -57,11 +55,13 @@ public class Shifter : Component<ShifterData>
         var x = this.GetIOFromIdentifier("X");
         var y = this.GetIOFromIdentifier("Y");
         var s = this.GetIOFromIdentifier("S");
+        var shiftIn = this.GetIOFromIdentifier("IN");
 
         var xBits = x.GetValues();
         var sBits = s.GetValues();
+        var shiftInBits = shiftIn.GetValues().First();
 
-        if (xBits.AnyUndefined() || sBits.AnyUndefined())
+        if (xBits.AnyUndefined() || sBits.AnyUndefined() || shiftInBits.IsUndefined())
         {
             return; // Can't do anything if we don't have all the values
         }
@@ -73,6 +73,11 @@ public class Shifter : Component<ShifterData>
         {
             var yint = xint << (int)shift;
 
+            if (shiftInBits == LogicValue.HIGH)
+            {
+                yint |= 1;
+            }
+
             var yBits = yint.GetAsLogicValues(y.Bits);
 
             y.Push(yBits);
@@ -80,6 +85,12 @@ public class Shifter : Component<ShifterData>
         else
         {
             var yint = xint >> (int)shift;
+
+            if (shiftInBits == LogicValue.HIGH)
+            {
+                var highestValue = (uint)Math.Pow(2, y.Bits - 1);
+                yint |= highestValue;
+            }
 
             var yBits = yint.GetAsLogicValues(y.Bits);
 

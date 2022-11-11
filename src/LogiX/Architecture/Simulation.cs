@@ -192,7 +192,7 @@ public class Simulation
     public List<(Vector2i, Vector2i)> SelectedWireSegments { get; set; } = new();
     public List<SimulationError> PreviousErrors { get; set; } = new();
     public List<SimulationError> Errors { get; set; } = new();
-    public Dictionary<Vector2i, (Component, IO)> ComponentIOPositions { get; set; } = new();
+    public Dictionary<Vector2i, List<(Component, IO)>> ComponentIOPositions { get; set; } = new();
     public Dictionary<Vector2i, Wire> WirePositions { get; set; } = new();
 
     public Simulation()
@@ -416,7 +416,13 @@ public class Simulation
         foreach (var io in component.IOs)
         {
             var ioPos = component.GetPositionForIO(io, out _);
-            this.ComponentIOPositions.Add(ioPos, (component, io));
+
+            if (!this.ComponentIOPositions.ContainsKey(ioPos))
+            {
+                this.ComponentIOPositions[ioPos] = new List<(Component, IO)>();
+            }
+
+            this.ComponentIOPositions[ioPos].Add((component, io));
         }
     }
 
@@ -550,8 +556,8 @@ public class Simulation
     {
         if (this.ComponentIOPositions.TryGetValue(gridPosition, out var found))
         {
-            io = found.Item2;
-            component = found.Item1;
+            io = found.First().Item2;
+            component = found.First().Item1;
             return true;
         }
 

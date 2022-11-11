@@ -168,10 +168,10 @@ public static class PrimitiveRenderer
         }
     }
 
-    public static void RenderCircle(Vector2 position, float radius, float rotation, ColorF color, float segmentPercentage = 1f)
+    public static void RenderCircle(Vector2 position, float radius, float rotation, ColorF color, float segmentPercentage = 1f, int sides = 10)
     {
         var model = Utilities.CreateModelMatrixFromPosition(position, rotation, Vector2.Zero, new Vector2(radius, radius));
-        var tris = new PCircle(10, segmentPercentage).GetTris();
+        var tris = new PCircle(sides, segmentPercentage).GetTris();
 
         foreach (var tri in tris)
         {

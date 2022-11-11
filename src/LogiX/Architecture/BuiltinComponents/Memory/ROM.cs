@@ -28,6 +28,7 @@ public class ROM : Component<RomData>
     public override bool ShowPropertyWindow => true;
 
     private RomData _data;
+    private string _pathLoadedFrom;
 
     public override IComponentDescriptionData GetDescriptionData()
     {
@@ -110,6 +111,8 @@ public class ROM : Component<RomData>
                         this.Initialize(this._data);
 
                         this._data.Memory = new ByteAddressableMemory(data);
+
+                        this._pathLoadedFrom = path;
                     }
 
                 }, ".bin");
@@ -128,6 +131,27 @@ public class ROM : Component<RomData>
                 }, ".bin");
                 editor.OpenPopup(fileDialog);
             }
+            ImGui.SameLine();
+            if (this._pathLoadedFrom is null)
+                ImGui.BeginDisabled();
+
+            if (ImGui.Button($"Reload##{id}"))
+            {
+                using (BinaryReader sr = new BinaryReader(File.Open(this._pathLoadedFrom, FileMode.Open)))
+                {
+                    var data = sr.ReadBytes((int)sr.BaseStream.Length);
+                    var addressBits = (int)Math.Ceiling(Math.Log(data.Length, 2));
+
+                    this._data.AddressBits = addressBits;
+
+                    this.Initialize(this._data);
+
+                    this._data.Memory = new ByteAddressableMemory(data);
+                }
+            }
+
+            if (this._pathLoadedFrom is null)
+                ImGui.EndDisabled();
 
             ImGui.PushFont(ImGui.GetIO().FontDefault);
         }, () =>

@@ -624,6 +624,20 @@ public static class Utilities
         return result;
     }
 
+    public static int GetAsTwosComplementInt(this IEnumerable<LogicValue> values)
+    {
+        int result = 0;
+        for (int i = 0; i < values.Count(); i++)
+        {
+            result += values.ElementAt(i) == LogicValue.HIGH ? 1 << i : 0;
+        }
+        if (values.ElementAt(0) == LogicValue.HIGH)
+        {
+            result -= (int)Math.Pow(2, values.Count());
+        }
+        return result;
+    }
+
     public static LogicValue[] GetAsLogicValues(this uint value, int bitCount)
     {
         var result = new LogicValue[bitCount];
