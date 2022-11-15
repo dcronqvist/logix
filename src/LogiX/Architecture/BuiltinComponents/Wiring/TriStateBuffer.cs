@@ -17,7 +17,7 @@ public class NoData : IComponentDescriptionData
     }
 }
 
-[ScriptType("TRISTATE_BUFFER"), ComponentInfo("TriState Buffer", "Wiring")]
+[ScriptType("TRISTATE_BUFFER"), ComponentInfo("TriState Buffer", "Wiring", "core.markdown.tristatebuffer")]
 public class TriStateBuffer : Component<NoData>
 {
     public override string Name => "TSB";

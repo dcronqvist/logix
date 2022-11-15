@@ -19,7 +19,7 @@ public class DemultiplexerData : IComponentDescriptionData
     }
 }
 
-[ScriptType("DEMULTIPLEXER"), ComponentInfo("Demultiplexer", "Plexers")]
+[ScriptType("DEMULTIPLEXER"), ComponentInfo("Demultiplexer", "Plexers", "core.markdown.demultiplexer")]
 public class Demultiplexer : Component<DemultiplexerData>
 {
     public override string Name => "DEMUX";

@@ -31,7 +31,7 @@ public class SplitterData : IComponentDescriptionData
     }
 }
 
-[ScriptType("SPLITTER"), ComponentInfo("Splitter", "Wiring")]
+[ScriptType("SPLITTER"), ComponentInfo("Splitter", "Wiring", "core.markdown.splitter")]
 public class Splitter : Component<SplitterData>
 {
     public override string Name => "SPLT";
@@ -50,11 +50,11 @@ public class Splitter : Component<SplitterData>
         this.ClearIOs();
 
         this._data = data;
-        this.RegisterIO("in", data.BitsToSplit, ComponentSide.LEFT);
+        this.RegisterIO("multi", data.BitsToSplit, ComponentSide.LEFT);
 
         for (int i = 0; i < data.BitsToSplit; i++)
         {
-            this.RegisterIO($"O{i}", 1, ComponentSide.RIGHT, "out");
+            this.RegisterIO($"single_{i}", 1, ComponentSide.RIGHT, "out");
         }
     }
 
@@ -62,7 +62,7 @@ public class Splitter : Component<SplitterData>
     {
         if (this._data.Direction == SplitterDirection.Split)
         {
-            var input = this.GetIOFromIdentifier("in");
+            var input = this.GetIOFromIdentifier("multi");
             var outputs = this.GetIOsWithTag("out");
 
             var values = input.GetValues();
@@ -75,7 +75,7 @@ public class Splitter : Component<SplitterData>
         else
         {
             var inputs = this.GetIOsWithTag("out");
-            var output = this.GetIOFromIdentifier("in");
+            var output = this.GetIOFromIdentifier("multi");
 
             var values = new LogicValue[inputs.Length];
 
@@ -141,7 +141,7 @@ public class Splitter : Component<SplitterData>
         var size = rect.GetSize().ToVector2i(Constants.GRIDSIZE);
         var realSize = size.ToVector2(Constants.GRIDSIZE);
 
-        var inputPos = this.GetPositionForIO(this.GetIOFromIdentifier("in"), out var end).ToVector2(Constants.GRIDSIZE);
+        var inputPos = this.GetPositionForIO(this.GetIOFromIdentifier("multi"), out var end).ToVector2(Constants.GRIDSIZE);
         var halfWay = this.Rotation switch
         {
             0 => end.ToVector2(Constants.GRIDSIZE) + new Vector2(Constants.GRIDSIZE / 2f, 0f),

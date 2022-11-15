@@ -17,7 +17,7 @@ public class DecoderData : IComponentDescriptionData
     }
 }
 
-[ScriptType("DECODER"), ComponentInfo("Decoder", "Plexers")]
+[ScriptType("DECODER"), ComponentInfo("Decoder", "Plexers", "core.markdown.decoder")]
 public class Decoder : Component<DecoderData>
 {
     public override string Name => "DEC";

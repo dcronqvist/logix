@@ -21,7 +21,7 @@ public class ClockData : IComponentDescriptionData
     }
 }
 
-[ScriptType("CLOCK"), ComponentInfo("Clock", "Wiring")]
+[ScriptType("CLOCK"), ComponentInfo("Clock", "Wiring", "core.markdown.clock")]
 public class Clock : Component<ClockData>
 {
     public override string Name => "CLK";

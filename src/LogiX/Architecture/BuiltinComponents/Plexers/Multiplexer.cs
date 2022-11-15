@@ -19,7 +19,7 @@ public class MultiplexerData : IComponentDescriptionData
     }
 }
 
-[ScriptType("MULTIPLEXER"), ComponentInfo("Multiplexer", "Plexers")]
+[ScriptType("MULTIPLEXER"), ComponentInfo("Multiplexer", "Plexers", "core.markdown.multiplexer")]
 public class Multiplexer : Component<MultiplexerData>
 {
     public override string Name => "MUX";
