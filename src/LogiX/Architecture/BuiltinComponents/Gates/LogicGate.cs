@@ -114,13 +114,13 @@ public class ORGateLogic : IGateLogic
 
     public LogicValue GetValueToPush(LogicValue a, LogicValue b)
     {
-        if (a == LogicValue.UNDEFINED || b == LogicValue.UNDEFINED)
-        {
-            return LogicValue.UNDEFINED;
-        }
-        else if (a == LogicValue.HIGH || b == LogicValue.HIGH)
+        if (a == LogicValue.HIGH || b == LogicValue.HIGH)
         {
             return LogicValue.HIGH;
+        }
+        else if (a == LogicValue.UNDEFINED || b == LogicValue.UNDEFINED)
+        {
+            return LogicValue.UNDEFINED;
         }
         else
         {
