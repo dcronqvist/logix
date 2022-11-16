@@ -22,7 +22,7 @@ public class DiskData : IComponentDescriptionData
     }
 }
 
-[ScriptType("DISK"), ComponentInfo("Disk", "Input/Output")]
+[ScriptType("DISK"), ComponentInfo("Disk", "Input/Output", "core.markdown.disk")]
 public class Disk : Component<DiskData>
 {
     public override string Name => "DISK";

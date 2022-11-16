@@ -16,7 +16,7 @@ public class PushButtonData : IComponentDescriptionData
     }
 }
 
-[ScriptType("PUSHBUTTON"), ComponentInfo("Button", "Input/Output")]
+[ScriptType("PUSHBUTTON"), ComponentInfo("Button", "Input/Output", "core.markdown.pushbutton")]
 public class PushButton : Component<PushButtonData>
 {
     public override string Name => "";
