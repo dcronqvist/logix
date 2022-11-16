@@ -21,7 +21,7 @@ public class HexDisplayData : IComponentDescriptionData
     }
 }
 
-[ScriptType("HEXDISPLAY"), ComponentInfo("Hex Display", "Misc.")]
+[ScriptType("HEXDISPLAY"), ComponentInfo("Hex Display", "Misc.", "core.markdown.hexdisplay")]
 public class HexDisplay : Component<HexDisplayData>
 {
     public override string Name => "";

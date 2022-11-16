@@ -21,7 +21,7 @@ public class TextCompData : IComponentDescriptionData
     }
 }
 
-[ScriptType("TEXTCOMP"), ComponentInfo("Text", "Misc.")]
+[ScriptType("TEXTCOMP"), ComponentInfo("Text", "Misc.", "core.markdown.text")]
 public class TextComp : Component<TextCompData>
 {
     public override string Name => "";

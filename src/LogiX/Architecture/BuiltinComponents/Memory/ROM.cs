@@ -20,7 +20,7 @@ public class RomData : IComponentDescriptionData
     }
 }
 
-[ScriptType("ROM"), ComponentInfo("ROM", "Memory")]
+[ScriptType("ROM"), ComponentInfo("ROM", "Memory", "core.markdown.rom")]
 public class ROM : Component<RomData>
 {
     public override string Name => "ROM";

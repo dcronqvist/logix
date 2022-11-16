@@ -12,7 +12,7 @@ public class SRLatchData : IComponentDescriptionData
     }
 }
 
-[ScriptType("SRLATCH"), ComponentInfo("SR Latch", "Memory")]
+[ScriptType("SRLATCH"), ComponentInfo("SR Latch", "Memory", "core.markdown.srlatch")]
 public class SRLatch : Component<SRLatchData>
 {
     public override string Name => "SR Latch";

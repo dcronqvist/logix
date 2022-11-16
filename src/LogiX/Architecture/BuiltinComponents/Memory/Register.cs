@@ -17,7 +17,7 @@ public class RegisterData : IComponentDescriptionData
     }
 }
 
-[ScriptType("REGISTER"), ComponentInfo("Register", "Memory")]
+[ScriptType("REGISTER"), ComponentInfo("Register", "Memory", "core.markdown.register")]
 public class Register : Component<RegisterData>
 {
     public override string Name => $"{this._currentState.Reverse().GetAsHexString()}";

@@ -2,6 +2,7 @@ using System.Numerics;
 using ImGuiNET;
 using LogiX.Graphics;
 using Markdig;
+using Markdig.Extensions.Tables;
 using Markdig.Renderers;
 using Markdig.Syntax;
 using Markdig.Syntax.Inlines;
@@ -19,6 +20,7 @@ public class ImGuiMarkdownRenderer : RendererBase
         this.ObjectRenderers.Add(new EmphasisInlineRenderer());
         this.ObjectRenderers.Add(new ListItemRenderer());
         this.ObjectRenderers.Add(new BlankLineRenderer());
+        this.ObjectRenderers.Add(new TableRenderer());
     }
 
     public override object Render(MarkdownObject markdownObject)
@@ -214,5 +216,45 @@ public class BlankLineRenderer : MarkdownObjectRenderer<ImGuiMarkdownRenderer, B
     protected override void Write(ImGuiMarkdownRenderer renderer, BlankLineBlock obj)
     {
         ImGui.NewLine();
+    }
+}
+
+public class TableRenderer : MarkdownObjectRenderer<ImGuiMarkdownRenderer, Markdig.Extensions.Tables.Table>
+{
+    protected override void Write(ImGuiMarkdownRenderer renderer, Table obj)
+    {
+        if (ImGui.BeginTable(obj.GetHashCode().ToString(), obj.ColumnDefinitions.Count - 1, ImGuiTableFlags.Borders))
+        {
+            foreach (var rowObj in obj)
+            {
+                var row = (TableRow)rowObj;
+
+                foreach (var cell in row)
+                {
+                    var tableCell = (TableCell)cell;
+                    if (row.IsHeader)
+                    {
+                        ImGui.TableSetupColumn(((ParagraphBlock)tableCell.LastChild).Inline.First().ToString());
+                    }
+                    else
+                    {
+                        ImGui.TableNextColumn();
+                        renderer.Render(tableCell);
+                    }
+                }
+
+                if (row.IsHeader)
+                {
+                    Utilities.PushFontBold();
+                    ImGui.TableHeadersRow();
+                    Utilities.PopFontStyle();
+                }
+
+                if (rowObj != obj.Last())
+                    ImGui.TableNextRow();
+            }
+
+            ImGui.EndTable();
+        }
     }
 }

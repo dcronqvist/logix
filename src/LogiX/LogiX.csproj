@@ -9,18 +9,20 @@
     <EnablePreviewFeatures>True</EnablePreviewFeatures>
     <ApplicationIcon>../../assets/core/core/icon.ico</ApplicationIcon>
     <PublishSingleFile>true</PublishSingleFile>
+    <LogiXPlatform>$(OS)</LogiXPlatform>
   </PropertyGroup>
 
-  <PropertyGroup Condition=" '$(OS)' == 'WINDOWS_NT'">
+  <PropertyGroup Condition="$(LogiXPlatform) == 'WINDOWS_NT'">
     <DefineConstants>_WINDOWS</DefineConstants>
   </PropertyGroup>
 
-  <PropertyGroup Condition=" '$(OS)' == 'OSX'">
+  <PropertyGroup Condition="$(LogiXPlatform) == 'OSX'">
     <DefineConstants>_OSX</DefineConstants>
   </PropertyGroup>
 
   <ItemGroup>
-    <LibDlls Include="$(ProjectDir)\libs\win\**\*.*" />
+    <WinLibDlls Include="$(ProjectDir)\libs\win\**\*.*" />
+    <OSXLibDlls Include="$(ProjectDir)\libs\osx\**\*.*" />
   </ItemGroup>
 
   <ItemGroup>
@@ -34,10 +36,14 @@
     <PackageReference Include="ImGui.NET" Version="1.88.0" />
   </ItemGroup>
 
-  <Target Name="CopyLibDlls" AfterTargets="Build">
-    <Message Text="Copying @(LibDlls) to output directory $(OutDir)..." Importance="High" />
+  <Target Name="CopyWinLibDlls" AfterTargets="Build" Condition="$(LogiXPlatform) == 'WINDOWS_NT'">
+    <Message Text="Copying Win Libs @(WinLibDlls) to output directory $(OutputPath)..." Importance="High" />
+    <Copy SourceFiles="@(WinLibDlls)" DestinationFolder="$(OutputPath)" SkipUnchangedFiles="true" />
+  </Target>
 
-    <Copy SourceFiles="@(LibDlls)" DestinationFolder="$(OutputPath)" SkipUnchangedFiles="true" />
+  <Target Name="CopyOSXLibDlls" AfterTargets="Build" Condition="$(LogiXPlatform) == 'OSX'">
+    <Message Text="Copying OSX Libs @(OSXLibDlls) to output directory $(OutputPath)..." Importance="High" />
+    <Copy SourceFiles="@(OSXLibDlls)" DestinationFolder="$(OutputPath)" SkipUnchangedFiles="true" />
   </Target>
 
 </Project>

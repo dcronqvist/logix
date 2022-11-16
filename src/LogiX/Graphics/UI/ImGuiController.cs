@@ -21,10 +21,7 @@ namespace LogiX.Graphics.UI
     {
         private bool _frameBegun;
 
-        private int _vertexArray;
-        private int _vertexBuffer;
         private int _vertexBufferSize;
-        private int _indexBuffer;
         private int _indexBufferSize;
 
         private Texture2D _fontTexture;
