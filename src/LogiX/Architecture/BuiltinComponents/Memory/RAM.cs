@@ -20,7 +20,7 @@ public class RamData : IComponentDescriptionData
     }
 }
 
-[ScriptType("RAM"), ComponentInfo("RAM", "Memory")]
+[ScriptType("RAM"), ComponentInfo("RAM", "Memory", "core.markdown.ram")]
 public class RAM : Component<RamData>
 {
     public override string Name => "RAM";

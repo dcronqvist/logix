@@ -17,7 +17,7 @@ public class CounterData : IComponentDescriptionData
     }
 }
 
-[ScriptType("COUNTER"), ComponentInfo("Counter", "Memory")]
+[ScriptType("COUNTER"), ComponentInfo("Counter", "Memory", "core.markdown.counter")]
 public class Counter : Component<CounterData>
 {
     public override string Name => "CNT";

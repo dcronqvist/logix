@@ -12,7 +12,7 @@ public class DFlipFlopData : IComponentDescriptionData
     }
 }
 
-[ScriptType("DFLIPFLOP"), ComponentInfo("D Flip Flop", "Memory")]
+[ScriptType("DFLIPFLOP"), ComponentInfo("D Flip Flop", "Memory", "core.markdown.dflipflop")]
 public class DFlipFlop : Component<DFlipFlopData>
 {
     public override string Name => "D Latch";

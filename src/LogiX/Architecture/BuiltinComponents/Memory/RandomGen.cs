@@ -21,7 +21,7 @@ public class RandomGenData : IComponentDescriptionData
     }
 }
 
-[ScriptType("RANDOM"), ComponentInfo("Random Generator", "Memory")]
+[ScriptType("RANDOM"), ComponentInfo("Random Generator", "Memory", "core.markdown.rng")]
 public class RandomGen : Component<RandomGenData>
 {
     public override string Name => "RNG";
