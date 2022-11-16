@@ -99,7 +99,7 @@ public class ANDGateLogic : IGateLogic
     }
 }
 
-[ScriptType("AND_GATE"), ComponentInfo("AND Gate", "Gates")]
+[ScriptType("AND_GATE"), ComponentInfo("AND Gate", "Gates", "core.markdown.logicgate")]
 public class ANDGate : LogicGate<GateData>
 {
     public override IGateLogic GetLogic()
@@ -129,7 +129,7 @@ public class ORGateLogic : IGateLogic
     }
 }
 
-[ScriptType("OR_GATE"), ComponentInfo("OR Gate", "Gates")]
+[ScriptType("OR_GATE"), ComponentInfo("OR Gate", "Gates", "core.markdown.logicgate")]
 public class ORGate : LogicGate<GateData>
 {
     public override IGateLogic GetLogic()
@@ -163,7 +163,7 @@ public class XORGateLogic : IGateLogic
     }
 }
 
-[ScriptType("XOR_GATE"), ComponentInfo("XOR Gate", "Gates")]
+[ScriptType("XOR_GATE"), ComponentInfo("XOR Gate", "Gates", "core.markdown.logicgate")]
 public class XORGate : LogicGate<GateData>
 {
     public override IGateLogic GetLogic()
@@ -193,7 +193,7 @@ public class NORGateLogic : IGateLogic
     }
 }
 
-[ScriptType("NOR_GATE"), ComponentInfo("NOR Gate", "Gates")]
+[ScriptType("NOR_GATE"), ComponentInfo("NOR Gate", "Gates", "core.markdown.logicgate")]
 public class NORGate : LogicGate<GateData>
 {
     public override IGateLogic GetLogic()
@@ -223,7 +223,7 @@ public class NANDGateLogic : IGateLogic
     }
 }
 
-[ScriptType("NAND_GATE"), ComponentInfo("NAND Gate", "Gates")]
+[ScriptType("NAND_GATE"), ComponentInfo("NAND Gate", "Gates", "core.markdown.logicgate")]
 public class NANDGate : LogicGate<GateData>
 {
     public override IGateLogic GetLogic()
@@ -257,7 +257,7 @@ public class XNORGateLogic : IGateLogic
     }
 }
 
-[ScriptType("XNOR_GATE"), ComponentInfo("XNOR Gate", "Gates")]
+[ScriptType("XNOR_GATE"), ComponentInfo("XNOR Gate", "Gates", "core.markdown.logicgate")]
 public class XNORGate : LogicGate<GateData>
 {
     public override IGateLogic GetLogic()
@@ -266,7 +266,7 @@ public class XNORGate : LogicGate<GateData>
     }
 }
 
-[ScriptType("NOT_GATE"), ComponentInfo("NOT Gate", "Gates")]
+[ScriptType("NOT_GATE"), ComponentInfo("NOT Gate", "Gates", "core.markdown.logicgate")]
 public class NOTGate : Component<GateData>
 {
     public override string Name => "NOT";

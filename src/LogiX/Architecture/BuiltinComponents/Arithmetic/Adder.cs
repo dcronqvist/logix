@@ -17,7 +17,7 @@ public class AdderData : IComponentDescriptionData
     }
 }
 
-[ScriptType("ADDER"), ComponentInfo("Adder", "Arithmetic")]
+[ScriptType("ADDER"), ComponentInfo("Adder", "Arithmetic", "core.markdown.adder")]
 public class Adder : Component<AdderData>
 {
     public override string Name => "ADD";

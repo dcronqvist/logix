@@ -17,7 +17,7 @@ public class InverterData : IComponentDescriptionData
     }
 }
 
-[ScriptType("INVERTER"), ComponentInfo("Inverter", "Arithmetic")]
+[ScriptType("INVERTER"), ComponentInfo("Inverter", "Arithmetic", "core.markdown.inverter")]
 public class Inverter : Component<InverterData>
 {
     public override string Name => "INV";

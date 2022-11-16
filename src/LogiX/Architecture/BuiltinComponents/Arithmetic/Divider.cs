@@ -17,7 +17,7 @@ public class DividerData : IComponentDescriptionData
     }
 }
 
-[ScriptType("DIVIDER"), ComponentInfo("Divider", "Arithmetic")]
+[ScriptType("DIVIDER"), ComponentInfo("Divider", "Arithmetic", "core.markdown.divider")]
 public class Divider : Component<DividerData>
 {
     public override string Name => "DIV";

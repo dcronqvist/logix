@@ -17,7 +17,7 @@ public class MultiplierData : IComponentDescriptionData
     }
 }
 
-[ScriptType("MULTIPLIER"), ComponentInfo("Multiplier", "Arithmetic")]
+[ScriptType("MULTIPLIER"), ComponentInfo("Multiplier", "Arithmetic", "core.markdown.multiplier")]
 public class Multiplier : Component<MultiplierData>
 {
     public override string Name => "MUL";

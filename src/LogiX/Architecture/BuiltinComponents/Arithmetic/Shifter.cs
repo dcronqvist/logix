@@ -25,7 +25,7 @@ public class ShifterData : IComponentDescriptionData
     }
 }
 
-[ScriptType("SHIFTER"), ComponentInfo("Shifter", "Arithmetic")]
+[ScriptType("SHIFTER"), ComponentInfo("Shifter", "Arithmetic", "core.markdown.shifter")]
 public class Shifter : Component<ShifterData>
 {
     public override string Name => "SHIFT";

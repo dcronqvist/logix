@@ -17,7 +17,7 @@ public class SubtractorData : IComponentDescriptionData
     }
 }
 
-[ScriptType("SUBTRACTOR"), ComponentInfo("Subtractor", "Arithmetic")]
+[ScriptType("SUBTRACTOR"), ComponentInfo("Subtractor", "Arithmetic", "core.markdown.subtractor")]
 public class Subtractor : Component<SubtractorData>
 {
     public override string Name => "SUB";

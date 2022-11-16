@@ -17,7 +17,7 @@ public class NegatorData : IComponentDescriptionData
     }
 }
 
-[ScriptType("NEGATOR"), ComponentInfo("Negator", "Arithmetic")]
+[ScriptType("NEGATOR"), ComponentInfo("Negator", "Arithmetic", "core.markdown.negator")]
 public class Negator : Component<NegatorData>
 {
     public override string Name => "NEG";

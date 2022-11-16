@@ -17,7 +17,7 @@ public class ComparatorData : IComponentDescriptionData
     }
 }
 
-[ScriptType("COMPARATOR"), ComponentInfo("Comparator", "Arithmetic")]
+[ScriptType("COMPARATOR"), ComponentInfo("Comparator", "Arithmetic", "core.markdown.comparator")]
 public class Comparator : Component<ComparatorData>
 {
     public override string Name => "COMP";
