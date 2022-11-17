@@ -34,6 +34,7 @@
     <PackageReference Include="Markdig" Version="0.30.4" />
     <PackageReference Include="StbImageSharp" Version="2.27.11" />
     <PackageReference Include="ImGui.NET" Version="1.88.0" />
+    <PackageReference Include="System.CommandLine" Version="2.0.0-beta4.22272.1" />
   </ItemGroup>
 
   <Target Name="CopyWinLibDlls" AfterTargets="Build" Condition="$(LogiXPlatform) == 'WINDOWS_NT'">
