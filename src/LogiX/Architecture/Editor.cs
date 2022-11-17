@@ -50,6 +50,8 @@ public class Editor : Invoker<Editor>
     public bool SimulationRunning { get; set; } = true;
     // The finite state machine that controls the editor and all the different "tools", moving components, etc.
     public EditorFSM FSM { get; private set; }
+    // If the simulation rendering should render wires
+    public bool RenderWires { get; set; } = true;
 
     // Some variables for popups, like the FileDialog modal and stuff
     public bool RequestedPopupModal { get; set; }
@@ -351,6 +353,12 @@ For now, you can always right click a component in the left component window and
             }));
         }));
 
+        // ALL VIEW ACTIONS
+        this.AddMainMenuItem("View", "Show Wires", new EditorAction((e) => true, (e) => this.RenderWires, (e) =>
+        {
+            this.RenderWires = !this.RenderWires;
+        }));
+
         #endregion
     }
 
@@ -559,6 +567,8 @@ For now, you can always right click a component in the left component window and
         this.ImGuiController.Update(GameTime.DeltaTime);
         var fShader = LogiX.ContentManager.GetContentItem<ShaderProgram>("core.shader_program.fb_default");
         var pShader = LogiX.ContentManager.GetContentItem<ShaderProgram>("core.shader_program.primitive");
+        var tShader = LogiX.ContentManager.GetContentItem<ShaderProgram>("core.shader_program.text");
+        var font = Utilities.GetFont("core.font.default", 8);
 
         if (this.CurrentlyOpenCircuit is not null)
         {
@@ -566,10 +576,10 @@ For now, you can always right click a component in the left component window and
             {
                 Framebuffer.Clear(ColorF.Darken(ColorF.LightGray, 0.9f));
                 this.DrawGrid();
-                this.Sim.LockedAction(s => s.Render(this.Camera));
+                this.Sim.LockedAction(s => s.Render(this.Camera, this.RenderWires));
                 this.FSM.Render(this);
                 PrimitiveRenderer.FinalizeRender(pShader, this.Camera);
-                TextRenderer.FinalizeRender();
+                TextRenderer.FinalizeRender(tShader, this.Camera, font);
             });
 
             this.GUIFramebuffer.Bind(() =>

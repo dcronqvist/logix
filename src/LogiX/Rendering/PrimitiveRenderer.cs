@@ -1,6 +1,7 @@
 using System.Drawing;
 using System.Numerics;
 using LogiX.Graphics;
+using LogiX;
 using static LogiX.OpenGL.GL;
 
 namespace LogiX.Rendering;
@@ -49,21 +50,18 @@ public struct PrimitiveInstance // Just a triangle
 
     public float[] GetColorAsFloatArray()
     {
-        return this.Color.ToFloatArray();
+        return new float[]
+        {
+            Color.R, Color.G, Color.B, Color.A
+        };
     }
 
     public float[] GetInstanceData()
     {
-        float[] vData = GetVerticesAsFloatArray();
-        float[] cData = GetColorAsFloatArray();
-        float[] mData = GetModelMatrixAsFloatArray();
-
-        float[] instanceData = new float[vData.Length + mData.Length + cData.Length];
-
-        vData.CopyTo(instanceData, 0);
-        cData.CopyTo(instanceData, vData.Length);
-        mData.CopyTo(instanceData, vData.Length + cData.Length);
-
+        float[] instanceData = new float[26];
+        GetVerticesAsFloatArray().CopyTo(instanceData, 0);
+        GetColorAsFloatArray().CopyTo(instanceData, 6);
+        GetModelMatrixAsFloatArray().CopyTo(instanceData, 10);
         return instanceData;
     }
 }
@@ -127,17 +125,20 @@ public static class PrimitiveRenderer
         glBindVertexArray(_vao);
         glBindBuffer(GL_ARRAY_BUFFER, _vbo);
 
-        var instanceData = new List<float>();
-        foreach (var instance in _instances)
+        var instanceData = new float[26 * _instances.Count];
+        for (int i = 0; i < _instances.Count; i++)
         {
-            instanceData.AddRange(instance.GetInstanceData());
+            var instance = _instances[i];
+            var data = instance.GetInstanceData();
+            for (int j = 0; j < 26; j++)
+            {
+                instanceData[i * 26 + j] = data[j];
+            }
         }
 
-        var data = instanceData.ToArray();
-
-        fixed (float* ptr = data)
+        fixed (float* ptr = &instanceData[0])
         {
-            glBufferData(GL_ARRAY_BUFFER, data.Length * sizeof(float), (void*)ptr, GL_STREAM_DRAW);
+            glBufferData(GL_ARRAY_BUFFER, instanceData.Length * sizeof(float), (void*)ptr, GL_STREAM_DRAW);
         }
 
         shader.Use(() =>
@@ -145,7 +146,6 @@ public static class PrimitiveRenderer
             shader.SetMatrix4x4("projection", camera.GetProjectionMatrix());
             glDrawArraysInstanced(GL_TRIANGLES, 0, 3, _instances.Count);
         });
-
 
         glBindBuffer(GL_ARRAY_BUFFER, 0);
         glBindVertexArray(0);

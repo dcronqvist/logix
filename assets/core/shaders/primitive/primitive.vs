@@ -12,12 +12,9 @@ out vec4 ourColor;
 void main()
 {
     ourColor = color;
-    
-    if (gl_VertexID == 0) {
-        gl_Position = projection * model * vec4(v1, 0.0, 1.0);
-    } else if (gl_VertexID == 1) {
-        gl_Position = projection * model * vec4(v2, 0.0, 1.0);
-    } else if (gl_VertexID == 2) {
-        gl_Position = projection * model * vec4(v3, 0.0, 1.0);
-    }
+    vec2 arr[3];
+    arr[0] = v1;
+    arr[1] = v2;
+    arr[2] = v3;
+    gl_Position = projection * model * vec4(arr[gl_VertexID], 0.0, 1.0);    
 }

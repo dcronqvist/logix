@@ -483,7 +483,7 @@ public class Simulation
         }
     }
 
-    public void Render(Camera2D cam)
+    public void Render(Camera2D cam, bool renderWires = true)
     {
         // Render selected components
         foreach (Component component in SelectedComponents)
@@ -491,12 +491,14 @@ public class Simulation
             component.RenderSelected(cam);
         }
 
-        // Allow wires to render themselves
-        foreach (Wire wire in Wires)
+        if (renderWires)
         {
-            wire.Render(this, cam);
+            // Allow wires to render themselves
+            foreach (Wire wire in Wires)
+            {
+                wire.Render(this, cam);
+            }
         }
-
         //Allow components to render themselves
         foreach (Component component in Components)
         {

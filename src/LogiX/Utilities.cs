@@ -14,6 +14,11 @@ using Markdig.Syntax;
 
 namespace LogiX;
 
+public interface IHashable
+{
+    public string GetHash();
+}
+
 public static class Utilities
 {
     static Random RNG = new();
@@ -65,6 +70,26 @@ public static class Utilities
                 m.M31, m.M32, m.M33, m.M34,
                 m.M41, m.M42, m.M43, m.M44
         };
+    }
+
+    public static IEnumerable<float> GetMatrix4x4ValuesIEnumerable(Matrix4x4 m)
+    {
+        yield return m.M11;
+        yield return m.M12;
+        yield return m.M13;
+        yield return m.M14;
+        yield return m.M21;
+        yield return m.M22;
+        yield return m.M23;
+        yield return m.M24;
+        yield return m.M31;
+        yield return m.M32;
+        yield return m.M33;
+        yield return m.M34;
+        yield return m.M41;
+        yield return m.M42;
+        yield return m.M43;
+        yield return m.M44;
     }
 
     public static Matrix4x4 CreateModelMatrixFromPosition(Vector2 position, float rotation, Vector2 origin, Vector2 scale)
@@ -461,6 +486,22 @@ public static class Utilities
         using (var md5 = MD5.Create())
         {
             var inputBytes = Encoding.ASCII.GetBytes(input);
+            var hashBytes = md5.ComputeHash(inputBytes);
+
+            var sb = new StringBuilder();
+            for (int i = 0; i < hashBytes.Length; i++)
+            {
+                sb.Append(hashBytes[i].ToString("X2"));
+            }
+            return sb.ToString();
+        }
+    }
+
+    public static string GetHash<THash>(IEnumerable<THash> input) where THash : IHashable
+    {
+        using (var md5 = MD5.Create())
+        {
+            var inputBytes = input.SelectMany(k => Encoding.ASCII.GetBytes(k.GetHash())).ToArray();
             var hashBytes = md5.ComputeHash(inputBytes);
 
             var sb = new StringBuilder();
