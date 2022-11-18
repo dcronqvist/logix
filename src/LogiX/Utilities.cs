@@ -7,10 +7,12 @@ using System.Security.Cryptography;
 using System.Text;
 using ImGuiNET;
 using LogiX.Architecture;
+using LogiX.Content;
 using LogiX.GLFW;
 using LogiX.Graphics;
 using Markdig;
 using Markdig.Syntax;
+using Symphony;
 
 namespace LogiX;
 
@@ -24,6 +26,7 @@ public static class Utilities
     static Random RNG = new();
     static Dictionary<string, ImFontPtr> _imguiFonts = new();
     static Font _currentImGuiFont = null;
+    public static ContentManager<ContentMeta> ContentManager { get; set; }
 
     public static void ClearImGuiFonts()
     {
@@ -798,7 +801,7 @@ public static class Utilities
             ImGui.PopFont();
             var font = ImGui.GetFont();
             var back = _imguiFonts.FirstOrDefault(f => f.Value.NativePtr == font.NativePtr).Key;
-            var realFont = LogiX.ContentManager.GetContentItem<Font>(back);
+            var realFont = ContentManager.GetContentItem<Font>(back);
             _currentImGuiFont = realFont;
         }
     }
@@ -857,7 +860,7 @@ public static class Utilities
     public static Font GetFont(string identifier, int size, bool bold = false, bool italic = false)
     {
         var final = bold && italic ? "bold-italic" : (bold ? "bold" : (italic ? "italic" : "regular"));
-        var font = LogiX.ContentManager.GetContentItem<Font>($"{identifier}-{final}-{size}");
+        var font = ContentManager.GetContentItem<Font>($"{identifier}-{final}-{size}");
         return font;
     }
 
@@ -886,5 +889,10 @@ public static class Utilities
             { Keys.LeftShift, "Shift"},
             { Keys.LeftAlt, "Alt"},
         }.GetValueOrDefault(key, key.ToString());
+    }
+
+    public static string ToBinaryString(this IEnumerable<LogicValue> values)
+    {
+        return string.Join("", values.Select(v => v == LogicValue.HIGH ? "1" : (v == LogicValue.UNDEFINED ? "X" : "0")));
     }
 }

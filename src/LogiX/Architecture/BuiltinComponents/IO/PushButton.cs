@@ -10,9 +10,14 @@ namespace LogiX.Architecture.BuiltinComponents;
 
 public class PushButtonData : IComponentDescriptionData
 {
+    public string Label { get; set; }
+
     public static IComponentDescriptionData GetDefault()
     {
-        return new PushButtonData();
+        return new PushButtonData()
+        {
+            Label = ""
+        };
     }
 }
 
@@ -21,7 +26,7 @@ public class PushButton : Component<PushButtonData>
 {
     public override string Name => "";
     public override bool DisplayIOGroupIdentifiers => true;
-    public override bool ShowPropertyWindow => false;
+    public override bool ShowPropertyWindow => true;
 
     private PushButtonData _data;
 
@@ -39,7 +44,7 @@ public class PushButton : Component<PushButtonData>
         this.TriggerSizeRecalculation();
     }
 
-    private LogicValue _value;
+    internal LogicValue _value;
     public override void PerformLogic()
     {
         var y = this.GetIOFromIdentifier("Y");
@@ -70,7 +75,6 @@ public class PushButton : Component<PushButtonData>
         var rect = this.GetBoundingBox(out var textSize);
         var size = rect.GetSize().ToVector2i(Constants.GRIDSIZE);
         var realSize = size.ToVector2(Constants.GRIDSIZE);
-
 
         var ios = this.IOs;
         for (int i = 0; i < ios.Length; i++)
@@ -117,5 +121,12 @@ public class PushButton : Component<PushButtonData>
     public override void SubmitUISelected(Editor editor, int componentIndex)
     {
         // NOT NEEDED
+        var id = this.GetUniqueIdentifier();
+        var currLabel = this._data.Label;
+        if (ImGui.InputTextWithHint($"Label##{id}", "Label", ref currLabel, 16))
+        {
+            this._data.Label = currLabel;
+            this.Initialize(this._data);
+        }
     }
 }

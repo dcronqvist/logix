@@ -7,7 +7,7 @@ public class NormalLoadingStage : BaseLoadingStage
 {
     public override string StageName => "Normal Loading";
 
-    public NormalLoadingStage(Dictionary<string, IContentItemLoader> loaders, params string[] extensions) : base(loaders, extensions)
+    public NormalLoadingStage(Dictionary<string, IContentItemLoader> loaders, bool doGLInit, params string[] extensions) : base(loaders, doGLInit, extensions)
     {
     }
 

@@ -10,11 +10,13 @@ public abstract class BaseLoadingStage : IContentLoadingStage
 
     protected Dictionary<string, IContentItemLoader> _loaders = new Dictionary<string, IContentItemLoader>();
     private string[] _extensions;
+    private bool doGLInit = false;
 
-    public BaseLoadingStage(Dictionary<string, IContentItemLoader> loaders, params string[] extensionsToAffect)
+    public BaseLoadingStage(Dictionary<string, IContentItemLoader> loaders, bool performGLInit, params string[] extensionsToAffect)
     {
         _extensions = extensionsToAffect;
         _loaders = loaders;
+        doGLInit = performGLInit;
     }
 
     public virtual IEnumerable<ContentEntry> GetAffectedEntries(IEnumerable<ContentEntry> allEntries)
@@ -46,7 +48,7 @@ public abstract class BaseLoadingStage : IContentLoadingStage
         {
             if (result.Success)
             {
-                if (result.Item is GLContentItem glItem)
+                if (result.Item is GLContentItem glItem && doGLInit)
                 {
                     DisplayManager.LockedGLContext(() =>
                     {

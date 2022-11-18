@@ -300,8 +300,6 @@ public abstract class Component
         // Otherwise, calculate the size of the component.
         // In order to trigger a recalculation of the component's size, set _size to Vector2i.Zero.
         var font = Utilities.GetFont("core.font.default", 8); //LogiX.ContentManager.GetContentItem<Font>("core.font.default-regular-8");
-        var pShader = LogiX.ContentManager.GetContentItem<ShaderProgram>("core.shaderprogram.primitive");
-        var tShader = LogiX.ContentManager.GetContentItem<ShaderProgram>("core.shaderprogram.text");
 
         var textScale = 1f;
         var gridSize = Constants.GRIDSIZE;

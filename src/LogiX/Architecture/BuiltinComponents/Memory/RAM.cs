@@ -9,6 +9,7 @@ public class RamData : IComponentDescriptionData
 {
     public ByteAddressableMemory Memory { get; set; }
     public int AddressBits { get; set; }
+    public string Label { get; set; }
 
     public static IComponentDescriptionData GetDefault()
     {
@@ -16,6 +17,7 @@ public class RamData : IComponentDescriptionData
         {
             AddressBits = 8,
             Memory = new ByteAddressableMemory(256, false),
+            Label = ""
         };
     }
 }
@@ -39,6 +41,11 @@ public class RAM : Component<RamData>
         this.ClearIOs();
         this._data = data;
         this._data.Memory = data.Memory;
+
+        if (this._data.Label is null)
+        {
+            this._data.Label = "";
+        }
 
         this.RegisterIO("ADDRESS", data.AddressBits, ComponentSide.LEFT, "address");
         this.RegisterIO("ENABLE", 1, ComponentSide.BOTTOM, "enable");
@@ -120,6 +127,12 @@ public class RAM : Component<RamData>
         var id = this.GetUniqueIdentifier();
         this.memoryEditor.DrawWindow($"Random Access Memory Editor##{id}", this._data.Memory, 1, this.currentlySelectedAddress, this.hasSelectedAddress, () =>
         {
+            var currLabel = this._data.Label;
+            if (ImGui.InputTextWithHint($"Label##{id}", "Label", ref currLabel, 16))
+            {
+                this._data.Label = currLabel;
+            }
+
             var currAddressBits = this._data.AddressBits;
             if (ImGui.InputInt($"Address Bits##{id}", ref currAddressBits, 1, 1))
             {

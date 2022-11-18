@@ -53,6 +53,87 @@ public class Font : GLContentItem<FontData>
     public Font(string identifier, IContentSource source, FontData content) : base(identifier, source, content)
     {
         this.Characters = new Dictionary<char, FontCharacter>();
+        this.InitNoGL();
+    }
+
+    public unsafe void InitNoGL()
+    {
+        this.Characters.Clear();
+
+        // Have to init the freetype2 lib.
+        this.Lib = new FreeTypeLibrary();
+
+        // Create empty pointer for the font.
+        IntPtr aFace;
+        var data = Content.Data;
+        var size = Content.Size;
+
+        // Init the font using FreeType2
+        //FT_New_Face(Lib.Native, TTFFile, 0, out aFace);
+        fixed (byte* ptr = &data[0])
+        {
+            FT_New_Memory_Face(Lib.Native, new IntPtr(ptr), data.Length, 0, out aFace);
+        }
+        // Set font size
+        FT_Set_Pixel_Sizes(aFace, 0, size);
+        // Then create facade for getting all the data.
+        FreeTypeFaceFacade ftff = new FreeTypeFaceFacade(Lib, aFace);
+
+        uint width = 0;
+        uint height = 0;
+
+        // Loop 128 times, first 128 characters for this font
+        for (uint i = 0; i < 256; i++)
+        {
+            // Check if the character exists for this font.
+            FT_Error error = FT_Load_Char(aFace, i, FT_LOAD_RENDER);
+            if (error != FT_Error.FT_Err_Ok)
+            {
+                // TODO: Fix this shit man, should use integrated console when that is done.
+                //Debug.WriteLine("FREETYPE ERROR: FAILED TO LOAD GLYPH FOR INDEX: " + i);
+                continue;
+            }
+
+            width += ftff.GlyphBitmap.width;
+            height = Math.Max(height, ftff.GlyphBitmap.rows);
+        }
+
+        int atlasWidth = (int)width;
+        this.AtlasWidth = atlasWidth;
+        int atlasHeight = (int)height;
+        this.AtlasHeight = atlasHeight;
+
+        uint x = 0;
+        this.MaxY = height;
+
+        for (uint i = 0; i < 256; i++)
+        {
+            // Check if the character exists for this font.
+            FT_Error error = FT_Load_Char(aFace, i, FT_LOAD_RENDER);
+            if (error != FT_Error.FT_Err_Ok)
+            {
+                // TODO: Fix this shit man, should use integrated console when that is done.
+                //Debug.WriteLine("FREETYPE ERROR: FAILED TO LOAD GLYPH FOR INDEX: " + i);
+                continue;
+            }
+
+            FontCharacter character = new FontCharacter()
+            {
+                Size = new Vector2(ftff.GlyphBitmap.width, ftff.GlyphBitmap.rows),
+                Bearing = new Vector2(ftff.GlyphBitmapLeft, ftff.GlyphBitmapTop),
+                Advance = ftff.GlyphMetricHorizontalAdvance,
+                Chara = ((char)i).ToString(),
+                Rectangle = new Rectangle((int)x, 0, (int)ftff.GlyphBitmap.width, (int)ftff.GlyphBitmap.rows)
+            };
+
+            // Add it to the character dictionary
+            Characters.Add((char)i, character);
+
+            x += ftff.GlyphBitmap.width;
+        }
+
+        FT_Done_Face(aFace);
+        FT_Done_FreeType(Lib.Native);
     }
 
     public string GetFontBaseName()

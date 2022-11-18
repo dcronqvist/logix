@@ -6,7 +6,7 @@ namespace LogiX.Content;
 
 public class ShaderProgramLoadingStage : BaseLoadingStage
 {
-    public ShaderProgramLoadingStage(Dictionary<string, IContentItemLoader> loaders, params string[] extensions) : base(loaders, extensions)
+    public ShaderProgramLoadingStage(Dictionary<string, IContentItemLoader> loaders, bool doGLInit, params string[] extensions) : base(loaders, doGLInit, extensions)
     {
     }
 

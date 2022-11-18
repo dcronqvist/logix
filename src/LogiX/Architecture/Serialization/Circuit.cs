@@ -92,9 +92,14 @@ public class Circuit
         }
     }
 
-    public ComponentDescription[] GetAllSwitches()
+    public ComponentDescription[] GetAllPins()
     {
         return this.Components.Where(c => c.ComponentTypeID == "logix_builtin.script_type.PIN" && (c.Data as PinData).IsExternal).ToArray();
+    }
+
+    public ComponentDescription[] GetAllComponentsOfType(string typeID)
+    {
+        return this.Components.Where(c => c.ComponentTypeID == typeID).ToArray();
     }
 
     // UNUSED AS OF NOW

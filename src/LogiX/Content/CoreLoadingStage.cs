@@ -8,7 +8,7 @@ public class CoreLoadingStage : BaseLoadingStage
 {
     public override string StageName => "Core Loading";
 
-    public CoreLoadingStage(Dictionary<string, IContentItemLoader> loaders, params string[] extensions) : base(loaders, extensions)
+    public CoreLoadingStage(Dictionary<string, IContentItemLoader> loaders, bool doGLInit, params string[] extensions) : base(loaders, doGLInit, extensions)
     {
     }
 

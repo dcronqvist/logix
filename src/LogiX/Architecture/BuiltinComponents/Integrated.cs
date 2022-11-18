@@ -80,7 +80,7 @@ public class Integrated : Component<IntegratedData>
         this._switchPositions = new();
         this._circuit = ComponentDescription.GetIntegratedProjectCircuitByID(this._data.CircuitID);
         this._simulation = Simulation.FromCircuit(this._circuit, "logix_builtin.script_type.PIN");
-        var switches = this._circuit.GetAllSwitches();
+        var switches = this._circuit.GetAllPins();
 
         int i = 0;
         foreach (var s in switches)

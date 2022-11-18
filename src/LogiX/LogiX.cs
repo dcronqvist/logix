@@ -44,13 +44,7 @@ public class LogiX : Game
             }
         };
 
-        var basePath = "";
-
-#if DEBUG
-        basePath = "../../assets";
-#else
-        basePath = "assets";
-#endif
+        var basePath = AppDomain.CurrentDomain.BaseDirectory + "/assets";
 
         var coreSource = new DirectoryContentSource(Path.GetFullPath($"{basePath}/core"));
         var validator = new ContentValidator();
@@ -135,6 +129,8 @@ public class LogiX : Game
         {
             Console.WriteLine($"Reloaded {e.Entry.EntryPath} in {e.Stage.StageName}!");
         };
+
+        Utilities.ContentManager = ContentManager;
 
         DisplayManager.OnFramebufferResize += (sender, e) =>
         {

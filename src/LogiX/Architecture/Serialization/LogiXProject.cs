@@ -117,4 +117,14 @@ public class LogiXProject
             return proj;
         }
     }
+
+    public bool HasCircuitWithName(string name)
+    {
+        return this.Circuits.Any(c => c.Name == name);
+    }
+
+    public Circuit GetCircuitWithName(string name)
+    {
+        return this.Circuits.FirstOrDefault(c => c.Name == name);
+    }
 }

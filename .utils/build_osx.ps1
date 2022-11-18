@@ -1,11 +1,18 @@
-Remove-Item -Path build -Recurse -Force
-mkdir -Force build
+Remove-Item -Path build/osx-x64 -Recurse -Force
+mkdir -Force build/osx-x64
 
-dotnet clean src/LogiX
-dotnet publish src/LogiX --self-contained -c Release --os osx -o build/osx -p:LogiXOutputType=WinExe -p:LogiXPlatform=OSX
+dotnet clean src/LogiX -c Release
+dotnet publish src/LogiX --output "build/osx-x64" --runtime osx-x64 --self-contained true --configuration Release -p:LogiXPlatform=OSX -p:LogiXType=GUI
 
-Copy-Item src/LogiX/libs/osx/*.* build/osx
+dotnet clean src/LogiX -c Release
+dotnet publish src/LogiX --output "build/osx-x64-tmp" --runtime osx-x64 --self-contained true --configuration Release -p:LogiXPlatform=OSX -p:LogiXType=GUI
 
-mkdir -Force build/osx/assets
+Copy-Item -Path build/osx-x64-tmp/LogiX -Destination build/osx-x64/logix-cli
+rm -Recurse -Force build/osx-x64-tmp
 
-Copy-Item -Recurse assets/* build/osx/assets
+Copy-Item src/LogiX/libs/osx/*.dll build/osx-x64
+
+mkdir -Force build/osx-x64/assets
+
+Copy-Item -Recurse assets/* build/osx-x64/assets
+

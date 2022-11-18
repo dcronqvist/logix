@@ -19,10 +19,10 @@ public class ContentLoader : IContentLoader<ContentMeta>
 
     public IEnumerable<IContentLoadingStage> GetLoadingStages()
     {
-        yield return new ShaderLoadingStage(_loaders, ".fs", ".vs");
-        yield return new ShaderProgramLoadingStage(_loaders, ".shader");
+        yield return new ShaderLoadingStage(_loaders, true, ".fs", ".vs");
+        yield return new ShaderProgramLoadingStage(_loaders, true, ".shader");
 
-        yield return new CoreLoadingStage(_loaders, ".png", ".font");
-        yield return new NormalLoadingStage(_loaders, ".png", ".dll", ".font", ".md");
+        yield return new CoreLoadingStage(_loaders, true, ".png", ".font");
+        yield return new NormalLoadingStage(_loaders, true, ".png", ".dll", ".font", ".md");
     }
 }

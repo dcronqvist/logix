@@ -1,0 +1,14 @@
+// Prepare RAM, Count to 0x44
+set RAM[0xE]=0x44;
+print "RAM has been set to count to 0x44!";
+
+// Reset circuit and enable clock
+push R, 100; 
+set CLK_MODE=0b1;
+print "Circuit has been reset and clock is enabled!";
+
+// Wait until output is equal to whatever is in RAM at 0xE
+print "Waiting for output to equal 0x44...";
+wait RAM[0xE]==OUTPUT;
+print "Done! OUTPUT=${d:OUTPUT}";
+end;
