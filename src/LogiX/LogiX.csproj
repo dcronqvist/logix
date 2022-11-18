@@ -8,6 +8,7 @@
     <ApplicationIcon>../../assets/core/core/icon.ico</ApplicationIcon>
     <PublishSingleFile>true</PublishSingleFile>
     <LogiXPlatform>$(OS)</LogiXPlatform>
+    <OutputType>Exe</OutputType>
   </PropertyGroup>
 
   <PropertyGroup Condition="$(LogiXType) == 'GUI'">

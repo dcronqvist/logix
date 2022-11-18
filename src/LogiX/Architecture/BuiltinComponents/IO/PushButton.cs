@@ -40,6 +40,11 @@ public class PushButton : Component<PushButtonData>
         this.ClearIOs();
         this._data = data;
 
+        if (this._data.Label is null)
+        {
+            this._data.Label = "";
+        }
+
         this.RegisterIO("Y", 1, ComponentSide.RIGHT);
         this.TriggerSizeRecalculation();
     }
