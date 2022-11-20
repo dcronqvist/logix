@@ -15,6 +15,9 @@ public class ActionSequenceRunner : ActionSequenceBaseVisitor<object>
     public Dictionary<string, Pin> Pins { get; private set; }
     public Dictionary<string, PushButton> PushButtons { get; private set; }
 
+    private Keyboard CurrentKeyboard { get; set; }
+    private TTY CurrentTTY { get; set; }
+
     private bool Terminate { get; set; } = false;
 
     public ActionSequenceRunner(Circuit circuit, string text)
@@ -35,6 +38,26 @@ public class ActionSequenceRunner : ActionSequenceBaseVisitor<object>
         var parser = new ActionSequencing.ActionSequenceParser(tokenStream);
 
         var tree = parser.program();
+
+        Task.Run(() =>
+        {
+            while (true)
+            {
+                var key = Console.ReadKey(true);
+                if (this.CurrentKeyboard is not null)
+                {
+                    if (key.KeyChar == 0x0D)
+                    {
+                        // Instead of carriage return, send line feed
+                        this.CurrentKeyboard.RegisterChar((char)0x0A);
+                    }
+                    else
+                    {
+                        this.CurrentKeyboard.RegisterChar(key.KeyChar);
+                    }
+                }
+            }
+        });
 
         this.Simulation.Tick();
         this.Visit(tree);
@@ -295,5 +318,44 @@ public class ActionSequenceRunner : ActionSequenceBaseVisitor<object>
 
         Console.WriteLine(sb.ToString());
         return base.VisitPrint(context);
+    }
+
+    public override object VisitConnectKeyboard([NotNull] ActionSequenceParser.ConnectKeyboardContext context)
+    {
+        var pin = context.PIN_ID().GetText();
+        var keyboard = this.Simulation.GetComponentsOfType<Keyboard>().Where(k => ((KeyboardData)k.GetDescriptionData()).Label == pin).First();
+
+        this.CurrentKeyboard = keyboard;
+        Console.WriteLine("Connected to keyboard " + pin);
+        return base.VisitConnectKeyboard(context);
+    }
+
+    public override object VisitConnectTTY([NotNull] ActionSequenceParser.ConnectTTYContext context)
+    {
+        var pin = context.PIN_ID().GetText();
+        var tty = this.Simulation.GetComponentsOfType<TTY>().Where(k => ((TTYData)k.GetDescriptionData()).Label == pin).First();
+
+        this.CurrentTTY = tty;
+
+        this.CurrentTTY.OnCharReceived += (sender, c) =>
+        {
+            if (c == '\f')
+            {
+                Console.Clear();
+            }
+            else if (c == '\b')
+            {
+                Console.SetCursorPosition(Math.Max(0, Console.CursorLeft - 1), Console.CursorTop);
+                Console.Write(' ');
+                Console.SetCursorPosition(Math.Max(0, Console.CursorLeft - 1), Console.CursorTop);
+            }
+            else
+            {
+                Console.Write(c);
+            }
+        };
+
+        Console.WriteLine("Connected to TTY " + pin);
+        return base.VisitConnectTTY(context);
     }
 }

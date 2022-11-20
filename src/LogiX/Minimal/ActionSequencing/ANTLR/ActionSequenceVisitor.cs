@@ -87,6 +87,18 @@ public interface IActionSequenceVisitor<Result> : IParseTreeVisitor<Result> {
 	/// <return>The visitor result.</return>
 	Result VisitPush([NotNull] ActionSequenceParser.PushContext context);
 	/// <summary>
+	/// Visit a parse tree produced by <see cref="ActionSequenceParser.connectKeyboard"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitConnectKeyboard([NotNull] ActionSequenceParser.ConnectKeyboardContext context);
+	/// <summary>
+	/// Visit a parse tree produced by <see cref="ActionSequenceParser.connectTTY"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitConnectTTY([NotNull] ActionSequenceParser.ConnectTTYContext context);
+	/// <summary>
 	/// Visit a parse tree produced by <see cref="ActionSequenceParser.exp"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>

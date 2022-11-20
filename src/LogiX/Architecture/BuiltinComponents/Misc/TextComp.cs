@@ -103,7 +103,7 @@ public class TextComp : Component<TextCompData>
         {
             var line = textLines[i];
             var linePos = new Vector2(middle.X - textSize.X / 2, middle.Y - textSize.Y / 2 + i * lineSize);
-            TextRenderer.RenderText(tShader, font, line, linePos, 1f, 0f, ColorF.Black, camera);
+            TextRenderer.RenderText(font, line, linePos, 1f, 0f, ColorF.Black, camera);
         }
         //TextRenderer.RenderText(tShader, font, this.Name, textPos, 1, this.Rotation == 0 || this.Rotation == 2 ? 0f : MathF.PI / 2f, ColorF.Black, camera);
     }

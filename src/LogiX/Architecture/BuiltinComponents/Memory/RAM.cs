@@ -173,6 +173,12 @@ public class RAM : Component<RamData>
                 }, ".bin");
                 editor.OpenPopup(fileDialog);
             }
+            ImGui.SameLine();
+            // Clear button
+            if (ImGui.Button($"Clear##{id}"))
+            {
+                this._data.Memory = new ByteAddressableMemory((int)Math.Pow(2, this._data.AddressBits), false);
+            }
 
             ImGui.PushFont(ImGui.GetIO().FontDefault);
         }, () =>

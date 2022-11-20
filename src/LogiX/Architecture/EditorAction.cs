@@ -28,7 +28,7 @@ public class EditorAction
     {
         if (this.Keys.Length > 0)
         {
-            if (Input.IsKeyComboPressed(this.Keys))
+            if (Input.IsKeyComboPressed(this.Keys) && !ImGui.GetIO().WantCaptureKeyboard && !ImGui.GetIO().WantCaptureMouse)
             {
                 if (this.Condition(editor))
                 {

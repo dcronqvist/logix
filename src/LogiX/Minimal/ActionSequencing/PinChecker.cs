@@ -8,6 +8,8 @@ public class PinChecker : ActionSequenceBaseVisitor<object>
     public List<(string, int)> Pins { get; private set; } = new();
     public List<string> PushButtons { get; private set; } = new();
     public List<string> Rams { get; private set; } = new();
+    public List<string> TTYs { get; private set; } = new();
+    public List<string> Keyboards { get; private set; } = new();
 
     private int ConvertValueStringToInt(string value)
     {
@@ -98,6 +100,22 @@ public class PinChecker : ActionSequenceBaseVisitor<object>
         return base.VisitRamexp(context);
     }
 
+    public override object VisitConnectKeyboard([NotNull] ActionSequenceParser.ConnectKeyboardContext context)
+    {
+        var keyboard = context.PIN_ID().GetText();
+        this.Keyboards.Add(keyboard);
+
+        return base.VisitConnectKeyboard(context);
+    }
+
+    public override object VisitConnectTTY([NotNull] ActionSequenceParser.ConnectTTYContext context)
+    {
+        var tty = context.PIN_ID().GetText();
+        this.TTYs.Add(tty);
+
+        return base.VisitConnectTTY(context);
+    }
+
     public List<(string, int)> GetPins()
     {
         return this.Pins.Distinct().ToList();
@@ -111,5 +129,15 @@ public class PinChecker : ActionSequenceBaseVisitor<object>
     public List<string> GetRams()
     {
         return this.Rams.Distinct().ToList();
+    }
+
+    public List<string> GetTTYs()
+    {
+        return this.TTYs.Distinct().ToList();
+    }
+
+    public List<string> GetKeyboards()
+    {
+        return this.Keyboards.Distinct().ToList();
     }
 }

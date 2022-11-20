@@ -345,6 +345,8 @@ public class Editor : Invoker<Editor>
 This is a work in progress, and documentation will be added later, when stuff stops changing so much.
 
 For now, you can always right click a component in the left component window and click _**Show Help**_ to get help for that specific component.
+
+Under *projects*, you can see your circuits, and right clicking them in the sidebar will allow you to edit them!
                 ");
                 if (ImGui.Button("OK"))
                 {
@@ -579,7 +581,7 @@ For now, you can always right click a component in the left component window and
                 this.Sim.LockedAction(s => s.Render(this.Camera, this.RenderWires));
                 this.FSM.Render(this);
                 PrimitiveRenderer.FinalizeRender(pShader, this.Camera);
-                TextRenderer.FinalizeRender(tShader, this.Camera, font);
+                TextRenderer.FinalizeRender(tShader, this.Camera);
             });
 
             this.GUIFramebuffer.Bind(() =>

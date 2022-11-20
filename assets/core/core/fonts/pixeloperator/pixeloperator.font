@@ -1,0 +1,9 @@
+{
+    "fileRegular": "PixelOperatorMono.ttf",
+	"fileBold": "PixelOperatorMono-Bold.ttf",
+	"fileItalic": "PixelOperatorMono.ttf",
+	"fileBoldItalic": "PixelOperatorMono-Bold.ttf",
+    "sizes": [12, 24, 36, 48],
+    "magFilter": "nearestNeighbour",
+    "minFilter": "nearestNeighbour"
+}

@@ -41,7 +41,7 @@ public class IntegratedError : SimulationError
         var tShader = LogiX.ContentManager.GetContentItem<ShaderProgram>("core.shader_program.text");
         var font = Utilities.GetFont("core.font.default", 8); //LogiX.ContentManager.GetContentItem<Font>("core.font.default-regular-8");
 
-        TextRenderer.RenderText(tShader, font, this.Message, middle, 0.5f, 0f, ColorF.Red, cam);
+        TextRenderer.RenderText(font, this.Message, middle, 0.5f, 0f, ColorF.Red, cam);
     }
 }
 

@@ -11,6 +11,12 @@ public class Program
 {
     public static void Main(string[] args)
     {
+        if (args.Length > 0 && args[0] == "run")
+        {
+            // Remove the first argument
+            args = args.Skip(1).ToArray();
+        }
+
         if (args.Length == 0)
         {
             var game = new LogiX();

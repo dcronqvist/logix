@@ -87,8 +87,6 @@ public static class TextRenderer
 
     private static List<CharacterInstance> _instances = new();
 
-    private static List<(ShaderProgram, Font, string, Vector2, float, float, ColorF, Camera2D, bool)> renderQueue = new();
-
     public static unsafe void InitGL()
     {
         // VBO should contain each character instance
@@ -151,7 +149,7 @@ public static class TextRenderer
     }
 
     // Write a method that takes a string as input and outputs a list of character instances
-    public static void AddCharacterInstances(string text, Font font, Vector2 position, float scale, float rotation, ColorF color)
+    public static void AddCharacterInstances(string text, Font font, Vector2 position, float scale, float rotation, ColorF color, float fixedAdvance = -1f)
     {
         List<CharacterInstance> characterInstances = new();
 
@@ -166,6 +164,8 @@ public static class TextRenderer
             // Get the character's glyph
             FontCharacter glyph = font.Characters[character];
 
+            var advance = fixedAdvance == -1f ? glyph.Advance : fixedAdvance;
+
             // Create a character instance
             CharacterInstance characterInstance = new()
             {
@@ -174,48 +174,57 @@ public static class TextRenderer
                 UVRectangle = glyph.Rectangle,
                 Character = character,
                 Color = color,
-                ModelMatrix = Utilities.CreateModelMatrixFromPosition(pos, rotation, new Vector2(0, 0), new Vector2(scale, scale))
+                ModelMatrix = Utilities.CreateModelMatrixFromPosition(pos.PixelAlign(), rotation, new Vector2(0, 0), new Vector2(scale, scale))
             };
 
             // Add the character instance to the list
             characterInstances.Add(characterInstance);
 
             // Move the position to the next character
-            pos.X += MathF.Cos(rotation) * glyph.Advance * scale;
-            pos.Y += MathF.Sin(rotation) * glyph.Advance * scale;
+            pos.X += MathF.Cos(rotation) * advance * scale;
+            pos.Y += MathF.Sin(rotation) * advance * scale;
         }
 
         // Add the character instances to the list of instances
         _instances.AddRange(characterInstances);
     }
 
-    public static unsafe void FinalizeRender(ShaderProgram shader, Camera2D camera, Font f)
+    private static List<(Font, CharacterInstance[])> GetInstancesForFonts()
+    {
+        return _instances.GroupBy(x => x.Font).Select(x => (x.Key, x.ToArray())).ToList();
+    }
+
+    public static unsafe void FinalizeRender(ShaderProgram shader, Camera2D camera)
     {
         glBindVertexArray(vao);
         glBindBuffer(GL_ARRAY_BUFFER, vbo);
 
-        var instanceData = new List<float>();
-        foreach (var instance in _instances)
+        var fontInstances = GetInstancesForFonts();
+
+        foreach (var (font, instances) in fontInstances)
         {
-            instanceData.AddRange(instance.GetData());
+            var instanceData = new List<float>();
+            foreach (var instance in instances)
+            {
+                instanceData.AddRange(instance.GetData());
+            }
+
+            var data = instanceData.ToArray();
+
+            fixed (float* ptr = data)
+            {
+                glBufferData(GL_ARRAY_BUFFER, data.Length * sizeof(float), (void*)ptr, GL_STREAM_DRAW);
+            }
+
+            shader.Use(() =>
+            {
+                shader.SetMatrix4x4("projection", camera.GetProjectionMatrix());
+                shader.SetInt("text", 0);
+                glActiveTexture(GL_TEXTURE0);
+                glBindTexture(GL_TEXTURE_2D, font.TextureID);
+                glDrawArraysInstanced(GL_TRIANGLES, 0, 3, _instances.Count * 2);
+            });
         }
-
-        var data = instanceData.ToArray();
-
-        fixed (float* ptr = data)
-        {
-            glBufferData(GL_ARRAY_BUFFER, data.Length * sizeof(float), (void*)ptr, GL_STREAM_DRAW);
-        }
-
-        shader.Use(() =>
-        {
-            shader.SetMatrix4x4("projection", camera.GetProjectionMatrix());
-            shader.SetInt("text", 0);
-            glActiveTexture(GL_TEXTURE0);
-            glBindTexture(GL_TEXTURE_2D, f.TextureID);
-            glDrawArraysInstanced(GL_TRIANGLES, 0, 3, _instances.Count * 2);
-        });
-
 
         glBindBuffer(GL_ARRAY_BUFFER, 0);
         glBindVertexArray(0);
@@ -223,10 +232,9 @@ public static class TextRenderer
         _instances.Clear();
     }
 
-    public static unsafe void RenderText(ShaderProgram shader, Font f, string s, Vector2 position, float scale, float rotation, ColorF color, Camera2D cam, bool pixelAlign = true)
+    public static unsafe void RenderText(Font f, string s, Vector2 position, float scale, float rotation, ColorF color, Camera2D cam, bool pixelAlign = true, float fixedAdvance = -1f)
     {
-        //renderQueue.Add((shader, f, s, position, scale, rotation, color, cam, pixelAlign));
-        AddCharacterInstances(s, f, position, scale, rotation, color);
+        AddCharacterInstances(s, f, position, scale, rotation, color, fixedAdvance);
     }
 
     // private static unsafe void RenderTextInternal(ShaderProgram shader, Font f, string s, Vector2 position, float scale, float rotation, ColorF color, Camera2D cam, bool pixelAlign = true)

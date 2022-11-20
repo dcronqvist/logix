@@ -5,7 +5,16 @@ program: actionSequence EOF;
 // Allow newlines
 actionSequence: (action WHITESPACE*)+;
 
-action: (assignment | wait | end | continue | print | push) ';';
+action: (
+		assignment
+		| wait
+		| end
+		| continue
+		| print
+		| push
+		| connectKeyboard
+		| connectTTY
+	) ';';
 
 wait: 'wait' ' ' (boolexp | DECIMAL_LITERAL);
 assignment: 'set' ' ' (pinexp | ramexp) '=' exp;
@@ -14,6 +23,8 @@ continue: 'continue';
 print: 'print' ' ' STRING_LITERAL;
 push:
 	'push' (' ')* PIN_ID ',' (' ')* (boolexp | DECIMAL_LITERAL);
+connectKeyboard: 'connect_keyboard' (' ')* PIN_ID;
+connectTTY: 'connect_tty' (' ')* PIN_ID;
 
 exp: pinexp | ramexp | literalexp;
 literalexp: BINARY_LITERAL | HEX_LITERAL;

@@ -235,7 +235,7 @@ public class Pin : Component<PinData>
                 PrimitiveRenderer.RenderRectangle(bitRect, Vector2.Zero, 0f, bitCol);
             }
 
-            TextRenderer.RenderText(tShader, font, this._data.Label, textPos, 1f, 0f, ColorF.Black, camera);
+            TextRenderer.RenderText(font, this._data.Label, textPos, 1f, 0f, ColorF.Black, camera);
         }
         else
         {
@@ -279,7 +279,7 @@ public class Pin : Component<PinData>
                 PrimitiveRenderer.RenderCircle(bitPos + new Vector2(Constants.GRIDSIZE / 2f), Constants.GRIDSIZE / 2f - 1, 0f, bitCol);
             }
 
-            TextRenderer.RenderText(tShader, font, this._data.Label, textPos, 1f, 0f, ColorF.Black, camera);
+            TextRenderer.RenderText(font, this._data.Label, textPos, 1f, 0f, ColorF.Black, camera);
         }
     }
 }

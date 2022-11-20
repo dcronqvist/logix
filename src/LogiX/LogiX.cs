@@ -21,6 +21,7 @@ public class LogiX : Game
     bool allContentLoaded = false;
     bool coreLoaded = false;
     public Editor Editor { get; private set; }
+    private string _loadingUnderstring = "";
 
     public override void Initialize(string[] args)
     {
@@ -57,17 +58,12 @@ public class LogiX : Game
         ContentManager.StartedLoading += (sender, e) =>
         {
             Console.WriteLine($"Started Loading!");
+            _loadingUnderstring = "Loading assets...";
         };
 
         ContentManager.FinishedLoading += (sender, e) =>
         {
             Console.WriteLine($"Finished Loading!");
-
-            // Log all loaded entries
-            foreach (var entry in ContentManager.GetContentItems())
-            {
-                Console.WriteLine($"Loaded {entry.Identifier}");
-            }
 
 #if DEBUG // Only start the polling if we are in DEBUG mode
             // The following background task will poll for content that is changed and then reloads it
@@ -81,11 +77,15 @@ public class LogiX : Game
             });
 #endif
 
+            _loadingUnderstring = "Initializing scripts...";
             ScriptManager.Initialize(ContentManager);
+            _loadingUnderstring = "Registering components...";
             ComponentDescription.RegisterComponentTypes();
 
+            _loadingUnderstring = "Starting editor...";
             this.Editor = new Editor();
             allContentLoaded = true;
+            _loadingUnderstring = "Finished!";
         };
 
         ContentManager.InvalidContentStructureError += (sender, e) =>
@@ -122,7 +122,6 @@ public class LogiX : Game
         ContentManager.ContentItemStartedLoading += (sender, e) =>
         {
             Console.WriteLine($"Loading {e.ItemPath}...");
-            DisplayManager.SetWindowTitle($"GoodGame - {MathF.Round(e.CurrentStageProgress, 2)} - Loading {e.ItemPath}");
         };
 
         ContentManager.ContentItemReloaded += (sender, e) =>
@@ -173,9 +172,12 @@ public class LogiX : Game
                     var font = Utilities.GetFont("core.font.default", 8);
 
                     var measure = font.MeasureString("Loading...", 2f);
+                    var measureUnder = font.MeasureString(_loadingUnderstring, 2f);
 
-                    TextRenderer.RenderText(shader, font, "Loading...", DisplayManager.GetWindowSizeInPixels() / 2f - measure / 2f, 2f, 0f, ColorF.White, Framebuffer.GetDefaultCamera());
-                    TextRenderer.FinalizeRender(shader, Framebuffer.GetDefaultCamera(), font);
+                    TextRenderer.RenderText(font, "Loading...", DisplayManager.GetWindowSizeInPixels() / 2f - measure / 2f, 2f, 0f, ColorF.White, Framebuffer.GetDefaultCamera());
+                    TextRenderer.RenderText(font, _loadingUnderstring, DisplayManager.GetWindowSizeInPixels() / 2f - measureUnder / 2f + new Vector2(0, 20), 2f, 0f, ColorF.White, Framebuffer.GetDefaultCamera());
+
+                    TextRenderer.FinalizeRender(shader, Framebuffer.GetDefaultCamera());
                     DisplayManager.SwapBuffers(-1);
                 }
             }

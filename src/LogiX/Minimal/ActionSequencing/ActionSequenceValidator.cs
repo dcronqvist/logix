@@ -79,6 +79,28 @@ public class ActionSequenceValidator
                 }
             }
 
+            var foundKeyboards = visitor.GetKeyboards();
+            var keyboardsInCircuit = this.Circuit.GetAllComponentsOfType("logix_builtin.script_type.KEYBOARD").Select(cd => cd.Data as KeyboardData).Select(pd => pd.Label);
+
+            foreach (var foundKeyboard in foundKeyboards)
+            {
+                if (!keyboardsInCircuit.Contains(foundKeyboard))
+                {
+                    ers.Add($"Keyboard {foundKeyboard} not found in circuit.");
+                }
+            }
+
+            var foundTTYs = visitor.GetTTYs();
+            var ttysInCircuit = this.Circuit.GetAllComponentsOfType("logix_builtin.script_type.TTY").Select(cd => cd.Data as TTYData).Select(pd => pd.Label);
+
+            foreach (var foundTTY in foundTTYs)
+            {
+                if (!ttysInCircuit.Contains(foundTTY))
+                {
+                    ers.Add($"TTY {foundTTY} not found in circuit.");
+                }
+            }
+
             var finalChecker = new FinalChecker();
             finalChecker.Visit(tree);
             var hasFinalEndOrContinue = finalChecker.HasFinalEndOrContinue;

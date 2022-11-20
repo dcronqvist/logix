@@ -402,7 +402,7 @@ public abstract class Component
 
         PrimitiveRenderer.RenderRectangle(rect, Vector2.Zero, 0f, ColorF.White);
         //PrimitiveRenderer.RenderRectangle(pShader, textPos.CreateRect(textSize), Vector2.Zero, 0f, ColorF.Red, camera);
-        TextRenderer.RenderText(tShader, font, this.Name, textPos, 1, this.Rotation == 0 || this.Rotation == 2 ? 0f : MathF.PI / 2f, ColorF.Black, camera);
+        TextRenderer.RenderText(font, this.Name, textPos, 1, this.Rotation == 0 || this.Rotation == 2 ? 0f : MathF.PI / 2f, ColorF.Black, camera);
 
         //this.TriggerSizeRecalculation();
     }
