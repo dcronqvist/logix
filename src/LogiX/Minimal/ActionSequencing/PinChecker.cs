@@ -10,6 +10,7 @@ public class PinChecker : ActionSequenceBaseVisitor<object>
     public List<string> Rams { get; private set; } = new();
     public List<string> TTYs { get; private set; } = new();
     public List<string> Keyboards { get; private set; } = new();
+    public List<string> Disks { get; private set; } = new();
 
     private int ConvertValueStringToInt(string value)
     {
@@ -116,6 +117,13 @@ public class PinChecker : ActionSequenceBaseVisitor<object>
         return base.VisitConnectTTY(context);
     }
 
+    public override object VisitMountDisk([NotNull] ActionSequenceParser.MountDiskContext context)
+    {
+        var disk = context.PIN_ID().GetText();
+        this.Disks.Add(disk);
+        return base.VisitMountDisk(context);
+    }
+
     public List<(string, int)> GetPins()
     {
         return this.Pins.Distinct().ToList();
@@ -139,5 +147,10 @@ public class PinChecker : ActionSequenceBaseVisitor<object>
     public List<string> GetKeyboards()
     {
         return this.Keyboards.Distinct().ToList();
+    }
+
+    public List<string> GetDisks()
+    {
+        return this.Disks.Distinct().ToList();
     }
 }

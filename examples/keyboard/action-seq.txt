@@ -1,3 +1,22 @@
+mount_disk DISKI, "disk.bin";
+
+set ADDR=0b00;
+set READ=0b1;
+
+wait 10;
+
+set READ=0b0;
+wait 10;
+
+print "DATAREAD=${x:DATAREAD} att ADDR=0b00";
+
+set ADDR=0b01;
+set READ=0b1;
+
+wait 10;
+
+print "DATAREAD=${x:DATAREAD} att ADDR=0b01";
+
 connect_keyboard MAIN_KBD;
 connect_tty MAIN_TTY;
 

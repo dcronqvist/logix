@@ -83,7 +83,7 @@ public class MinimalLogiX
                 var validator = new ActionSequenceValidator(circuit, text);
                 if (validator.TryValidatePins(out var errors))
                 {
-                    var actionRunner = new ActionSequenceRunner(circuit, text);
+                    var actionRunner = new ActionSequenceRunner(circuit, text, Path.GetDirectoryName(actionSequencePath));
                     actionRunner.Run();
                 }
                 else

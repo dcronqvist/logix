@@ -101,6 +101,17 @@ public class ActionSequenceValidator
                 }
             }
 
+            var foundDisks = visitor.GetDisks();
+            var disksInCircuit = this.Circuit.GetAllComponentsOfType("logix_builtin.script_type.DISK").Select(cd => cd.Data as DiskData).Select(pd => pd.Label);
+
+            foreach (var foundDisk in foundDisks)
+            {
+                if (!disksInCircuit.Contains(foundDisk))
+                {
+                    ers.Add($"Disk {foundDisk} not found in circuit.");
+                }
+            }
+
             var finalChecker = new FinalChecker();
             finalChecker.Visit(tree);
             var hasFinalEndOrContinue = finalChecker.HasFinalEndOrContinue;

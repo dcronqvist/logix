@@ -10,6 +10,7 @@ public class ActionSequenceRunner : ActionSequenceBaseVisitor<object>
 {
     public string Text { get; private set; }
     public Circuit Circuit { get; private set; }
+    public string PathToActionSequenceFile { get; private set; }
 
     public Simulation Simulation { get; private set; }
     public Dictionary<string, Pin> Pins { get; private set; }
@@ -20,10 +21,11 @@ public class ActionSequenceRunner : ActionSequenceBaseVisitor<object>
 
     private bool Terminate { get; set; } = false;
 
-    public ActionSequenceRunner(Circuit circuit, string text)
+    public ActionSequenceRunner(Circuit circuit, string text, string pathToActionSequenceFile)
     {
         this.Text = text;
         this.Circuit = circuit;
+        this.PathToActionSequenceFile = pathToActionSequenceFile;
     }
 
     public void Run()
@@ -357,5 +359,20 @@ public class ActionSequenceRunner : ActionSequenceBaseVisitor<object>
 
         Console.WriteLine("Connected to TTY " + pin);
         return base.VisitConnectTTY(context);
+    }
+
+    public override object VisitMountDisk([NotNull] ActionSequenceParser.MountDiskContext context)
+    {
+        var pin = context.PIN_ID().GetText();
+        var disk = this.Simulation.GetComponentsOfType<Disk>().Where(k => ((DiskData)k.GetDescriptionData()).Label == pin).First();
+        var filePath = context.STRING_LITERAL().GetText().Substring(1, context.STRING_LITERAL().GetText().Length - 2);
+
+        var path = Path.Combine(this.PathToActionSequenceFile, filePath);
+
+        if (!disk.TryMountFile(path))
+        {
+            throw new Exception("Could not mount disk");
+        }
+        return base.VisitMountDisk(context);
     }
 }

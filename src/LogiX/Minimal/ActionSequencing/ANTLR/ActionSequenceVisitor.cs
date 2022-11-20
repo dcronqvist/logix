@@ -99,6 +99,12 @@ public interface IActionSequenceVisitor<Result> : IParseTreeVisitor<Result> {
 	/// <return>The visitor result.</return>
 	Result VisitConnectTTY([NotNull] ActionSequenceParser.ConnectTTYContext context);
 	/// <summary>
+	/// Visit a parse tree produced by <see cref="ActionSequenceParser.mountDisk"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitMountDisk([NotNull] ActionSequenceParser.MountDiskContext context);
+	/// <summary>
 	/// Visit a parse tree produced by <see cref="ActionSequenceParser.exp"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>

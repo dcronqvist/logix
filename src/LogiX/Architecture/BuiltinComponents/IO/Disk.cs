@@ -7,6 +7,7 @@ namespace LogiX.Architecture.BuiltinComponents;
 
 public class DiskData : IComponentDescriptionData
 {
+    public string Label { get; set; }
     public string FilePath { get; set; }
     public int BlockAddressBits { get; set; } // The addresses of the blocks
     public int BlockSize { get; set; } // How big a single block is in bytes
@@ -17,7 +18,8 @@ public class DiskData : IComponentDescriptionData
         {
             BlockAddressBits = 8,
             BlockSize = 1,
-            FilePath = null
+            FilePath = null,
+            Label = "",
         };
     }
 }
@@ -51,7 +53,7 @@ public class Disk : Component<DiskData>
         this.TriggerSizeRecalculation();
     }
 
-    private Mutex _mutex = new Mutex();
+    private SemaphoreSlim _mutex = new SemaphoreSlim(1, 1);
     private bool _busy = false;
     private byte[] _outputBuffer = new byte[0];
 
@@ -109,29 +111,52 @@ public class Disk : Component<DiskData>
 
     private async Task WriteAsync(byte[] data, uint address)
     {
-        _mutex.WaitOne();
+        await _mutex.WaitAsync();
         _busy = true;
-        using (FileStream sw = File.Open(this._data.FilePath, FileMode.Open, FileAccess.Write, FileShare.Read))
+        using (FileStream sw = File.Open(this._data.FilePath, FileMode.Open, FileAccess.Write))
         {
             sw.Seek(address, SeekOrigin.Begin);
             await sw.WriteAsync(data, 0, data.Length);
         }
         _busy = false;
-        _mutex.ReleaseMutex();
+        _mutex.Release();
     }
 
     private async Task ReadAsync(uint address)
     {
-        _mutex.WaitOne();
+        await _mutex.WaitAsync();
         _busy = true;
-        using (FileStream sr = File.Open(this._data.FilePath, FileMode.Open, FileAccess.Read, FileShare.Read))
+        using (FileStream sr = File.Open(this._data.FilePath, FileMode.Open, FileAccess.Read))
         {
             sr.Seek(address, SeekOrigin.Begin);
             _outputBuffer = new byte[this._data.BlockSize];
             await sr.ReadAsync(_outputBuffer, 0, this._data.BlockSize);
         }
         _busy = false;
-        _mutex.ReleaseMutex();
+        _mutex.Release();
+    }
+
+    internal bool TryMountFile(string filePath)
+    {
+        if (!File.Exists(filePath))
+        {
+            var file = File.Create(filePath);
+            file.Write(new byte[(1 << this._data.BlockAddressBits) * this._data.BlockSize]);
+            file.Close();
+
+            this._data.FilePath = filePath;
+            return true;
+        }
+        else
+        {
+            if (!this.AssertFileHasCorrectSize(filePath))
+            {
+                return false;
+            }
+
+            this._data.FilePath = filePath;
+            return true;
+        }
     }
 
     private bool AssertFileHasCorrectSize(string path)
@@ -145,21 +170,18 @@ public class Disk : Component<DiskData>
     public override void SubmitUISelected(Editor editor, int componentIndex)
     {
         var id = this.GetUniqueIdentifier();
+        var currLabel = this._data.Label;
+        if (ImGui.InputTextWithHint($"Label##{id}", "Label", ref currLabel, 32))
+        {
+            this._data.Label = currLabel;
+            this.Initialize(this._data);
+        }
+
         if (ImGui.Button($"Mount New File##{id}"))
         {
             var dialog = new FileDialog(".", FileDialogType.SaveFile, (path) =>
             {
-                this._data.FilePath = path;
-
-                // Create the file if it doesn't exist
-                if (!File.Exists(path))
-                {
-                    var file = File.Create(path);
-                    file.Write(new byte[(1 << this._data.BlockAddressBits) * this._data.BlockSize]);
-                    file.Close();
-                }
-
-                this.Initialize(this._data);
+                this.TryMountFile(path);
             });
 
             editor.OpenPopup(dialog);
@@ -169,15 +191,7 @@ public class Disk : Component<DiskData>
         {
             var dialog = new FileDialog(".", FileDialogType.SelectFile, (path) =>
             {
-                this._data.FilePath = path;
-
-                // Create the file if it doesn't exist
-                if (!AssertFileHasCorrectSize(path))
-                {
-                    throw new Exception("File size does not match the disk size");
-                }
-
-                this.Initialize(this._data);
+                this.TryMountFile(path);
             });
 
             editor.OpenPopup(dialog);
