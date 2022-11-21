@@ -4,62 +4,58 @@ using LogiX.Content.Scripting;
 
 namespace LogiX.Architecture.BuiltinComponents;
 
-public class BufferData : IComponentDescriptionData
+public class NoData : IComponentDescriptionData
 {
     public int DataBits { get; set; }
-    public int BufferSize { get; set; }
 
     public static IComponentDescriptionData GetDefault()
     {
-        return new BufferData()
+        return new NoData()
         {
-            DataBits = 1,
-            BufferSize = 1
+            DataBits = 1
         };
     }
 }
 
-[ScriptType("BUFFER"), ComponentInfo("Buffer", "Wiring", "core.markdown.tristatebuffer")]
-public class Buffer : Component<BufferData>
+[ScriptType("TRISTATE_BUFFER"), ComponentInfo("TriState Buffer", "Common", "core.markdown.tristatebuffer")]
+public class TriStateBuffer : Component<NoData>
 {
-    public override string Name => "BUF";
+    public override string Name => "TSB";
     public override bool DisplayIOGroupIdentifiers => true;
     public override bool ShowPropertyWindow => true;
 
-    private BufferData _data;
-    private Queue<LogicValue[]> _buffer;
+    private NoData _data;
 
     public override IComponentDescriptionData GetDescriptionData()
     {
         return this._data;
     }
 
-    public override void Initialize(BufferData data)
+    public override void Initialize(NoData data)
     {
         this.ClearIOs();
         this._data = data;
 
         this.RegisterIO("in", data.DataBits, ComponentSide.LEFT);
         this.RegisterIO("out", data.DataBits, ComponentSide.RIGHT);
-
-        this._buffer = new();
+        this.RegisterIO("enabled", 1, ComponentSide.TOP);
     }
 
     public override void PerformLogic()
     {
+        var enabled = this.GetIOFromIdentifier("enabled").GetValues().First() == LogicValue.HIGH;
         var input = this.GetIOFromIdentifier("in").GetValues();
-        var output = this.GetIOFromIdentifier("out");
 
-        this._buffer.Enqueue(input);
-
-        if (this._buffer.Count == this._data.BufferSize)
+        if (enabled)
         {
-            output.Push(this._buffer.Dequeue());
+            this.GetIOFromIdentifier("out").Push(input);
         }
         else
         {
-            output.Push(Enumerable.Repeat(LogicValue.UNDEFINED, this._data.DataBits).ToArray());
+            this.GetIOFromIdentifier("out").Push(Enumerable.Repeat(LogicValue.UNDEFINED, this._data.DataBits).ToArray());
         }
+
+        this.TriggerSizeRecalculation();
     }
 
     public override void SubmitUISelected(Editor editor, int componentIndex)
@@ -69,13 +65,6 @@ public class Buffer : Component<BufferData>
         if (ImGui.InputInt($"Data Bits##{id}", ref databits, 1, 1))
         {
             this._data.DataBits = databits;
-            this.Initialize(this._data);
-        }
-
-        var buffersize = this._data.BufferSize;
-        if (ImGui.InputInt($"Buffer Size##{id}", ref buffersize, 1, 1))
-        {
-            this._data.BufferSize = buffersize;
             this.Initialize(this._data);
         }
     }

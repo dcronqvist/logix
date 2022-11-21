@@ -11,8 +11,12 @@ namespace LogiX;
 
 public class ImGuiMarkdownRenderer : RendererBase
 {
-    public ImGuiMarkdownRenderer()
+    public Action<string> OnLinkClicked;
+
+    public ImGuiMarkdownRenderer(Action<string> onLinkClicked)
     {
+        this.OnLinkClicked = onLinkClicked;
+
         this.ObjectRenderers.Add(new HeadingRenderer());
         this.ObjectRenderers.Add(new ParagraphRenderer());
         this.ObjectRenderers.Add(new LinkRenderer());
@@ -160,13 +164,9 @@ public class LinkRenderer : MarkdownObjectRenderer<ImGuiMarkdownRenderer, LinkIn
         renderer.Render(obj.FirstChild);
         if (ImGui.IsItemClicked())
         {
-            Utilities.OpenURL(obj.Url);
+            renderer.OnLinkClicked?.Invoke(obj.Url);
         }
         ImGui.PopStyleColor();
-        if (ImGui.IsItemHovered())
-        {
-            Utilities.MouseToolTip(obj.Url);
-        }
         Underline(color.ToVector4());
         ImGui.SameLine(0, 0);
     }

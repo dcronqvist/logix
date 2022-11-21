@@ -11,6 +11,7 @@ public class EditorFSM : FSM<Editor, int>
         this.AddNewState(new StateDraggingWire());
         this.AddNewState(new StateMovingSelection());
         this.AddNewState(new StateRectangleSelecting());
+        this.AddNewState(new StateAddingNewComponent());
 
         this.SetState<StateIdle>(null, 0);
     }

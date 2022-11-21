@@ -26,6 +26,7 @@ public class Editor : Invoker<Editor>
     public ImGuiController ImGuiController { get; private set; }
     public Framebuffer GUIFramebuffer { get; private set; }
     public Framebuffer WorkspaceFramebuffer { get; private set; }
+    public Framebuffer NewComponentFramebuffer { get; private set; }
 
     // A few temporary variables for creating a new circuit
     public bool WritingNewCircuitName { get; set; }
@@ -65,6 +66,9 @@ public class Editor : Invoker<Editor>
     public Action RequestedPopupContextSubmit { get; set; }
     public Vector2 MouseStartPosition { get; set; }
 
+    // Some variables for the AddNewComponent coroutine
+    public ComponentDescription NewComponent { get; set; }
+
     // All editor actions that should be visible in the main menu bar, and have shortcuts etc.
     public List<(string, List<(string, EditorAction)>)> EditorActions { get; private set; }
 
@@ -74,6 +78,7 @@ public class Editor : Invoker<Editor>
         // Define the GUI framebuffer and the workspace framebuffer
         this.GUIFramebuffer = new(true);
         this.WorkspaceFramebuffer = new(true);
+        this.NewComponentFramebuffer = new(true);
 
         // Upon creating this editor, make sure that we have acquired the OpenGL context
         DisplayManager.LockedGLContext(() =>
@@ -347,7 +352,7 @@ This is a work in progress, and documentation will be added later, when stuff st
 For now, you can always right click a component in the left component window and click _**Show Help**_ to get help for that specific component.
 
 Under *projects*, you can see your circuits, and right clicking them in the sidebar will allow you to edit them!
-                ");
+                ", (link) => { });
                 if (ImGui.Button("OK"))
                 {
                     ImGui.CloseCurrentPopup();
@@ -443,6 +448,10 @@ Under *projects*, you can see your circuits, and right clicking them in the side
         {
             this.OpenCircuit(project.LastOpenedCircuit);
         }
+        else
+        {
+            this.OpenCircuit(project.Circuits.First().ID);
+        }
     }
 
     /// <summary>
@@ -500,11 +509,10 @@ Under *projects*, you can see your circuits, and right clicking them in the side
 
     #region CURRENTLY OPEN CIRCUIT METHODS
 
-    public void AddNewComponent(ComponentDescription comp, Vector2i position)
+    public void AddNewComponent(ComponentDescription desc)
     {
-        var command = new CAddComponent(comp.CreateComponent(), position);
-        this.Execute(command, this);
-        this.FSM.SetState<StateMovingSelection>(this, 0);
+        this.NewComponent = desc;
+        this.FSM.SetState<StateAddingNewComponent>(this, 0);
     }
 
     public void Update()
@@ -579,9 +587,25 @@ Under *projects*, you can see your circuits, and right clicking them in the side
                 Framebuffer.Clear(ColorF.Darken(ColorF.LightGray, 0.9f));
                 this.DrawGrid();
                 this.Sim.LockedAction(s => s.Render(this.Camera, this.RenderWires));
-                this.FSM.Render(this);
+
+                if (!this.FSM.CurrentState.RenderAboveGUI())
+                {
+                    this.FSM.Render(this);
+                }
+
                 PrimitiveRenderer.FinalizeRender(pShader, this.Camera);
                 TextRenderer.FinalizeRender(tShader, this.Camera);
+            });
+
+            this.NewComponentFramebuffer.Bind(() =>
+            {
+                Framebuffer.Clear(ColorF.Transparent);
+                if (this.FSM.CurrentState.RenderAboveGUI())
+                {
+                    this.FSM.Render(this);
+                    PrimitiveRenderer.FinalizeRender(pShader, this.Camera);
+                    TextRenderer.FinalizeRender(tShader, this.Camera);
+                }
             });
 
             this.GUIFramebuffer.Bind(() =>
@@ -614,6 +638,7 @@ Under *projects*, you can see your circuits, and right clicking them in the side
             glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
             Framebuffer.RenderFrameBufferToScreen(fShader, this.WorkspaceFramebuffer);
             Framebuffer.RenderFrameBufferToScreen(fShader, this.GUIFramebuffer);
+            Framebuffer.RenderFrameBufferToScreen(fShader, this.NewComponentFramebuffer);
         }
         else
         {
@@ -649,6 +674,12 @@ Under *projects*, you can see your circuits, and right clicking them in the side
     #endregion
 
     #region GUI METHODS
+
+    private bool _mouseOverComponentsWindow = false;
+    public bool IsMouseOverComponentWindow()
+    {
+        return _mouseOverComponentsWindow;
+    }
 
     private List<(string, EditorAction)> GetEditorActionCategory(string category)
     {
@@ -687,7 +718,10 @@ Under *projects*, you can see your circuits, and right clicking them in the side
         if (ImGui.Begin("About LogiX", ref open))
         {
             var about = LogiX.ContentManager.GetContentItem<MarkdownFile>("core.markdown.about");
-            Utilities.RenderMarkdown(about.Text);
+            Utilities.RenderMarkdown(about.Text, (url) =>
+            {
+                Utilities.OpenURL(url);
+            });
         }
 
         if (!open)
@@ -717,6 +751,7 @@ Under *projects*, you can see your circuits, and right clicking them in the side
 
         ImGui.Text($"TPS: {this.CurrentTicksPerSecond.GetAsHertzString()}");
         ImGui.Text($"State: {this.FSM.CurrentState.GetType().Name}");
+        ImGui.Text($"Hovered: {this.IsMouseOverComponentWindow()}");
 
         if (this.CurrentMessage is not null && this.CurrentMessage != "")
         {
@@ -797,7 +832,7 @@ Under *projects*, you can see your circuits, and right clicking them in the side
                     if (ImGui.IsItemClicked() && circuit.ID != CurrentlyOpenCircuit.ID)
                     {
                         // Cannot put a circuit inside itself
-                        this.AddNewComponent(Integrated.CreateDescriptionFromCircuit(circuit.Name, circuit), Input.GetMousePosition(this.Camera).ToVector2i(Constants.GRIDSIZE));
+                        this.AddNewComponent(Integrated.CreateDescriptionFromCircuit(circuit.Name, circuit));
                     }
                     if (ImGui.BeginPopupContextItem())
                     {
@@ -830,13 +865,28 @@ Under *projects*, you can see your circuits, and right clicking them in the side
                             {
                                 ImGui.Text($"Rename circuit '{circuit.Name}' to:");
                                 var circName = this.NewCircuitName;
-                                ImGui.SetKeyboardFocusHere();
+
+                                if (!ImGui.IsAnyItemHovered())
+                                {
+                                    ImGui.SetKeyboardFocusHere();
+                                }
+
                                 ImGui.InputText("##RenameCircuit", ref circName, 16);
                                 this.NewCircuitName = circName;
+
+                                if (this.NewCircuitName.Length == 0)
+                                {
+                                    ImGui.BeginDisabled();
+                                }
+
                                 if (ImGui.Button("Rename") || Input.IsKeyPressed(Keys.Enter))
                                 {
                                     circuit.Name = circName;
                                     ImGui.CloseCurrentPopup();
+                                }
+                                if (this.NewCircuitName.Length == 0)
+                                {
+                                    ImGui.EndDisabled();
                                 }
                                 ImGui.SameLine();
                                 if (ImGui.Button("Cancel"))
@@ -884,7 +934,7 @@ Under *projects*, you can see your circuits, and right clicking them in the side
 
                         if (ImGui.IsItemClicked())
                         {
-                            this.AddNewComponent(ComponentDescription.CreateDefaultComponentDescription(c), Input.GetMousePosition(this.Camera).ToVector2i(Constants.GRIDSIZE));
+                            this.AddNewComponent(ComponentDescription.CreateDefaultComponentDescription(c));
                         }
 
                         if (ImGui.BeginPopupContextItem())
@@ -907,6 +957,7 @@ Under *projects*, you can see your circuits, and right clicking them in the side
                 }
             }
         }
+        this._mouseOverComponentsWindow = ImGui.IsWindowHovered();
         ImGui.End();
     }
 
@@ -986,7 +1037,18 @@ Under *projects*, you can see your circuits, and right clicking them in the side
             if (ImGui.Begin("Component Documentation", ref open, ImGuiWindowFlags.None))
             {
                 var docAsset = LogiX.ContentManager.GetContentItem<MarkdownFile>(this.CurrentlyOpenCircuitInfoDocumentation.DocumentationAsset);
-                Utilities.RenderMarkdown(docAsset.Text);
+                Utilities.RenderMarkdown(docAsset.Text, (url) =>
+                {
+                    if (url.StartsWith("http"))
+                    {
+                        Utilities.OpenURL(url);
+                    }
+                    else if (url.StartsWith("component://"))
+                    {
+                        var component = ComponentDescription.GetComponentInfo(url.Substring("component://".Length));
+                        this.CurrentlyOpenCircuitInfoDocumentation = component;
+                    }
+                });
             }
 
             if (!open)
@@ -1012,11 +1074,11 @@ Under *projects*, you can see your circuits, and right clicking them in the side
         // Show the properties window for the selected component
         this.SubmitSingleSelectedPropertyWindow();
 
-        // Show the currently open popup modal
-        this.SubmitPopupModals();
-
         // Show the currently open popup context
         this.SubmitContextMenu();
+
+        // Show the currently open popup modal
+        this.SubmitPopupModals();
     }
 
     #endregion

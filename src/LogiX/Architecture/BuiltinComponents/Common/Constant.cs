@@ -19,7 +19,7 @@ public class ConstantData : IComponentDescriptionData
     }
 }
 
-[ScriptType("CONSTANT"), ComponentInfo("Constant", "Wiring", "core.markdown.constant")]
+[ScriptType("CONSTANT"), ComponentInfo("Constant", "Common", "core.markdown.constant")]
 public class Constant : Component<ConstantData>
 {
     public override string Name => this._data.Value.ToString($"X{(int)Math.Ceiling(this._data.DataBits / 4f)}");

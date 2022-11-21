@@ -806,10 +806,10 @@ public static class Utilities
         }
     }
 
-    public static void RenderMarkdown(string markdown)
+    public static void RenderMarkdown(string markdown, Action<string> onLinkClicked)
     {
         MarkdownDocument md = Markdown.Parse(markdown, new MarkdownPipelineBuilder().UseAdvancedExtensions().Build());
-        ImGuiMarkdownRenderer igmr = new ImGuiMarkdownRenderer();
+        ImGuiMarkdownRenderer igmr = new ImGuiMarkdownRenderer(onLinkClicked);
 
         WithImGuiFont(GetFont("core.font.opensans", 16, false, false), () =>
         {
@@ -817,10 +817,10 @@ public static class Utilities
         });
     }
 
-    public static void RenderMarkdown(string markdown, Font font)
+    public static void RenderMarkdown(string markdown, Font font, Action<string> onLinkClicked)
     {
         MarkdownDocument md = Markdown.Parse(markdown);
-        ImGuiMarkdownRenderer igmr = new ImGuiMarkdownRenderer();
+        ImGuiMarkdownRenderer igmr = new ImGuiMarkdownRenderer(onLinkClicked);
 
         WithImGuiFont(font, () =>
         {

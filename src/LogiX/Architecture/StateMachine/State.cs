@@ -15,6 +15,7 @@ public abstract class State<TUpdate, TOnEnter>
     public virtual void Render(TUpdate arg) { }
     public virtual void SubmitUI(TUpdate arg) { }
     public virtual void OnEnter(TUpdate updateArg, TOnEnter arg) { }
+    public virtual bool RenderAboveGUI() => false;
 
     public void GoToState<TState>(TOnEnter arg) where TState : State<TUpdate, TOnEnter>
     {

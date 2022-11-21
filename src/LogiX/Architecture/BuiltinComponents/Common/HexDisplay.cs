@@ -21,7 +21,7 @@ public class HexDisplayData : IComponentDescriptionData
     }
 }
 
-[ScriptType("HEXDISPLAY"), ComponentInfo("Hex Display", "Misc.", "core.markdown.hexdisplay")]
+[ScriptType("HEXDISPLAY"), ComponentInfo("Hex Display", "Common", "core.markdown.hexdisplay")]
 public class HexDisplay : Component<HexDisplayData>
 {
     public override string Name => "";
@@ -73,6 +73,8 @@ public class HexDisplay : Component<HexDisplayData>
             { 0xEu, Utilities.Arrayify(top, bottom, middle, leftBottom, leftTop) },
             { 0xFu, Utilities.Arrayify(top, middle, leftBottom, leftTop) },
         };
+
+        this._values = Enumerable.Repeat(LogicValue.UNDEFINED, this._data.DataBits).ToArray();
     }
 
     public override void PerformLogic()

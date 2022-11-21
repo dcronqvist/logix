@@ -31,7 +31,7 @@ public class SplitterData : IComponentDescriptionData
     }
 }
 
-[ScriptType("SPLITTER"), ComponentInfo("Splitter", "Wiring", "core.markdown.splitter")]
+[ScriptType("SPLITTER"), ComponentInfo("Splitter", "Common", "core.markdown.splitter")]
 public class Splitter : Component<SplitterData>
 {
     public override string Name => "SPLT";
