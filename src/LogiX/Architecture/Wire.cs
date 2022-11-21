@@ -249,7 +249,10 @@ public class Wire
             return;
         }
 
-        var newEdge = (edgeA.Item1, edgeB.Item2);
+        var allPoints = new Vector2i[] { edgeA.Item1, edgeA.Item2, edgeB.Item1, edgeB.Item2 };
+        var distinct = allPoints.Distinct().Except(allPoints.Where(p => p == position)).ToArray();
+
+        var newEdge = (distinct.First(), distinct.Last());
         this.Segments.Remove(edgeA);
         this.Segments.Remove(edgeB);
         this.Segments.Add(newEdge);

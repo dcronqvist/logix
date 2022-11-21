@@ -273,20 +273,14 @@ public class Editor : Invoker<Editor>
 
         this.AddMainMenuItem("Edit", "Rotate Clockwise", new EditorAction((e) => this.Sim.LockedAction(s => s.SelectedComponents).Count > 0, (e) => false, (e) =>
         {
-            var selected = this.Sim.LockedAction(s => s.SelectedComponents);
-            foreach (var s in selected)
-            {
-                s.RotateClockwise();
-            }
+            var commands = this.Sim.LockedAction(s => s.SelectedComponents.Select(c => new CRotateComponent(c, 1)));
+            this.Execute(new CMulti(commands.ToArray()), this);
         }, Keys.LeftControl, Keys.Right));
 
         this.AddMainMenuItem("Edit", "Rotate Counter Clockwise", new EditorAction((e) => this.Sim.LockedAction(s => s.SelectedComponents).Count > 0, (e) => false, (e) =>
         {
-            var selected = this.Sim.LockedAction(s => s.SelectedComponents);
-            foreach (var s in selected)
-            {
-                s.RotateCounterClockwise();
-            }
+            var commands = this.Sim.LockedAction(s => s.SelectedComponents.Select(c => new CRotateComponent(c, -1)));
+            this.Execute(new CMulti(commands.ToArray()), this);
         }, Keys.LeftControl, Keys.Left));
 
         // ALL CIRCUIT ACTIONS
