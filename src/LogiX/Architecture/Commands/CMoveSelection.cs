@@ -3,11 +3,14 @@ namespace LogiX.Architecture.Commands;
 public class CMoveSelection : Command<Editor>
 {
     public List<Component> Components { get; set; }
+    public List<(Vector2i, Vector2i)> Segments { get; set; }
+    public List<(Vector2i, Vector2i)> DestSegments => this.Segments.Select(s => (s.Item1 + this.Delta, s.Item2 + this.Delta)).ToList();
     public Vector2i Delta { get; set; }
 
-    public CMoveSelection(List<Component> components, Vector2i delta)
+    public CMoveSelection(List<Component> components, List<(Vector2i, Vector2i)> segments, Vector2i delta)
     {
         this.Components = components.ToList();
+        this.Segments = segments.ToList();
         this.Delta = delta;
     }
 
@@ -16,13 +19,10 @@ public class CMoveSelection : Command<Editor>
         arg.Sim.LockedAction(s =>
         {
             s.ClearSelection();
-
-            foreach (var comp in this.Components)
-            {
-                s.SelectComponent(comp);
-            }
-
-            s.MoveSelection(Delta);
+            s.SelectedComponents = this.Components.ToList();
+            s.SelectedWireSegments = this.Segments.ToList();
+            s.PickUpSelection();
+            s.CommitMovedPickedUpSelection(this.Delta);
         });
     }
 
@@ -31,13 +31,10 @@ public class CMoveSelection : Command<Editor>
         arg.Sim.LockedAction(s =>
         {
             s.ClearSelection();
-
-            foreach (var comp in this.Components)
-            {
-                s.SelectComponent(comp);
-            }
-
-            s.MoveSelection(-Delta);
+            s.SelectedComponents = this.Components.ToList();
+            s.SelectedWireSegments = this.DestSegments.ToList();
+            s.PickUpSelection();
+            s.CommitMovedPickedUpSelection(-this.Delta);
         });
     }
 }

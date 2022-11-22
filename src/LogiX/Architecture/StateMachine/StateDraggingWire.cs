@@ -84,8 +84,12 @@ public class StateDraggingWire : State<Editor, int>
                 Console.WriteLine($"Create wire between {_startPos.ToString()}, {_cornerPos.ToString()} and {_endPos.ToString()}, CORNER: {this.CornerNeeded()}");
                 if (CornerNeeded())
                 {
-                    arg.Execute(new CAddWire(_startPos, _cornerPos), arg);
-                    arg.Execute(new CAddWire(_cornerPos, _endPos), arg);
+                    var commands = new Command<Editor>[]
+                    {
+                        new CAddWire(_startPos, _cornerPos),
+                        new CAddWire(_cornerPos, _endPos)
+                    };
+                    arg.Execute(new CMulti(commands), arg);
                 }
                 else
                 {

@@ -24,6 +24,10 @@ public class CAddWire : Command<Editor>
         arg.Sim.LockedAction(s =>
         {
             s.DisconnectPoints(_startPos, _endPos);
+            if (s.SelectedWireSegments.Contains((_startPos, _endPos)))
+            {
+                s.SelectedWireSegments.Remove((_startPos, _endPos));
+            }
         });
     }
 

@@ -126,6 +126,14 @@ public class Wire
         }
     }
 
+    public static void RenderSegmentAsSelected((Vector2i, Vector2i) segment)
+    {
+        var a = segment.Item1.ToVector2(Constants.GRIDSIZE);
+        var b = segment.Item2.ToVector2(Constants.GRIDSIZE);
+
+        PrimitiveRenderer.RenderLine(a, b, Constants.WIRE_WIDTH + 2, Constants.COLOR_SELECTED);
+    }
+
     private static ColorF GetWireColor(Vector2i[] points, Simulation simulation)
     {
         var positions = points;

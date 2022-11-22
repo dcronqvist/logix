@@ -267,7 +267,9 @@ public class Editor : Invoker<Editor>
 
         this.AddMainMenuItem("Edit", "Delete Selection", new EditorAction((e) => this.Sim.LockedAction(s => s.SelectedComponents).Count > 0, (e) => false, (e) =>
         {
-            var commands = this.Sim.LockedAction(s => s.SelectedComponents.Select(c => new CDeleteComponent(c)));
+            var commands = new List<Command<Editor>>();
+            commands.AddRange(this.Sim.LockedAction(s => s.SelectedComponents.Select(c => new CDeleteComponent(c))));
+            commands.AddRange(this.Sim.LockedAction(s => s.SelectedWireSegments.Select(w => new CDeleteWireSegment(w))));
             this.Execute(new CMulti(commands.ToArray()), this);
         }, Keys.Delete));
 

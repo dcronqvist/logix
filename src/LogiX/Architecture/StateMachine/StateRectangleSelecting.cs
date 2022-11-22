@@ -23,6 +23,7 @@ public class StateRectangleSelecting : State<Editor, int>
         arg.Sim.LockedAction(s =>
         {
             s.SelectComponentsInRectangle(rect);
+            s.SelectWireSegmentsInRectangle(rect);
         });
 
         if (Input.IsMouseButtonReleased(MouseButton.Left))

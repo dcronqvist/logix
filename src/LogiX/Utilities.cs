@@ -895,4 +895,27 @@ public static class Utilities
     {
         return string.Join("", values.Select(v => v == LogicValue.HIGH ? "1" : (v == LogicValue.UNDEFINED ? "X" : "0")));
     }
+
+    public static RectangleF GetSegmentBoundingBox((Vector2i, Vector2i) wireSegment)
+    {
+        var (start, end) = (wireSegment.Item1.ToVector2(Constants.GRIDSIZE), wireSegment.Item2.ToVector2(Constants.GRIDSIZE));
+        if (start.X == end.X)
+        {
+            // VERTICAL
+            var width = Constants.WIRE_WIDTH;
+            var height = Math.Abs(start.Y - end.Y);
+            var x = start.X - width / 2;
+            var y = Math.Min(start.Y, end.Y);
+            return new RectangleF(x, y, width, height);
+        }
+        else
+        {
+            // HORIZONTAL
+            var width = Math.Abs(start.X - end.X);
+            var height = Constants.WIRE_WIDTH;
+            var x = Math.Min(start.X, end.X);
+            var y = start.Y - height / 2;
+            return new RectangleF(x, y, width, height);
+        }
+    }
 }

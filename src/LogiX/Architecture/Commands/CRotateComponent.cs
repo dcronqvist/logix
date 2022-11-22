@@ -36,11 +36,11 @@ public class CRotateComponent : Command<Editor>
             var rotationSign = Math.Sign(this.Rotation);
             if (rotationSign == 1)
             {
-                Component.RotateCounterClockwise(-this.Rotation);
+                Component.RotateCounterClockwise(this.Rotation);
             }
             else
             {
-                Component.RotateClockwise(this.Rotation);
+                Component.RotateClockwise(-this.Rotation);
             }
         });
     }

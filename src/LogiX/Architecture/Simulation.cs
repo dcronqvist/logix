@@ -493,6 +493,11 @@ public class Simulation
 
         if (renderWires)
         {
+            foreach (var selectedSegment in this.SelectedWireSegments)
+            {
+                Wire.RenderSegmentAsSelected(selectedSegment);
+            }
+
             // Allow wires to render themselves
             foreach (Wire wire in Wires)
             {
@@ -730,6 +735,11 @@ public class Simulation
                     this.Wires.Remove(w1);
                     this.Wires.AddRange(newWires);
                     this.RecalculateWirePositions();
+
+                    // if (this.SelectedWireSegments.Contains((point1, point2)))
+                    // {
+                    //     this.SelectedWireSegments.Remove((point1, point2));
+                    // }
                 }
                 else
                 {
@@ -823,5 +833,115 @@ public class Simulation
             c.Move(delta);
         }
         this.ComponentIOPositions.Clear();
+    }
+
+    public void SelectWireSegment((Vector2i, Vector2i) segment)
+    {
+        if (!this.SelectedWireSegments.Contains(segment))
+        {
+            this.SelectedWireSegments.Add(segment);
+        }
+    }
+
+    public void DeselectWireSegment((Vector2i, Vector2i) segment)
+    {
+        if (this.SelectedWireSegments.Contains(segment))
+        {
+            this.SelectedWireSegments.Remove(segment);
+        }
+    }
+
+    public void ToggleSelection((Vector2i, Vector2i) segment)
+    {
+        if (this.SelectedWireSegments.Contains(segment))
+        {
+            this.SelectedWireSegments.Remove(segment);
+        }
+        else
+        {
+            this.SelectedWireSegments.Add(segment);
+        }
+    }
+
+    public void SelectWireSegmentsInRectangle(RectangleF rectangle)
+    {
+        this.SelectedWireSegments.Clear();
+
+        foreach (var w in this.Wires)
+        {
+            foreach (var s in w.Segments)
+            {
+                if (Utilities.GetSegmentBoundingBox(s).IntersectsWith(rectangle))
+                {
+                    this.SelectedWireSegments.Add(s);
+                }
+            }
+        }
+    }
+
+    public bool IsWireSegmentSelected((Vector2i, Vector2i) segment)
+    {
+        return this.SelectedWireSegments.Contains(segment);
+    }
+
+    public void MoveSelectedWireSegments(Vector2i delta)
+    {
+        foreach (var s in this.SelectedWireSegments)
+        {
+            this.DisconnectPoints(s.Item1, s.Item2);
+        }
+
+        var selected = this.SelectedWireSegments.ToList();
+        this.SelectedWireSegments.Clear();
+
+        foreach (var s in selected)
+        {
+            this.ConnectPointsWithWire(s.Item1 + delta, s.Item2 + delta);
+            this.SelectedWireSegments.Add((s.Item1 + delta, s.Item2 + delta));
+        }
+    }
+
+    private List<Component> _pickedComponents = new();
+    private List<(Vector2i, Vector2i)> _pickedWireSegments = new();
+
+    public void PickUpSelection()
+    {
+        this._pickedComponents = this.SelectedComponents.ToList();
+        this._pickedWireSegments = this.SelectedWireSegments.ToList();
+
+        this.SelectedComponents.ForEach(s => this.Components.Remove(s));
+        this.SelectedWireSegments.ForEach(s => this.DisconnectPoints(s.Item1, s.Item2));
+
+        this.SelectedComponents.Clear();
+        this.SelectedWireSegments.Clear();
+
+        this.RecalculateWirePositions();
+    }
+
+    public void CommitMovedPickedUpSelection(Vector2i delta)
+    {
+        this._pickedComponents.ForEach(s => { s.Move(delta); });
+        this._pickedWireSegments.ForEach(s => this.ConnectPointsWithWire(s.Item1 + delta, s.Item2 + delta));
+
+        this.Components.AddRange(this._pickedComponents);
+
+        this.SelectedComponents = this._pickedComponents.ToList();
+        this.SelectedWireSegments = this._pickedWireSegments.Select(s => (s.Item1 + delta, s.Item2 + delta)).ToList();
+
+        this.RecalculateWirePositions();
+    }
+
+    public void MoveWireSegment((Vector2i, Vector2i) segment, Vector2i delta)
+    {
+        this.DisconnectPoints(segment.Item1, segment.Item2);
+        this.ConnectPointsWithWire(segment.Item1 + delta, segment.Item2 + delta);
+
+        if (this.SelectedWireSegments.Contains(segment))
+        {
+            this.SelectedWireSegments.Remove(segment);
+            this.SelectedWireSegments.Add((segment.Item1 + delta, segment.Item2 + delta));
+        }
+
+        this.RecalculateWirePositions();
     }
 }
