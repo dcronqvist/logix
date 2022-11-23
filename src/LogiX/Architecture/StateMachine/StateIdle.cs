@@ -99,27 +99,6 @@ public class StateIdle : State<Editor, int>
                     }
                 });
             }
-            if (Input.IsMouseButtonPressed(MouseButton.Right))
-            {
-                done = arg.Sim.LockedAction(s =>
-                {
-                    if (s.SelectedComponents.Count > 0 && s.TryGetComponentAtPos(mouseWorldPosition, out var comp) && s.IsComponentSelected(comp))
-                    {
-                        arg.OpenContextMenu(() =>
-                        {
-                            if (ImGui.MenuItem("Delete Selection"))
-                            {
-                                var deleteSelection = s.SelectedComponents.Select(c => new CDeleteComponent(c)).ToArray();
-                                var multi = new CMulti(deleteSelection);
-                                arg.Execute(multi, arg);
-                            }
-                        });
-                        return true;
-                    }
-
-                    return false;
-                });
-            }
         }
     }
 }

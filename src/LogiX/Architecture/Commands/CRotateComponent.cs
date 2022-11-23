@@ -28,20 +28,4 @@ public class CRotateComponent : Command<Editor>
             }
         });
     }
-
-    public override void Undo(Editor arg)
-    {
-        arg.Sim.LockedAction(s =>
-        {
-            var rotationSign = Math.Sign(this.Rotation);
-            if (rotationSign == 1)
-            {
-                Component.RotateCounterClockwise(this.Rotation);
-            }
-            else
-            {
-                Component.RotateClockwise(-this.Rotation);
-            }
-        });
-    }
 }

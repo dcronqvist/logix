@@ -1,8 +1,30 @@
 using System.Reflection;
 using LogiX.Content.Scripting;
 using System.Text.Json;
+using ImGuiNET;
 
 namespace LogiX.Architecture.Serialization;
+
+[AttributeUsage(AttributeTargets.Property)]
+public class ComponentDescriptionPropertyAttribute : Attribute
+{
+    public string DisplayName { get; set; }
+    public string HelpTooltip { get; set; } = null;
+
+    public int IntMinValue { get; set; } = int.MinValue;
+    public int IntMaxValue { get; set; } = int.MaxValue;
+
+    public int StringMaxLength { get; set; } = int.MaxValue;
+    public string StringHint { get; set; } = null;
+    public bool StringMultiline { get; set; } = false;
+    public ImGuiInputTextFlags StringFlags { get; set; } = ImGuiInputTextFlags.CallbackCharFilter;
+    public string StringRegexFilter { get; set; } = null;
+
+    public ComponentDescriptionPropertyAttribute(string displayName)
+    {
+        this.DisplayName = displayName;
+    }
+}
 
 public interface IComponentDescriptionData
 {
@@ -15,13 +37,15 @@ public class ComponentDescription
     public IComponentDescriptionData Data { get; set; }
     public Vector2i Position { get; set; }
     public int Rotation { get; set; }
+    public Guid ID { get; set; }
 
-    public ComponentDescription(string componentTypeID, Vector2i position, int rotation, IComponentDescriptionData data)
+    public ComponentDescription(string componentTypeID, Vector2i position, int rotation, Guid id, IComponentDescriptionData data)
     {
         this.ComponentTypeID = componentTypeID;
         this.Data = data;
         this.Position = position;
         this.Rotation = rotation;
+        this.ID = id;
     }
 
     private static Dictionary<string, ScriptType> _componentTypes;
@@ -72,6 +96,7 @@ public class ComponentDescription
         component.Initialize(this.Data);
         component.Position = this.Position;
         component.Rotation = this.Rotation;
+        component.ID = this.ID;
         return component;
     }
 
@@ -219,7 +244,7 @@ public class ComponentDescription<TData> : ComponentDescription where TData : IC
 {
     public new TData Data { get; set; }
 
-    public ComponentDescription(string componentTypeID, Vector2i position, int rotation, TData data) : base(componentTypeID, position, rotation, data)
+    public ComponentDescription(string componentTypeID, Vector2i position, int rotation, Guid id, TData data) : base(componentTypeID, position, rotation, id, data)
     {
         Data = data;
     }

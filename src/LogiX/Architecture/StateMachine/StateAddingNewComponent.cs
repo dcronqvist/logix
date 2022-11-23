@@ -25,7 +25,7 @@ public class StateAddingNewComponent : State<Editor, int>
                 // Add the component
                 arg.Sim.LockedAction(s =>
                 {
-                    arg.Execute(new CAddComponent(description.CreateComponent(), currentMouse.ToVector2i(Constants.GRIDSIZE)), arg);
+                    arg.Execute(new CAddComponent(description, currentMouse.ToVector2i(Constants.GRIDSIZE)), arg);
                 });
             }
 

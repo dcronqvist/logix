@@ -48,9 +48,33 @@ public class StateMovingSelection : State<Editor, int>
             arg.Sim.LockedAction(s =>
             {
                 s.CommitMovedPickedUpSelection(currentSnap - this.startWorldPos.ToVector2i(Constants.GRIDSIZE));
-                arg.Execute(new CMoveSelection(components.ToList(), segments.ToList(), currentSnap - this.startWorldPos.ToVector2i(Constants.GRIDSIZE)), arg, false);
+                arg.Execute(new CMoveSelection(components.Select(c => c.ID).ToList(), segments.ToList(), currentSnap - this.startWorldPos.ToVector2i(Constants.GRIDSIZE)), arg, false);
             });
             this.GoToState<StateIdle>(0);
+        }
+    }
+
+    public override void Render(Editor arg)
+    {
+        var currentMouse = Input.GetMousePosition(arg.Camera);
+        var currentSnap = currentMouse.ToVector2i(Constants.GRIDSIZE);
+        var delta = currentSnap - this.startWorldPos.ToVector2i(Constants.GRIDSIZE);
+
+        foreach (var (start, end) in this.segments)
+        {
+            Wire.RenderSegment((start + delta, end + delta), Constants.COLOR_UNDEFINED);
+        }
+
+        foreach (var comp in this.components)
+        {
+            var realPos = comp.Position;
+            var pos = comp.Position + delta;
+
+            comp.Position = pos;
+            comp.TriggerSizeRecalculation();
+            comp.RenderSelected(arg.Camera);
+            comp.Render(arg.Camera);
+            comp.Position = realPos;
         }
     }
 }

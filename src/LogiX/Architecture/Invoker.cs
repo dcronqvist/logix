@@ -2,14 +2,14 @@ using LogiX.Architecture.Commands;
 
 namespace LogiX.Architecture;
 
-public abstract class Invoker<TArg>
+public abstract class Invoker<TState, TArg>
 {
-    public List<Command<TArg>> Commands { get; set; }
+    public List<(TState, Command<TArg>, TState)> Commands { get; set; }
     public int CurrentCommandIndex { get; set; }
 
     public Invoker()
     {
-        this.Commands = new List<Command<TArg>>();
+        this.Commands = new();
         this.CurrentCommandIndex = -1;
     }
 
@@ -19,8 +19,11 @@ public abstract class Invoker<TArg>
         this.CurrentCommandIndex = -1;
     }
 
+    public abstract TState GetCurrentInvokerState();
+
     public void Execute(Command<TArg> command, TArg arg, bool doExecute = true)
     {
+        var stateBefore = this.GetCurrentInvokerState();
         if (this.CurrentCommandIndex < this.Commands.Count - 1)
         {
             this.Commands.RemoveRange(this.CurrentCommandIndex + 1, this.Commands.Count - this.CurrentCommandIndex - 1);
@@ -30,41 +33,58 @@ public abstract class Invoker<TArg>
         {
             command.Execute(arg);
         }
-        this.Commands.Add(command);
+        var stateAfter = this.GetCurrentInvokerState();
+        this.Commands.Add((stateBefore, command, stateAfter));
         this.CurrentCommandIndex++;
     }
 
-    public void Undo(TArg arg)
+    /// <summary>
+    /// Undo the last command by simply returning the state before the command was executed.
+    /// </summary>
+    public TState Undo(TArg arg)
     {
         if (this.CurrentCommandIndex >= 0)
         {
-            this.Commands[this.CurrentCommandIndex].Undo(arg);
+            var (stateBefore, command, stateAfter) = this.Commands[this.CurrentCommandIndex];
             this.CurrentCommandIndex--;
+            return stateBefore;
         }
+
+        return default;
     }
 
-    public void Undo(TArg arg, int count)
+    public TState Undo(TArg arg, int count)
     {
+        TState stateToReturn = default;
         for (int i = 0; i < count; i++)
         {
-            this.Undo(arg);
+            stateToReturn = this.Undo(arg);
         }
+        return stateToReturn;
     }
 
-    public void Redo(TArg arg)
+    /// <summary>
+    /// Redo the last command by simply returning the state after the command was executed.
+    /// </summary>
+    public TState Redo(TArg arg)
     {
         if (this.CurrentCommandIndex < this.Commands.Count - 1)
         {
             this.CurrentCommandIndex++;
-            this.Commands[this.CurrentCommandIndex].Redo(arg);
+            var (stateBefore, command, stateAfter) = this.Commands[this.CurrentCommandIndex];
+            return stateAfter;
         }
+
+        return default;
     }
 
-    public void Redo(TArg arg, int count)
+    public TState Redo(TArg arg, int count)
     {
+        TState stateToReturn = default;
         for (int i = 0; i < count; i++)
         {
-            this.Redo(arg);
+            stateToReturn = this.Redo(arg);
         }
+        return stateToReturn;
     }
 }

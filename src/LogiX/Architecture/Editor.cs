@@ -15,7 +15,7 @@ using static LogiX.OpenGL.GL;
 
 namespace LogiX.Architecture;
 
-public class Editor : Invoker<Editor>
+public class Editor : Invoker<Circuit, Editor>
 {
     // Currently loaded project and the currently open circuit from that project
     public LogiXProject Project { get; private set; }
@@ -71,6 +71,11 @@ public class Editor : Invoker<Editor>
 
     // All editor actions that should be visible in the main menu bar, and have shortcuts etc.
     public List<(string, List<(string, EditorAction)>)> EditorActions { get; private set; }
+
+    public override Circuit GetCurrentInvokerState()
+    {
+        return this.GetCurrentCircuit();
+    }
 
     public Editor()
     {
@@ -219,13 +224,45 @@ public class Editor : Invoker<Editor>
 
         #region INITIALIZE EDITOR ACTIONS
 
+        Input.OnKeyPressOrRepeat += (sender, e) =>
+        {
+            var key = e.Item1;
+            var mods = e.Item2;
+
+            if (ImGui.GetIO().WantCaptureKeyboard || ImGui.GetIO().WantCaptureMouse)
+            {
+                return;
+            }
+
+            foreach (var (category, actions) in this.EditorActions)
+            {
+                foreach (var (actionName, action) in actions)
+                {
+                    var actionMods = action.Modifiers;
+                    var actionKey = action.Key;
+
+                    if ((mods.HasFlag(actionMods) || actionMods == 0) && (key == actionKey) && action.Condition.Invoke(this))
+                    {
+                        try
+                        {
+                            action.Execute.Invoke(this);
+                        }
+                        catch (Exception ex)
+                        {
+                            this.OpenErrorPopup("Error", true, () => { ImGui.Text(ex.Message); ImGui.Button("OK"); });
+                        }
+                    }
+                }
+            }
+        };
+
         // ALL FILE ACTIONS
         this.AddMainMenuItem("File", "New Project", new EditorAction((e) => true, (e) => false, (e) =>
         {
             // Verify that the user wants to create a new project
             // Currently very unforgiving, and should be changed later.
             this.SetProject(LogiXProject.New("Untitled"));
-        }, Keys.LeftControl, Keys.N));
+        }, ModifierKeys.Control, Keys.N));
 
         this.AddMainMenuItem("File", "Open Project", new EditorAction((e) => true, (e) => false, (e) =>
         {
@@ -244,7 +281,7 @@ public class Editor : Invoker<Editor>
             }, ".lxprojj");
 
             this.OpenPopup(fileDialog);
-        }, Keys.LeftControl, Keys.O));
+        }, ModifierKeys.Control, Keys.O));
 
         this.AddMainMenuItem("File", "Save Project", new EditorAction((e) => this.Project is not null, (e) => false, (e) =>
         {
@@ -252,38 +289,40 @@ public class Editor : Invoker<Editor>
             newCircuit.ID = this.CurrentlyOpenCircuit.ID;
             this.Project.UpdateCircuit(newCircuit);
             this.SetMessage(this.QuickSaveProject());
-        }, Keys.LeftControl, Keys.S));
+        }, ModifierKeys.Control, Keys.S));
 
         // ALL EDIT ACTIONS
         this.AddMainMenuItem("Edit", "Undo", new EditorAction((e) => this.CurrentCommandIndex >= 0, (e) => false, (e) =>
         {
-            this.Undo(this);
-        }, Keys.LeftControl, Keys.Z));
+            var newState = this.Undo(this);
+            this.Sim.LockedAction(s => s.SetCircuitInSimulation(newState));
+        }, ModifierKeys.Control, Keys.Z));
 
         this.AddMainMenuItem("Edit", "Redo", new EditorAction((e) => this.CurrentCommandIndex < this.Commands.Count - 1, (e) => false, (e) =>
         {
-            this.Redo(this);
-        }, Keys.LeftControl, Keys.Y));
+            var newState = this.Redo(this);
+            this.Sim.LockedAction(s => s.SetCircuitInSimulation(newState));
+        }, ModifierKeys.Control, Keys.Y));
 
         this.AddMainMenuItem("Edit", "Delete Selection", new EditorAction((e) => this.Sim.LockedAction(s => s.SelectedComponents).Count > 0, (e) => false, (e) =>
         {
             var commands = new List<Command<Editor>>();
-            commands.AddRange(this.Sim.LockedAction(s => s.SelectedComponents.Select(c => new CDeleteComponent(c))));
+            commands.AddRange(this.Sim.LockedAction(s => s.SelectedComponents.Select(c => new CDeleteComponent(c.ID))));
             commands.AddRange(this.Sim.LockedAction(s => s.SelectedWireSegments.Select(w => new CDeleteWireSegment(w))));
             this.Execute(new CMulti(commands.ToArray()), this);
-        }, Keys.Delete));
+        }, 0, Keys.Delete));
 
         this.AddMainMenuItem("Edit", "Rotate Clockwise", new EditorAction((e) => this.Sim.LockedAction(s => s.SelectedComponents).Count > 0, (e) => false, (e) =>
         {
             var commands = this.Sim.LockedAction(s => s.SelectedComponents.Select(c => new CRotateComponent(c, 1)));
             this.Execute(new CMulti(commands.ToArray()), this);
-        }, Keys.LeftControl, Keys.Right));
+        }, ModifierKeys.Control, Keys.Right));
 
         this.AddMainMenuItem("Edit", "Rotate Counter Clockwise", new EditorAction((e) => this.Sim.LockedAction(s => s.SelectedComponents).Count > 0, (e) => false, (e) =>
         {
             var commands = this.Sim.LockedAction(s => s.SelectedComponents.Select(c => new CRotateComponent(c, -1)));
             this.Execute(new CMulti(commands.ToArray()), this);
-        }, Keys.LeftControl, Keys.Left));
+        }, ModifierKeys.Control, Keys.Left));
 
         // ALL CIRCUIT ACTIONS
         this.AddMainMenuItem("Circuits", "New Circuit...", new EditorAction((e) => true, (e) => false, (e) =>
@@ -291,18 +330,18 @@ public class Editor : Invoker<Editor>
             this.WritingNewCircuitName = true;
             this.NewCircuitName = "";
             this._projectsOpen = true;
-        }, Keys.LeftControl, Keys.LeftShift, Keys.N));
+        }, ModifierKeys.Control | ModifierKeys.Shift, Keys.N));
 
         // ALL SIMULATION ACTIONS
         this.AddMainMenuItem("Simulation", "Simulation Enabled", new EditorAction((e) => this.CurrentlyOpenCircuit is not null, (e) => this.SimulationRunning, (e) =>
         {
             this.SimulationRunning = !this.SimulationRunning;
-        }, Keys.F5));
+        }, 0, Keys.F5));
 
         this.AddMainMenuItem("Simulation", $"Tick Rate", new NestedEditorAction(this.AvailableTickRates.Select(tr => (tr.GetAsHertzString(), new EditorAction((e) => true, (e) => this.CurrentlySelectedTickRate == Array.IndexOf(this.AvailableTickRates, tr), (e) =>
         {
             this.CurrentlySelectedTickRate = Array.IndexOf(this.AvailableTickRates, tr);
-        }))).ToList().Concat(new (string, EditorAction)[] { ("Custom", new EditorAction((e) => true, (e) => this.CurrentlySelectedTickRate == -1, (e) => {
+        }, 0, Keys.Unknown))).ToList().Concat(new (string, EditorAction)[] { ("Custom", new EditorAction((e) => true, (e) => this.CurrentlySelectedTickRate == -1, (e) => {
             this.OpenPopup("Enter a custom tick rate", (s) => {
                 var custom = this.CustomTickRate;
                 if (ImGui.InputInt("Tick Rate", ref custom))
@@ -323,18 +362,18 @@ public class Editor : Invoker<Editor>
                     ImGui.CloseCurrentPopup();
                 }
             });
-        })) }).ToArray()));
+        }, 0, Keys.Unknown)) }).ToArray()));
 
         this.AddMainMenuItem("Simulation", "Tick Once", new EditorAction((e) => this.CurrentlyOpenCircuit is not null, (e) => false, (e) =>
         {
             this.Sim.LockedAction(s => s.Tick());
-        }, Keys.F6));
+        }, 0, Keys.F6));
 
         // ALL HELP ACTIONS
         this.AddMainMenuItem("Help", "About", new EditorAction((e) => true, (e) => false, (e) =>
         {
             this._displayAboutWindow = true;
-        }));
+        }, 0, Keys.Unknown));
 
         this.AddMainMenuItem("Help", "Documentation", new EditorAction((e) => true, (e) => false, (e) =>
         {
@@ -354,13 +393,13 @@ Under *projects*, you can see your circuits, and right clicking them in the side
                     ImGui.CloseCurrentPopup();
                 }
             }));
-        }));
+        }, 0, Keys.Unknown));
 
         // ALL VIEW ACTIONS
         this.AddMainMenuItem("View", "Show Wires", new EditorAction((e) => true, (e) => this.RenderWires, (e) =>
         {
             this.RenderWires = !this.RenderWires;
-        }));
+        }, 0, Keys.Unknown));
 
         #endregion
     }
@@ -501,9 +540,17 @@ Under *projects*, you can see your circuits, and right clicking them in the side
         this.Project.SetLastOpenedCircuit(id);
     }
 
+    public Circuit GetCurrentCircuit()
+    {
+        var circ = this.Sim.LockedAction(s => s.GetCircuitInSimulation(this.CurrentlyOpenCircuit.Name));
+        circ.ID = this.CurrentlyOpenCircuit.ID;
+
+        return circ;
+    }
+
     #endregion
 
-    #region CURRENTLY OPEN CIRCUIT METHODS
+    #region UPDATE METHODS
 
     public void AddNewComponent(ComponentDescription desc)
     {
@@ -513,14 +560,6 @@ Under *projects*, you can see your circuits, and right clicking them in the side
 
     public void Update()
     {
-        foreach (var (category, actionList) in this.EditorActions)
-        {
-            foreach (var (actionName, action) in actionList)
-            {
-                action.Update(this);
-            }
-        }
-
         if (this.Sim is not null)
         {
             this.FSM?.Update(this);
@@ -748,6 +787,8 @@ Under *projects*, you can see your circuits, and right clicking them in the side
         ImGui.Text($"TPS: {this.CurrentTicksPerSecond.GetAsHertzString()}");
         ImGui.Text($"State: {this.FSM.CurrentState.GetType().Name}");
         ImGui.Text($"Hovered: {this.IsMouseOverComponentWindow()}");
+        long memory = GC.GetTotalMemory(true);
+        ImGui.Text($"Memory: {memory / 1024 / 1024} MB");
 
         if (this.CurrentMessage is not null && this.CurrentMessage != "")
         {

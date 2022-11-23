@@ -2,7 +2,10 @@ using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Numerics;
+using System.Runtime.InteropServices;
+using System.Text.RegularExpressions;
 using ImGuiNET;
+using LogiX.Architecture.Commands;
 using LogiX.Architecture.Serialization;
 using LogiX.GLFW;
 using LogiX.Graphics;
@@ -98,10 +101,11 @@ public abstract class Component
     public abstract bool ShowPropertyWindow { get; }
 
     public int Rotation { get; set; }
+    public Guid ID { get; set; }
 
     public Component()
     {
-
+        this.ID = Guid.NewGuid();
     }
 
     protected Vector2 _textSize;
@@ -447,7 +451,7 @@ public abstract class Component
 
     public ComponentDescription GetDescriptionOfInstance()
     {
-        return new ComponentDescription(this.GetComponentTypeID(), this.Position, this.Rotation, this.GetDescriptionData());
+        return new ComponentDescription(this.GetComponentTypeID(), this.Position, this.Rotation, this.ID, this.GetDescriptionData());
     }
 
     public virtual void CompleteSubmitUISelected(Editor editor, int componentIndex)
@@ -459,11 +463,119 @@ public abstract class Component
         ImGui.End();
     }
 
-    public abstract void SubmitUISelected(Editor editor, int componentIndex);
+    public virtual unsafe void SubmitUISelected(Editor editor, int componentIndex)
+    {
+        var id = this.GetUniqueIdentifier();
+
+        var data = Utilities.GetCopyOfInstance(this.GetDescriptionData()) as IComponentDescriptionData;
+        var props = data.GetType().GetProperties();
+
+
+        foreach (var prop in props)
+        {
+            var propType = prop.PropertyType;
+            var propValue = prop.GetValue(data);
+
+            var attrib = prop.GetCustomAttributes(typeof(ComponentDescriptionPropertyAttribute), false).FirstOrDefault() as ComponentDescriptionPropertyAttribute;
+
+            if (attrib is null)
+            {
+                continue; // Skip properties without the attribute
+            }
+
+            var displayName = attrib.DisplayName;
+
+            if (propType == typeof(int))
+            {
+                var val = (int)propValue;
+                if (ImGui.InputInt(displayName, ref val))
+                {
+                    val = Math.Clamp(val, attrib.IntMinValue, attrib.IntMaxValue);
+                    editor.Execute(new CModifyComponentDataProp(this.ID, prop, val), editor);
+                }
+            }
+            else if (propType == typeof(string))
+            {
+                string val = (string)propValue;
+                var hint = attrib.StringHint;
+
+                var checkRegex = (string s) =>
+                {
+                    if (attrib.StringRegexFilter is null)
+                    {
+                        return true;
+                    }
+
+                    return Regex.IsMatch(s, attrib.StringRegexFilter);
+                };
+
+                ImGuiInputTextCallback callback = (data) =>
+                {
+                    var addedChar = (char)data->EventChar;
+                    if (!checkRegex(val + addedChar))
+                    {
+                        // Remove the added character
+                        return 1;
+                    }
+
+                    return 0;
+                };
+
+                if (hint is null)
+                {
+                    // No hint
+                    if (attrib.StringMultiline)
+                    {
+                        if (ImGui.InputTextMultiline(displayName, ref val, (uint)attrib.StringMaxLength, new Vector2(300, 150), attrib.StringFlags, callback))
+                        {
+                            editor.Execute(new CModifyComponentDataProp(this.ID, prop, val), editor);
+                        }
+                    }
+                    else
+                    {
+                        if (ImGui.InputText(displayName, ref val, (uint)attrib.StringMaxLength, attrib.StringFlags, callback))
+                        {
+                            editor.Execute(new CModifyComponentDataProp(this.ID, prop, val), editor);
+                        }
+                    }
+                }
+                else
+                {
+                    if (ImGui.InputTextWithHint(displayName, attrib.StringHint, ref val, (uint)attrib.StringMaxLength, attrib.StringFlags, callback))
+                    {
+                        editor.Execute(new CModifyComponentDataProp(this.ID, prop, val), editor);
+                    }
+                }
+            }
+            else if (propType == typeof(bool))
+            {
+                bool val = (bool)propValue;
+                if (ImGui.Checkbox(displayName, ref val))
+                {
+                    editor.Execute(new CModifyComponentDataProp(this.ID, prop, val), editor);
+                }
+            }
+            else if (propType.IsEnum)
+            {
+                var val = (int)propValue;
+                if (ImGui.Combo(displayName, ref val, propType.GetEnumNames(), propType.GetEnumNames().Length))
+                {
+                    editor.Execute(new CModifyComponentDataProp(this.ID, prop, val), editor);
+                }
+            }
+
+            if (attrib.HelpTooltip is not null)
+            {
+                ImGui.SameLine();
+                Utilities.ImGuiHelp(attrib.HelpTooltip);
+            }
+        }
+
+    }
 
     public string GetUniqueIdentifier()
     {
-        return Utilities.GetHash($"{this.GetComponentTypeID()}{this.Position.X}{this.Position.Y}{this.GetHashCode()}");
+        return this.ID.ToString();
     }
 }
 

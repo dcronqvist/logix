@@ -64,6 +64,14 @@ public static class Utilities
         }
     }
 
+    public static object GetCopyOfInstance(object instance)
+    {
+        var type = instance.GetType();
+        var copy = Activator.CreateInstance(type);
+        CopyPropsAndFields(instance, ref copy);
+        return copy;
+    }
+
     public static float[] GetMatrix4x4Values(Matrix4x4 m)
     {
         return new float[]
@@ -917,5 +925,10 @@ public static class Utilities
             var y = start.Y - height / 2;
             return new RectangleF(x, y, width, height);
         }
+    }
+
+    public static ColorF ToColorF(this Vector4 vec)
+    {
+        return new ColorF(vec.X, vec.Y, vec.Z, vec.W);
     }
 }

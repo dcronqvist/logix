@@ -22,12 +22,4 @@ public class CDeleteWireSegment : Command<Editor>
             }
         });
     }
-
-    public override void Undo(Editor arg)
-    {
-        arg.Sim.LockedAction(s =>
-        {
-            s.ConnectPointsWithWire(this.Segment.Item1, this.Segment.Item2);
-        });
-    }
 }

@@ -19,18 +19,6 @@ public class CAddWire : Command<Editor>
         });
     }
 
-    public override void Undo(Editor arg)
-    {
-        arg.Sim.LockedAction(s =>
-        {
-            s.DisconnectPoints(_startPos, _endPos);
-            if (s.SelectedWireSegments.Contains((_startPos, _endPos)))
-            {
-                s.SelectedWireSegments.Remove((_startPos, _endPos));
-            }
-        });
-    }
-
     public override string ToString()
     {
         return $"Connect {_startPos} to {_endPos}";

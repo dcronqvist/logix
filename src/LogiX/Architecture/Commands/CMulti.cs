@@ -18,12 +18,4 @@ public class CMulti : Command<Editor>
             cmd.Execute(arg);
         }
     }
-
-    public override void Undo(Editor arg)
-    {
-        foreach (var cmd in this.Commands)
-        {
-            cmd.Undo(arg);
-        }
-    }
 }

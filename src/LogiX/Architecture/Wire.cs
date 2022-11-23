@@ -110,10 +110,7 @@ public class Wire
 
         foreach (var segment in this.Segments)
         {
-            var a = segment.Item1.ToVector2(Constants.GRIDSIZE);
-            var b = segment.Item2.ToVector2(Constants.GRIDSIZE);
-
-            PrimitiveRenderer.RenderLine(a, b, Constants.WIRE_WIDTH, color);
+            RenderSegment(segment, color);
         }
 
         var segmentPoints = this.Segments.SelectMany(s => new Vector2i[] { s.Item1, s.Item2 }).Distinct().ToArray();
@@ -124,6 +121,14 @@ public class Wire
             //PrimitiveRenderer.RenderCircle(pShader, worldPos, Constants.WIRE_POINT_RADIUS, 0, color, cam);
             PrimitiveRenderer.RenderRectangle(new RectangleF(worldPos.X, worldPos.Y, 0, 0).Inflate(Constants.WIRE_WIDTH / 2f), Vector2.Zero, 0, color);
         }
+    }
+
+    public static void RenderSegment((Vector2i, Vector2i) segment, ColorF color)
+    {
+        var a = segment.Item1.ToVector2(Constants.GRIDSIZE);
+        var b = segment.Item2.ToVector2(Constants.GRIDSIZE);
+
+        PrimitiveRenderer.RenderLine(a, b, Constants.WIRE_WIDTH, color);
     }
 
     public static void RenderSegmentAsSelected((Vector2i, Vector2i) segment)

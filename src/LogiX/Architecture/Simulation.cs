@@ -547,6 +547,9 @@ public class Simulation
         this.Components.Clear();
         this.Wires.Clear();
 
+        this.SelectedComponents.Clear();
+        this.SelectedWireSegments.Clear();
+
         foreach (var component in circuit.Components)
         {
             var c = component.CreateComponent();
@@ -557,6 +560,13 @@ public class Simulation
         {
             this.AddWire(wire.CreateWire());
         }
+
+        this.RecalculateWirePositions();
+    }
+
+    public Component GetComponentFromID(Guid id)
+    {
+        return this.Components.FirstOrDefault(x => x.ID == id);
     }
 
     public bool TryGetIOFromPosition(Vector2i gridPosition, out IO io, out Component component)
