@@ -41,7 +41,7 @@ public class FileDialog : Modal
     public FileDialogType Type { get; set; }
     private Action<string> OnSelect { get; set; }
 
-    public FileDialog(string startDirectory, FileDialogType fdt, Action<string> onSelect, params string[] filteredExtensions) : base(fdt.ToString(), ImGuiWindowFlags.AlwaysAutoResize, ImGuiPopupFlags.None)
+    public FileDialog(string startDirectory, string title, FileDialogType fdt, Action<string> onSelect, params string[] filteredExtensions) : base(title, ImGuiWindowFlags.AlwaysAutoResize, ImGuiPopupFlags.None)
     {
         this.CurrentFolder = startDirectory;
         this.SelectedFile = null;
@@ -89,48 +89,50 @@ public class FileDialog : Modal
     }
 #pragma warning restore CA1416 // Validate platform compatibility
 
-    public override void SubmitUI(Editor editor)
+    public void SubmitFolderNavigation(Editor editor, bool includeFiles, Action<string> onFileClicked)
     {
-        if (this.Type == FileDialogType.SelectFile)
+        string[] parents = GetMax5Parents(this.CurrentFolder);
+
+        foreach (string parent in parents.Reverse())
         {
-            string[] parents = GetMax5Parents(this.CurrentFolder);
-
-            foreach (string parent in parents.Reverse())
+            string dirName = parent.Split(Path.DirectorySeparatorChar).Last();
+            if (dirName == "")
             {
-                string dirName = parent.Split(Path.DirectorySeparatorChar).Last();
-                if (dirName == "")
-                {
-                    dirName = "/";
-                }
-
-                if (ImGui.Button(dirName))
-                {
-                    this.CurrentFolder = parent;
-                }
-                ImGui.SameLine();
+                dirName = "/";
             }
 
-            ImGui.NewLine();
-
-            ImGui.BeginChild("File Area", new Vector2(400, 250), true);
-
-            if (ImGui.MenuItem(".."))
+            if (ImGui.Button(dirName))
             {
-                this.CurrentFolder = Directory.GetParent(this.CurrentFolder).FullName;
+                this.CurrentFolder = parent;
             }
+            ImGui.SameLine();
+        }
 
-            string[] subDirs = Directory.GetDirectories(this.CurrentFolder);
-            ImGui.PushStyleColor(ImGuiCol.Text, ColorF.DarkGoldenRod.ToVector4());
-            foreach (string subDir in subDirs)
+        ImGui.NewLine();
+
+        ImGui.BeginChild("File Area", new Vector2(400, 250), true);
+
+        if (ImGui.MenuItem(".."))
+        {
+            this.CurrentFolder = Directory.GetParent(this.CurrentFolder).FullName;
+        }
+
+        ImGui.Separator();
+
+        string[] subDirs = Directory.GetDirectories(this.CurrentFolder);
+        ImGui.PushStyleColor(ImGuiCol.Text, ColorF.DarkGoldenRod.ToVector4());
+        foreach (string subDir in subDirs)
+        {
+            DirectoryInfo di = new DirectoryInfo(subDir);
+            if (ImGui.MenuItem($"[dir] {di.Name}"))
             {
-                DirectoryInfo di = new DirectoryInfo(subDir);
-                if (ImGui.MenuItem($"[dir] {di.Name}"))
-                {
-                    this.CurrentFolder = subDir;
-                }
+                this.CurrentFolder = subDir;
             }
-            ImGui.PopStyleColor();
+        }
+        ImGui.PopStyleColor();
 
+        if (includeFiles)
+        {
             string[] files = Directory.GetFiles(this.CurrentFolder);
             if (this.FilteredExtensions.Length > 0)
                 files = files.Where(file => this.FilteredExtensions.Contains(Path.GetExtension(file))).ToArray();
@@ -142,7 +144,7 @@ public class FileDialog : Modal
 
                 if (ImGui.Selectable(fileText, this.currentSelectedFile == file))
                 {
-                    this.currentSelectedFile = file;
+                    onFileClicked.Invoke(file);
                 }
 
                 float fileTextLength = ImGui.CalcTextSize(fileText).X;
@@ -154,40 +156,53 @@ public class FileDialog : Modal
                 ImGui.SameLine();
                 ImGui.Text(Utilities.GetAsByteString(fi.Length));
             }
+        }
 
-            ImGui.EndChild();
+        ImGui.EndChild();
 
-            ImGui.SameLine();
+        ImGui.SameLine();
 
-            ImGui.BeginChild("Common Directories", new Vector2(130, 250), true);
+        ImGui.BeginChild("Common Directories", new Vector2(130, 250), true);
 
-            ImGui.TextDisabled("Common Directories");
+        ImGui.TextDisabled("Common Directories");
 
-            if (ImGui.Button("LogiX", new Vector2(ImGui.GetContentRegionAvail().X, 0)))
+        if (ImGui.Button("LogiX", new Vector2(ImGui.GetContentRegionAvail().X, 0)))
+        {
+            this.CurrentFolder = Directory.GetCurrentDirectory();
+        }
+        if (editor.Project != null && editor.Project.HasFileToSaveTo() && ImGui.Button("Project Dir.", new Vector2(ImGui.GetContentRegionAvail().X, 0)))
+        {
+            this.CurrentFolder = Path.GetDirectoryName(editor.Project.LoadedFromPath);
+        }
+        ImGui.Separator();
+
+        (string, string)[] specialFolders = new (string, string)[] {
+            (Environment.GetFolderPath(Environment.SpecialFolder.Desktop), "Desktop"),
+            (Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "Documents"),
+            (Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), "User")
+        };
+
+        foreach ((string, string) specialFolder in specialFolders)
+        {
+            if (ImGui.Button(specialFolder.Item2, new Vector2(ImGui.GetContentRegionAvail().X, 0)))
             {
-                this.CurrentFolder = Directory.GetCurrentDirectory();
+                this.CurrentFolder = specialFolder.Item1;
             }
-            // if (editor.loadedProject != null && editor.loadedProject.HasFile() && ImGui.Button("Project Dir", new Vector2(ImGui.GetContentRegionAvail().X, 0)))
-            // {
-            //     this.CurrentFolder = Path.GetDirectoryName(editor.loadedProject.LoadedFromFile);
-            // }
-            ImGui.Separator();
+        }
 
-            (string, string)[] specialFolders = new (string, string)[] {
-                (Environment.GetFolderPath(Environment.SpecialFolder.Desktop), "Desktop"),
-                (Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "Documents"),
-            };
+        ImGui.EndChild();
+    }
 
-            foreach ((string, string) specialFolder in specialFolders)
+    public override void SubmitUI(Editor editor)
+    {
+        if (this.Type == FileDialogType.SelectFile)
+        {
+            this.SubmitFolderNavigation(editor, true, (file) =>
             {
-                if (ImGui.Button(specialFolder.Item2, new Vector2(ImGui.GetContentRegionAvail().X, 0)))
-                {
-                    this.CurrentFolder = specialFolder.Item1;
-                }
-            }
+                this.currentSelectedFile = file;
+            });
 
-            ImGui.EndChild();
-
+            ImGui.PushItemWidth(400);
             ImGui.InputText("Selected file", ref this.currentSelectedFile, 100);
 
             if (ImGui.Button("Cancel"))
@@ -214,75 +229,10 @@ public class FileDialog : Modal
         }
         else if (this.Type == FileDialogType.SelectFolder)
         {
-            string[] parents = GetMax5Parents(this.CurrentFolder);
-
-            foreach (string parent in parents.Reverse())
+            this.SubmitFolderNavigation(editor, false, (file) =>
             {
-                string dirName = parent.Split(Path.DirectorySeparatorChar).Last();
-                if (dirName == "")
-                {
-                    dirName = "/";
-                }
-
-                if (ImGui.Button(dirName))
-                {
-                    this.CurrentFolder = parent;
-                }
-                ImGui.SameLine();
-            }
-
-            ImGui.NewLine();
-
-            ImGui.BeginChild("hej", new Vector2((ImGui.GetWindowContentRegionMax().X / 4) * 3 - 5, ImGui.GetWindowHeight() * 0.7f), true);
-
-            if (ImGui.MenuItem(".."))
-            {
-                this.CurrentFolder = Directory.GetParent(this.CurrentFolder).FullName;
-            }
-
-            string[] subDirs = Directory.GetDirectories(this.CurrentFolder);
-            ImGui.PushStyleColor(ImGuiCol.Text, ColorF.DarkGoldenRod.ToVector4());
-            foreach (string subDir in subDirs)
-            {
-                DirectoryInfo di = new DirectoryInfo(subDir);
-                if (ImGui.Selectable($"[dir] {di.Name}"))
-                {
-                    this.CurrentFolder = subDir;
-                }
-            }
-            ImGui.PopStyleColor();
-
-            string[] files = Directory.GetFiles(this.CurrentFolder);
-            foreach (string file in files.Where(file => this.FilteredExtensions.Contains(Path.GetExtension(file))))
-            {
-                FileInfo fi = new FileInfo(file);
-
-                string fileText = $"[file] {fi.Name}";
-
-                if (ImGui.Selectable(fileText, this.currentSelectedFile == file))
-                {
-                    this.currentSelectedFile = file;
-                }
-
-                float fileTextLength = ImGui.CalcTextSize(fileText).X;
-                float startDistNext = 200f;
-                float offset = startDistNext - fileTextLength;
-
-                ImGui.SameLine();
-                ImGui.Dummy(new Vector2(offset, 1));
-                ImGui.SameLine();
-                ImGui.Text(Utilities.GetAsByteString(fi.Length));
-            }
-
-            ImGui.EndChild();
-
-            ImGui.SameLine();
-
-            ImGui.BeginChild("hej2", new Vector2(ImGui.GetWindowContentRegionMax().X / 4 - 5, ImGui.GetWindowHeight() * 0.7f), true);
-
-            ImGui.Text("Group 2");
-
-            ImGui.EndChild();
+                // Nothing really, we don't care about files when selecting folders
+            });
 
             if (ImGui.Button("Cancel"))
             {
@@ -308,54 +258,12 @@ public class FileDialog : Modal
         }
         else if (this.Type == FileDialogType.SaveFile)
         {
-            string[] parents = GetMax5Parents(this.CurrentFolder);
-
-            foreach (string parent in parents.Reverse())
+            this.SubmitFolderNavigation(editor, true, (file) =>
             {
-                string dirName = parent.Split(Path.DirectorySeparatorChar).Last();
-                if (dirName == "")
-                {
-                    dirName = "/";
-                }
+                this.currentSelectedFile = file;
+            });
 
-                if (ImGui.Button(dirName))
-                {
-                    this.CurrentFolder = parent;
-                }
-                ImGui.SameLine();
-            }
-
-            ImGui.NewLine();
-
-            ImGui.BeginChild("hej", new Vector2((ImGui.GetWindowContentRegionMax().X / 4) * 3 - 5, ImGui.GetWindowHeight() * 0.7f), true);
-
-            if (ImGui.MenuItem(".."))
-            {
-                this.CurrentFolder = Directory.GetParent(this.CurrentFolder).FullName;
-            }
-
-            string[] subDirs = Directory.GetDirectories(this.CurrentFolder);
-            ImGui.PushStyleColor(ImGuiCol.Text, ColorF.DarkGoldenRod.ToVector4());
-            foreach (string subDir in subDirs)
-            {
-                DirectoryInfo di = new DirectoryInfo(subDir);
-                if (ImGui.Selectable($"[dir] {di.Name}"))
-                {
-                    this.CurrentFolder = subDir;
-                }
-            }
-            ImGui.PopStyleColor();
-
-            ImGui.EndChild();
-
-            ImGui.SameLine();
-
-            ImGui.BeginChild("hej2", new Vector2(ImGui.GetWindowContentRegionMax().X / 4 - 5, ImGui.GetWindowHeight() * 0.7f), true);
-
-            ImGui.Text("Group 2");
-
-            ImGui.EndChild();
-
+            ImGui.PushItemWidth(400);
             ImGui.InputText("Filename", ref this.currentSelectedFile, 100);
 
             if (ImGui.Button("Cancel"))

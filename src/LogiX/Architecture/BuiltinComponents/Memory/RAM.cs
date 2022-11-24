@@ -142,7 +142,7 @@ public class RAM : Component<RamData>
 
             if (ImGui.Button($"Load From File##{id}", buttonSize))
             {
-                var fileDialog = new FileDialog(FileDialog.LastDirectory, FileDialogType.SelectFile, (path) =>
+                var fileDialog = new FileDialog(FileDialog.LastDirectory, "Load RAM from file", FileDialogType.SelectFile, (path) =>
                 {
                     using (BinaryReader sr = new BinaryReader(File.Open(path, FileMode.Open)))
                     {
@@ -158,7 +158,7 @@ public class RAM : Component<RamData>
             ImGui.SameLine();
             if (ImGui.Button($"Dump To File##{id}", buttonSize))
             {
-                var fileDialog = new FileDialog(FileDialog.LastDirectory, FileDialogType.SaveFile, (path) =>
+                var fileDialog = new FileDialog(FileDialog.LastDirectory, "Dump RAM contents to file", FileDialogType.SaveFile, (path) =>
                 {
                     using (BinaryWriter bw = new BinaryWriter(File.Open(path, FileMode.Open)))
                     {

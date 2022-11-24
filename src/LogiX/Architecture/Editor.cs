@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Diagnostics;
 using System.Numerics;
+using System.Threading;
 using ImGuiNET;
 using LogiX.Architecture.BuiltinComponents;
 using LogiX.Architecture.Commands;
@@ -269,7 +270,7 @@ public class Editor : Invoker<Circuit, Editor>
 
         this.AddMainMenuItem("File", "Open Project", new EditorAction((e) => true, (e) => false, (e) =>
         {
-            var fileDialog = new FileDialog(FileDialog.LastDirectory, FileDialogType.SelectFile, (s) =>
+            var fileDialog = new FileDialog(FileDialog.LastDirectory, "Open Project", FileDialogType.SelectFile, (s) =>
             {
                 // On select
                 if (this.Project is not null)
@@ -293,6 +294,19 @@ public class Editor : Invoker<Circuit, Editor>
             this.Project.UpdateCircuit(newCircuit);
             this.SetMessage(this.QuickSaveProject());
         }, ModifierKeys.Control, Keys.S));
+
+        this.AddMainMenuItem("File", "Save Project As...", new EditorAction((e) => this.Project is not null, (e) => false, (e) =>
+        {
+            var fileDialog = new FileDialog(FileDialog.LastDirectory, "Save project as...", FileDialogType.SaveFile, (path) =>
+            {
+                this.Project.LoadedFromPath = Path.GetFullPath(path);
+                Settings.SetSetting(Settings.LAST_OPEN_PROJECT, Path.GetFullPath(path));
+                File.Create(path).Close();
+                this.SetMessage(this.QuickSaveProject());
+            });
+
+            this.OpenPopup(fileDialog);
+        }, 0, Keys.Unknown));
 
         // ALL EDIT ACTIONS
         this.AddMainMenuItem("Edit", "Undo", new EditorAction((e) => this.CurrentCommandIndex >= 0, (e) => false, (e) =>
@@ -362,7 +376,7 @@ public class Editor : Invoker<Circuit, Editor>
         this.AddMainMenuItem("Simulation", $"Tick Rate", new NestedEditorAction(this.AvailableTickRates.Select(tr => (tr.GetAsHertzString(), new EditorAction((e) => true, (e) => this.CurrentlySelectedTickRate == Array.IndexOf(this.AvailableTickRates, tr), (e) =>
         {
             this.CurrentlySelectedTickRate = Array.IndexOf(this.AvailableTickRates, tr);
-        }, 0, Keys.Unknown))).ToList().Concat(new (string, EditorAction)[] { ("Custom", new EditorAction((e) => true, (e) => this.CurrentlySelectedTickRate == -1, (e) => {
+        }, 0, Keys.Unknown))).ToList().Concat(new (string, EditorAction)[] { ("", new SeparatorEditorAction()), ("Custom", new EditorAction((e) => true, (e) => this.CurrentlySelectedTickRate == -1, (e) => {
             this.OpenPopup("Enter a custom tick rate", (s) => {
                 var custom = this.CustomTickRate;
                 if (ImGui.InputInt("Tick Rate", ref custom))
@@ -538,7 +552,7 @@ Under *projects*, you can see your circuits, and right clicking them in the side
         }
         else
         {
-            var fileDialog = new FileDialog(FileDialog.LastDirectory, FileDialogType.SaveFile, (path) =>
+            var fileDialog = new FileDialog(FileDialog.LastDirectory, "Save project as...", FileDialogType.SaveFile, (path) =>
             {
                 this.Project.LoadedFromPath = Path.GetFullPath(path);
                 Settings.SetSetting(Settings.LAST_OPEN_PROJECT, Path.GetFullPath(path));
@@ -814,12 +828,6 @@ Under *projects*, you can see your circuits, and right clicking them in the side
             ImGui.Spacing();
         }
 
-        ImGui.Text($"TPS: {this.CurrentTicksPerSecond.GetAsHertzString()}");
-        ImGui.Text($"State: {this.FSM.CurrentState.GetType().Name}");
-        ImGui.Text($"Hovered: {this.IsMouseOverComponentWindow()}");
-        long memory = GC.GetTotalMemory(true);
-        ImGui.Text($"Memory: {memory / 1024 / 1024} MB");
-
         if (this.CurrentMessage is not null && this.CurrentMessage != "")
         {
             var cursorX = ImGui.GetCursorPosX();
@@ -875,11 +883,20 @@ Under *projects*, you can see your circuits, and right clicking them in the side
         // }
     }
 
+    public void SubmitStatusMenuBar()
+    {
+        ImGui.Text($"{this.CurrentTicksPerSecond.GetAsHertzString()}");
+        long memory = GC.GetTotalMemory(true);
+        ImGui.Text($"{memory / 1024 / 1024} MB");
+        ImGui.Separator();
+        ImGui.Text($"State: {this.FSM.CurrentState.GetType().Name}");
+    }
+
     private bool _projectsOpen = false;
-    public void SubmitComponentsWindow(Vector2 mainMenuBarSize)
+    public void SubmitComponentsWindow(Vector2 mainMenuBarSize, Vector2 underMenuBarSize)
     {
         ImGui.SetNextWindowPos(new Vector2(0, mainMenuBarSize.Y));
-        ImGui.SetNextWindowSize(new Vector2(180, DisplayManager.GetWindowSizeInPixels().Y - mainMenuBarSize.Y));
+        ImGui.SetNextWindowSize(new Vector2(180, DisplayManager.GetWindowSizeInPixels().Y - mainMenuBarSize.Y - underMenuBarSize.Y));
         if (ImGui.Begin("Components", ImGuiWindowFlags.NoCollapse | ImGuiWindowFlags.NoTitleBar | ImGuiWindowFlags.NoResize | ImGuiWindowFlags.NoMove | ImGuiWindowFlags.AlwaysVerticalScrollbar))
         {
             if (_projectsOpen)
@@ -1135,8 +1152,21 @@ Under *projects*, you can see your circuits, and right clicking them in the side
         var mainMenuBarSize = ImGui.GetWindowSize();
         ImGui.EndMainMenuBar();
 
+        // Status menu bar
+        ImGui.SetNextWindowPos(new Vector2(0, ImGui.GetIO().DisplaySize.Y - mainMenuBarSize.Y));
+        ImGui.SetNextWindowSize(new Vector2(ImGui.GetIO().DisplaySize.X, mainMenuBarSize.Y), ImGuiCond.Always);
+        ImGui.PushStyleVar(ImGuiStyleVar.WindowRounding, 0.0f);
+        ImGui.PushStyleVar(ImGuiStyleVar.WindowMinSize, Vector2.Zero);
+        ImGui.Begin("##STATUSMENUBAR", ImGuiWindowFlags.NoTitleBar | ImGuiWindowFlags.NoResize | ImGuiWindowFlags.NoMove | ImGuiWindowFlags.NoScrollbar | ImGuiWindowFlags.NoScrollWithMouse | ImGuiWindowFlags.NoCollapse | ImGuiWindowFlags.NoSavedSettings | ImGuiWindowFlags.NoBringToFrontOnFocus | ImGuiWindowFlags.NoFocusOnAppearing | ImGuiWindowFlags.NoNav | ImGuiWindowFlags.MenuBar);
+        ImGui.BeginMenuBar();
+        this.SubmitStatusMenuBar();
+        ImGui.EndMenuBar();
+        var underMenuBarSize = ImGui.GetWindowSize();
+        ImGui.End();
+        ImGui.PopStyleVar(2);
+
         // Show the components window which you can drag new components from
-        this.SubmitComponentsWindow(mainMenuBarSize);
+        this.SubmitComponentsWindow(mainMenuBarSize, underMenuBarSize);
 
         // Show the properties window for the selected component
         this.SubmitSingleSelectedPropertyWindow();

@@ -212,7 +212,7 @@ public class Disk : Component<DiskData>
         var uid = this.ID.GetHashCode();
         if (ImGui.Button($"Mount New File##{id}", buttonSize))
         {
-            var dialog = new FileDialog(FileDialog.LastDirectory, FileDialogType.SaveFile, (path) =>
+            var dialog = new FileDialog(FileDialog.LastDirectory, "Mount new file", FileDialogType.SaveFile, (path) =>
             {
                 this.TryMountFile(editor, path);
             });
@@ -222,7 +222,7 @@ public class Disk : Component<DiskData>
         ImGui.SameLine();
         if (ImGui.Button($"Mount Existing File##{id}", buttonSize))
         {
-            var dialog = new FileDialog(FileDialog.LastDirectory, FileDialogType.SelectFile, (path) =>
+            var dialog = new FileDialog(FileDialog.LastDirectory, "Mount existing file", FileDialogType.SelectFile, (path) =>
             {
                 this.TryMountFile(editor, path);
             });
