@@ -6,6 +6,7 @@ namespace LogiX.Architecture.BuiltinComponents;
 
 public class DecoderData : IComponentDescriptionData
 {
+    [ComponentDescriptionProperty("Select Bits", IntMinValue = 1, IntMaxValue = 32)]
     public int SelectBits { get; set; }
 
     public static IComponentDescriptionData GetDefault()
@@ -67,18 +68,6 @@ public class Decoder : Component<DecoderData>
         {
             var val = i == select ? LogicValue.HIGH : LogicValue.LOW;
             outputs[i].Push(val);
-        }
-    }
-
-    public override void SubmitUISelected(Editor editor, int componentIndex)
-    {
-        // Nothing yet.
-        var id = this.GetUniqueIdentifier();
-        var currSelectBits = this._data.SelectBits;
-        if (ImGui.InputInt($"Select Bits##{id}", ref currSelectBits, 1, 1))
-        {
-            this._data.SelectBits = Math.Clamp(currSelectBits, 1, 8);
-            this.Initialize(this._data);
         }
     }
 }

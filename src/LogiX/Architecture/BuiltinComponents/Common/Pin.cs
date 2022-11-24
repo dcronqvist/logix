@@ -61,15 +61,7 @@ public class Pin : Component<PinData>
 
     public override IComponentDescriptionData GetDescriptionData()
     {
-        return new PinData()
-        {
-            Bits = CurrentValues.Length,
-            Values = CurrentValues,
-            Label = this._data.Label,
-            Behaviour = this._data.Behaviour,
-            Side = this._data.Side,
-            IsExternal = this._data.IsExternal
-        };
+        return _data;
     }
 
     public override void Initialize(PinData data)
@@ -98,39 +90,6 @@ public class Pin : Component<PinData>
             this.CurrentValues = io.GetValues();
         }
     }
-
-    // public override void SubmitUISelected(Editor editor, int componentIndex)
-    // {
-    //     int bits = this.CurrentValues.Length;
-    //     var label = this._data.Label;
-    //     if (ImGui.InputTextWithHint($"Label##{this.GetUniqueIdentifier()}", "Label", ref label, 10))
-    //     {
-    //         this._data.Label = label;
-    //         this.Initialize(this._data);
-    //     }
-    //     var currentBehaviour = (int)this._data.Behaviour;
-    //     ImGui.Combo($"Behaviour##{this.GetUniqueIdentifier()}", ref currentBehaviour, new string[] { "Input", "Output" }, 2);
-    //     this._data.Behaviour = (PinBehaviour)currentBehaviour;
-    //     var currentSide = (int)this._data.Side;
-    //     ImGui.Combo($"Side##{this.GetUniqueIdentifier}", ref currentSide, new string[] { "Top", "Bottom", "Left", "Right" }, 4);
-    //     this._data.Side = (ComponentSide)currentSide;
-    //     var currentBits = this._data.Bits;
-    //     ImGui.InputInt($"Bits##{this.GetUniqueIdentifier()}", ref currentBits, 1, 1);
-    //     currentBits = Math.Clamp(currentBits, 1, 64);
-    //     if (currentBits != this._data.Bits)
-    //     {
-    //         this._data.Bits = currentBits;
-    //         this._data.Values = Enumerable.Repeat(LogicValue.UNDEFINED, currentBits).ToArray();
-    //         this.Initialize(this._data);
-    //         this.TriggerSizeRecalculation();
-    //     }
-    //     var external = this._data.IsExternal;
-    //     if (ImGui.Checkbox($"External##{this.GetUniqueIdentifier()}", ref external))
-    //     {
-    //         this._data.IsExternal = external;
-    //         this.TriggerSizeRecalculation();
-    //     }
-    // }
 
     public override void Interact(Camera2D cam)
     {

@@ -6,7 +6,10 @@ namespace LogiX.Architecture.BuiltinComponents;
 
 public class DemultiplexerData : IComponentDescriptionData
 {
+    [ComponentDescriptionProperty("Bits", IntMinValue = 1, IntMaxValue = 32)]
     public int DataBits { get; set; }
+
+    [ComponentDescriptionProperty("Select Bits", IntMinValue = 1, IntMaxValue = 32)]
     public int SelectBits { get; set; }
 
     public static IComponentDescriptionData GetDefault()
@@ -69,23 +72,5 @@ public class Demultiplexer : Component<DemultiplexerData>
 
         var outputs = this.GetIOsWithTag("output");
         outputs[select].Push(input);
-    }
-
-    public override void SubmitUISelected(Editor editor, int componentIndex)
-    {
-        // Nothing yet.
-        var id = this.GetUniqueIdentifier();
-        var currSelectBits = this._data.SelectBits;
-        if (ImGui.InputInt($"Select Bits##{id}", ref currSelectBits, 1, 1))
-        {
-            this._data.SelectBits = currSelectBits;
-            this.Initialize(this._data);
-        }
-        var databits = this._data.DataBits;
-        if (ImGui.InputInt($"Data Bits##{id}", ref databits, 1, 1))
-        {
-            this._data.DataBits = databits;
-            this.Initialize(this._data);
-        }
     }
 }

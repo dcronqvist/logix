@@ -10,6 +10,7 @@ namespace LogiX.Architecture.BuiltinComponents;
 
 public class TextCompData : IComponentDescriptionData
 {
+    [ComponentDescriptionProperty("Text", StringMultiline = true)]
     public string Text { get; set; }
 
     public static IComponentDescriptionData GetDefault()
@@ -66,11 +67,11 @@ public class TextComp : Component<TextCompData>
         var lineMeasures = lines.Select(l => font.MeasureString(l, textScale));
 
         var maxTextWidth = lineMeasures.Max(l => l.X);
-        var maxTextHeight = lineMeasures.Max(l => l.Y);
+        var sumHeight = lineMeasures.Sum(l => l.Y);
 
         var textWidth = Utilities.CeilToMultipleOf(maxTextWidth, gridSize);
-        var textHeight = Utilities.CeilToMultipleOf(maxTextHeight, gridSize) * lines.Length;
-        this._textSize = new Vector2(maxTextWidth, maxTextHeight * lines.Length);
+        var textHeight = Utilities.CeilToMultipleOf(sumHeight, gridSize);
+        this._textSize = new Vector2(maxTextWidth, sumHeight);
 
         var size = new Vector2(Math.Max(textWidth, Constants.GRIDSIZE), Math.Max(textHeight, Constants.GRIDSIZE));
         this._bounds = this.Position.ToVector2(Constants.GRIDSIZE).CreateRect(size);
@@ -106,16 +107,5 @@ public class TextComp : Component<TextCompData>
             TextRenderer.RenderText(font, line, linePos, 1f, 0f, ColorF.Black, camera);
         }
         //TextRenderer.RenderText(tShader, font, this.Name, textPos, 1, this.Rotation == 0 || this.Rotation == 2 ? 0f : MathF.PI / 2f, ColorF.Black, camera);
-    }
-
-    public override void SubmitUISelected(Editor editor, int componentIndex)
-    {
-        var id = this.GetUniqueIdentifier();
-        var text = this._data.Text;
-        if (ImGui.InputTextMultiline($"##{id}", ref text, 1000, new Vector2(200, 100)))
-        {
-            this._data.Text = text;
-            this.Initialize(this._data);
-        }
     }
 }

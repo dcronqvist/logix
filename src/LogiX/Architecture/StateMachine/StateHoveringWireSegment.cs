@@ -42,7 +42,7 @@ public class StateHoveringWireSegment : State<Editor, int>
                         if (ImGui.MenuItem("Delete Wire"))
                         {
                             var deleteSegments = wire.Segments.Select(w => new CDeleteWireSegment(w));
-                            arg.Execute(new CMulti(deleteSegments.ToArray()), arg);
+                            arg.Execute(new CMulti("Deleted wire", deleteSegments.ToArray()), arg);
                             ImGui.CloseCurrentPopup();
                         }
                     });

@@ -66,20 +66,17 @@ public class EditorAction
 
     public string GetShortcutString()
     {
-        string s = "";
-        var modifiers = this.GetAllModifiers();
-
-        for (int i = 0; i < modifiers.Length; i++)
+        if (Key == Keys.Unknown && Modifiers == 0)
         {
-            s += modifiers[i].ToString();
-            if (i < modifiers.Length - 1)
-            {
-                s += "+";
-            }
+            return "";
         }
 
-        s += this.Key.PrettifyKey();
-        return s;
+        if (Modifiers == 0)
+        {
+            return this.Key.PrettifyKey();
+        }
+
+        return $"{this.Modifiers.PrettifyModifiers()}+{this.Key.PrettifyKey()}";
     }
 
     public virtual void SubmitGUI(Editor editor, string actionName)
@@ -110,5 +107,17 @@ public class NestedEditorAction : EditorAction
             }
             ImGui.EndMenu();
         }
+    }
+}
+
+public class SeparatorEditorAction : EditorAction
+{
+    public SeparatorEditorAction() : base((e) => true, (e) => false, (e) => { }, 0, Keys.Unknown)
+    {
+    }
+
+    public override void SubmitGUI(Editor editor, string actionName)
+    {
+        ImGui.Separator();
     }
 }

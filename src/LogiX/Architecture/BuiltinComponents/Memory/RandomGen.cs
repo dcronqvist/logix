@@ -6,9 +6,14 @@ namespace LogiX.Architecture.BuiltinComponents;
 
 public class RandomGenData : IComponentDescriptionData
 {
+    [ComponentDescriptionProperty("Bits", IntMinValue = 1, IntMaxValue = 32)]
     public int DataBits { get; set; }
-    public bool ExposeSeedPin { get; set; }
+
+    [ComponentDescriptionProperty("Seed")]
     public int Seed { get; set; }
+
+    [ComponentDescriptionProperty("Expose Seed Pin")]
+    public bool ExposeSeedPin { get; set; }
 
     public static IComponentDescriptionData GetDefault()
     {
@@ -53,6 +58,8 @@ public class RandomGen : Component<RandomGenData>
         {
             this._random = new Random(data.Seed);
         }
+
+        this.TriggerSizeRecalculation();
     }
 
     private bool TryGetSeed(out int seed)
@@ -126,28 +133,5 @@ public class RandomGen : Component<RandomGenData>
 
         q.Push(_randomValue.GetAsLogicValues(this._data.DataBits));
         this._previousClock = clockHigh;
-    }
-
-    public override void SubmitUISelected(Editor editor, int componentIndex)
-    {
-        var id = this.GetUniqueIdentifier();
-        var databits = this._data.DataBits;
-        if (ImGui.InputInt($"Data Bits##{id}", ref databits, 1, 1))
-        {
-            this._data.DataBits = databits;
-            this.Initialize(this._data);
-        }
-        var seed = this._data.Seed;
-        if (ImGui.InputInt($"Seed##{id}", ref seed, 1, 1))
-        {
-            this._data.Seed = seed;
-            this.Initialize(this._data);
-        }
-        var exposeSeed = this._data.ExposeSeedPin;
-        if (ImGui.Checkbox($"Expose Seed Pin##{id}", ref exposeSeed))
-        {
-            this._data.ExposeSeedPin = exposeSeed;
-            this.Initialize(this._data);
-        }
     }
 }

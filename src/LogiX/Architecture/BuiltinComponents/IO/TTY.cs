@@ -12,10 +12,19 @@ namespace LogiX.Architecture.BuiltinComponents;
 
 public class TTYData : IComponentDescriptionData
 {
+    [ComponentDescriptionProperty("Label", StringHint = "e.g. MAIN_TTY", StringMaxLength = 16)]
     public string Label { get; set; }
+
+    [ComponentDescriptionProperty("Columns", IntMinValue = 1, IntMaxValue = 256, HelpTooltip = "The number of columns in the terminal.")]
     public int Width { get; set; }
+
+    [ComponentDescriptionProperty("Rows", IntMinValue = 1, IntMaxValue = 256, HelpTooltip = "The number of rows in the terminal.")]
     public int Height { get; set; }
+
+    [ComponentDescriptionProperty("Background Color")]
     public ColorF BackgroundColor { get; set; }
+
+    [ComponentDescriptionProperty("Text Color")]
     public ColorF TextColor { get; set; }
 
     public static IComponentDescriptionData GetDefault()
@@ -222,39 +231,5 @@ public class TTY : Component<TTYData>
         }
 
         return lines.TakeLast(this._data.Height).ToArray();
-    }
-
-    public override void SubmitUISelected(Editor editor, int componentIndex)
-    {
-        // NOT NEEDED
-        var id = this.GetUniqueIdentifier();
-        var currLabel = this._data.Label;
-        if (ImGui.InputTextWithHint($"Label##{id}", "Label", ref currLabel, 16))
-        {
-            this._data.Label = currLabel;
-            this.Initialize(this._data);
-        }
-
-        var currWidth = this._data.Width;
-        if (ImGui.InputInt($"Width##{id}", ref currWidth))
-        {
-            this._data.Width = currWidth;
-            this.Initialize(this._data);
-        }
-
-        var currHeight = this._data.Height;
-        if (ImGui.InputInt($"Height##{id}", ref currHeight))
-        {
-            this._data.Height = currHeight;
-            this.Initialize(this._data);
-        }
-
-        var currBackCol = this._data.BackgroundColor.ToVector4();
-        ImGui.ColorEdit4($"Background##{id}", ref currBackCol);
-        this._data.BackgroundColor = new ColorF(currBackCol.X, currBackCol.Y, currBackCol.Z, currBackCol.W);
-
-        var currTextCol = this._data.TextColor.ToVector4();
-        ImGui.ColorEdit4($"Text##{id}", ref currTextCol);
-        this._data.TextColor = new ColorF(currTextCol.X, currTextCol.Y, currTextCol.Z, currTextCol.W);
     }
 }

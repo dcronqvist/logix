@@ -1,4 +1,6 @@
+using System.Numerics;
 using ImGuiNET;
+using LogiX.Architecture.Commands;
 using LogiX.Architecture.Serialization;
 using LogiX.Content.Scripting;
 using LogiX.Graphics.UI;
@@ -7,10 +9,17 @@ namespace LogiX.Architecture.BuiltinComponents;
 
 public class DiskData : IComponentDescriptionData
 {
+    [ComponentDescriptionProperty("Label", StringMaxLength = 16)]
     public string Label { get; set; }
-    public string FilePath { get; set; }
-    public int BlockAddressBits { get; set; } // The addresses of the blocks
+
+    [ComponentDescriptionProperty("Size", IntMinValue = 1, IntMaxValue = 32)]
     public int BlockSize { get; set; } // How big a single block is in bytes
+
+    [ComponentDescriptionProperty("Block Address Bits", IntMinValue = 1, IntMaxValue = 32)]
+    public int BlockAddressBits { get; set; } // The addresses of the blocks
+
+    // Handled internally.
+    public string FilePath { get; set; }
 
     public static IComponentDescriptionData GetDefault()
     {
@@ -136,6 +145,29 @@ public class Disk : Component<DiskData>
         _mutex.Release();
     }
 
+    internal bool TryMountFile(Editor editor, string filePath)
+    {
+        if (!File.Exists(filePath))
+        {
+            var file = File.Create(filePath);
+            file.Write(new byte[(1 << this._data.BlockAddressBits) * this._data.BlockSize]);
+            file.Close();
+
+            editor.Execute(new CModifyComponentDataProp(this.ID, this._data.GetType().GetProperty(nameof(this._data.FilePath)), filePath), editor);
+            return true;
+        }
+        else
+        {
+            if (!this.AssertFileHasCorrectSize(filePath))
+            {
+                return false;
+            }
+
+            editor.Execute(new CModifyComponentDataProp(this.ID, this._data.GetType().GetProperty(nameof(this._data.FilePath)), filePath), editor);
+            return true;
+        }
+    }
+
     internal bool TryMountFile(string filePath)
     {
         if (!File.Exists(filePath))
@@ -169,49 +201,33 @@ public class Disk : Component<DiskData>
 
     public override void SubmitUISelected(Editor editor, int componentIndex)
     {
-        var id = this.GetUniqueIdentifier();
-        var currLabel = this._data.Label;
-        if (ImGui.InputTextWithHint($"Label##{id}", "Label", ref currLabel, 32))
-        {
-            this._data.Label = currLabel;
-            this.Initialize(this._data);
-        }
+        ImGui.TextDisabled($"File: {this._data.FilePath ?? "None"}");
+        base.SubmitUISelected(editor, componentIndex);
 
-        if (ImGui.Button($"Mount New File##{id}"))
+        var avail = ImGui.GetContentRegionAvail();
+        var padding = ImGui.GetStyle().ItemInnerSpacing;
+        var buttonSize = new Vector2(avail.X / 2 - padding.X, 0);
+
+        var id = this.GetUniqueIdentifier();
+        var uid = this.ID.GetHashCode();
+        if (ImGui.Button($"Mount New File##{id}", buttonSize))
         {
             var dialog = new FileDialog(".", FileDialogType.SaveFile, (path) =>
             {
-                this.TryMountFile(path);
+                this.TryMountFile(editor, path);
             });
 
             editor.OpenPopup(dialog);
         }
         ImGui.SameLine();
-        if (ImGui.Button($"Mount Existing File##{id}"))
+        if (ImGui.Button($"Mount Existing File##{id}", buttonSize))
         {
             var dialog = new FileDialog(".", FileDialogType.SelectFile, (path) =>
             {
-                this.TryMountFile(path);
+                this.TryMountFile(editor, path);
             });
 
             editor.OpenPopup(dialog);
-        }
-        ImGui.SameLine();
-
-        ImGui.TextDisabled($"File: {this._data.FilePath ?? "None"}");
-
-        ImGui.Separator();
-        var blockAddressBits = this._data.BlockAddressBits;
-        if (ImGui.InputInt($"Block Address Bits##{id}", ref blockAddressBits, 1, 1))
-        {
-            this._data.BlockAddressBits = blockAddressBits;
-            this.Initialize(this._data);
-        }
-        var blockSize = this._data.BlockSize;
-        if (ImGui.InputInt($"Block Size##{id}", ref blockSize, 1, 1))
-        {
-            this._data.BlockSize = blockSize;
-            this.Initialize(this._data);
         }
     }
 }

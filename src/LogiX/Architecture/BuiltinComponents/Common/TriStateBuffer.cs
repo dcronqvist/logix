@@ -6,6 +6,7 @@ namespace LogiX.Architecture.BuiltinComponents;
 
 public class NoData : IComponentDescriptionData
 {
+    [ComponentDescriptionProperty("Bits", IntMinValue = 1, IntMaxValue = 256)]
     public int DataBits { get; set; }
 
     public static IComponentDescriptionData GetDefault()
@@ -39,6 +40,8 @@ public class TriStateBuffer : Component<NoData>
         this.RegisterIO("in", data.DataBits, ComponentSide.LEFT);
         this.RegisterIO("out", data.DataBits, ComponentSide.RIGHT);
         this.RegisterIO("enabled", 1, ComponentSide.TOP);
+
+        this.TriggerSizeRecalculation();
     }
 
     public override void PerformLogic()
@@ -53,19 +56,6 @@ public class TriStateBuffer : Component<NoData>
         else
         {
             this.GetIOFromIdentifier("out").Push(Enumerable.Repeat(LogicValue.UNDEFINED, this._data.DataBits).ToArray());
-        }
-
-        this.TriggerSizeRecalculation();
-    }
-
-    public override void SubmitUISelected(Editor editor, int componentIndex)
-    {
-        var id = this.GetUniqueIdentifier();
-        var databits = this._data.DataBits;
-        if (ImGui.InputInt($"Data Bits##{id}", ref databits, 1, 1))
-        {
-            this._data.DataBits = databits;
-            this.Initialize(this._data);
         }
     }
 }

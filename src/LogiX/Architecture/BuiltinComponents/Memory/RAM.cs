@@ -1,4 +1,6 @@
+using System.Numerics;
 using ImGuiNET;
+using LogiX.Architecture.Commands;
 using LogiX.Architecture.Serialization;
 using LogiX.Content.Scripting;
 using LogiX.Graphics.UI;
@@ -7,9 +9,14 @@ namespace LogiX.Architecture.BuiltinComponents;
 
 public class RamData : IComponentDescriptionData
 {
-    public ByteAddressableMemory Memory { get; set; }
-    public int AddressBits { get; set; }
+    [ComponentDescriptionProperty("Label", StringHint = "e.g. RAM_1", StringMaxLength = 16)]
     public string Label { get; set; }
+
+    [ComponentDescriptionProperty("Size", IntMinValue = 1, IntMaxValue = 256, HelpTooltip = "The number of address bits.")]
+    public int AddressBits { get; set; }
+
+    // Handled internally
+    public ByteAddressableMemory Memory { get; set; }
 
     public static IComponentDescriptionData GetDefault()
     {
@@ -127,21 +134,13 @@ public class RAM : Component<RamData>
         var id = this.GetUniqueIdentifier();
         this.memoryEditor.DrawWindow($"Random Access Memory Editor##{id}", this._data.Memory, 1, this.currentlySelectedAddress, this.hasSelectedAddress, () =>
         {
-            var currLabel = this._data.Label;
-            if (ImGui.InputTextWithHint($"Label##{id}", "Label", ref currLabel, 16))
-            {
-                this._data.Label = currLabel;
-            }
+            base.SubmitUISelected(editor, componentIndex);
 
-            var currAddressBits = this._data.AddressBits;
-            if (ImGui.InputInt($"Address Bits##{id}", ref currAddressBits, 1, 1))
-            {
-                this._data.AddressBits = currAddressBits;
-                this._data.Memory = new ByteAddressableMemory((int)Math.Pow(2, this._data.AddressBits), false);
-                this.Initialize(this._data);
-            }
+            var avail = ImGui.GetContentRegionAvail();
+            var padding = ImGui.GetStyle().ItemInnerSpacing;
+            var buttonSize = new Vector2(avail.X / 3 - padding.X, 0);
 
-            if (ImGui.Button($"Load From File##{id}"))
+            if (ImGui.Button($"Load From File##{id}", buttonSize))
             {
                 var fileDialog = new FileDialog(".", FileDialogType.SelectFile, (path) =>
                 {
@@ -149,11 +148,7 @@ public class RAM : Component<RamData>
                     {
                         var data = sr.ReadBytes((int)sr.BaseStream.Length);
                         var addressBits = (int)Math.Ceiling(Math.Log(data.Length, 2));
-
-                        this._data.AddressBits = addressBits;
-
-                        this.Initialize(this._data);
-
+                        editor.Execute(new CModifyComponentDataProp(this.ID, this._data.GetType().GetProperty(nameof(this._data.AddressBits)), addressBits), editor);
                         this._data.Memory = new ByteAddressableMemory(data);
                     }
 
@@ -161,7 +156,7 @@ public class RAM : Component<RamData>
                 editor.OpenPopup(fileDialog);
             }
             ImGui.SameLine();
-            if (ImGui.Button($"Dump To File##{id}"))
+            if (ImGui.Button($"Dump To File##{id}", buttonSize))
             {
                 var fileDialog = new FileDialog(".", FileDialogType.SaveFile, (path) =>
                 {
@@ -175,7 +170,7 @@ public class RAM : Component<RamData>
             }
             ImGui.SameLine();
             // Clear button
-            if (ImGui.Button($"Clear##{id}"))
+            if (ImGui.Button($"Clear##{id}", buttonSize))
             {
                 this._data.Memory = new ByteAddressableMemory((int)Math.Pow(2, this._data.AddressBits), false);
             }

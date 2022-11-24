@@ -6,6 +6,7 @@ namespace LogiX.Architecture.BuiltinComponents;
 
 public class RegisterData : IComponentDescriptionData
 {
+    [ComponentDescriptionProperty("Bits", IntMinValue = 1, IntMaxValue = 32)]
     public int DataBits { get; set; }
 
     public static IComponentDescriptionData GetDefault()
@@ -81,17 +82,5 @@ public class Register : Component<RegisterData>
 
         q.Push(this._currentState);
         previousClk = clk;
-    }
-
-    public override void SubmitUISelected(Editor editor, int componentIndex)
-    {
-        // Nothing yet.
-        var id = this.GetUniqueIdentifier();
-        var databits = this._data.DataBits;
-        if (ImGui.InputInt($"Data Bits##{id}", ref databits, 1, 1))
-        {
-            this._data.DataBits = databits;
-            this.Initialize(this._data);
-        }
     }
 }

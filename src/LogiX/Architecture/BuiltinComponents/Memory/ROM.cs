@@ -1,4 +1,5 @@
 using ImGuiNET;
+using LogiX.Architecture.Commands;
 using LogiX.Architecture.Serialization;
 using LogiX.Content.Scripting;
 using LogiX.Graphics.UI;
@@ -7,8 +8,11 @@ namespace LogiX.Architecture.BuiltinComponents;
 
 public class RomData : IComponentDescriptionData
 {
-    public ByteAddressableMemory Memory { get; set; }
+    [ComponentDescriptionProperty("Address Bits", IntMinValue = 1, IntMaxValue = 32)]
     public int AddressBits { get; set; }
+
+    // Handled internally.
+    public ByteAddressableMemory Memory { get; set; }
 
     public static IComponentDescriptionData GetDefault()
     {
@@ -89,13 +93,7 @@ public class ROM : Component<RomData>
         var id = this.GetUniqueIdentifier();
         this.memoryEditor.DrawWindow($"Read Only Memory Editor##{id}", this._data.Memory, 1, this.currentlySelectedAddress, this.hasSelectedAddress, () =>
         {
-            var currAddressBits = this._data.AddressBits;
-            if (ImGui.InputInt($"Address Bits##{id}", ref currAddressBits, 1, 1))
-            {
-                this._data.AddressBits = currAddressBits;
-                this._data.Memory = new ByteAddressableMemory((int)Math.Pow(2, this._data.AddressBits), false);
-                this.Initialize(this._data);
-            }
+            this.SubmitUISelected(editor, componentIndex);
 
             if (ImGui.Button($"Load From File##{id}"))
             {
@@ -106,12 +104,11 @@ public class ROM : Component<RomData>
                         var data = sr.ReadBytes((int)sr.BaseStream.Length);
                         var addressBits = (int)Math.Ceiling(Math.Log(data.Length, 2));
 
-                        this._data.AddressBits = addressBits;
+                        var setAddressBits = new CModifyComponentDataProp(this.ID, this._data.GetType().GetProperty(nameof(this._data.AddressBits)), addressBits);
+                        var setMemory = new CModifyComponentDataProp(this.ID, this._data.GetType().GetProperty(nameof(this._data.Memory)), new ByteAddressableMemory(data));
+                        var multi = new CMulti("Load ROM from file", setAddressBits, setMemory);
 
-                        this.Initialize(this._data);
-
-                        this._data.Memory = new ByteAddressableMemory(data);
-
+                        editor.Execute(multi, editor);
                         this._pathLoadedFrom = path;
                     }
 
@@ -142,11 +139,11 @@ public class ROM : Component<RomData>
                     var data = sr.ReadBytes((int)sr.BaseStream.Length);
                     var addressBits = (int)Math.Ceiling(Math.Log(data.Length, 2));
 
-                    this._data.AddressBits = addressBits;
+                    var setAddressBits = new CModifyComponentDataProp(this.ID, this._data.GetType().GetProperty(nameof(this._data.AddressBits)), addressBits);
+                    var setMemory = new CModifyComponentDataProp(this.ID, this._data.GetType().GetProperty(nameof(this._data.Memory)), new ByteAddressableMemory(data));
+                    var multi = new CMulti("Reload ROM from file", setAddressBits, setMemory);
 
-                    this.Initialize(this._data);
-
-                    this._data.Memory = new ByteAddressableMemory(data);
+                    editor.Execute(multi, editor);
                 }
             }
 

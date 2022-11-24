@@ -61,6 +61,11 @@ public class Vector2i
         return new Vector2i(-x.X, -x.Y);
     }
 
+    public static Vector2i operator /(Vector2i v, int x)
+    {
+        return new Vector2i(v.X / x, v.Y / x);
+    }
+
     public static bool operator ==(Vector2i left, Vector2i right)
     {
         return left.Equals(right);
@@ -483,7 +488,7 @@ public abstract class Component
                 continue; // Skip properties without the attribute
             }
 
-            var displayName = attrib.DisplayName;
+            var displayName = $"{attrib.DisplayName}##{id}";
 
             if (propType == typeof(int))
             {
@@ -526,14 +531,14 @@ public abstract class Component
                     // No hint
                     if (attrib.StringMultiline)
                     {
-                        if (ImGui.InputTextMultiline(displayName, ref val, (uint)attrib.StringMaxLength, new Vector2(300, 150), attrib.StringFlags, callback))
+                        if (ImGui.InputTextMultiline(displayName, ref val, attrib.StringMaxLength, new Vector2(300, 150), attrib.StringFlags, callback))
                         {
                             editor.Execute(new CModifyComponentDataProp(this.ID, prop, val), editor);
                         }
                     }
                     else
                     {
-                        if (ImGui.InputText(displayName, ref val, (uint)attrib.StringMaxLength, attrib.StringFlags, callback))
+                        if (ImGui.InputText(displayName, ref val, attrib.StringMaxLength, attrib.StringFlags, callback))
                         {
                             editor.Execute(new CModifyComponentDataProp(this.ID, prop, val), editor);
                         }
@@ -541,7 +546,7 @@ public abstract class Component
                 }
                 else
                 {
-                    if (ImGui.InputTextWithHint(displayName, attrib.StringHint, ref val, (uint)attrib.StringMaxLength, attrib.StringFlags, callback))
+                    if (ImGui.InputTextWithHint(displayName, attrib.StringHint, ref val, attrib.StringMaxLength, attrib.StringFlags, callback))
                     {
                         editor.Execute(new CModifyComponentDataProp(this.ID, prop, val), editor);
                     }
@@ -552,6 +557,16 @@ public abstract class Component
                 bool val = (bool)propValue;
                 if (ImGui.Checkbox(displayName, ref val))
                 {
+                    editor.Execute(new CModifyComponentDataProp(this.ID, prop, val), editor);
+                }
+            }
+            else if (propType == typeof(ColorF))
+            {
+                ColorF val = (ColorF)propValue;
+                var colorV3 = new Vector3(val.R, val.G, val.B);
+                if (ImGui.ColorEdit3(displayName, ref colorV3))
+                {
+                    val = new ColorF(colorV3.X, colorV3.Y, colorV3.Z, val.A);
                     editor.Execute(new CModifyComponentDataProp(this.ID, prop, val), editor);
                 }
             }

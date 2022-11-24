@@ -17,10 +17,19 @@ public enum ConsumeBehaviour : int
 
 public class KeyboardData : IComponentDescriptionData
 {
+    [ComponentDescriptionProperty("Label", StringHint = "e.g. MAIN_KBD", StringMaxLength = 16)]
     public string Label { get; set; }
+
+    [ComponentDescriptionProperty("Max Buffer Size", IntMinValue = 1, IntMaxValue = 256, HelpTooltip = "The maximum number of keys that can be stored in the buffer at once.")]
     public int MaxBufferSize { get; set; }
+
+    [ComponentDescriptionProperty("Background Color")]
     public ColorF BackgroundColor { get; set; }
+
+    [ComponentDescriptionProperty("Text Color")]
     public ColorF TextColor { get; set; }
+
+    [ComponentDescriptionProperty("Consume Behaviour")]
     public ConsumeBehaviour ConsumeBehaviour { get; set; }
 
     public static IComponentDescriptionData GetDefault()
@@ -235,36 +244,8 @@ public class Keyboard : Component<KeyboardData>
 
     public override void SubmitUISelected(Editor editor, int componentIndex)
     {
-        // NOT NEEDED
+        base.SubmitUISelected(editor, componentIndex);
         var id = this.GetUniqueIdentifier();
-        var currLabel = this._data.Label;
-        if (ImGui.InputTextWithHint($"Label##{id}", "Label", ref currLabel, 16))
-        {
-            this._data.Label = currLabel;
-            this.Initialize(this._data);
-        }
-
-        var currMaxBuff = this._data.MaxBufferSize;
-        if (ImGui.InputInt($"Max Buffer Size##{id}", ref currMaxBuff))
-        {
-            this._data.MaxBufferSize = currMaxBuff;
-            this.Initialize(this._data);
-        }
-
-        var currConsume = (int)this._data.ConsumeBehaviour;
-        if (ImGui.Combo($"Consume Behaviour##{id}", ref currConsume, "Rising Edge\0Falling Edge\0\0"))
-        {
-            this._data.ConsumeBehaviour = (ConsumeBehaviour)currConsume;
-        }
-
-        var currBackCol = this._data.BackgroundColor.ToVector4();
-        ImGui.ColorEdit4($"Background##{id}", ref currBackCol);
-        this._data.BackgroundColor = new ColorF(currBackCol.X, currBackCol.Y, currBackCol.Z, currBackCol.W);
-
-        var currTextCol = this._data.TextColor.ToVector4();
-        ImGui.ColorEdit4($"Text##{id}", ref currTextCol);
-        this._data.TextColor = new ColorF(currTextCol.X, currTextCol.Y, currTextCol.Z, currTextCol.W);
-
-        ImGui.Checkbox($"Capture Keyboard Input##{id}", ref this._captureKeys);
+        ImGui.Checkbox($"Capture Keyboard Input##{id}", ref this._captureKeys); // Is only part of the current simulation
     }
 }

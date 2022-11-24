@@ -19,8 +19,8 @@ public class CAddWire : Command<Editor>
         });
     }
 
-    public override string ToString()
+    public override string GetDescription()
     {
-        return $"Connect {_startPos} to {_endPos}";
+        return $"Add wire from {_startPos.X},{_startPos.Y} to {_endPos.X},{_endPos.Y}";
     }
 }

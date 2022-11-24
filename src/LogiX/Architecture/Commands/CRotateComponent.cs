@@ -4,10 +4,10 @@ namespace LogiX.Architecture.Commands;
 
 public class CRotateComponent : Command<Editor>
 {
-    public Component Component { get; set; }
+    public Guid Component { get; set; }
     public int Rotation { get; set; }
 
-    public CRotateComponent(Component comp, int rotation)
+    public CRotateComponent(Guid comp, int rotation)
     {
         this.Component = comp;
         this.Rotation = rotation;
@@ -17,15 +17,21 @@ public class CRotateComponent : Command<Editor>
     {
         arg.Sim.LockedAction(s =>
         {
+            var comp = s.GetComponentFromID(this.Component);
             var rotationSign = Math.Sign(this.Rotation);
             if (rotationSign == 1)
             {
-                Component.RotateClockwise(this.Rotation);
+                comp.RotateClockwise(this.Rotation);
             }
             else
             {
-                Component.RotateCounterClockwise(-this.Rotation);
+                comp.RotateCounterClockwise(-this.Rotation);
             }
         });
+    }
+
+    public override string GetDescription()
+    {
+        return $"Rotate {this.Component} {this.Rotation} times";
     }
 }

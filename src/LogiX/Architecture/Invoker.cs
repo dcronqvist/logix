@@ -38,6 +38,22 @@ public abstract class Invoker<TState, TArg>
         this.CurrentCommandIndex++;
     }
 
+    public void Execute(TState stateBefore, Command<TArg> command, TArg arg, bool doExecute = true)
+    {
+        if (this.CurrentCommandIndex < this.Commands.Count - 1)
+        {
+            this.Commands.RemoveRange(this.CurrentCommandIndex + 1, this.Commands.Count - this.CurrentCommandIndex - 1);
+        }
+
+        if (doExecute)
+        {
+            command.Execute(arg);
+        }
+        var stateAfter = this.GetCurrentInvokerState();
+        this.Commands.Add((stateBefore, command, stateAfter));
+        this.CurrentCommandIndex++;
+    }
+
     /// <summary>
     /// Undo the last command by simply returning the state before the command was executed.
     /// </summary>

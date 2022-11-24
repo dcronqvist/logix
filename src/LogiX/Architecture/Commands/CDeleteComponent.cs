@@ -19,4 +19,9 @@ public class CDeleteComponent : Command<Editor>
             s.RemoveComponent(comp);
         });
     }
+
+    public override string GetDescription()
+    {
+        return $"Delete {this.Component}";
+    }
 }

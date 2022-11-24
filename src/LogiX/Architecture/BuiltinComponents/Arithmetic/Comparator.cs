@@ -6,6 +6,7 @@ namespace LogiX.Architecture.BuiltinComponents;
 
 public class ComparatorData : IComponentDescriptionData
 {
+    [ComponentDescriptionProperty("Bits", IntMinValue = 1, IntMaxValue = 32)]
     public int DataBits { get; set; }
 
     public static IComponentDescriptionData GetDefault()
@@ -80,17 +81,6 @@ public class Comparator : Component<ComparatorData>
             agb.Push(LogicValue.LOW);
             aeb.Push(LogicValue.LOW);
             alb.Push(LogicValue.HIGH);
-        }
-    }
-
-    public override void SubmitUISelected(Editor editor, int componentIndex)
-    {
-        var id = this.GetUniqueIdentifier();
-        var databits = this._data.DataBits;
-        if (ImGui.InputInt($"Data Bits##{id}", ref databits, 1, 1))
-        {
-            this._data.DataBits = databits;
-            this.Initialize(this._data);
         }
     }
 }

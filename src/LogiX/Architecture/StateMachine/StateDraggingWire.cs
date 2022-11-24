@@ -89,7 +89,7 @@ public class StateDraggingWire : State<Editor, int>
                         new CAddWire(_startPos, _cornerPos),
                         new CAddWire(_cornerPos, _endPos)
                     };
-                    arg.Execute(new CMulti(commands), arg);
+                    arg.Execute(new CMulti("Create wire with corner", commands), arg);
                 }
                 else
                 {

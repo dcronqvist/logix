@@ -22,4 +22,9 @@ public class CDeleteWireSegment : Command<Editor>
             }
         });
     }
+
+    public override string GetDescription()
+    {
+        return $"Delete wire segment {this.Segment.Item1.X},{this.Segment.Item1.Y} to {this.Segment.Item2.X},{this.Segment.Item2.Y}";
+    }
 }

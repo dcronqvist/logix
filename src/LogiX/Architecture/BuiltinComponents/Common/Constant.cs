@@ -1,4 +1,5 @@
 using ImGuiNET;
+using LogiX.Architecture.Commands;
 using LogiX.Architecture.Serialization;
 using LogiX.Content.Scripting;
 
@@ -6,7 +7,10 @@ namespace LogiX.Architecture.BuiltinComponents;
 
 public class ConstantData : IComponentDescriptionData
 {
+    [ComponentDescriptionProperty("Bits", IntMinValue = 1, IntMaxValue = 32)]
     public int DataBits { get; set; }
+
+    // Will be rendered by this component.
     public uint Value { get; set; }
 
     public static IComponentDescriptionData GetDefault()
@@ -57,6 +61,8 @@ public class Constant : Component<ConstantData>
 
     public override void SubmitUISelected(Editor editor, int componentIndex)
     {
+        base.SubmitUISelected(editor, componentIndex);
+
         var id = this.GetUniqueIdentifier();
         var symbols = (int)Math.Ceiling(this._data.DataBits / 4f);
         var currVal = (int)this._data.Value;
@@ -64,15 +70,8 @@ public class Constant : Component<ConstantData>
         {
             if (IsInputValid((uint)currVal, this._data.DataBits))
             {
-                this._data.Value = (uint)currVal;
-                this.Initialize(this._data);
+                editor.Execute(new CModifyComponentDataProp(this.ID, this._data.GetType().GetProperty(nameof(this._data.Value)), (uint)currVal), editor);
             }
-        }
-        var currBits = this._data.DataBits;
-        if (ImGui.InputInt($"Data Bits##{id}", ref currBits))
-        {
-            this._data.DataBits = currBits;
-            this.Initialize(this._data);
         }
     }
 }

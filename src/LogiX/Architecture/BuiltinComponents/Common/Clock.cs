@@ -8,7 +8,10 @@ namespace LogiX.Architecture.BuiltinComponents;
 
 public class ClockData : IComponentDescriptionData
 {
+    [ComponentDescriptionProperty("High Duration", HelpTooltip = "Amount of ticks the clock will remain HIGH", IntMinValue = 1)]
     public int HighDuration { get; set; }
+
+    [ComponentDescriptionProperty("Low Duration", HelpTooltip = "Amount of ticks the clock will remain LOW", IntMinValue = 1)]
     public int LowDuration { get; set; }
 
     public static IComponentDescriptionData GetDefault()
@@ -62,23 +65,6 @@ public class Clock : Component<ClockData>
         {
             _counter = 0;
             output.Push(LogicValue.LOW);
-        }
-    }
-
-    public override void SubmitUISelected(Editor editor, int componentIndex)
-    {
-        var id = this.GetUniqueIdentifier();
-        var highdur = this._data.HighDuration;
-        if (ImGui.InputInt($"High Duration##{id}", ref highdur, 20, 100))
-        {
-            this._data.HighDuration = highdur;
-            this.Initialize(this._data);
-        }
-        var lowdur = this._data.LowDuration;
-        if (ImGui.InputInt($"Low Duration##{id}", ref lowdur, 20, 100))
-        {
-            this._data.LowDuration = lowdur;
-            this.Initialize(this._data);
         }
     }
 }

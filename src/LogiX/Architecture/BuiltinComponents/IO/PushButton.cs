@@ -10,6 +10,7 @@ namespace LogiX.Architecture.BuiltinComponents;
 
 public class PushButtonData : IComponentDescriptionData
 {
+    [ComponentDescriptionProperty("Label", StringHint = "e.g. BTN_RESET", StringMaxLength = 16)]
     public string Label { get; set; }
 
     public static IComponentDescriptionData GetDefault()
@@ -121,17 +122,5 @@ public class PushButton : Component<PushButtonData>
 
         // Draw the component
         PrimitiveRenderer.RenderCircle(pos + realSize / 2f, 11f, 0f, Constants.COLOR_SELECTED, sides: 20);
-    }
-
-    public override void SubmitUISelected(Editor editor, int componentIndex)
-    {
-        // NOT NEEDED
-        var id = this.GetUniqueIdentifier();
-        var currLabel = this._data.Label;
-        if (ImGui.InputTextWithHint($"Label##{id}", "Label", ref currLabel, 16))
-        {
-            this._data.Label = currLabel;
-            this.Initialize(this._data);
-        }
     }
 }

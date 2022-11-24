@@ -6,6 +6,7 @@ namespace LogiX.Architecture.BuiltinComponents;
 
 public class DividerData : IComponentDescriptionData
 {
+    [ComponentDescriptionProperty("Bits", IntMinValue = 1, IntMaxValue = 32)]
     public int DataBits { get; set; }
 
     public static IComponentDescriptionData GetDefault()
@@ -79,16 +80,5 @@ public class Divider : Component<DividerData>
         s.Push(sumAsBits);
         rem.Push(remainder.GetAsLogicValues(this._data.DataBits));
         z.Push(LogicValue.LOW);
-    }
-
-    public override void SubmitUISelected(Editor editor, int componentIndex)
-    {
-        var id = this.GetUniqueIdentifier();
-        var databits = this._data.DataBits;
-        if (ImGui.InputInt($"Data Bits##{id}", ref databits, 1, 1))
-        {
-            this._data.DataBits = databits;
-            this.Initialize(this._data);
-        }
     }
 }

@@ -1,5 +1,6 @@
 using System.Numerics;
 using LogiX.Architecture.Commands;
+using LogiX.Architecture.Serialization;
 using LogiX.GLFW;
 
 namespace LogiX.Architecture.StateMachine;
@@ -9,6 +10,7 @@ public class StateMovingSelection : State<Editor, int>
     private Vector2 startWorldPos;
     private List<Component> components;
     private List<(Vector2i, Vector2i)> segments;
+    private Circuit stateBefore;
 
     public override void OnEnter(Editor updateArg, int arg)
     {
@@ -17,6 +19,7 @@ public class StateMovingSelection : State<Editor, int>
         {
             this.components = s.SelectedComponents.ToList();
             this.segments = s.SelectedWireSegments.ToList();
+            this.stateBefore = updateArg.GetCurrentInvokerState();
             s.PickUpSelection();
         });
     }
@@ -45,10 +48,14 @@ public class StateMovingSelection : State<Editor, int>
         else
         {
             var currentSnap = currentMouse.ToVector2i(Constants.GRIDSIZE);
+            var delta = currentSnap - this.startWorldPos.ToVector2i(Constants.GRIDSIZE);
             arg.Sim.LockedAction(s =>
             {
-                s.CommitMovedPickedUpSelection(currentSnap - this.startWorldPos.ToVector2i(Constants.GRIDSIZE));
-                arg.Execute(new CMoveSelection(components.Select(c => c.ID).ToList(), segments.ToList(), currentSnap - this.startWorldPos.ToVector2i(Constants.GRIDSIZE)), arg, false);
+                s.CommitMovedPickedUpSelection(delta);
+                if (delta != Vector2i.Zero)
+                {
+                    arg.Execute(stateBefore, new CMoveSelection(components.Select(c => c.ID).ToList(), segments.ToList(), delta), arg, false);
+                }
             });
             this.GoToState<StateIdle>(0);
         }

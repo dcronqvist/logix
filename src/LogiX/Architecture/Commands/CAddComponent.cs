@@ -24,4 +24,9 @@ public class CAddComponent : Command<Editor>
             s.SelectComponent(comp);
         });
     }
+
+    public override string GetDescription()
+    {
+        return $"Add {this.Component.ComponentTypeID} at {this.Position.X},{this.Position.Y}";
+    }
 }

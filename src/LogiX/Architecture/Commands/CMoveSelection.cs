@@ -29,4 +29,9 @@ public class CMoveSelection : Command<Editor>
             }
         });
     }
+
+    public override string GetDescription()
+    {
+        return $"Move {this.Components.Count} components and {this.Segments.Count} segments by {this.Delta.X},{this.Delta.Y}";
+    }
 }

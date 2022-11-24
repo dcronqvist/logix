@@ -26,4 +26,9 @@ public class CModifyComponentDataProp : Command<Editor>
             comp.Initialize(data);
         });
     }
+
+    public override string GetDescription()
+    {
+        return $"Modify {this.Component} {this.Property.Name} to {this.Value}";
+    }
 }

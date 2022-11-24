@@ -18,7 +18,10 @@ public enum SplitterDirection
 
 public class SplitterData : IComponentDescriptionData
 {
+    [ComponentDescriptionProperty("Bits", HelpTooltip = "The number of bits to split or combine depending on the direction.", IntMinValue = 1, IntMaxValue = 256)]
     public int BitsToSplit { get; set; }
+
+    [ComponentDescriptionProperty("Direction")]
     public SplitterDirection Direction { get; set; }
 
     public static IComponentDescriptionData GetDefault()
@@ -56,6 +59,8 @@ public class Splitter : Component<SplitterData>
         {
             this.RegisterIO($"single_{i}", 1, ComponentSide.RIGHT, "out");
         }
+
+        this.TriggerSizeRecalculation();
     }
 
     public override void PerformLogic()
@@ -85,23 +90,6 @@ public class Splitter : Component<SplitterData>
             }
 
             output.Push(values);
-        }
-    }
-
-    public override void SubmitUISelected(Editor editor, int componentIndex)
-    {
-        var uid = this.GetUniqueIdentifier();
-        var currBits = this._data.BitsToSplit;
-        if (ImGui.InputInt($"Bits##{uid}", ref currBits))
-        {
-            this._data.BitsToSplit = currBits;
-            this.Initialize(this._data);
-        }
-        var currDir = (int)this._data.Direction;
-        if (ImGui.Combo($"Direction##{uid}", ref currDir, "Split\0Combine\0"))
-        {
-            this._data.Direction = (SplitterDirection)currDir;
-            this.Initialize(this._data);
         }
     }
 

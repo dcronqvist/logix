@@ -199,6 +199,11 @@ public class Simulation
     {
     }
 
+    public bool HasSelection()
+    {
+        return this.SelectedComponents.Count > 0 || this.SelectedWireSegments.Count > 0;
+    }
+
     public bool TryGetLogicValuesAtPosition(Vector2i position, int expectedWidth, [NotNullWhen(true)] out LogicValue[] values, [NotNullWhen(false)] out LogicValueRetrievalStatus status, out IO fromIO, out Component fromComp)
     {
         // Find all driven values at that position, if any.

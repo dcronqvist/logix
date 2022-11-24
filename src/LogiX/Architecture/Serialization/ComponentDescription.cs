@@ -14,7 +14,7 @@ public class ComponentDescriptionPropertyAttribute : Attribute
     public int IntMinValue { get; set; } = int.MinValue;
     public int IntMaxValue { get; set; } = int.MaxValue;
 
-    public int StringMaxLength { get; set; } = int.MaxValue;
+    public uint StringMaxLength { get; set; } = ushort.MaxValue;
     public string StringHint { get; set; } = null;
     public bool StringMultiline { get; set; } = false;
     public ImGuiInputTextFlags StringFlags { get; set; } = ImGuiInputTextFlags.CallbackCharFilter;

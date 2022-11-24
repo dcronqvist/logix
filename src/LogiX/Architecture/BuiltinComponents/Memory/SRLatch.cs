@@ -66,22 +66,4 @@ public class SRLatch : Component<SRLatchData>
         q.Push(this._currentState);
         qNot.Push(this._currentState == LogicValue.UNDEFINED ? LogicValue.UNDEFINED : this._currentState == LogicValue.HIGH ? LogicValue.LOW : LogicValue.HIGH);
     }
-
-    public override void SubmitUISelected(Editor editor, int componentIndex)
-    {
-        // Nothing yet.
-        // var id = this.GetUniqueIdentifier();
-        // var currSelectBits = this._data.SelectBits;
-        // if (ImGui.InputInt($"Select Bits##{id}", ref currSelectBits, 1, 1))
-        // {
-        //     this._data.SelectBits = currSelectBits;
-        //     this.Initialize(this._data);
-        // }
-        // var databits = this._data.DataBits;
-        // if (ImGui.InputInt($"Data Bits##{id}", ref databits, 1, 1))
-        // {
-        //     this._data.DataBits = databits;
-        //     this.Initialize(this._data);
-        // }
-    }
 }

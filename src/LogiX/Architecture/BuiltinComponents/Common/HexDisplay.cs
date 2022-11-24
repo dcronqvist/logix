@@ -10,6 +10,7 @@ namespace LogiX.Architecture.BuiltinComponents;
 
 public class HexDisplayData : IComponentDescriptionData
 {
+    [ComponentDescriptionProperty("Bits", IntMinValue = 1, IntMaxValue = 256)]
     public int DataBits { get; set; }
 
     public static IComponentDescriptionData GetDefault()
@@ -148,17 +149,6 @@ public class HexDisplay : Component<HexDisplayData>
 
                 PrimitiveRenderer.RenderLine(start, end, 3, ColorF.Red);
             }
-        }
-    }
-
-    public override void SubmitUISelected(Editor editor, int componentIndex)
-    {
-        var id = this.GetUniqueIdentifier();
-        var currBits = this._data.DataBits;
-        if (ImGui.InputInt($"Data Bits##{id}", ref currBits))
-        {
-            this._data.DataBits = Math.Clamp(currBits, 1, 64);
-            this.Initialize(this._data);
         }
     }
 }

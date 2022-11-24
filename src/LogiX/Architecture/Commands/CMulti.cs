@@ -5,8 +5,9 @@ namespace LogiX.Architecture.Commands;
 public class CMulti : Command<Editor>
 {
     public List<Command<Editor>> Commands { get; set; }
+    public string Description { get; set; }
 
-    public CMulti(params Command<Editor>[] commands)
+    public CMulti(string desc, params Command<Editor>[] commands)
     {
         this.Commands = new List<Command<Editor>>(commands);
     }
@@ -17,5 +18,10 @@ public class CMulti : Command<Editor>
         {
             cmd.Execute(arg);
         }
+    }
+
+    public override string GetDescription()
+    {
+        return this.Description;
     }
 }

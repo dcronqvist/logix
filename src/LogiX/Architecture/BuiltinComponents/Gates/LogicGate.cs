@@ -6,6 +6,7 @@ namespace LogiX.Architecture.BuiltinComponents;
 
 public class GateData : IComponentDescriptionData
 {
+    [ComponentDescriptionProperty("Bits", IntMinValue = 1, IntMaxValue = 32)]
     public int DataBits { get; set; } // Setting this to something other than 1 will create a bitwise gate
 
     public static IComponentDescriptionData GetDefault()
@@ -61,17 +62,6 @@ public abstract class LogicGate<TData> : Component<TData> where TData : GateData
         var oVals = Enumerable.Range(0, aVal.Length).Select(i => this.Logic.GetValueToPush(aVal[i], bVal[i])).ToArray();
 
         o.Push(oVals);
-    }
-
-    public override void SubmitUISelected(Editor editor, int componentIndex)
-    {
-        var id = this.GetUniqueIdentifier();
-        var currBits = this._data.DataBits;
-        if (ImGui.InputInt($"Data Bits##{id}", ref currBits))
-        {
-            this._data.DataBits = Math.Clamp(currBits, 1, 32);
-            this.Initialize(this._data);
-        }
     }
 
     public abstract IGateLogic GetLogic();

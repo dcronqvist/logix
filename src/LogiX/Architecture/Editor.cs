@@ -77,6 +77,9 @@ public class Editor : Invoker<Circuit, Editor>
         return this.GetCurrentCircuit();
     }
 
+    private List<Guid> _currentComponentClipboard = new();
+    private List<(Vector2i, Vector2i)> _currentSegmentClipboard = new();
+
     public Editor()
     {
         #region INITIALIZE FRAMEBUFFER AND INPUT
@@ -304,24 +307,40 @@ public class Editor : Invoker<Circuit, Editor>
             this.Sim.LockedAction(s => s.SetCircuitInSimulation(newState));
         }, ModifierKeys.Control, Keys.Y));
 
+        this.AddMainMenuItem("Edit", "SEPARATOR", new SeparatorEditorAction());
+
+        this.AddMainMenuItem("Edit", "Copy", new EditorAction((e) => this.Sim.LockedAction(s => s.HasSelection()), (e) => false, (e) =>
+        {
+            this._currentComponentClipboard = this.Sim.LockedAction(s => s.SelectedComponents.Select(c => c.ID)).ToList();
+            this._currentSegmentClipboard = this.Sim.LockedAction(s => s.SelectedWireSegments).ToList();
+        }, ModifierKeys.Control, Keys.C));
+
+        this.AddMainMenuItem("Edit", "Paste", new EditorAction((e) => this._currentComponentClipboard.Count > 0, (e) => false, (e) =>
+        {
+            var comm = new CPaste(this._currentComponentClipboard, this._currentSegmentClipboard, Input.GetMousePosition(this.Camera).ToVector2i(Constants.GRIDSIZE));
+            this.Execute(comm, this);
+        }, ModifierKeys.Control, Keys.V));
+
+        this.AddMainMenuItem("Edit", "SEPARATOR", new SeparatorEditorAction());
+
         this.AddMainMenuItem("Edit", "Delete Selection", new EditorAction((e) => this.Sim.LockedAction(s => s.SelectedComponents).Count > 0, (e) => false, (e) =>
         {
             var commands = new List<Command<Editor>>();
             commands.AddRange(this.Sim.LockedAction(s => s.SelectedComponents.Select(c => new CDeleteComponent(c.ID))));
             commands.AddRange(this.Sim.LockedAction(s => s.SelectedWireSegments.Select(w => new CDeleteWireSegment(w))));
-            this.Execute(new CMulti(commands.ToArray()), this);
+            this.Execute(new CMulti("Delete Selection", commands.ToArray()), this);
         }, 0, Keys.Delete));
 
         this.AddMainMenuItem("Edit", "Rotate Clockwise", new EditorAction((e) => this.Sim.LockedAction(s => s.SelectedComponents).Count > 0, (e) => false, (e) =>
         {
-            var commands = this.Sim.LockedAction(s => s.SelectedComponents.Select(c => new CRotateComponent(c, 1)));
-            this.Execute(new CMulti(commands.ToArray()), this);
+            var commands = this.Sim.LockedAction(s => s.SelectedComponents.Select(c => new CRotateComponent(c.ID, 1)));
+            this.Execute(new CMulti("Rotate Selection CW", commands.ToArray()), this);
         }, ModifierKeys.Control, Keys.Right));
 
         this.AddMainMenuItem("Edit", "Rotate Counter Clockwise", new EditorAction((e) => this.Sim.LockedAction(s => s.SelectedComponents).Count > 0, (e) => false, (e) =>
         {
-            var commands = this.Sim.LockedAction(s => s.SelectedComponents.Select(c => new CRotateComponent(c, -1)));
-            this.Execute(new CMulti(commands.ToArray()), this);
+            var commands = this.Sim.LockedAction(s => s.SelectedComponents.Select(c => new CRotateComponent(c.ID, -1)));
+            this.Execute(new CMulti("Rotate Selection CCW", commands.ToArray()), this);
         }, ModifierKeys.Control, Keys.Left));
 
         // ALL CIRCUIT ACTIONS
@@ -1116,6 +1135,25 @@ Under *projects*, you can see your circuits, and right clicking them in the side
 
         // Show the currently open popup modal
         this.SubmitPopupModals();
+
+        // ImGui.SetNextWindowSize(new Vector2(250, 300), ImGuiCond.Appearing);
+        // ImGui.Begin("Commands", ImGuiWindowFlags.AlwaysVerticalScrollbar | ImGuiWindowFlags.HorizontalScrollbar);
+
+        // var currComm = this.CurrentCommandIndex;
+        // for (int i = this.Commands.Count - 1; i > 0; i--)
+        // {
+        //     var command = this.Commands[i];
+        //     if (currComm >= i)
+        //     {
+        //         ImGui.Selectable(command.Item2.GetDescription());
+        //     }
+        //     else
+        //     {
+        //         ImGui.TextDisabled(command.Item2.GetDescription());
+        //     }
+        // }
+
+        // ImGui.End();
     }
 
     #endregion

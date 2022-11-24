@@ -177,6 +177,18 @@ public static class Utilities
         return new Vector2((v1.X + v2.X) / 2, (v1.Y + v2.Y) / 2);
     }
 
+    public static Vector2i Average(this IEnumerable<Vector2i> vecs)
+    {
+        var sum = Vector2i.Zero;
+
+        foreach (var vec in vecs)
+        {
+            sum += vec;
+        }
+
+        return sum / vecs.Count();
+    }
+
     public static ColorF Darken(this ColorF c, float amnt)
     {
         return ColorF.Darken(c, amnt);
@@ -897,6 +909,21 @@ public static class Utilities
             { Keys.LeftShift, "Shift"},
             { Keys.LeftAlt, "Alt"},
         }.GetValueOrDefault(key, key.ToString());
+    }
+
+    public static string PrettifyModifiers(this ModifierKeys mods)
+    {
+        var result = new List<string>();
+        if (mods.HasFlag(ModifierKeys.Control))
+            result.Add("Ctrl");
+        if (mods.HasFlag(ModifierKeys.Alt))
+            result.Add("Alt");
+        if (mods.HasFlag(ModifierKeys.Shift))
+            result.Add("Shift");
+        if (mods.HasFlag(ModifierKeys.Super))
+            result.Add("Cmd");
+
+        return string.Join("+", result);
     }
 
     public static string ToBinaryString(this IEnumerable<LogicValue> values)

@@ -6,7 +6,10 @@ namespace LogiX.Architecture.BuiltinComponents;
 
 public class BufferData : IComponentDescriptionData
 {
+    [ComponentDescriptionProperty("Bits", IntMinValue = 1, IntMaxValue = 256)]
     public int DataBits { get; set; }
+
+    [ComponentDescriptionProperty("Buffer Size", HelpTooltip = "The amount of ticks before the input is visible on the output.", IntMinValue = 1)]
     public int BufferSize { get; set; }
 
     public static IComponentDescriptionData GetDefault()
@@ -59,24 +62,6 @@ public class Buffer : Component<BufferData>
         else
         {
             output.Push(Enumerable.Repeat(LogicValue.UNDEFINED, this._data.DataBits).ToArray());
-        }
-    }
-
-    public override void SubmitUISelected(Editor editor, int componentIndex)
-    {
-        var id = this.GetUniqueIdentifier();
-        var databits = this._data.DataBits;
-        if (ImGui.InputInt($"Data Bits##{id}", ref databits, 1, 1))
-        {
-            this._data.DataBits = databits;
-            this.Initialize(this._data);
-        }
-
-        var buffersize = this._data.BufferSize;
-        if (ImGui.InputInt($"Buffer Size##{id}", ref buffersize, 1, 1))
-        {
-            this._data.BufferSize = buffersize;
-            this.Initialize(this._data);
         }
     }
 }
