@@ -97,7 +97,7 @@ public class ROM : Component<RomData>
 
             if (ImGui.Button($"Load From File##{id}"))
             {
-                var fileDialog = new FileDialog(".", FileDialogType.SelectFile, (path) =>
+                var fileDialog = new FileDialog(FileDialog.LastDirectory, FileDialogType.SelectFile, (path) =>
                 {
                     using (BinaryReader sr = new BinaryReader(File.Open(path, FileMode.Open)))
                     {
@@ -118,7 +118,7 @@ public class ROM : Component<RomData>
             ImGui.SameLine();
             if (ImGui.Button($"Dump To File##{id}"))
             {
-                var fileDialog = new FileDialog(".", FileDialogType.SaveFile, (path) =>
+                var fileDialog = new FileDialog(FileDialog.LastDirectory, FileDialogType.SaveFile, (path) =>
                 {
                     using (BinaryWriter bw = new BinaryWriter(File.Open(path, FileMode.Open)))
                     {

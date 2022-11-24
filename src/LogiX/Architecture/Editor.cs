@@ -269,7 +269,7 @@ public class Editor : Invoker<Circuit, Editor>
 
         this.AddMainMenuItem("File", "Open Project", new EditorAction((e) => true, (e) => false, (e) =>
         {
-            var fileDialog = new FileDialog(".", FileDialogType.SelectFile, (s) =>
+            var fileDialog = new FileDialog(FileDialog.LastDirectory, FileDialogType.SelectFile, (s) =>
             {
                 // On select
                 if (this.Project is not null)
@@ -313,6 +313,8 @@ public class Editor : Invoker<Circuit, Editor>
         {
             this._currentComponentClipboard = this.Sim.LockedAction(s => s.SelectedComponents.Select(c => c.ID)).ToList();
             this._currentSegmentClipboard = this.Sim.LockedAction(s => s.SelectedWireSegments).ToList();
+
+            this.SetMessage(TimedMessages(("Copied to clipboard!", 3000), ("", 0)));
         }, ModifierKeys.Control, Keys.C));
 
         this.AddMainMenuItem("Edit", "Paste", new EditorAction((e) => this._currentComponentClipboard.Count > 0, (e) => false, (e) =>
@@ -461,6 +463,15 @@ Under *projects*, you can see your circuits, and right clicking them in the side
         this.SimulationRunning = !stopSim;
     }
 
+    public async IAsyncEnumerable<string> TimedMessages(params (string, int)[] messages)
+    {
+        foreach (var (message, time) in messages)
+        {
+            yield return message;
+            await Task.Delay(time);
+        }
+    }
+
     public void SetMessage(IAsyncEnumerable<string> provider)
     {
         Task.Run(async () =>
@@ -527,7 +538,7 @@ Under *projects*, you can see your circuits, and right clicking them in the side
         }
         else
         {
-            var fileDialog = new FileDialog(".", FileDialogType.SaveFile, (path) =>
+            var fileDialog = new FileDialog(FileDialog.LastDirectory, FileDialogType.SaveFile, (path) =>
             {
                 this.Project.LoadedFromPath = Path.GetFullPath(path);
                 Settings.SetSetting(Settings.LAST_OPEN_PROJECT, Path.GetFullPath(path));

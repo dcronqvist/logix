@@ -20,6 +20,7 @@
 #pragma warning disable 419
 
 namespace LogiX.Minimal.ActionSequencing {
+#pragma warning disable 3021
 using System;
 using System.IO;
 using System.Text;

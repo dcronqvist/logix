@@ -1,5 +1,7 @@
 grammar ActionSequence;
 
+@header {#pragma warning disable 3021}
+
 program: actionSequence EOF;
 
 // Allow newlines

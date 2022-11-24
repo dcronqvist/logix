@@ -21,10 +21,19 @@ public class IComponentDescriptionDataConverter : JsonConverter<ComponentDescrip
         var newOptions = new JsonSerializerOptions(options);
         newOptions.Converters.Remove(this);
 
-        document.RootElement.TryGetProperty("data", out JsonElement data);
-        var dataType = ComponentDescription.GetComponentTypesDataParameterType(type);
+        IComponentDescriptionData dataInstance = null;
 
-        var dataInstance = (IComponentDescriptionData)data.Deserialize(dataType, options);
+        var dataType = ComponentDescription.GetComponentTypesDataParameterType(type);
+        if (document.RootElement.TryGetProperty("data", out JsonElement data))
+        {
+            dataInstance = (IComponentDescriptionData)data.Deserialize(dataType, options);
+        }
+        else
+        {
+            // If there is a missing data property, we just give it a default one.
+            dataInstance = ComponentDescription.CreateDefaultComponentDescriptionData(type);
+        }
+
 
         document.RootElement.TryGetProperty("position", out JsonElement posEle);
         var position = (Vector2i)posEle.Deserialize(typeof(Vector2i), newOptions);
@@ -32,10 +41,15 @@ public class IComponentDescriptionDataConverter : JsonConverter<ComponentDescrip
         document.RootElement.TryGetProperty("rotation", out JsonElement rotEle);
         var rotation = rotEle.GetInt32();
 
-        document.RootElement.TryGetProperty("id", out JsonElement idEle);
-        var id = (Guid)idEle.Deserialize(typeof(Guid), newOptions);
-
-        return new ComponentDescription(type, position, rotation, id, dataInstance);
+        if (document.RootElement.TryGetProperty("id", out JsonElement idEle))
+        {
+            var id = (Guid)idEle.Deserialize(typeof(Guid), newOptions);
+            return new ComponentDescription(type, position, rotation, id, dataInstance);
+        }
+        else
+        {
+            return new ComponentDescription(type, position, rotation, Guid.NewGuid(), dataInstance);
+        }
     }
 
     public override void Write(Utf8JsonWriter writer, ComponentDescription value, JsonSerializerOptions options)

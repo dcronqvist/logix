@@ -19,6 +19,8 @@ public class FileDialog : Modal
 {
     private static readonly Vector2 DefaultFilePickerSize = new Vector2(600, 400);
 
+    public static string LastDirectory { get; set; } = Environment.GetFolderPath(Environment.SpecialFolder.Personal);
+
     private string _currentFolder;
     public string CurrentFolder
     {
@@ -29,7 +31,7 @@ public class FileDialog : Modal
         set
         {
             _currentFolder = value;
-            //Util.FileDialogStartDir = value;
+            LastDirectory = value;
         }
     }
     public string currentSelectedFile;
@@ -76,14 +78,16 @@ public class FileDialog : Modal
         return fileExists && validExtension;
     }
 
+#pragma warning disable CA1416 // Validate platform compatibility
     private string GetDownloadFolderPath()
     {
 #if _WINDOWS
         return Registry.GetValue(@"HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Explorer\Shell Folders", "{374DE290-123F-4565-9164-39C4925E467B}", String.Empty).ToString();
-#else
-        return $"Environment.GetFolderPath(Environment.SpecialFolder.UserProfile)";
+#elif _OSX
+        return Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
 #endif
     }
+#pragma warning restore CA1416 // Validate platform compatibility
 
     public override void SubmitUI(Editor editor)
     {
