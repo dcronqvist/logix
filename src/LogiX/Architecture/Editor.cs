@@ -889,7 +889,7 @@ Under *projects*, you can see your circuits, and right clicking them in the side
         long memory = GC.GetTotalMemory(true);
         ImGui.Text($"{memory / 1024 / 1024} MB");
         ImGui.Separator();
-        ImGui.Text($"State: {this.FSM.CurrentState.GetType().Name}");
+        ImGui.Text($"{this.FSM.CurrentState.GetType().Name}");
     }
 
     private bool _projectsOpen = false;

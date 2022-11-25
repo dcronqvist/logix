@@ -124,11 +124,6 @@ public class RAM : Component<RamData>
     }
 
     private MemoryEditor memoryEditor = new MemoryEditor(false);
-    public override void SubmitUISelected(Editor editor, int componentIndex)
-    {
-
-    }
-
     public override void CompleteSubmitUISelected(Editor editor, int componentIndex)
     {
         var id = this.GetUniqueIdentifier();

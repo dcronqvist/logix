@@ -10,6 +10,8 @@ namespace LogiX.Architecture.StateMachine;
 
 public class StateIdle : State<Editor, int>
 {
+    Vector2 clickDownPos;
+
     public override void Update(Editor arg)
     {
         // Pan around with mouse
@@ -60,6 +62,8 @@ public class StateIdle : State<Editor, int>
 
             if (Input.IsMouseButtonPressed(MouseButton.Left))
             {
+                this.clickDownPos = mouseWorldPosition;
+
                 arg.Sim.LockedAction(s =>
                 {
                     // Check if we clicked on a component
@@ -73,21 +77,12 @@ public class StateIdle : State<Editor, int>
                                 s.ClearSelection();
                             }
                             s.SelectComponent(comp);
-                            // Should go to the state of moving selection.
-                            // TODO:
-                            this.GoToState<StateMovingSelection>(0);
                         }
                         else
                         {
                             if (Input.IsKeyDown(Keys.LeftShift))
                             {
                                 s.DeselectComponent(comp);
-                            }
-                            else
-                            {
-                                // If it already is selected, immediately go to the state of moving selection.
-                                // TODO: 
-                                this.GoToState<StateMovingSelection>(0);
                             }
                         }
                     }
@@ -98,6 +93,16 @@ public class StateIdle : State<Editor, int>
                         this.GoToState<StateRectangleSelecting>(0);
                     }
                 });
+            }
+
+            if (Input.IsMouseButtonDown(MouseButton.Left))
+            {
+                var delta = (mouseWorldPosition - this.clickDownPos).ToVector2i(Constants.GRIDSIZE);
+
+                if (Math.Abs(delta.X) > 0 || Math.Abs(delta.Y) > 0)
+                {
+                    this.GoToState<StateMovingSelection>(0);
+                }
             }
         }
     }

@@ -205,6 +205,15 @@ public abstract class Component
         return GetPositionForIO(GetIndexOfIO(io), out lineEndPosition);
     }
 
+    public Component GetVisualCopy()
+    {
+        var copy = (Component)Activator.CreateInstance(this.GetType());
+        copy.Position = this.Position;
+        copy.Rotation = this.Rotation;
+        copy.ID = this.ID;
+        return copy;
+    }
+
     private Dictionary<int, (Vector2i, Vector2i)> _ioPositions = new();
     public Vector2i GetPositionForIO(int index, out Vector2i lineEndPosition)
     {
