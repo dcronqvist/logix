@@ -9,7 +9,7 @@ namespace LogiX.Architecture.BuiltinComponents;
 
 public class DiskData : IComponentDescriptionData
 {
-    [ComponentDescriptionProperty("Label", StringMaxLength = 16)]
+    [ComponentDescriptionProperty("Label", StringHint = "e.g. MAIN_DISK", StringMaxLength = 16, StringRegexFilter = "^[a-zA-Z0-9_]*$")]
     public string Label { get; set; }
 
     [ComponentDescriptionProperty("Size", IntMinValue = 1, IntMaxValue = 32)]

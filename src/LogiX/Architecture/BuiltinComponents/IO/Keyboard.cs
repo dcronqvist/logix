@@ -17,7 +17,7 @@ public enum ConsumeBehaviour : int
 
 public class KeyboardData : IComponentDescriptionData
 {
-    [ComponentDescriptionProperty("Label", StringHint = "e.g. MAIN_KBD", StringMaxLength = 16)]
+    [ComponentDescriptionProperty("Label", StringHint = "e.g. MAIN_KBD", StringMaxLength = 16, StringRegexFilter = "^[a-zA-Z0-9_]*$")]
     public string Label { get; set; }
 
     [ComponentDescriptionProperty("Max Buffer Size", IntMinValue = 1, IntMaxValue = 256, HelpTooltip = "The maximum number of keys that can be stored in the buffer at once.")]

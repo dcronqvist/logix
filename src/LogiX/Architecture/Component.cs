@@ -499,6 +499,7 @@ public abstract class Component
 
             var displayName = $"{attrib.DisplayName}##{id}";
 
+            ImGui.PushItemWidth(200);
             if (propType == typeof(int))
             {
                 var val = (int)propValue;

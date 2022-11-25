@@ -12,7 +12,7 @@ namespace LogiX.Architecture.BuiltinComponents;
 
 public class TTYData : IComponentDescriptionData
 {
-    [ComponentDescriptionProperty("Label", StringHint = "e.g. MAIN_TTY", StringMaxLength = 16)]
+    [ComponentDescriptionProperty("Label", StringHint = "e.g. MAIN_TTY", StringMaxLength = 16, StringRegexFilter = "^[a-zA-Z0-9_]*$")]
     public string Label { get; set; }
 
     [ComponentDescriptionProperty("Columns", IntMinValue = 1, IntMaxValue = 256, HelpTooltip = "The number of columns in the terminal.")]

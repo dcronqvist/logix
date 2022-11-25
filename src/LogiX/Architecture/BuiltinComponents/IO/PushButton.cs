@@ -10,7 +10,7 @@ namespace LogiX.Architecture.BuiltinComponents;
 
 public class PushButtonData : IComponentDescriptionData
 {
-    [ComponentDescriptionProperty("Label", StringHint = "e.g. BTN_RESET", StringMaxLength = 16)]
+    [ComponentDescriptionProperty("Label", StringHint = "e.g. BTN_RESET", StringMaxLength = 16, StringRegexFilter = "^[a-zA-Z0-9_]*$")]
     public string Label { get; set; }
 
     public static IComponentDescriptionData GetDefault()

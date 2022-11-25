@@ -9,7 +9,7 @@ namespace LogiX.Architecture.BuiltinComponents;
 
 public class RamData : IComponentDescriptionData
 {
-    [ComponentDescriptionProperty("Label", StringHint = "e.g. RAM_1", StringMaxLength = 16)]
+    [ComponentDescriptionProperty("Label", StringHint = "e.g. RAM_1", StringMaxLength = 16, StringRegexFilter = "^[a-zA-Z0-9_]*$")]
     public string Label { get; set; }
 
     [ComponentDescriptionProperty("Size", IntMinValue = 1, IntMaxValue = 256, HelpTooltip = "The number of address bits.")]

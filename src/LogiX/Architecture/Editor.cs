@@ -436,6 +436,17 @@ Under *projects*, you can see your circuits, and right clicking them in the side
             this.RenderWires = !this.RenderWires;
         }, 0, Keys.Unknown));
 
+        var uiScales = new (string, int)[] {
+            ("Small", 16),
+            ("Medium", 20),
+            ("Large", 24)
+        };
+
+        this.AddMainMenuItem("View", "UI Scale", new NestedEditorAction(uiScales.Select(s => (s.Item1, new EditorAction((e) => true, (e) => this._guiFontSize == s.Item2, (e) =>
+        {
+            this._guiFontSize = s.Item2;
+        }, 0, Keys.Unknown))).ToArray()));
+
         #endregion
     }
 
@@ -651,6 +662,8 @@ Under *projects*, you can see your circuits, and right clicking them in the side
         }
     }
 
+    private int _guiFontSize = 20;
+    private int _previousRenderMillis = 0;
     public void Render()
     {
         this.ImGuiController.Update(GameTime.DeltaTime);
@@ -661,6 +674,10 @@ Under *projects*, you can see your circuits, and right clicking them in the side
 
         if (this.CurrentlyOpenCircuit is not null)
         {
+            var watch = new Stopwatch();
+            watch.Start();
+            var watchStart = watch.ElapsedMilliseconds;
+
             this.WorkspaceFramebuffer.Bind(() =>
             {
                 Framebuffer.Clear(ColorF.Darken(ColorF.LightGray, 0.9f));
@@ -690,7 +707,7 @@ Under *projects*, you can see your circuits, and right clicking them in the side
             this.GUIFramebuffer.Bind(() =>
             {
                 Framebuffer.Clear(ColorF.Transparent);
-                var font = Utilities.GetFont("core.font.opensans", 16);
+                var font = Utilities.GetFont("core.font.opensans", _guiFontSize);
                 Utilities.WithImGuiFont(font, () =>
                 {
                     try
@@ -718,6 +735,9 @@ Under *projects*, you can see your circuits, and right clicking them in the side
             Framebuffer.RenderFrameBufferToScreen(fShader, this.WorkspaceFramebuffer);
             Framebuffer.RenderFrameBufferToScreen(fShader, this.GUIFramebuffer);
             Framebuffer.RenderFrameBufferToScreen(fShader, this.NewComponentFramebuffer);
+
+            var watchEnd = watch.ElapsedMilliseconds;
+            this._previousRenderMillis = (int)(watchEnd - watchStart);
         }
         else
         {
@@ -888,6 +908,7 @@ Under *projects*, you can see your circuits, and right clicking them in the side
         ImGui.Text($"{this.CurrentTicksPerSecond.GetAsHertzString()}");
         long memory = GC.GetTotalMemory(true);
         ImGui.Text($"{memory / 1024 / 1024} MB");
+        ImGui.Text($"{this._previousRenderMillis} ms");
         ImGui.Separator();
         ImGui.Text($"{this.FSM.CurrentState.GetType().Name}");
     }
@@ -896,7 +917,7 @@ Under *projects*, you can see your circuits, and right clicking them in the side
     public void SubmitComponentsWindow(Vector2 mainMenuBarSize, Vector2 underMenuBarSize)
     {
         ImGui.SetNextWindowPos(new Vector2(0, mainMenuBarSize.Y));
-        ImGui.SetNextWindowSize(new Vector2(180, DisplayManager.GetWindowSizeInPixels().Y - mainMenuBarSize.Y - underMenuBarSize.Y));
+        ImGui.SetNextWindowSize(new Vector2(12 * _guiFontSize, DisplayManager.GetWindowSizeInPixels().Y - mainMenuBarSize.Y - underMenuBarSize.Y));
         if (ImGui.Begin("Components", ImGuiWindowFlags.NoCollapse | ImGuiWindowFlags.NoTitleBar | ImGuiWindowFlags.NoResize | ImGuiWindowFlags.NoMove | ImGuiWindowFlags.AlwaysVerticalScrollbar))
         {
             if (_projectsOpen)
