@@ -536,6 +536,22 @@ public static class Utilities
         }
     }
 
+    public static string GetFastHashOfFloatArray(float[] array)
+    {
+        using (var md5 = MD5.Create())
+        {
+            var inputBytes = array.SelectMany(BitConverter.GetBytes).ToArray();
+            var hashBytes = md5.ComputeHash(inputBytes);
+
+            var sb = new StringBuilder();
+            for (int i = 0; i < hashBytes.Length; i++)
+            {
+                sb.Append(hashBytes[i].ToString("X2"));
+            }
+            return sb.ToString();
+        }
+    }
+
     public static Vector2 Pad(this Vector2 v, float padding)
     {
         return new Vector2(v.X + padding, v.Y + padding);

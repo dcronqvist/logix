@@ -222,7 +222,7 @@ public class Editor : Invoker<Circuit, Editor>
         });
 
         thread.IsBackground = true;
-        thread.Priority = ThreadPriority.Highest;
+        thread.Priority = ThreadPriority.Normal;
         thread.Start();
         #endregion
 
@@ -671,6 +671,7 @@ Under *projects*, you can see your circuits, and right clicking them in the side
         var pShader = LogiX.ContentManager.GetContentItem<ShaderProgram>("core.shader_program.primitive");
         var tShader = LogiX.ContentManager.GetContentItem<ShaderProgram>("core.shader_program.text");
         var font = Utilities.GetFont("core.font.default", 8);
+        this._submittedInstances = 0;
 
         if (this.CurrentlyOpenCircuit is not null)
         {
@@ -689,6 +690,7 @@ Under *projects*, you can see your circuits, and right clicking them in the side
                     this.FSM.Render(this);
                 }
 
+                this._submittedInstances += PrimitiveRenderer._submittedInstances;
                 PrimitiveRenderer.FinalizeRender(pShader, this.Camera);
                 TextRenderer.FinalizeRender(tShader, this.Camera);
             });
@@ -699,6 +701,7 @@ Under *projects*, you can see your circuits, and right clicking them in the side
                 if (this.FSM.CurrentState.RenderAboveGUI())
                 {
                     this.FSM.Render(this);
+                    this._submittedInstances += PrimitiveRenderer._submittedInstances;
                     PrimitiveRenderer.FinalizeRender(pShader, this.Camera);
                     TextRenderer.FinalizeRender(tShader, this.Camera);
                 }
@@ -903,12 +906,11 @@ Under *projects*, you can see your circuits, and right clicking them in the side
         // }
     }
 
+    private int _submittedInstances = 0;
     public void SubmitStatusMenuBar()
     {
         ImGui.Text($"{this.CurrentTicksPerSecond.GetAsHertzString()}");
-        long memory = GC.GetTotalMemory(true);
-        ImGui.Text($"{memory / 1024 / 1024} MB");
-        ImGui.Text($"{this._previousRenderMillis} ms");
+        ImGui.Text($"{this._submittedInstances} @ {this._previousRenderMillis} ms");
         ImGui.Separator();
         ImGui.Text($"{this.FSM.CurrentState.GetType().Name}");
     }

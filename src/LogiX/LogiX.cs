@@ -141,7 +141,7 @@ public class LogiX : Game
         };
 
         TextureRenderer.InitGL();
-        PrimitiveRenderer.InitGL();
+        PrimitiveRenderer.InitGL(64);
         TextRenderer.InitGL();
 
         DisplayManager.ReleaseGLContext();

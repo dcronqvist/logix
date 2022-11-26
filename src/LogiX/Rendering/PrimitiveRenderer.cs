@@ -68,14 +68,17 @@ public struct PrimitiveInstance // Just a triangle
 
 public static class PrimitiveRenderer
 {
-    private static List<PrimitiveInstance> _instances = new List<PrimitiveInstance>();
+    private static float[] _instanceData = new float[0];
+    private static float[] _lastInstanceData = new float[0];
+    public static int _submittedInstances = 0;
     private static uint _vao;
     private static uint _vbo;
 
-    public unsafe static void InitGL()
+    public unsafe static void InitGL(int initialCapacity)
     {
         // VBO STRUCTURE
         // xy1, xy2, xy3, mat4, color
+        SetCapacity(initialCapacity);
 
         _vao = glGenVertexArray();
         glBindVertexArray(_vao);
@@ -120,37 +123,84 @@ public static class PrimitiveRenderer
         glBindVertexArray(0);
     }
 
+    private static void SetCapacity(int capacity)
+    {
+        var newArray = new float[capacity * 26];
+        _instanceData.CopyTo(newArray, 0);
+        _instanceData = newArray;
+    }
+
     public unsafe static void FinalizeRender(ShaderProgram shader, Camera2D camera)
     {
         glBindVertexArray(_vao);
         glBindBuffer(GL_ARRAY_BUFFER, _vbo);
 
-        var instanceData = new float[26 * _instances.Count];
-        for (int i = 0; i < _instances.Count; i++)
-        {
-            var instance = _instances[i];
-            var data = instance.GetInstanceData();
-            for (int j = 0; j < 26; j++)
-            {
-                instanceData[i * 26 + j] = data[j];
-            }
-        }
+        // var instanceData = new float[26 * _instances.Count];
+        // for (int i = 0; i < _instances.Count; i++)
+        // {
+        //     var instance = _instances[i];
+        //     var data = instance.GetInstanceData();
+        //     for (int j = 0; j < 26; j++)
+        //     {
+        //         instanceData[i * 26 + j] = data[j];
+        //     }
+        // }
 
-        fixed (float* ptr = &instanceData[0])
+        fixed (float* ptr = &_instanceData[0])
         {
-            glBufferData(GL_ARRAY_BUFFER, instanceData.Length * sizeof(float), (void*)ptr, GL_STREAM_DRAW);
+            glBufferData(GL_ARRAY_BUFFER, _submittedInstances * 26 * sizeof(float), (void*)ptr, GL_STREAM_DRAW);
         }
 
         shader.Use(() =>
         {
             shader.SetMatrix4x4("projection", camera.GetProjectionMatrix());
-            glDrawArraysInstanced(GL_TRIANGLES, 0, 3, _instances.Count);
+            glDrawArraysInstanced(GL_TRIANGLES, 0, 3, _submittedInstances);
         });
 
         glBindBuffer(GL_ARRAY_BUFFER, 0);
         glBindVertexArray(0);
 
-        _instances.Clear();
+        _submittedInstances = 0;
+    }
+
+    private static void AddInstance(PrimitiveInstance instance)
+    {
+        var i = _submittedInstances * 26;
+
+        _instanceData[i] = instance.V1.X;
+        _instanceData[i + 1] = instance.V1.Y;
+        _instanceData[i + 2] = instance.V2.X;
+        _instanceData[i + 3] = instance.V2.Y;
+        _instanceData[i + 4] = instance.V3.X;
+        _instanceData[i + 5] = instance.V3.Y;
+        _instanceData[i + 6] = instance.Color.R;
+        _instanceData[i + 7] = instance.Color.G;
+        _instanceData[i + 8] = instance.Color.B;
+        _instanceData[i + 9] = instance.Color.A;
+        _instanceData[i + 10] = instance.ModelMatrix.M11;
+        _instanceData[i + 11] = instance.ModelMatrix.M12;
+        _instanceData[i + 12] = instance.ModelMatrix.M13;
+        _instanceData[i + 13] = instance.ModelMatrix.M14;
+        _instanceData[i + 14] = instance.ModelMatrix.M21;
+        _instanceData[i + 15] = instance.ModelMatrix.M22;
+        _instanceData[i + 16] = instance.ModelMatrix.M23;
+        _instanceData[i + 17] = instance.ModelMatrix.M24;
+        _instanceData[i + 18] = instance.ModelMatrix.M31;
+        _instanceData[i + 19] = instance.ModelMatrix.M32;
+        _instanceData[i + 20] = instance.ModelMatrix.M33;
+        _instanceData[i + 21] = instance.ModelMatrix.M34;
+        _instanceData[i + 22] = instance.ModelMatrix.M41;
+        _instanceData[i + 23] = instance.ModelMatrix.M42;
+        _instanceData[i + 24] = instance.ModelMatrix.M43;
+        _instanceData[i + 25] = instance.ModelMatrix.M44;
+
+        // Increment
+        _submittedInstances++;
+
+        if (_submittedInstances >= _instanceData.Length / 26)
+        {
+            SetCapacity(_instanceData.Length * 2);
+        }
     }
 
     public static void RenderRectangle(RectangleF rect, Vector2 origin, float rotation, ColorF color)
@@ -164,7 +214,7 @@ public static class PrimitiveRenderer
 
         foreach (var tri in tris)
         {
-            _instances.Add(new PrimitiveInstance(tri, model, color));
+            AddInstance(new PrimitiveInstance(tri, model, color));
         }
     }
 
@@ -175,7 +225,7 @@ public static class PrimitiveRenderer
 
         foreach (var tri in tris)
         {
-            _instances.Add(new PrimitiveInstance(tri, model, color));
+            AddInstance(new PrimitiveInstance(tri, model, color));
         }
     }
 
