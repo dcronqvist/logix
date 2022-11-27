@@ -116,7 +116,6 @@ public class MinimalLogiX
 
         var config = new ContentManagerConfiguration<ContentMeta>(validator, collection, loader);
         ContentManager = new ContentManager<ContentMeta>(config);
-
         ContentManager.Load();
 
         ScriptManager.Initialize(ContentManager);

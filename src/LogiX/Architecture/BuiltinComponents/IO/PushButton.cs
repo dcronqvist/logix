@@ -13,6 +13,9 @@ public class PushButtonData : IComponentDescriptionData
     [ComponentDescriptionProperty("Label", StringHint = "e.g. BTN_RESET", StringMaxLength = 16, StringRegexFilter = "^[a-zA-Z0-9_]*$")]
     public string Label { get; set; }
 
+    [ComponentDescriptionProperty("Hotkey")]
+    public Keys Hotkey { get; set; }
+
     public static IComponentDescriptionData GetDefault()
     {
         return new PushButtonData()
@@ -31,9 +34,39 @@ public class PushButton : Component<PushButtonData>
 
     private PushButtonData _data;
 
+    public PushButton()
+    {
+        Input.OnKeyPressOrRepeat += (sender, e) =>
+        {
+            if (e.Item1 == _data.Hotkey && _hotkeyDown == false)
+            {
+                this.SetKeyDown();
+            }
+        };
+
+        Input.OnKeyRelease += (sender, e) =>
+        {
+            if (e.Item1 == _data.Hotkey && _hotkeyDown == true)
+            {
+                this.SetKeyUp();
+            }
+        };
+    }
+
     public override IComponentDescriptionData GetDescriptionData()
     {
         return _data;
+    }
+
+    private bool _hotkeyDown = false;
+    public void SetKeyDown()
+    {
+        _hotkeyDown = true;
+    }
+
+    public void SetKeyUp()
+    {
+        _hotkeyDown = false;
     }
 
     public override void Initialize(PushButtonData data)
@@ -54,21 +87,31 @@ public class PushButton : Component<PushButtonData>
     public override void PerformLogic()
     {
         var y = this.GetIOFromIdentifier("Y");
+
+        if (_hotkeyDown || this._mouseClicking)
+        {
+            _value = LogicValue.HIGH;
+        }
+        else
+        {
+            _value = LogicValue.LOW;
+        }
+
         y.Push(_value);
     }
 
+    private bool _mouseClicking = false;
     public override void Interact(Camera2D cam)
     {
         var bounds = this.GetBoundingBox(out var _);
         var mousePos = Input.GetMousePosition(cam);
 
-        this._value = LogicValue.LOW;
-
+        _mouseClicking = false;
         if (Input.IsMouseButtonDown(MouseButton.Right))
         {
             if (bounds.Contains(mousePos))
             {
-                _value = LogicValue.HIGH;
+                _mouseClicking = true;
             }
         }
     }
@@ -99,9 +142,9 @@ public class PushButton : Component<PushButtonData>
         }
 
         var isHovered = rect.Contains(Input.GetMousePosition(camera));
-        var isClicked = isHovered && Input.IsMouseButtonDown(MouseButton.Right);
+        var isClicked = _mouseClicking || _hotkeyDown;
 
-        var color = isHovered ? (isClicked ? ColorF.White : ColorF.LightGray) : ColorF.Gray;
+        var color = isClicked ? ColorF.White : (isHovered ? ColorF.LightGray : ColorF.Gray);
 
         PrimitiveRenderer.RenderCircle(pos + realSize / 2f, 10f, 0f, ColorF.White, sides: 20);
         PrimitiveRenderer.RenderCircle(pos + realSize / 2f, 8.5f, 0f, color.Darken(0.5f), sides: 20);

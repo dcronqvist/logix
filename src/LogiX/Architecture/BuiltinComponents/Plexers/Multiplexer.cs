@@ -6,10 +6,10 @@ namespace LogiX.Architecture.BuiltinComponents;
 
 public class MultiplexerData : IComponentDescriptionData
 {
-    [ComponentDescriptionProperty("Bits", IntMinValue = 1, IntMaxValue = 32)]
+    [ComponentDescriptionProperty("Bits", IntMinValue = 1, IntMaxValue = 256)]
     public int DataBits { get; set; }
 
-    [ComponentDescriptionProperty("Select Bits", IntMinValue = 1, IntMaxValue = 32)]
+    [ComponentDescriptionProperty("Select Bits", IntMinValue = 1, IntMaxValue = 12)]
     public int SelectBits { get; set; }
 
     public static IComponentDescriptionData GetDefault()

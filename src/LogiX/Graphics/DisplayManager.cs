@@ -47,7 +47,7 @@ public static class DisplayManager
         TargetFPS = fps;
     }
 
-    private static Window CreateWindow(int width, int height, string title)
+    private static Window CreateWindow(int width, int height, string title, int minWidth = 1280, int minHeight = 720)
     {
         // Create window, make the OpenGL context current on the thread, and import graphics functions
         Window window = Glfw.CreateWindow(width, height, title, GLFW.Monitor.None, Window.None);
@@ -61,7 +61,7 @@ public static class DisplayManager
         Glfw.MakeContextCurrent(window);
         GL.Import(Glfw.GetProcAddress);
 
-        Glfw.SetWindowSizeLimits(window, 1280, 720, screen.Width, screen.Height);
+        Glfw.SetWindowSizeLimits(window, minWidth, minHeight, screen.Width, screen.Height);
 
         return window;
     }
@@ -107,10 +107,10 @@ public static class DisplayManager
         return Glfw.CurrentContext == WindowHandle;
     }
 
-    public unsafe static void InitWindow(int width, int height, string title)
+    public unsafe static void InitWindow(int width, int height, string title, int minWidth = 1280, int minHeight = 720)
     {
         PrepareContext();
-        WindowHandle = CreateWindow(width, height, title);
+        WindowHandle = CreateWindow(width, height, title, minWidth, minHeight);
         Input.Init();
 
         Glfw.SetWindowMaximizeCallback(WindowHandle, (window, maximized) =>

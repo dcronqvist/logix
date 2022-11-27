@@ -23,6 +23,8 @@ public class CPaste : Command<Editor>
             var comps = this.Components.Select(c => s.GetComponentFromID(c)).ToList();
             var middleOfComps = comps.Select(c => c.Position).Average();
 
+            s.ClearSelection();
+
             var newComps = comps.Select(c =>
             {
                 var compDesc = c.GetDescriptionOfInstance();
@@ -37,11 +39,13 @@ public class CPaste : Command<Editor>
             foreach (var c in newComps)
             {
                 s.AddComponent(c, c.Position);
+                s.SelectComponent(c);
             }
 
             foreach (var (s1, s2) in this.Segments)
             {
                 s.ConnectPointsWithWire(s1 - middleOfComps + this.NewBasePosition, s2 - middleOfComps + this.NewBasePosition);
+                s.SelectWireSegment((s1 - middleOfComps + this.NewBasePosition, s2 - middleOfComps + this.NewBasePosition));
             }
         });
     }

@@ -383,7 +383,7 @@ public class Simulation
 
         if (this.TryGetWireAtPos(position, out var wire))
         {
-            var positions = wire.GetLeafPoints();
+            var positions = wire.GetLeafPoints(true);
             foreach (var pos in positions)
             {
                 if (this.TryGetIOFromPosition(pos, out var group, out var comp) || wire.HasEdgeVertexAt(pos))
@@ -544,6 +544,7 @@ public class Simulation
             sim.AddWire(wire.CreateWire());
         }
 
+        sim.RecalculateWirePositions();
         return sim;
     }
 

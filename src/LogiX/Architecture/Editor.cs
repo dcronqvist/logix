@@ -339,7 +339,7 @@ public class Editor : Invoker<Circuit, Editor>
 
         this.AddMainMenuItem("Edit", "SEPARATOR", new SeparatorEditorAction());
 
-        this.AddMainMenuItem("Edit", "Delete Selection", new EditorAction((e) => this.Sim.LockedAction(s => s.SelectedComponents).Count > 0, (e) => false, (e) =>
+        this.AddMainMenuItem("Edit", "Delete Selection", new EditorAction((e) => this.Sim.LockedAction(s => s.HasSelection()), (e) => false, (e) =>
         {
             var commands = new List<Command<Editor>>();
             commands.AddRange(this.Sim.LockedAction(s => s.SelectedComponents.Select(c => new CDeleteComponent(c.ID))));

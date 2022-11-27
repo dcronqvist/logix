@@ -19,11 +19,11 @@ public class StateHoveringWireSegment : State<Editor, int>
             {
                 this.GoToState<StateHoveringIOGroup>(0);
             }
-            else if (s.TryGetWireVertexAtPos(mouseWorldPos, out var pos, out var wire))
-            {
-                this.GoToState<StateHoveringWireVertex>(0);
-            }
-            else if (s.TryGetWireSegmentAtPos(mouseWorldPos, out var edge, out wire))
+            // else if (s.TryGetWireVertexAtPos(mouseWorldPos, out var pos, out var wire))
+            // {
+            //     this.GoToState<StateHoveringWireVertex>(0);
+            // }
+            else if (s.TryGetWireSegmentAtPos(mouseWorldPos, out var edge, out var wire))
             {
                 if (Input.IsMouseButtonPressed(MouseButton.Left))
                 {

@@ -107,8 +107,8 @@ public class ShaderProgram : GLContentItem<ShaderProgramDescription>
 
     public unsafe override void InitGL(ShaderProgramDescription newContent)
     {
-        var vertexShader = LogiX.ContentManager.GetContentItem<VertexShader>(newContent.VertexShader);
-        var fragmentShader = LogiX.ContentManager.GetContentItem<FragmentShader>(newContent.FragmentShader);
+        var vertexShader = Utilities.ContentManager.GetContentItem<VertexShader>(newContent.VertexShader);
+        var fragmentShader = Utilities.ContentManager.GetContentItem<FragmentShader>(newContent.FragmentShader);
 
         vertexShader.ContentUpdated += (sender, e) => { this.OnContentUpdated(newContent); };
         fragmentShader.ContentUpdated += (sender, e) => { this.OnContentUpdated(newContent); };

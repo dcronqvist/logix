@@ -112,6 +112,17 @@ public class ActionSequenceValidator
                 }
             }
 
+            var foundLeds = visitor.GetLeds();
+            var ledsInCircuit = this.Circuit.GetAllComponentsOfType("logix_builtin.script_type.LEDMATRIX").Select(cd => cd.Data as LEDMatrixData).Select(pd => pd.Label);
+
+            foreach (var foundLed in foundLeds)
+            {
+                if (!ledsInCircuit.Contains(foundLed))
+                {
+                    ers.Add($"LEDMatrix {foundLed} not found in circuit.");
+                }
+            }
+
             var finalChecker = new FinalChecker();
             finalChecker.Visit(tree);
             var hasFinalEndOrContinue = finalChecker.HasFinalEndOrContinue;

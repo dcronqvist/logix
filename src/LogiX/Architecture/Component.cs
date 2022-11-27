@@ -378,8 +378,8 @@ public abstract class Component
         // Position of component
 
         var font = Utilities.GetFont("core.font.default", 8); //LogiX.ContentManager.GetContentItem<Font>("core.font.default-regular-8");
-        var pShader = LogiX.ContentManager.GetContentItem<ShaderProgram>("core.shader_program.primitive");
-        var tShader = LogiX.ContentManager.GetContentItem<ShaderProgram>("core.shader_program.text");
+        var pShader = Utilities.ContentManager.GetContentItem<ShaderProgram>("core.shader_program.primitive");
+        var tShader = Utilities.ContentManager.GetContentItem<ShaderProgram>("core.shader_program.text");
 
         var pos = this.Position.ToVector2(Constants.GRIDSIZE);
         var rect = this.GetBoundingBox(out var textSize);
@@ -445,8 +445,8 @@ public abstract class Component
     {
         // Position of component
         var font = Utilities.GetFont("core.font.default", 8); //LogiX.ContentManager.GetContentItem<Font>("core.font.default-regular-8");
-        var pShader = LogiX.ContentManager.GetContentItem<ShaderProgram>("core.shader_program.primitive");
-        var tShader = LogiX.ContentManager.GetContentItem<ShaderProgram>("core.shader_program.text");
+        var pShader = Utilities.ContentManager.GetContentItem<ShaderProgram>("core.shader_program.primitive");
+        var tShader = Utilities.ContentManager.GetContentItem<ShaderProgram>("core.shader_program.text");
 
         var rect = this.GetBoundingBox(out _);
 
@@ -578,6 +578,32 @@ public abstract class Component
                 {
                     val = new ColorF(colorV3.X, colorV3.Y, colorV3.Z, val.A);
                     editor.Execute(new CModifyComponentDataProp(this.ID, prop, val), editor);
+                }
+            }
+            else if (propType == typeof(Keys))
+            {
+                Keys val = (Keys)propValue;
+                if (ImGui.Button($"Change hotkey##{id}"))
+                {
+                    editor.OpenPopup($"Change hotkey", (e) =>
+                    {
+                        ImGui.Text("Waiting for key press...");
+                        if (Input.TryGetNextKeyPressed(out var key))
+                        {
+                            editor.Execute(new CModifyComponentDataProp(this.ID, prop, key), editor);
+                            ImGui.CloseCurrentPopup();
+                        }
+                    });
+                }
+                ImGui.SameLine();
+
+                if (val == 0 || val == Keys.Unknown)
+                {
+                    ImGui.Text("None");
+                }
+                else
+                {
+                    ImGui.Text($"{attrib.DisplayName}: {val.PrettifyKey()}");
                 }
             }
             else if (propType.IsEnum)

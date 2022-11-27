@@ -1,0 +1,9 @@
+push RESET, 200;
+
+wait 1000;
+
+push TX, 104;
+
+connect_ledmatrix MATX, 10;
+
+continue;

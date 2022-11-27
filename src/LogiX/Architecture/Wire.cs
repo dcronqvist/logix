@@ -76,7 +76,7 @@ public class Wire
     }
 
     private List<Vector2i> _leafPoints;
-    public IEnumerable<Vector2i> GetLeafPoints()
+    public IEnumerable<Vector2i> GetLeafPoints(bool includeCorners = false)
     {
         if (_leafPoints is null)
         {
@@ -98,6 +98,11 @@ public class Wire
             }
 
             _leafPoints = pointDegrees.Where(x => x.Value == 1).Select(x => x.Key).ToList();
+
+            if (includeCorners)
+            {
+                _leafPoints = _leafPoints.Concat(pointDegrees.Where(x => x.Value == 2).Select(x => x.Key)).ToList();
+            }
         }
 
         return _leafPoints;

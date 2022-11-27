@@ -29,6 +29,7 @@ public static class Input
     public static event EventHandler<Tuple<char, ModifierKeys>> OnCharMods;
     public static event EventHandler OnEnterPressed;
     public static event EventHandler<Tuple<Keys, ModifierKeys>> OnKeyPressOrRepeat;
+    public static event EventHandler<Tuple<Keys, ModifierKeys>> OnKeyRelease;
 
     public static void Init()
     {
@@ -72,6 +73,10 @@ public static class Input
             if ((state.HasFlag(InputState.Press) || state.HasFlag(InputState.Repeat)))
             {
                 OnKeyPressOrRepeat?.Invoke(null, new Tuple<Keys, ModifierKeys>(key, mods));
+            }
+            else if (state.HasFlag(InputState.Release))
+            {
+                OnKeyRelease?.Invoke(null, new Tuple<Keys, ModifierKeys>(key, mods));
             }
         });
 
@@ -203,5 +208,16 @@ public static class Input
 
         // Return lastPressed & NO OTHER KEY IS PRESSED
         return lastPressed && current.Except(keys).Count() == 0;
+    }
+
+    public static bool TryGetNextKeyPressed(out Keys key)
+    {
+        if (currentKeyboardState.Any(kvp => kvp.Value == true && previousKeyboardState[kvp.Key] == false))
+        {
+            key = currentKeyboardState.First(kvp => kvp.Value == true && previousKeyboardState[kvp.Key] == false).Key;
+            return true;
+        }
+        key = Keys.Unknown;
+        return false;
     }
 }

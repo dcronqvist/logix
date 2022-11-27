@@ -11,6 +11,7 @@ public class PinChecker : ActionSequenceBaseVisitor<object>
     public List<string> TTYs { get; private set; } = new();
     public List<string> Keyboards { get; private set; } = new();
     public List<string> Disks { get; private set; } = new();
+    public List<string> Leds { get; private set; } = new();
 
     private int ConvertValueStringToInt(string value)
     {
@@ -124,6 +125,13 @@ public class PinChecker : ActionSequenceBaseVisitor<object>
         return base.VisitMountDisk(context);
     }
 
+    public override object VisitConnectLEDMatrix([NotNull] ActionSequenceParser.ConnectLEDMatrixContext context)
+    {
+        var led = context.PIN_ID().GetText();
+        this.Leds.Add(led);
+        return base.VisitConnectLEDMatrix(context);
+    }
+
     public List<(string, int)> GetPins()
     {
         return this.Pins.Distinct().ToList();
@@ -152,5 +160,10 @@ public class PinChecker : ActionSequenceBaseVisitor<object>
     public List<string> GetDisks()
     {
         return this.Disks.Distinct().ToList();
+    }
+
+    public List<string> GetLeds()
+    {
+        return this.Leds.Distinct().ToList();
     }
 }

@@ -135,17 +135,6 @@ public static class PrimitiveRenderer
         glBindVertexArray(_vao);
         glBindBuffer(GL_ARRAY_BUFFER, _vbo);
 
-        // var instanceData = new float[26 * _instances.Count];
-        // for (int i = 0; i < _instances.Count; i++)
-        // {
-        //     var instance = _instances[i];
-        //     var data = instance.GetInstanceData();
-        //     for (int j = 0; j < 26; j++)
-        //     {
-        //         instanceData[i * 26 + j] = data[j];
-        //     }
-        // }
-
         fixed (float* ptr = &_instanceData[0])
         {
             glBufferData(GL_ARRAY_BUFFER, _submittedInstances * 26 * sizeof(float), (void*)ptr, GL_STREAM_DRAW);

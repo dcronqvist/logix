@@ -64,7 +64,7 @@ public class Counter : Component<CounterData>
 
         var q = this.GetIOFromIdentifier("Q");
 
-        if (ld.IsUndefined() || c.IsUndefined() || en.IsUndefined() || clk.IsUndefined())
+        if (ld.IsUndefined() || en.IsUndefined() || clk.IsUndefined())
         {
             return; // Undefined values
         }
@@ -72,7 +72,6 @@ public class Counter : Component<CounterData>
         var enabled = en == LogicValue.HIGH;
         var clock = clk == LogicValue.HIGH;
         var reset = r == LogicValue.HIGH;
-        var increment = c == LogicValue.HIGH;
         var load = ld == LogicValue.HIGH;
 
         if (reset)
@@ -90,12 +89,12 @@ public class Counter : Component<CounterData>
             }
             else
             {
-                if (increment)
+                if (c == LogicValue.HIGH)
                 {
                     // Increment
                     this._value++;
                 }
-                else
+                else if (c == LogicValue.LOW)
                 {
                     // Decrement
                     this._value--;

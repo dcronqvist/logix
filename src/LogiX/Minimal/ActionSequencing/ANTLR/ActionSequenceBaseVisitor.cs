@@ -157,6 +157,16 @@ public partial class ActionSequenceBaseVisitor<Result> : AbstractParseTreeVisito
 	/// <return>The visitor result.</return>
 	public virtual Result VisitMountDisk([NotNull] ActionSequenceParser.MountDiskContext context) { return VisitChildren(context); }
 	/// <summary>
+	/// Visit a parse tree produced by <see cref="ActionSequenceParser.connectLEDMatrix"/>.
+	/// <para>
+	/// The default implementation returns the result of calling <see cref="AbstractParseTreeVisitor{Result}.VisitChildren(IRuleNode)"/>
+	/// on <paramref name="context"/>.
+	/// </para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	public virtual Result VisitConnectLEDMatrix([NotNull] ActionSequenceParser.ConnectLEDMatrixContext context) { return VisitChildren(context); }
+	/// <summary>
 	/// Visit a parse tree produced by <see cref="ActionSequenceParser.exp"/>.
 	/// <para>
 	/// The default implementation returns the result of calling <see cref="AbstractParseTreeVisitor{Result}.VisitChildren(IRuleNode)"/>

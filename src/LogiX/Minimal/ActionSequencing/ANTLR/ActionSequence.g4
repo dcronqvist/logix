@@ -17,6 +17,7 @@ action: (
 		| connectKeyboard
 		| connectTTY
 		| mountDisk
+		| connectLEDMatrix
 	) ';';
 
 wait: 'wait' ' ' (boolexp | DECIMAL_LITERAL);
@@ -30,6 +31,8 @@ connectKeyboard: 'connect_keyboard' (' ')* PIN_ID;
 connectTTY: 'connect_tty' (' ')* PIN_ID;
 mountDisk:
 	'mount_disk' (' ')* PIN_ID (' ')* ',' (' ')* STRING_LITERAL;
+connectLEDMatrix:
+	'connect_ledmatrix' (' ')* PIN_ID (' ')* ',' (' ')* DECIMAL_LITERAL;
 
 exp: pinexp | ramexp | literalexp;
 literalexp: BINARY_LITERAL | HEX_LITERAL;

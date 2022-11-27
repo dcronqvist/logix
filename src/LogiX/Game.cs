@@ -13,13 +13,13 @@ public abstract class Game
     public abstract void Render();
     public abstract void Unload();
 
-    public void Run(int winWidth, int winHeight, string winTitle, string[] args)
+    public void Run(int winWidth, int winHeight, string winTitle, string[] args, int minWidth = 1280, int minHeight = 720)
     {
         bool macMove = false;
 
         Initialize(args);
 
-        DisplayManager.InitWindow(winWidth, winHeight, winTitle);
+        DisplayManager.InitWindow(winWidth, winHeight, winTitle, minWidth, minHeight);
 
         LoadContent(args);
 
