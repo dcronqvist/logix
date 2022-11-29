@@ -438,6 +438,11 @@ Under *projects*, you can see your circuits, and right clicking them in the side
             this.RenderWires = !this.RenderWires;
         }, 0, Keys.Unknown));
 
+        this.AddMainMenuItem("View", "Show Grid", new EditorAction((e) => true, (e) => this._drawGrid, (e) =>
+        {
+            this._drawGrid = !this._drawGrid;
+        }, 0, Keys.Unknown));
+
         var uiScales = new (string, int)[] {
             ("Small", 16),
             ("Medium", 20),
@@ -698,6 +703,7 @@ Under *projects*, you can see your circuits, and right clicking them in the side
 
     private int _guiFontSize = 20;
     private int _previousRenderMillis = 0;
+    private bool _drawGrid = true;
     public void Render()
     {
         this.ImGuiController.Update(GameTime.DeltaTime);
@@ -716,7 +722,11 @@ Under *projects*, you can see your circuits, and right clicking them in the side
             this.WorkspaceFramebuffer.Bind(() =>
             {
                 Framebuffer.Clear(ColorF.Darken(ColorF.LightGray, 0.9f));
-                this.DrawGrid();
+
+                if (this._drawGrid)
+                {
+                    this.DrawGrid();
+                }
                 this.Sim.LockedAction(s => s.Render(this.Camera, this.RenderWires));
 
                 if (!this.FSM.CurrentState.RenderAboveGUI())
@@ -946,6 +956,7 @@ Under *projects*, you can see your circuits, and right clicking them in the side
         ImGui.Text($"{this.CurrentTicksPerSecond.GetAsHertzString()}");
         ImGui.Text($"{this._submittedInstances} @ {this._previousRenderMillis} ms");
         ImGui.Separator();
+        ImGui.Text($"Zoom: {(this.Camera.Zoom * 100f).ToString("0")}%");
         ImGui.Text($"{this.FSM.CurrentState.GetType().Name}");
     }
 

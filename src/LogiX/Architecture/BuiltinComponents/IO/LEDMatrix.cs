@@ -20,10 +20,10 @@ public class LEDMatrixData : IComponentDescriptionData
     [ComponentDescriptionProperty("Rows", IntMinValue = 1, IntMaxValue = 256, HelpTooltip = "The number of rows in the matrix.")]
     public int Rows { get; set; }
 
-    [ComponentDescriptionProperty("Background Color")]
+    [ComponentDescriptionProperty("LED Off Color")]
     public ColorF BackgroundColor { get; set; }
 
-    [ComponentDescriptionProperty("Foreground Color")]
+    [ComponentDescriptionProperty("LED On Color")]
     public ColorF ForegroundColor { get; set; }
 
     public static IComponentDescriptionData GetDefault()
