@@ -12,7 +12,7 @@ public class EditorAction
     public ModifierKeys Modifiers { get; set; }
     public Keys Key { get; set; }
 
-    public EditorAction(Func<Editor, bool> condition, Func<Editor, bool> selected, Action<Editor> execute, ModifierKeys mods, Keys key)
+    public EditorAction(Func<Editor, bool> condition, Func<Editor, bool> selected, Action<Editor> execute, ModifierKeys mods = 0, Keys key = Keys.Unknown)
     {
         Condition = condition;
         this.Selected = selected;
@@ -91,15 +91,17 @@ public class EditorAction
 public class NestedEditorAction : EditorAction
 {
     public (string, EditorAction)[] Actions { get; set; }
+    public Func<Editor, bool> Enabled { get; set; }
 
-    public NestedEditorAction(params (string, EditorAction)[] actions) : base((e) => true, (e) => false, (e) => { }, 0, Keys.Unknown)
+    public NestedEditorAction(Func<Editor, bool> enabled, params (string, EditorAction)[] actions) : base((e) => true, (e) => false, (e) => { }, 0, Keys.Unknown)
     {
         this.Actions = actions;
+        this.Enabled = enabled;
     }
 
     public override void SubmitGUI(Editor editor, string actionName)
     {
-        if (ImGui.BeginMenu(actionName))
+        if (ImGui.BeginMenu(actionName, this.Enabled(editor)))
         {
             foreach (var (nestName, action) in this.Actions)
             {

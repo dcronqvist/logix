@@ -15,13 +15,18 @@ public class AssemblyLoader : IContentItemLoader
             await Task.Delay(1000);
 
             using var stream = structure.GetEntryStream(pathToItem, out var entry);
+            using (var ms = new MemoryStream())
+            {
+                stream.CopyTo(ms);
+                var bytes = ms.ToArray();
+                //var assembly = System.Runtime.Loader.AssemblyLoadContext.Default.LoadFromStream(ms);
+                var assembly = Assembly.Load(bytes);
 
-            var assembly = System.Runtime.Loader.AssemblyLoadContext.Default.LoadFromStream(stream);
+                var defs = assembly.DefinedTypes;
 
-            var defs = assembly.DefinedTypes;
-
-            var fileName = Path.GetFileNameWithoutExtension(pathToItem);
-            result = await LoadEntryResult.CreateSuccessAsync(new AssemblyContentItem($"{source.GetIdentifier()}.assembly.{fileName}", source, assembly));
+                var fileName = Path.GetFileNameWithoutExtension(pathToItem);
+                result = await LoadEntryResult.CreateSuccessAsync(new AssemblyContentItem($"{source.GetIdentifier()}.assembly.{fileName}", source, assembly));
+            }
         }
         catch (System.Exception ex)
         {

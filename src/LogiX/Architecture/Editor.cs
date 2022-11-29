@@ -5,9 +5,11 @@ using System.Threading;
 using ImGuiNET;
 using LogiX.Architecture.BuiltinComponents;
 using LogiX.Architecture.Commands;
+using LogiX.Architecture.Plugins;
 using LogiX.Architecture.Serialization;
 using LogiX.Architecture.StateMachine;
 using LogiX.Content;
+using LogiX.Content.Scripting;
 using LogiX.GLFW;
 using LogiX.Graphics;
 using LogiX.Graphics.UI;
@@ -373,7 +375,7 @@ public class Editor : Invoker<Circuit, Editor>
             this.SimulationRunning = !this.SimulationRunning;
         }, 0, Keys.F5));
 
-        this.AddMainMenuItem("Simulation", $"Tick Rate", new NestedEditorAction(this.AvailableTickRates.Select(tr => (tr.GetAsHertzString(), new EditorAction((e) => true, (e) => this.CurrentlySelectedTickRate == Array.IndexOf(this.AvailableTickRates, tr), (e) =>
+        this.AddMainMenuItem("Simulation", $"Tick Rate", new NestedEditorAction((e) => true, this.AvailableTickRates.Select(tr => (tr.GetAsHertzString(), new EditorAction((e) => true, (e) => this.CurrentlySelectedTickRate == Array.IndexOf(this.AvailableTickRates, tr), (e) =>
         {
             this.CurrentlySelectedTickRate = Array.IndexOf(this.AvailableTickRates, tr);
         }, 0, Keys.Unknown))).ToList().Concat(new (string, EditorAction)[] { ("", new SeparatorEditorAction()), ("Custom", new EditorAction((e) => true, (e) => this.CurrentlySelectedTickRate == -1, (e) => {
@@ -442,10 +444,42 @@ Under *projects*, you can see your circuits, and right clicking them in the side
             ("Large", 24)
         };
 
-        this.AddMainMenuItem("View", "UI Scale", new NestedEditorAction(uiScales.Select(s => (s.Item1, new EditorAction((e) => true, (e) => this._guiFontSize == s.Item2, (e) =>
+        this.AddMainMenuItem("View", "UI Scale", new NestedEditorAction((e) => true, uiScales.Select(s => (s.Item1, new EditorAction((e) => true, (e) => this._guiFontSize == s.Item2, (e) =>
         {
             this._guiFontSize = s.Item2;
         }, 0, Keys.Unknown))).ToArray()));
+
+        var plugins = PluginManager.GetPlugins();
+
+        foreach (var plugin in plugins)
+        {
+            var meta = plugin.GetMeta();
+
+            var allPluginActions = new NestedEditorAction((e) => plugin.GetActions().Count() > 0, plugin.GetActions().Select(a =>
+            {
+                return (a.Name, new EditorAction((e) => true, (e) => false, (e) =>
+                {
+                    a.Execute(this);
+                }, 0, Keys.Unknown));
+            }).ToArray());
+
+            var pluginMenus = new List<(string, EditorAction)>();
+
+
+            pluginMenus.Add(("About", new EditorAction((e) => true, (e) => false, (e) =>
+            {
+                this.OpenPopup($"About Plugin: {meta.Name}", (e) =>
+                {
+                    ImGui.Text($"{meta.Name} v{meta.Version}, by {meta.Author}");
+                    ImGui.Text(meta.Description);
+                });
+            })));
+            pluginMenus.Add(("", new SeparatorEditorAction()));
+            pluginMenus.Add(("Actions", allPluginActions));
+
+
+            this.AddMainMenuItem("Plugins", $"{meta.Name} (v{meta.Version})", new NestedEditorAction((e) => true, pluginMenus.ToArray()));
+        }
 
         #endregion
     }

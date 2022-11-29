@@ -2,6 +2,7 @@ using System.Diagnostics;
 using System.Drawing;
 using System.Numerics;
 using LogiX.Architecture;
+using LogiX.Architecture.Plugins;
 using LogiX.Architecture.Serialization;
 using LogiX.Content;
 using LogiX.Content.Scripting;
@@ -39,17 +40,20 @@ public class LogiX : Game
             {
                 return new ZipFileContentSource(path);
             }
-            else
+            else if (Directory.Exists(path))
             {
                 return new DirectoryContentSource(path);
             }
+
+            return null;
         };
 
         var basePath = AppDomain.CurrentDomain.BaseDirectory + "/assets";
 
         var coreSource = new DirectoryContentSource(Path.GetFullPath($"{basePath}/core"));
+        var pluginSources = new Symphony.Common.DirectoryCollectionProvider(Path.GetFullPath($"{basePath}/plugins/"), factory);
         var validator = new ContentValidator();
-        var collection = IContentCollectionProvider.FromListOfSources(coreSource); //new DirectoryCollectionProvider(@"C:\Users\RichieZ\repos\logix\assets\core", factory);
+        var collection = IContentCollectionProvider.FromListOfSources(pluginSources.GetModSources().Prepend(coreSource)); //new DirectoryCollectionProvider(@"C:\Users\RichieZ\repos\logix\assets\core", factory);
         var loader = new ContentLoader();
 
         var config = new ContentManagerConfiguration<ContentMeta>(validator, collection, loader);
@@ -79,6 +83,8 @@ public class LogiX : Game
 
             _loadingUnderstring = "Initializing scripts...";
             ScriptManager.Initialize(ContentManager);
+            _loadingUnderstring = "Initializing plugins...";
+            PluginManager.LoadPlugins(ContentManager);
             _loadingUnderstring = "Registering components...";
             ComponentDescription.RegisterComponentTypes();
 

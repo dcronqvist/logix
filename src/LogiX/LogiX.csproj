@@ -61,4 +61,9 @@
     <Message Text="Built $(LogiXType) LogiX, $(OutputType)" Importance="High" />
     <Copy SourceFiles="@(AssetFiles)" DestinationFolder="$(OutputPath)\assets\%(RecursiveDir)" SkipUnchangedFiles="true" />
   </Target>
+
+  <Target Name="CleanAssetFiles" AfterTargets="Clean">
+    <Message Text="Cleaning Asset Files from output directory $(OutputPath)..." Importance="High" />
+    <RemoveDir Directories="$(OutputPath)\assets" />
+  </Target>
 </Project>
