@@ -241,7 +241,7 @@ public class ActionSequenceRunner : ActionSequenceBaseVisitor<object>
     {
         var pin = context.PIN_ID().GetText();
         var pushButton = this.PushButtons[pin];
-        pushButton._value = LogicValue.HIGH;
+        pushButton._hotkeyDown = true;
 
         if (context.DECIMAL_LITERAL() != null)
         {
@@ -260,7 +260,7 @@ public class ActionSequenceRunner : ActionSequenceBaseVisitor<object>
                 this.Simulation.Tick();
             }
         }
-        pushButton._value = LogicValue.LOW;
+        pushButton._hotkeyDown = false;
         return base.VisitPush(context);
     }
 

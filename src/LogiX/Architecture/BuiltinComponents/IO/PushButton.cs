@@ -58,7 +58,7 @@ public class PushButton : Component<PushButtonData>
         return _data;
     }
 
-    private bool _hotkeyDown = false;
+    internal bool _hotkeyDown = false;
     public void SetKeyDown()
     {
         _hotkeyDown = true;
