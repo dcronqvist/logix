@@ -12,22 +12,22 @@ public class StateHoveringWireVertex : State<Editor, int>
 
         arg.Sim.LockedAction(s =>
         {
-            if (s.TryGetWireVertexAtPos(mouseWorldPos, out var pos, out var wire))
-            {
-                if (Input.IsMouseButtonPressed(MouseButton.Left))
-                {
-                    this.GoToState<StateDraggingWire>(0);
-                }
-            }
-            else if (s.TryGetWireSegmentAtPos(mouseWorldPos, out var edge, out wire))
-            {
-                this.GoToState<StateHoveringWireSegment>(0);
-            }
-            else
-            {
-                // Not hovering wire vertex anymore, go back to idle
-                this.GoToState<StateIdle>(0);
-            }
+            // if (s.TryGetWireVertexAtPos(mouseWorldPos, out var pos, out var wire))
+            // {
+            //     if (Input.IsMouseButtonPressed(MouseButton.Left))
+            //     {
+            //         this.GoToState<StateDraggingWire>(0);
+            //     }
+            // }
+            // else if (s.TryGetWireSegmentAtPos(mouseWorldPos, out var edge, out wire))
+            // {
+            //     this.GoToState<StateHoveringWireSegment>(0);
+            // }
+            // else
+            // {
+            //     // Not hovering wire vertex anymore, go back to idle
+            //     this.GoToState<StateIdle>(0);
+            // }
         });
     }
 

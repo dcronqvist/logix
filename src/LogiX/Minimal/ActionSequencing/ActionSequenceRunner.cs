@@ -1,409 +1,417 @@
-using System.Text;
-using Antlr4.Runtime;
-using Antlr4.Runtime.Misc;
-using LogiX.Architecture.BuiltinComponents;
-using LogiX.Architecture.Serialization;
+// using System.Diagnostics;
+// using System.Text;
+// using Antlr4.Runtime;
+// using Antlr4.Runtime.Misc;
+// using LogiX.Architecture.BuiltinComponents;
+// using LogiX.Architecture.Serialization;
 
-namespace LogiX.Minimal.ActionSequencing;
+// namespace LogiX.Minimal.ActionSequencing;
 
-public class ActionSequenceRunner : ActionSequenceBaseVisitor<object>
-{
-    public string Text { get; private set; }
-    public Circuit Circuit { get; private set; }
-    public string PathToActionSequenceFile { get; private set; }
+// public class ActionSequenceRunner : ActionSequenceBaseVisitor<object>
+// {
+//     public string Text { get; private set; }
+//     public Circuit Circuit { get; private set; }
+//     public string PathToActionSequenceFile { get; private set; }
 
-    public Simulation Simulation { get; private set; }
-    public Dictionary<string, Pin> Pins { get; private set; }
-    public Dictionary<string, PushButton> PushButtons { get; private set; }
+//     public Simulation Simulation { get; private set; }
+//     public Dictionary<string, Pin> Pins { get; private set; }
+//     public Dictionary<string, PushButton> PushButtons { get; private set; }
 
-    private Keyboard CurrentKeyboard { get; set; }
-    private TTY CurrentTTY { get; set; }
-    private LEDMatrix CurrentLEDMatrix { get; set; }
-    private int LedMatrixScale { get; set; }
+//     private Keyboard CurrentKeyboard { get; set; }
+//     private TTY CurrentTTY { get; set; }
+//     private LEDMatrix CurrentLEDMatrix { get; set; }
+//     private int LedMatrixScale { get; set; }
 
-    private bool Terminate { get; set; } = false;
+//     private bool Terminate { get; set; } = false;
 
-    public ActionSequenceRunner(Circuit circuit, string text, string pathToActionSequenceFile)
-    {
-        this.Text = text;
-        this.Circuit = circuit;
-        this.PathToActionSequenceFile = pathToActionSequenceFile;
-    }
+//     public ActionSequenceRunner(Circuit circuit, string text, string pathToActionSequenceFile)
+//     {
+//         this.Text = text;
+//         this.Circuit = circuit;
+//         this.PathToActionSequenceFile = pathToActionSequenceFile;
+//     }
 
-    public void Run()
-    {
-        this.Simulation = Simulation.FromCircuit(this.Circuit);
-        this.Pins = this.Simulation.GetComponentsOfType<Pin>().Where(p => ((PinData)p.GetDescriptionData()).Label != "").ToDictionary(p => ((PinData)p.GetDescriptionData()).Label, p => p);
-        this.PushButtons = this.Simulation.GetComponentsOfType<PushButton>().Where(p => ((PushButtonData)p.GetDescriptionData()).Label != "").ToDictionary(p => ((PushButtonData)p.GetDescriptionData()).Label, p => p);
+//     public void Run()
+//     {
+//         var stopwatch = new Stopwatch();
 
-        var inputStream = new AntlrInputStream(this.Text);
-        var lexer = new ActionSequencing.ActionSequenceLexer(inputStream);
-        var tokenStream = new CommonTokenStream(lexer);
-        var parser = new ActionSequencing.ActionSequenceParser(tokenStream);
+//         this.Simulation = Simulation.FromCircuit(this.Circuit);
+//         this.Pins = this.Simulation.GetComponentsOfType<Pin>().Where(p => ((PinData)p.GetDescriptionData()).Label != "").ToDictionary(p => ((PinData)p.GetDescriptionData()).Label, p => p);
+//         this.PushButtons = this.Simulation.GetComponentsOfType<PushButton>().Where(p => ((PushButtonData)p.GetDescriptionData()).Label != "").ToDictionary(p => ((PushButtonData)p.GetDescriptionData()).Label, p => p);
 
-        var tree = parser.program();
+//         var inputStream = new AntlrInputStream(this.Text);
+//         var lexer = new ActionSequencing.ActionSequenceLexer(inputStream);
+//         var tokenStream = new CommonTokenStream(lexer);
+//         var parser = new ActionSequencing.ActionSequenceParser(tokenStream);
 
-        this.Simulation.RecalculateWirePositions();
-        this.Simulation.Tick();
-        this.Visit(tree);
+//         var tree = parser.program();
 
-        if (!this.Terminate)
-        {
-            if (this.CurrentLEDMatrix is not null)
-            {
-                var ledMatrixData = this.CurrentLEDMatrix.GetDescriptionData() as LEDMatrixData;
-                var width = ledMatrixData.Columns;
-                var height = ledMatrixData.Rows;
-                var scale = this.LedMatrixScale;
-                var ledmatrixWindow = new LEDMatrixWindow(this.LedMatrixScale, width * scale, height * scale, this.Simulation, this.CurrentLEDMatrix, this.CurrentKeyboard);
+//         this.Simulation.RecalculateWirePositions();
+//         this.Simulation.Tick();
 
-                ledmatrixWindow.Run(width * scale, height * scale, $"LogiX - {ledMatrixData.Label}", new string[] { }, width * scale, height * scale);
-            }
-            else
-            {
-                if (this.CurrentKeyboard is not null)
-                {
-                    Task.Run(() =>
-                    {
-                        while (true)
-                        {
-                            var key = Console.ReadKey(true);
-                            if (this.CurrentKeyboard is not null)
-                            {
-                                if (key.KeyChar == 0x0D)
-                                {
-                                    // Instead of carriage return, send line feed
-                                    this.CurrentKeyboard.RegisterChar((char)0x0A);
-                                }
-                                else
-                                {
-                                    this.CurrentKeyboard.RegisterChar(key.KeyChar);
-                                }
-                            }
-                        }
-                    });
-                }
+//         stopwatch.Start();
+//         this.Visit(tree);
+//         stopwatch.Stop();
 
-                while (true)
-                {
-                    this.Simulation.Tick();
-                }
-            }
-        }
-    }
+//         if (!this.Terminate)
+//         {
+//             if (this.CurrentLEDMatrix is not null)
+//             {
+//                 var ledMatrixData = this.CurrentLEDMatrix.GetDescriptionData() as LEDMatrixData;
+//                 var width = ledMatrixData.Columns;
+//                 var height = ledMatrixData.Rows;
+//                 var scale = this.LedMatrixScale;
+//                 var ledmatrixWindow = new LEDMatrixWindow(this.LedMatrixScale, width * scale, height * scale, this.Simulation, this.CurrentLEDMatrix, this.CurrentKeyboard);
 
-    private void PrintCurrentPins()
-    {
-        foreach (var pin in this.Pins)
-        {
-            Console.WriteLine($"{pin.Key}: 0b{pin.Value.CurrentValues.Select(v => v == LogicValue.UNDEFINED ? "X" : (v == LogicValue.HIGH ? "1" : "0")).Aggregate((a, b) => a + b)}");
-        }
-    }
+//                 ledmatrixWindow.Run(width * scale, height * scale, $"LogiX - {ledMatrixData.Label}", new string[] { }, width * scale, height * scale);
+//             }
+//             else
+//             {
+//                 if (this.CurrentKeyboard is not null)
+//                 {
+//                     _ = Task.Run(() =>
+//                     {
+//                         while (true)
+//                         {
+//                             var key = Console.ReadKey(true);
+//                             if (this.CurrentKeyboard is not null)
+//                             {
+//                                 if (key.KeyChar == 0x0D)
+//                                 {
+//                                     // Instead of carriage return, send line feed
+//                                     this.CurrentKeyboard.RegisterChar((char)0x0A);
+//                                 }
+//                                 else
+//                                 {
+//                                     this.CurrentKeyboard.RegisterChar(key.KeyChar);
+//                                 }
+//                             }
+//                         }
+//                     });
+//                 }
 
-    private (uint, int) GetValueStringAsUInt(string valueString)
-    {
-        if (valueString.StartsWith("0b"))
-        {
-            return (Convert.ToUInt32(valueString.Substring(2), 2), valueString.Length - 2);
-        }
-        else if (valueString.StartsWith("0x"))
-        {
-            return (Convert.ToUInt32(valueString.Substring(2), 16), (valueString.Length - 2) * 4);
-        }
-        else
-        {
-            return (Convert.ToUInt32(valueString), valueString.Length);
-        }
-    }
+//                 while (true)
+//                 {
+//                     this.Simulation.Tick();
+//                 }
+//             }
+//         }
 
-    private LogicValue[] EvaluateExp(ActionSequenceParser.ExpContext exp)
-    {
-        if (exp.pinexp() != null)
-        {
-            return this.EvaluateExp(exp.pinexp());
-        }
-        else if (exp.ramexp() != null)
-        {
-            return this.EvaluateExp(exp.ramexp());
-        }
-        else if (exp.literalexp() != null)
-        {
-            return this.EvaluateExp(exp.literalexp());
-        }
+//         Console.WriteLine($"Execution time: {stopwatch.ElapsedMilliseconds} ms");
+//     }
 
-        return null;
-    }
+//     private void PrintCurrentPins()
+//     {
+//         foreach (var pin in this.Pins)
+//         {
+//             Console.WriteLine($"{pin.Key}: 0b{pin.Value.CurrentValues.Select(v => v == LogicValue.UNDEFINED ? "X" : (v == LogicValue.HIGH ? "1" : "0")).Aggregate((a, b) => a + b)}");
+//         }
+//     }
 
-    private LogicValue[] EvaluateExp(ActionSequenceParser.LiteralexpContext literal)
-    {
-        var text = literal.GetText();
-        var (value, width) = GetValueStringAsUInt(text);
-        return value.GetAsLogicValues(width);
-    }
+//     private (uint, int) GetValueStringAsUInt(string valueString)
+//     {
+//         if (valueString.StartsWith("0b"))
+//         {
+//             return (Convert.ToUInt32(valueString.Substring(2), 2), valueString.Length - 2);
+//         }
+//         else if (valueString.StartsWith("0x"))
+//         {
+//             return (Convert.ToUInt32(valueString.Substring(2), 16), (valueString.Length - 2) * 4);
+//         }
+//         else
+//         {
+//             return (Convert.ToUInt32(valueString), valueString.Length);
+//         }
+//     }
 
-    private LogicValue[] EvaluateExp(ActionSequenceParser.RamexpContext ram)
-    {
-        var r = this.Simulation.GetComponentsOfType<RAM>().Where(r => ((RamData)r.GetDescriptionData()).Label == ram.PIN_ID().GetText()).First();
+//     private LogicValue[] EvaluateExp(ActionSequenceParser.ExpContext exp)
+//     {
+//         if (exp.pinexp() != null)
+//         {
+//             return this.EvaluateExp(exp.pinexp());
+//         }
+//         else if (exp.ramexp() != null)
+//         {
+//             return this.EvaluateExp(exp.ramexp());
+//         }
+//         else if (exp.literalexp() != null)
+//         {
+//             return this.EvaluateExp(exp.literalexp());
+//         }
 
-        if (ram.HEX_LITERAL() != null)
-        {
-            var (address, width) = GetValueStringAsUInt(ram.HEX_LITERAL().GetText());
-            return ((RamData)r.GetDescriptionData()).Memory[address].GetAsLogicValues(8);
-        }
-        else
-        {
-            var (address, width) = GetValueStringAsUInt(ram.BINARY_LITERAL().GetText());
-            return ((RamData)r.GetDescriptionData()).Memory[address].GetAsLogicValues(8);
-        }
-    }
+//         return null;
+//     }
 
-    private LogicValue[] EvaluateExp(ActionSequenceParser.PinexpContext pin)
-    {
-        var pinID = pin.PIN_ID().GetText();
-        var p = this.Pins[pinID];
-        return p.CurrentValues;
-    }
+//     private LogicValue[] EvaluateExp(ActionSequenceParser.LiteralexpContext literal)
+//     {
+//         var text = literal.GetText();
+//         var (value, width) = GetValueStringAsUInt(text);
+//         return value.GetAsLogicValues(width);
+//     }
 
-    public override object VisitAssignment([NotNull] ActionSequenceParser.AssignmentContext context)
-    {
-        if (context.pinexp() != null)
-        {
-            var pin = context.pinexp().PIN_ID().GetText();
-            var value = EvaluateExp(context.exp());
+//     private LogicValue[] EvaluateExp(ActionSequenceParser.RamexpContext ram)
+//     {
+//         var r = this.Simulation.GetComponentsOfType<RAM>().Where(r => ((RamData)r.GetDescriptionData()).Label == ram.PIN_ID().GetText()).First();
 
-            this.Pins[pin].CurrentValues = value;
-            return this.VisitChildren(context);
-        }
-        else
-        {
-            var ram = context.ramexp().PIN_ID().GetText();
-            var r = this.Simulation.GetComponentsOfType<RAM>().Where(r => ((RamData)r.GetDescriptionData()).Label == ram).First();
+//         if (ram.HEX_LITERAL() != null)
+//         {
+//             var (address, width) = GetValueStringAsUInt(ram.HEX_LITERAL().GetText());
+//             return ((RamData)r.GetDescriptionData()).Memory[address].GetAsLogicValues(8);
+//         }
+//         else
+//         {
+//             var (address, width) = GetValueStringAsUInt(ram.BINARY_LITERAL().GetText());
+//             return ((RamData)r.GetDescriptionData()).Memory[address].GetAsLogicValues(8);
+//         }
+//     }
 
-            if (context.ramexp().HEX_LITERAL() != null)
-            {
-                // address using hex literal
-                var (address, width) = GetValueStringAsUInt(context.ramexp().HEX_LITERAL().GetText());
-                var value = EvaluateExp(context.exp());
+//     private LogicValue[] EvaluateExp(ActionSequenceParser.PinexpContext pin)
+//     {
+//         var pinID = pin.PIN_ID().GetText();
+//         var p = this.Pins[pinID];
+//         return p.CurrentValues;
+//     }
 
-                ((RamData)r.GetDescriptionData()).Memory[address] = value.Reverse().GetAsByte();
-            }
-            else
-            {
-                // address using binary literal
-                var (address, width) = GetValueStringAsUInt(context.ramexp().BINARY_LITERAL().GetText());
-                var value = EvaluateExp(context.exp());
+//     public override object VisitAssignment([NotNull] ActionSequenceParser.AssignmentContext context)
+//     {
+//         if (context.pinexp() != null)
+//         {
+//             var pin = context.pinexp().PIN_ID().GetText();
+//             var value = EvaluateExp(context.exp());
 
-                ((RamData)r.GetDescriptionData()).Memory[address] = value.Reverse().GetAsByte();
-            }
+//             this.Pins[pin].CurrentValues = value;
+//             return this.VisitChildren(context);
+//         }
+//         else
+//         {
+//             var ram = context.ramexp().PIN_ID().GetText();
+//             var r = this.Simulation.GetComponentsOfType<RAM>().Where(r => ((RamData)r.GetDescriptionData()).Label == ram).First();
 
-            return this.VisitChildren(context);
-        }
-    }
+//             if (context.ramexp().HEX_LITERAL() != null)
+//             {
+//                 // address using hex literal
+//                 var (address, width) = GetValueStringAsUInt(context.ramexp().HEX_LITERAL().GetText());
+//                 var value = EvaluateExp(context.exp());
 
-    public override object VisitEnd([NotNull] ActionSequenceParser.EndContext context)
-    {
-        this.Terminate = true;
-        return base.VisitEnd(context);
-    }
+//                 ((RamData)r.GetDescriptionData()).Memory[address] = value.Reverse().GetAsByte();
+//             }
+//             else
+//             {
+//                 // address using binary literal
+//                 var (address, width) = GetValueStringAsUInt(context.ramexp().BINARY_LITERAL().GetText());
+//                 var value = EvaluateExp(context.exp());
 
-    public override object VisitContinue([NotNull] ActionSequenceParser.ContinueContext context)
-    {
-        this.Terminate = false;
-        return base.VisitContinue(context);
-    }
+//                 ((RamData)r.GetDescriptionData()).Memory[address] = value.Reverse().GetAsByte();
+//             }
 
-    public override object VisitWait([NotNull] ActionSequenceParser.WaitContext context)
-    {
-        if (context.DECIMAL_LITERAL() != null)
-        {
-            // We are going to wait for a specified number of ticks, and then continue.
-            var ticks = Convert.ToInt32(context.DECIMAL_LITERAL().GetText());
-            for (int i = 0; i < ticks; i++)
-            {
-                this.Simulation.Tick();
-            }
-        }
-        else
-        {
-            // We are going to wait until a specified boolexp is true, and then continue.
-            var boolexp = context.boolexp();
+//             return this.VisitChildren(context);
+//         }
+//     }
 
-            while (!EvaluateBoolExp(boolexp))
-            {
-                this.Simulation.Tick();
-            }
-        }
+//     public override object VisitEnd([NotNull] ActionSequenceParser.EndContext context)
+//     {
+//         this.Terminate = true;
+//         return base.VisitEnd(context);
+//     }
 
-        return base.VisitWait(context);
-    }
+//     public override object VisitContinue([NotNull] ActionSequenceParser.ContinueContext context)
+//     {
+//         this.Terminate = false;
+//         return base.VisitContinue(context);
+//     }
 
-    public override object VisitPush([NotNull] ActionSequenceParser.PushContext context)
-    {
-        var pin = context.PIN_ID().GetText();
-        var pushButton = this.PushButtons[pin];
-        pushButton._hotkeyDown = true;
+//     public override object VisitWait([NotNull] ActionSequenceParser.WaitContext context)
+//     {
+//         if (context.DECIMAL_LITERAL() != null)
+//         {
+//             // We are going to wait for a specified number of ticks, and then continue.
+//             var ticks = Convert.ToInt32(context.DECIMAL_LITERAL().GetText());
+//             for (int i = 0; i < ticks; i++)
+//             {
+//                 this.Simulation.Tick();
+//             }
+//         }
+//         else
+//         {
+//             // We are going to wait until a specified boolexp is true, and then continue.
+//             var boolexp = context.boolexp();
 
-        if (context.DECIMAL_LITERAL() != null)
-        {
-            var literalText = context.DECIMAL_LITERAL().GetText();
-            var (ticks, width) = GetValueStringAsUInt(literalText);
-            for (int i = 0; i < ticks; i++)
-            {
-                this.Simulation.Tick();
-            }
-        }
-        else
-        {
-            var boolexp = context.boolexp();
-            while (!EvaluateBoolExp(boolexp))
-            {
-                this.Simulation.Tick();
-            }
-        }
-        pushButton._hotkeyDown = false;
-        return base.VisitPush(context);
-    }
+//             while (!EvaluateBoolExp(boolexp))
+//             {
+//                 this.Simulation.Tick();
+//             }
+//         }
 
-    private bool EvaluateBoolExp(ActionSequenceParser.BoolexpContext context)
-    {
-        if (context.exp(0) != null)
-        {
-            // We can evaluate
-            var left = EvaluateExp(context.exp(0));
-            var right = EvaluateExp(context.exp(1));
+//         return base.VisitWait(context);
+//     }
 
-            if (context.GetText().Contains("=="))
-            {
-                // Equals
-                return left.SequenceEqual(right);
-            }
-            else
-            {
-                // Not equals
-                return !left.SequenceEqual(right);
-            }
-        }
-        else
-        {
-            var left = EvaluateBoolExp(context.boolexp(0));
-            var right = EvaluateBoolExp(context.boolexp(1));
+//     public override object VisitPush([NotNull] ActionSequenceParser.PushContext context)
+//     {
+//         var pin = context.PIN_ID().GetText();
+//         var pushButton = this.PushButtons[pin];
+//         pushButton._hotkeyDown = true;
 
-            if (context.GetText().Contains("&&"))
-            {
-                // And
-                return left && right;
-            }
-            else
-            {
-                // Or
-                return left || right;
-            }
-        }
-    }
+//         if (context.DECIMAL_LITERAL() != null)
+//         {
+//             var literalText = context.DECIMAL_LITERAL().GetText();
+//             var (ticks, width) = GetValueStringAsUInt(literalText);
+//             for (int i = 0; i < ticks; i++)
+//             {
+//                 this.Simulation.Tick();
+//             }
+//         }
+//         else
+//         {
+//             var boolexp = context.boolexp();
+//             while (!EvaluateBoolExp(boolexp))
+//             {
+//                 this.Simulation.Tick();
+//             }
+//         }
+//         pushButton._hotkeyDown = false;
+//         return base.VisitPush(context);
+//     }
 
-    public override object VisitPrint([NotNull] ActionSequenceParser.PrintContext context)
-    {
-        var text = context.GetText().Substring(7, context.GetText().Length - 8);
+//     private bool EvaluateBoolExp(ActionSequenceParser.BoolexpContext context)
+//     {
+//         if (context.exp(0) != null)
+//         {
+//             // We can evaluate
+//             var left = EvaluateExp(context.exp(0));
+//             var right = EvaluateExp(context.exp(1));
 
-        var sb = new StringBuilder();
+//             if (context.GetText().Contains("=="))
+//             {
+//                 // Equals
+//                 return left.SequenceEqual(right);
+//             }
+//             else
+//             {
+//                 // Not equals
+//                 return !left.SequenceEqual(right);
+//             }
+//         }
+//         else
+//         {
+//             var left = EvaluateBoolExp(context.boolexp(0));
+//             var right = EvaluateBoolExp(context.boolexp(1));
 
-        var i = 0;
-        while (i < text.Length)
-        {
-            if (text[i] == '$')
-            {
-                i++;
-                var mode = text[i + 1];
-                i += 2;
-                var pin = text.Substring(i + 1, text.IndexOf('}', i) - i - 1);
+//             if (context.GetText().Contains("&&"))
+//             {
+//                 // And
+//                 return left && right;
+//             }
+//             else
+//             {
+//                 // Or
+//                 return left || right;
+//             }
+//         }
+//     }
 
-                var values = this.Pins[pin].CurrentValues;
+//     public override object VisitPrint([NotNull] ActionSequenceParser.PrintContext context)
+//     {
+//         var text = context.GetText().Substring(7, context.GetText().Length - 8);
 
-                var formatted = mode switch
-                {
-                    'x' => "0x" + values.Reverse().GetAsHexString(),
-                    'b' => "0b" + values.Select(v => v == LogicValue.UNDEFINED ? "X" : (v == LogicValue.HIGH ? "1" : "0")).Aggregate((a, b) => a + b),
-                    'd' => values.Reverse().GetAsUInt().ToString(),
-                    _ => throw new Exception("Invalid format mode"),
-                };
+//         var sb = new StringBuilder();
 
-                sb.Append(formatted);
-                i = text.IndexOf('}', i) + 1;
-            }
-            else
-            {
-                sb.Append(text[i]);
-                i++;
-            }
-        }
+//         var i = 0;
+//         while (i < text.Length)
+//         {
+//             if (text[i] == '$')
+//             {
+//                 i++;
+//                 var mode = text[i + 1];
+//                 i += 2;
+//                 var pin = text.Substring(i + 1, text.IndexOf('}', i) - i - 1);
 
-        Console.WriteLine(sb.ToString());
-        return base.VisitPrint(context);
-    }
+//                 var values = this.Pins[pin].CurrentValues;
 
-    public override object VisitConnectKeyboard([NotNull] ActionSequenceParser.ConnectKeyboardContext context)
-    {
-        var pin = context.PIN_ID().GetText();
-        var keyboard = this.Simulation.GetComponentsOfType<Keyboard>().Where(k => ((KeyboardData)k.GetDescriptionData()).Label == pin).First();
+//                 var formatted = mode switch
+//                 {
+//                     'x' => "0x" + values.Reverse().GetAsHexString(),
+//                     'b' => "0b" + values.Select(v => v == LogicValue.UNDEFINED ? "X" : (v == LogicValue.HIGH ? "1" : "0")).Aggregate((a, b) => a + b),
+//                     'd' => values.Reverse().GetAsUInt().ToString(),
+//                     _ => throw new Exception("Invalid format mode"),
+//                 };
 
-        this.CurrentKeyboard = keyboard;
-        Console.WriteLine("Connected to keyboard " + pin);
-        return base.VisitConnectKeyboard(context);
-    }
+//                 sb.Append(formatted);
+//                 i = text.IndexOf('}', i) + 1;
+//             }
+//             else
+//             {
+//                 sb.Append(text[i]);
+//                 i++;
+//             }
+//         }
 
-    public override object VisitConnectTTY([NotNull] ActionSequenceParser.ConnectTTYContext context)
-    {
-        var pin = context.PIN_ID().GetText();
-        var tty = this.Simulation.GetComponentsOfType<TTY>().Where(k => ((TTYData)k.GetDescriptionData()).Label == pin).First();
+//         Console.WriteLine(sb.ToString());
+//         return base.VisitPrint(context);
+//     }
 
-        this.CurrentTTY = tty;
+//     public override object VisitConnectKeyboard([NotNull] ActionSequenceParser.ConnectKeyboardContext context)
+//     {
+//         var pin = context.PIN_ID().GetText();
+//         var keyboard = this.Simulation.GetComponentsOfType<Keyboard>().Where(k => ((KeyboardData)k.GetDescriptionData()).Label == pin).First();
 
-        this.CurrentTTY.OnCharReceived += (sender, c) =>
-        {
-            if (c == '\f')
-            {
-                Console.Clear();
-            }
-            else if (c == '\b')
-            {
-                Console.SetCursorPosition(Math.Max(0, Console.CursorLeft - 1), Console.CursorTop);
-                Console.Write(' ');
-                Console.SetCursorPosition(Math.Max(0, Console.CursorLeft - 1), Console.CursorTop);
-            }
-            else
-            {
-                Console.Write(c);
-            }
-        };
+//         this.CurrentKeyboard = keyboard;
+//         Console.WriteLine("Connected to keyboard " + pin);
+//         return base.VisitConnectKeyboard(context);
+//     }
 
-        Console.WriteLine("Connected to TTY " + pin);
-        return base.VisitConnectTTY(context);
-    }
+//     public override object VisitConnectTTY([NotNull] ActionSequenceParser.ConnectTTYContext context)
+//     {
+//         var pin = context.PIN_ID().GetText();
+//         var tty = this.Simulation.GetComponentsOfType<TTY>().Where(k => ((TTYData)k.GetDescriptionData()).Label == pin).First();
 
-    public override object VisitMountDisk([NotNull] ActionSequenceParser.MountDiskContext context)
-    {
-        var pin = context.PIN_ID().GetText();
-        var disk = this.Simulation.GetComponentsOfType<Disk>().Where(k => ((DiskData)k.GetDescriptionData()).Label == pin).First();
-        var filePath = context.STRING_LITERAL().GetText().Substring(1, context.STRING_LITERAL().GetText().Length - 2);
+//         this.CurrentTTY = tty;
 
-        var path = Path.Combine(this.PathToActionSequenceFile, filePath);
+//         this.CurrentTTY.OnCharReceived += (sender, c) =>
+//         {
+//             if (c == '\f')
+//             {
+//                 Console.Clear();
+//             }
+//             else if (c == '\b')
+//             {
+//                 Console.SetCursorPosition(Math.Max(0, Console.CursorLeft - 1), Console.CursorTop);
+//                 Console.Write(' ');
+//                 Console.SetCursorPosition(Math.Max(0, Console.CursorLeft - 1), Console.CursorTop);
+//             }
+//             else
+//             {
+//                 Console.Write(c);
+//             }
+//         };
 
-        if (!disk.TryMountFile(path))
-        {
-            throw new Exception("Could not mount disk");
-        }
-        return base.VisitMountDisk(context);
-    }
+//         Console.WriteLine("Connected to TTY " + pin);
+//         return base.VisitConnectTTY(context);
+//     }
 
-    public override object VisitConnectLEDMatrix([NotNull] ActionSequenceParser.ConnectLEDMatrixContext context)
-    {
-        var pin = context.PIN_ID().GetText();
-        var ledMatrix = this.Simulation.GetComponentsOfType<LEDMatrix>().Where(k => ((LEDMatrixData)k.GetDescriptionData()).Label == pin).First();
+//     public override object VisitMountDisk([NotNull] ActionSequenceParser.MountDiskContext context)
+//     {
+//         var pin = context.PIN_ID().GetText();
+//         var disk = this.Simulation.GetComponentsOfType<Disk>().Where(k => ((DiskData)k.GetDescriptionData()).Label == pin).First();
+//         var filePath = context.STRING_LITERAL().GetText().Substring(1, context.STRING_LITERAL().GetText().Length - 2);
 
-        this.CurrentLEDMatrix = ledMatrix;
-        this.LedMatrixScale = int.Parse(context.DECIMAL_LITERAL().GetText());
+//         var path = Path.Combine(this.PathToActionSequenceFile, filePath);
 
-        Console.WriteLine("Connected to LED matrix " + pin);
-        return base.VisitConnectLEDMatrix(context);
-    }
-}
+//         if (!disk.TryMountFile(path))
+//         {
+//             throw new Exception("Could not mount disk");
+//         }
+//         return base.VisitMountDisk(context);
+//     }
+
+//     public override object VisitConnectLEDMatrix([NotNull] ActionSequenceParser.ConnectLEDMatrixContext context)
+//     {
+//         var pin = context.PIN_ID().GetText();
+//         var ledMatrix = this.Simulation.GetComponentsOfType<LEDMatrix>().Where(k => ((LEDMatrixData)k.GetDescriptionData()).Label == pin).First();
+
+//         this.CurrentLEDMatrix = ledMatrix;
+//         this.LedMatrixScale = int.Parse(context.DECIMAL_LITERAL().GetText());
+
+//         Console.WriteLine("Connected to LED matrix " + pin);
+//         return base.VisitConnectLEDMatrix(context);
+//     }
+// }

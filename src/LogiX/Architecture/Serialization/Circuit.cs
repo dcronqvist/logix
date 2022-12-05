@@ -1,15 +1,17 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using LogiX.Architecture.BuiltinComponents;
+using LogiX.Graphics;
 
 namespace LogiX.Architecture.Serialization;
+
 
 public class Circuit
 {
     public Guid ID { get; set; }
     public Guid IterationID { get; set; }
     public string Name { get; set; }
-    public List<ComponentDescription> Components { get; set; }
+    public List<NodeDescription> Nodes { get; set; }
     public List<WireDescription> Wires { get; set; }
 
     [JsonConstructor]
@@ -21,28 +23,28 @@ public class Circuit
     public Circuit(string name)
     {
         this.Name = name;
-        this.Components = new List<ComponentDescription>();
+        this.Nodes = new List<NodeDescription>();
         this.Wires = new List<WireDescription>();
         this.ID = Guid.NewGuid();
         this.IterationID = Guid.NewGuid();
     }
 
-    public Circuit(string name, List<Component> components, List<Wire> wires)
+    public Circuit(string name, List<Node> nodes, List<Wire> wires)
     {
         this.Name = name;
-        this.Components = this.GetComponentDescriptions(components);
+        this.Nodes = this.GetNodeDescriptions(nodes);
         this.Wires = this.GetWireDescriptions(wires);
         this.ID = Guid.NewGuid();
         this.IterationID = Guid.NewGuid();
     }
 
-    private List<ComponentDescription> GetComponentDescriptions(List<Component> comps)
+    private List<NodeDescription> GetNodeDescriptions(List<Node> nodes)
     {
-        List<ComponentDescription> descriptions = new List<ComponentDescription>();
+        List<NodeDescription> descriptions = new List<NodeDescription>();
 
-        foreach (Component comp in comps)
+        foreach (var node in nodes)
         {
-            descriptions.Add(comp.GetDescriptionOfInstance());
+            descriptions.Add(node.GetDescriptionOfInstance());
         }
 
         return descriptions;
@@ -66,7 +68,7 @@ public class Circuit
         {
             WriteIndented = true,
             PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-            Converters = { new IComponentDescriptionDataConverter() }
+            Converters = { new INodeDescriptionDataConverter() }
         };
 
         string json = JsonSerializer.Serialize(this, options);
@@ -85,43 +87,26 @@ public class Circuit
             {
                 WriteIndented = true,
                 PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-                Converters = { new IComponentDescriptionDataConverter() }
+                Converters = { new INodeDescriptionDataConverter() }
             };
 
             return JsonSerializer.Deserialize<Circuit>(file.ReadToEnd(), options);
         }
     }
 
-    public ComponentDescription[] GetAllPins()
+    public NodeDescription[] GetAllPins()
     {
-        return this.Components.Where(c => c.ComponentTypeID == "logix_builtin.script_type.PIN" && (c.Data as PinData).IsExternal).ToArray();
+        return this.Nodes.Where(c => c.NodeTypeID == "logix_builtin.script_type.PIN" && (c.Data as PinData).IsExternal).ToArray();
     }
 
-    public ComponentDescription[] GetAllComponentsOfType(string typeID)
+    public NodeDescription[] GetAllComponentsOfType(string typeID)
     {
-        return this.Components.Where(c => c.ComponentTypeID == typeID).ToArray();
-    }
-
-    // UNUSED AS OF NOW
-    public CircuitDependencyNode GetDependencies()
-    {
-        var root = new CircuitDependencyNode(this);
-
-        foreach (var desc in this.Components)
-        {
-            if (desc.ComponentTypeID == "logix_builtin.script_type.INTEGRATED")
-            {
-                var integratedData = desc.Data as IntegratedData;
-                //root.AddDependency(integratedData.Circuit.GetDependencies());
-            }
-        }
-
-        return root;
+        return this.Nodes.Where(c => c.NodeTypeID == typeID).ToArray();
     }
 
     public void Update(Circuit other)
     {
-        this.Components = other.Components;
+        this.Nodes = other.Nodes;
         this.Wires = other.Wires;
     }
 
@@ -132,7 +117,7 @@ public class Circuit
         int maxX = int.MinValue;
         int maxY = int.MinValue;
 
-        foreach (var desc in this.Components)
+        foreach (var desc in this.Nodes)
         {
             if (desc.Position.X < minX)
             {
@@ -160,6 +145,6 @@ public class Circuit
 
     public void RemoveOccurencesOf(Guid id)
     {
-        this.Components.RemoveAll(c => c.ComponentTypeID == "logix_builtin.script_type.INTEGRATED" && (c.Data as IntegratedData).CircuitID == id);
+        //this.Nodes.RemoveAll(c => c.NodeTypeID == "logix_builtin.script_type.INTEGRATED" && (c.Data as IntegratedData).CircuitID == id);
     }
 }

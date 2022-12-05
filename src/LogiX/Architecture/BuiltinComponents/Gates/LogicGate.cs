@@ -1,19 +1,23 @@
+using System.Drawing;
+using System.Numerics;
 using ImGuiNET;
 using LogiX.Architecture.Serialization;
 using LogiX.Content.Scripting;
+using LogiX.Graphics;
+using LogiX.Rendering;
 
 namespace LogiX.Architecture.BuiltinComponents;
 
-public class GateData : IComponentDescriptionData
+public class GateData : INodeDescriptionData
 {
-    [ComponentDescriptionProperty("Bits", IntMinValue = 1, IntMaxValue = 32)]
+    [NodeDescriptionProperty("Bits", IntMinValue = 2, IntMaxValue = 32)]
     public int DataBits { get; set; } // Setting this to something other than 1 will create a bitwise gate
 
-    public static IComponentDescriptionData GetDefault()
+    public static INodeDescriptionData GetDefault()
     {
         return new GateData()
         {
-            DataBits = 1
+            DataBits = 2
         };
     }
 }
@@ -24,49 +28,129 @@ public interface IGateLogic
     public LogicValue GetValueToPush(LogicValue a, LogicValue b);
 }
 
-public abstract class LogicGate<TData> : Component<TData> where TData : GateData
+public abstract class LogicGate<TData> : Node<TData> where TData : GateData
 {
     public IGateLogic Logic { get; set; }
-    public override string Name => this.Logic.Name;
-    public override bool DisplayIOGroupIdentifiers => true;
-    public override bool ShowPropertyWindow => true;
-
     private TData _data;
 
-    public override IComponentDescriptionData GetDescriptionData()
+    public override IEnumerable<PinConfig> GetPinConfiguration()
+    {
+        for (int i = 0; i < this._data.DataBits; i++)
+        {
+            yield return new PinConfig($"X{i}", 1, true, new Vector2i(0, i * 2));
+        }
+
+        yield return new PinConfig("Y", 1, false, new Vector2i(3, this._data.DataBits - 1));
+    }
+
+    protected override IEnumerable<(ObservableValue, LogicValue[])> Prepare(PinCollection pins)
+    {
+        return Enumerable.Empty<(ObservableValue, LogicValue[])>(); // Gates don't have any initial values for any pins
+    }
+
+    public override IEnumerable<(ObservableValue, LogicValue[], int)> Evaluate(PinCollection pins)
+    {
+        var pin1 = pins.Get("X0");
+        var y = pins.Get("Y");
+        LogicValue currVal = pin1.Read().First();
+        for (int i = 1; i < this._data.DataBits; i++)
+        {
+            var p = pins.Get($"X{i}");
+            currVal = this.Logic.GetValueToPush(currVal, p.Read().First());
+        }
+
+        yield return (y, currVal.Multiple(1), 1);
+    }
+
+    public override INodeDescriptionData GetNodeData()
     {
         return this._data;
     }
 
-    public override void Initialize(TData data)
+    public override Vector2i GetSize()
     {
-        this.ClearIOs();
-        this._data = data;
+        var width = 3;
+        var height = this._data.DataBits * 2 - 2;
 
-        this.RegisterIO("A", data.DataBits, ComponentSide.LEFT);
-        this.RegisterIO("B", data.DataBits, ComponentSide.LEFT);
-        this.RegisterIO("O", data.DataBits, ComponentSide.RIGHT);
+        if (this.Rotation == 1 || this.Rotation == 3)
+        {
+            var tmp = width;
+            width = height;
+            height = tmp;
+        }
 
-        this.Logic = this.GetLogic();
+        return new Vector2i(width, height);
     }
 
-    public override void PerformLogic()
+    public override bool IsNodeInRect(RectangleF rect)
     {
-        var a = this.GetIOFromIdentifier("A");
-        var b = this.GetIOFromIdentifier("B");
-        var o = this.GetIOFromIdentifier("O");
+        var middle = this.GetMiddleOffset();
+        var doubleMiddle = (middle * 2);
 
-        var aVal = a.GetValues();
-        var bVal = b.GetValues();
+        var pos = this.Position.ToVector2(Constants.GRIDSIZE);
 
-        var oVals = Enumerable.Range(0, aVal.Length).Select(i => this.Logic.GetValueToPush(aVal[i], bVal[i])).ToArray();
+        return pos.CreateRect(doubleMiddle).IntersectsWith(rect);
+    }
 
-        o.Push(oVals);
+    protected override bool Interact(Scheduler scheduler, PinCollection pins, Camera2D camera)
+    {
+        // Nothing
+        return false;
+    }
+
+    public override void RenderSelected(Camera2D camera)
+    {
+        var pos = this.Position;
+
+        var size = this.GetSize();
+
+        var rect = pos.ToVector2(Constants.GRIDSIZE).CreateRect(size.ToVector2(Constants.GRIDSIZE));
+
+        PrimitiveRenderer.RenderRectangle(rect.Inflate(2), Vector2.Zero, 0f, Constants.COLOR_SELECTED);
+    }
+
+    public override void Render(PinCollection pins, Camera2D camera)
+    {
+        var pos = this.Position;
+        var size = this.GetSize();
+
+        var rect = pos.ToVector2(Constants.GRIDSIZE).CreateRect(size.ToVector2(Constants.GRIDSIZE));
+
+        PrimitiveRenderer.RenderRectangleWithBorder(rect, Vector2.Zero, 0f, 1, ColorF.White, ColorF.Black);
+
+        var root = pos.ToVector2(Constants.GRIDSIZE);
+        var sizeReal = size.ToVector2(Constants.GRIDSIZE);
+        var font = Utilities.GetFont("core.font.default", 8);
+        var scale = 0.75f;
+        var measure = font.MeasureString(this.Logic.Name, scale);
+
+        var rot = this.Rotation switch
+        {
+            1 => MathF.PI / 2f,
+            3 => MathF.PI / 2f,
+            _ => 0
+        };
+
+        var offset = this.Rotation switch
+        {
+            1 => new Vector2(measure.Y / 2f, -measure.X / 2f),
+            3 => new Vector2(measure.Y / 2f, -measure.X / 2f),
+            _ => -measure / 2f
+        };
+
+        TextRenderer.RenderText(Utilities.GetFont("core.font.default", 8), this.Logic.Name, root + sizeReal / 2f + offset, scale, rot, ColorF.Black);
+
+        base.Render(pins, camera);
+    }
+
+    public override void Initialize(TData data)
+    {
+        this._data = data;
+        this.Logic = this.GetLogic();
     }
 
     public abstract IGateLogic GetLogic();
 }
-
 
 public class ANDGateLogic : IGateLogic
 {
@@ -74,9 +158,9 @@ public class ANDGateLogic : IGateLogic
 
     public LogicValue GetValueToPush(LogicValue a, LogicValue b)
     {
-        if (a == LogicValue.UNDEFINED || b == LogicValue.UNDEFINED)
+        if (a == LogicValue.Z || b == LogicValue.Z)
         {
-            return LogicValue.UNDEFINED;
+            return LogicValue.Z;
         }
         else if (a == LogicValue.HIGH && b == LogicValue.HIGH)
         {
@@ -89,7 +173,7 @@ public class ANDGateLogic : IGateLogic
     }
 }
 
-[ScriptType("AND_GATE"), ComponentInfo("AND Gate", "Gates", "core.markdown.logicgate")]
+[ScriptType("AND_GATE"), NodeInfo("AND Gate", "Gates", "core.markdown.logicgate")]
 public class ANDGate : LogicGate<GateData>
 {
     public override IGateLogic GetLogic()
@@ -108,9 +192,9 @@ public class ORGateLogic : IGateLogic
         {
             return LogicValue.HIGH;
         }
-        else if (a == LogicValue.UNDEFINED || b == LogicValue.UNDEFINED)
+        else if (a == LogicValue.Z || b == LogicValue.Z)
         {
-            return LogicValue.UNDEFINED;
+            return LogicValue.Z;
         }
         else
         {
@@ -119,7 +203,7 @@ public class ORGateLogic : IGateLogic
     }
 }
 
-[ScriptType("OR_GATE"), ComponentInfo("OR Gate", "Gates", "core.markdown.logicgate")]
+[ScriptType("OR_GATE"), NodeInfo("OR Gate", "Gates", "core.markdown.logicgate")]
 public class ORGate : LogicGate<GateData>
 {
     public override IGateLogic GetLogic()
@@ -134,9 +218,9 @@ public class XORGateLogic : IGateLogic
 
     public LogicValue GetValueToPush(LogicValue a, LogicValue b)
     {
-        if (a == LogicValue.UNDEFINED || b == LogicValue.UNDEFINED)
+        if (a == LogicValue.Z || b == LogicValue.Z)
         {
-            return LogicValue.UNDEFINED;
+            return LogicValue.Z;
         }
         else if (a == LogicValue.HIGH && b == LogicValue.LOW)
         {
@@ -153,7 +237,7 @@ public class XORGateLogic : IGateLogic
     }
 }
 
-[ScriptType("XOR_GATE"), ComponentInfo("XOR Gate", "Gates", "core.markdown.logicgate")]
+[ScriptType("XOR_GATE"), NodeInfo("XOR Gate", "Gates", "core.markdown.logicgate")]
 public class XORGate : LogicGate<GateData>
 {
     public override IGateLogic GetLogic()
@@ -172,9 +256,9 @@ public class NORGateLogic : IGateLogic
         {
             return LogicValue.LOW;
         }
-        else if (a == LogicValue.UNDEFINED || b == LogicValue.UNDEFINED)
+        else if (a == LogicValue.Z || b == LogicValue.Z)
         {
-            return LogicValue.UNDEFINED;
+            return LogicValue.Z;
         }
         else
         {
@@ -183,7 +267,7 @@ public class NORGateLogic : IGateLogic
     }
 }
 
-[ScriptType("NOR_GATE"), ComponentInfo("NOR Gate", "Gates", "core.markdown.logicgate")]
+[ScriptType("NOR_GATE"), NodeInfo("NOR Gate", "Gates", "core.markdown.logicgate")]
 public class NORGate : LogicGate<GateData>
 {
     public override IGateLogic GetLogic()
@@ -198,9 +282,9 @@ public class NANDGateLogic : IGateLogic
 
     public LogicValue GetValueToPush(LogicValue a, LogicValue b)
     {
-        if (a == LogicValue.UNDEFINED || b == LogicValue.UNDEFINED)
+        if (a == LogicValue.Z || b == LogicValue.Z)
         {
-            return LogicValue.UNDEFINED;
+            return LogicValue.Z;
         }
         else if (a == LogicValue.HIGH && b == LogicValue.HIGH)
         {
@@ -213,7 +297,7 @@ public class NANDGateLogic : IGateLogic
     }
 }
 
-[ScriptType("NAND_GATE"), ComponentInfo("NAND Gate", "Gates", "core.markdown.logicgate")]
+[ScriptType("NAND_GATE"), NodeInfo("NAND Gate", "Gates", "core.markdown.logicgate")]
 public class NANDGate : LogicGate<GateData>
 {
     public override IGateLogic GetLogic()
@@ -228,9 +312,9 @@ public class XNORGateLogic : IGateLogic
 
     public LogicValue GetValueToPush(LogicValue a, LogicValue b)
     {
-        if (a == LogicValue.UNDEFINED || b == LogicValue.UNDEFINED)
+        if (a == LogicValue.Z || b == LogicValue.Z)
         {
-            return LogicValue.UNDEFINED;
+            return LogicValue.Z;
         }
         else if (a == LogicValue.HIGH && b == LogicValue.LOW)
         {
@@ -247,55 +331,11 @@ public class XNORGateLogic : IGateLogic
     }
 }
 
-[ScriptType("XNOR_GATE"), ComponentInfo("XNOR Gate", "Gates", "core.markdown.logicgate")]
+[ScriptType("XNOR_GATE"), NodeInfo("XNOR Gate", "Gates", "core.markdown.logicgate")]
 public class XNORGate : LogicGate<GateData>
 {
     public override IGateLogic GetLogic()
     {
         return new XNORGateLogic();
-    }
-}
-
-[ScriptType("NOT_GATE"), ComponentInfo("NOT Gate", "Gates", "core.markdown.logicgate")]
-public class NOTGate : Component<GateData>
-{
-    public override string Name => "NOT";
-    public override bool DisplayIOGroupIdentifiers => true;
-    public override bool ShowPropertyWindow => false;
-
-    private GateData _data;
-
-    public override IComponentDescriptionData GetDescriptionData()
-    {
-        return _data;
-    }
-
-    public override void Initialize(GateData data)
-    {
-        this.ClearIOs();
-        this._data = data;
-
-        this.RegisterIO("X", 1, ComponentSide.LEFT);
-        this.RegisterIO("Y", 1, ComponentSide.RIGHT);
-    }
-
-    public override void PerformLogic()
-    {
-        var x = this.GetIOFromIdentifier("X");
-        var y = this.GetIOFromIdentifier("Y");
-
-        var xVal = x.GetValues().First();
-
-        if (xVal == LogicValue.UNDEFINED)
-        {
-            return;
-        }
-
-        y.Push(xVal == LogicValue.HIGH ? LogicValue.LOW : LogicValue.HIGH);
-    }
-
-    public override void SubmitUISelected(Editor editor, int componentIndex)
-    {
-
     }
 }

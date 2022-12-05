@@ -86,7 +86,7 @@ public class LogiX : Game
             _loadingUnderstring = "Initializing plugins...";
             PluginManager.LoadPlugins(ContentManager);
             _loadingUnderstring = "Registering components...";
-            ComponentDescription.RegisterComponentTypes();
+            NodeDescription.RegisterNodeTypes();
 
             _loadingUnderstring = "Starting editor...";
             this.Editor = new Editor();
@@ -180,8 +180,8 @@ public class LogiX : Game
                     var measure = font.MeasureString("Loading...", 2f);
                     var measureUnder = font.MeasureString(_loadingUnderstring, 2f);
 
-                    TextRenderer.RenderText(font, "Loading...", DisplayManager.GetWindowSizeInPixels() / 2f - measure / 2f, 2f, 0f, ColorF.White, Framebuffer.GetDefaultCamera());
-                    TextRenderer.RenderText(font, _loadingUnderstring, DisplayManager.GetWindowSizeInPixels() / 2f - measureUnder / 2f + new Vector2(0, 20), 2f, 0f, ColorF.White, Framebuffer.GetDefaultCamera());
+                    TextRenderer.RenderText(font, "Loading...", DisplayManager.GetWindowSizeInPixels() / 2f - measure / 2f, 2f, 0f, ColorF.White);
+                    TextRenderer.RenderText(font, _loadingUnderstring, DisplayManager.GetWindowSizeInPixels() / 2f - measureUnder / 2f + new Vector2(0, 20), 2f, 0f, ColorF.White);
 
                     TextRenderer.FinalizeRender(shader, Framebuffer.GetDefaultCamera());
                     DisplayManager.SwapBuffers(-1);

@@ -17,239 +17,183 @@ public enum PinBehaviour
     OUTPUT = 1
 }
 
-public class PinData : IComponentDescriptionData
+public class PinData : INodeDescriptionData
 {
-    [ComponentDescriptionProperty("Bits", IntMaxValue = 32, IntMinValue = 1)]
+    [NodeDescriptionProperty("Bits", IntMaxValue = 32, IntMinValue = 1)]
     public int Bits { get; set; }
     public LogicValue[] Values { get; set; }
 
-    [ComponentDescriptionProperty("Label", StringMaxLength = 16, StringHint = "PIN_ID", StringRegexFilter = "^[a-zA-Z0-9_]*$")]
+    [NodeDescriptionProperty("Label", StringMaxLength = 16, StringHint = "PIN_ID", StringRegexFilter = "^[a-zA-Z0-9_]*$")]
     public string Label { get; set; }
 
-    [ComponentDescriptionProperty("Behaviour", HelpTooltip = "Inputs will \"push\" values, outputs will \"pull\" values.")]
+    [NodeDescriptionProperty("Behaviour", HelpTooltip = "Only affects the behaviour of a pin in the current circuit.\nDoes not affect the behaviour of the pin when used in another circuit.")]
     public PinBehaviour Behaviour { get; set; }
 
-    [ComponentDescriptionProperty("Side of component", HelpTooltip = "Only applies if \"Visible on component\" is enabled")]
+    [NodeDescriptionProperty("Side of component", HelpTooltip = "Only applies if \"Visible on component\" is enabled")]
     public ComponentSide Side { get; set; }
 
-    [ComponentDescriptionProperty("Visible on component")]
+    [NodeDescriptionProperty("Visible on component")]
     public bool IsExternal { get; set; }
 
-    public static IComponentDescriptionData GetDefault()
+    public static INodeDescriptionData GetDefault()
     {
         return new PinData()
         {
             Bits = 1,
-            Values = new LogicValue[] { LogicValue.UNDEFINED },
+            Values = new LogicValue[] { LogicValue.Z },
             Label = "",
             Behaviour = PinBehaviour.INPUT,
             Side = ComponentSide.LEFT,
-            IsExternal = true
+            IsExternal = true,
         };
     }
 }
 
-[ScriptType("PIN"), ComponentInfo("Pin", "Common", "core.markdown.pin")]
-public class Pin : Component<PinData>
+[ScriptType("PIN"), NodeInfo("Pin", "Common", "core.markdown.pin")]
+public class Pin : Node<PinData>
 {
-    public override string Name => this.CurrentValues.Select(x => x.ToString().Substring(0, 1)).Aggregate((x, y) => x + y);
-    public override bool DisplayIOGroupIdentifiers => false;
-    public override bool ShowPropertyWindow => true;
-
-    public LogicValue[] CurrentValues { get; set; }
     private PinData _data;
-
-    public override IComponentDescriptionData GetDescriptionData()
+    public override INodeDescriptionData GetNodeData()
     {
-        return _data;
+        return this._data;
     }
 
     public override void Initialize(PinData data)
     {
-        this.ClearIOs();
-
         this._data = data;
-        this.CurrentValues = data.Values.Length == data.Bits ? data.Values : Enumerable.Repeat(LogicValue.LOW, data.Bits).ToArray();
-        this.RegisterIO($"io", data.Bits, ComponentSide.RIGHT, "io");
 
-        this.TriggerSizeRecalculation();
-    }
-
-    public override void PerformLogic()
-    {
-        if (this._data.Behaviour == PinBehaviour.INPUT)
+        if (data.Bits == data.Values.Length)
         {
-            this.CurrentValues = this.CurrentValues.Select(v => v == LogicValue.UNDEFINED ? LogicValue.LOW : v).ToArray();
-
-            var io = this.GetIOFromIdentifier("io");
-            io.Push(this.CurrentValues);
-        }
-        else
-        {
-            var io = this.GetIOFromIdentifier("io");
-            this.CurrentValues = io.GetValues();
-        }
-    }
-
-    public override void Interact(Camera2D cam)
-    {
-        if (this._data.Behaviour == PinBehaviour.INPUT)
-        {
-            var rect = this.GetBoundingBox(out _);
-            var mousePos = Input.GetMousePosition(cam);
-            var pos = this.Position.ToVector2(Constants.GRIDSIZE);
-
-            if (rect.Contains(mousePos))
+            if (data.Behaviour == PinBehaviour.INPUT)
             {
-                if (Input.IsMouseButtonPressed(MouseButton.Right))
+                for (int i = 0; i < data.Values.Length; i++)
                 {
-                    // Get which bit was clicked
-                    for (int i = 0; i < this._data.Bits; i++)
+                    if (data.Values[i] == LogicValue.Z)
                     {
-                        var bitPos = pos + GetBitPosition(i);
-                        var bitRect = bitPos.CreateRect(new Vector2(Constants.GRIDSIZE, Constants.GRIDSIZE)).Inflate(-1);
-                        if (bitRect.Contains(mousePos))
-                        {
-                            this.CurrentValues[i] = this.CurrentValues[i] == LogicValue.HIGH ? LogicValue.LOW : LogicValue.HIGH;
-                            break;
-                        }
+                        data.Values[i] = LogicValue.LOW;
                     }
                 }
             }
-        }
-    }
+            else
+            {
+                data.Values = LogicValue.Z.Multiple(data.Bits);
+            }
 
-    public override RectangleF GetBoundingBox(out Vector2 textSize)
-    {
-        if (this._bounds != RectangleF.Empty)
-        {
-            textSize = this._textSize;
-            return this._bounds;
-        }
-
-        var amountOfBits = this._data.Bits;
-        var gridSize = Constants.GRIDSIZE;
-
-        var needsWidth = amountOfBits * gridSize;
-        var position = this.Position.ToVector2(gridSize);
-        var rect = position.CreateRect(new Vector2(needsWidth, gridSize)).Inflate(1);
-
-        textSize = Vector2.Zero;
-        this._textSize = textSize;
-
-        if (this.Rotation == 0 || this.Rotation == 2)
-        {
-            this._bounds = rect;
-            return rect;
+            return;
         }
         else
         {
-            this._bounds = new RectangleF(rect.X, rect.Y, rect.Height, rect.Width);
-            return _bounds;
+            this._data.Values = data.Behaviour == PinBehaviour.INPUT ? LogicValue.LOW.Multiple(this._data.Bits) : LogicValue.Z.Multiple(this._data.Bits);
         }
     }
 
-    private Vector2 GetBitPosition(int index)
+    public override IEnumerable<(ObservableValue, LogicValue[], int)> Evaluate(PinCollection pins)
     {
-        if (this.Rotation == 0 || this.Rotation == 2)
-        {
-            return new Vector2(index * Constants.GRIDSIZE, 0);
-        }
-        else
-        {
-            return new Vector2(0, index * Constants.GRIDSIZE);
-        }
+        var q = pins.Get("Q");
+        this._data.Values = q.Read();
+
+        return Enumerable.Empty<(ObservableValue, LogicValue[], int)>();
     }
 
-    public override void Render(Camera2D camera)
+    protected override bool Interact(Scheduler scheduler, PinCollection pins, Camera2D camera)
+    {
+        bool precedence = false;
+
+        if (this._data.Behaviour == PinBehaviour.INPUT)
+        {
+            var pos = this.Position.ToVector2(Constants.GRIDSIZE);
+            var width = this._data.Bits * 2;
+
+            for (int i = 0; i < this._data.Bits; i++)
+            {
+                var value = this._data.Values[i];
+                var x = i * 2 * Constants.GRIDSIZE;
+
+                var r = new RectangleF(pos.X + x, pos.Y, Constants.GRIDSIZE * 2, Constants.GRIDSIZE * 2).Inflate(-2);
+
+                if (r.Contains(Input.GetMousePosition(camera)))
+                {
+                    if (Input.IsMouseButtonPressed(MouseButton.Right))
+                    {
+                        this._data.Values[i] = value == LogicValue.LOW ? LogicValue.HIGH : LogicValue.LOW;
+                        scheduler.Schedule(this, pins.Get("Q"), this._data.Values, 1);
+                    }
+
+                    precedence = true;
+                }
+            }
+        }
+
+        return precedence;
+    }
+
+    public override bool IsNodeInRect(RectangleF rect)
+    {
+        var pos = this.Position;
+        var width = this._data.Bits * 2;
+        var height = 2;
+
+        var r = pos.ToVector2(Constants.GRIDSIZE).CreateRect(new Vector2(width, height) * Constants.GRIDSIZE);
+
+        return rect.IntersectsWith(r);
+    }
+
+    public override void Render(PinCollection pins, Camera2D camera)
+    {
+        var pos = this.Position;
+        var width = this._data.Bits * 2;
+        var height = 2;
+
+        var rect = pos.ToVector2(Constants.GRIDSIZE).CreateRect(new Vector2(width, height) * Constants.GRIDSIZE);
+
+        PrimitiveRenderer.RenderRectangleWithBorder(rect, Vector2.Zero, 0f, 1, ColorF.White, ColorF.Black);
+
+        for (int i = 0; i < this._data.Bits; i++)
+        {
+            var value = this._data.Values[i];
+            var x = i * 2 * Constants.GRIDSIZE;
+
+            var r = new RectangleF(rect.X + x, rect.Y, Constants.GRIDSIZE * 2, Constants.GRIDSIZE * 2).Inflate(-3);
+
+            if (this._data.Behaviour == PinBehaviour.INPUT)
+            {
+                PrimitiveRenderer.RenderRectangle(r, Vector2.Zero, 0f, Utilities.GetValueColor(value));
+            }
+            else
+            {
+                PrimitiveRenderer.RenderCircle(r.GetMiddleOfRectangle(), Constants.GRIDSIZE - 3, 0f, Utilities.GetValueColor(value), 1f);
+            }
+        }
+
+        base.Render(pins, camera);
+    }
+
+    public override void RenderSelected(Camera2D camera)
+    {
+        var pos = this.Position;
+        var width = this._data.Bits * 2;
+        var height = 2;
+
+        var rect = pos.ToVector2(Constants.GRIDSIZE).CreateRect(new Vector2(width, height) * Constants.GRIDSIZE);
+
+        PrimitiveRenderer.RenderRectangle(rect.Inflate(2), Vector2.Zero, 0f, Constants.COLOR_SELECTED);
+    }
+
+    public override IEnumerable<PinConfig> GetPinConfiguration()
+    {
+        yield return new PinConfig("Q", this._data.Bits, this._data.Behaviour == PinBehaviour.INPUT ? false : true, new Vector2i(0, 1));
+    }
+
+    protected override IEnumerable<(ObservableValue, LogicValue[])> Prepare(PinCollection pins)
     {
         if (this._data.Behaviour == PinBehaviour.INPUT)
         {
-            var font = Utilities.GetFont("core.font.default", 8); //LogiX.ContentManager.GetContentItem<Font>("core.font.default-regular-8");
-            var pShader = LogiX.ContentManager.GetContentItem<ShaderProgram>("core.shader_program.primitive");
-            var tShader = LogiX.ContentManager.GetContentItem<ShaderProgram>("core.shader_program.text");
-
-            var pos = this.Position.ToVector2(Constants.GRIDSIZE);
-            var rect = this.GetBoundingBox(out var textSize);
-            var size = rect.GetSize().ToVector2i(Constants.GRIDSIZE);
-            var realSize = size.ToVector2(Constants.GRIDSIZE);
-            var measure = font.MeasureString(this._data.Label, 1f);
-
-            // Draw the component
-            var textPos = pos - new Vector2(measure.X + 2, 0) + new Vector2(0, realSize.Y / 2f - measure.Y / 2f);
-
-            if (this.Rotation == 2)
-            {
-                textPos = pos + new Vector2(realSize.X + 2, 0) + new Vector2(0, realSize.Y / 2f - measure.Y / 2f);
-            }
-
-            var io = this.IOs[0];
-            var ioPos = this.GetPositionForIO(io, out var lineEnd);
-            var lineEndPos = new Vector2(lineEnd.X * Constants.GRIDSIZE, lineEnd.Y * Constants.GRIDSIZE);
-
-            // Draw the group
-            var gPos = new Vector2(ioPos.X * Constants.GRIDSIZE, ioPos.Y * Constants.GRIDSIZE);
-            int lineThickness = 2;
-            var groupCol = this.GetIOColor(0);
-
-            PrimitiveRenderer.RenderLine(gPos, lineEndPos, lineThickness, groupCol.Darken(0.5f));
-            PrimitiveRenderer.RenderCircle(gPos, Constants.IO_GROUP_RADIUS, 0f, groupCol);
-
-            PrimitiveRenderer.RenderRectangle(rect, Vector2.Zero, 0f, ColorF.White);
-
-            for (int i = 0; i < this._data.Bits; i++)
-            {
-                var bitPos = pos + GetBitPosition(i);
-                var bitRect = bitPos.CreateRect(new Vector2(Constants.GRIDSIZE, Constants.GRIDSIZE)).Inflate(-1);
-                var bitCol = Utilities.GetValueColor(this.CurrentValues[i]);
-                PrimitiveRenderer.RenderRectangle(bitRect, Vector2.Zero, 0f, bitCol);
-            }
-
-            TextRenderer.RenderText(font, this._data.Label, textPos, 1f, 0f, ColorF.Black, camera);
+            yield return (pins.Get("Q"), this._data.Values);
         }
-        else
-        {
-            var font = Utilities.GetFont("core.font.default", 8); //LogiX.ContentManager.GetContentItem<Font>("core.font.default-regular-8");
-            var pShader = LogiX.ContentManager.GetContentItem<ShaderProgram>("core.shader_program.primitive");
-            var tShader = LogiX.ContentManager.GetContentItem<ShaderProgram>("core.shader_program.text");
+    }
 
-            var pos = this.Position.ToVector2(Constants.GRIDSIZE);
-            var rect = this.GetBoundingBox(out var textSize);
-            var size = rect.GetSize().ToVector2i(Constants.GRIDSIZE);
-            var realSize = size.ToVector2(Constants.GRIDSIZE);
-            var measure = font.MeasureString(this._data.Label, 1f);
-
-            // Draw the component
-            var textPos = pos - new Vector2(measure.X + 2, 0) + new Vector2(0, realSize.Y / 2f - measure.Y / 2f);
-
-            if (this.Rotation == 2)
-            {
-                textPos = pos + new Vector2(realSize.X + 2, 0) + new Vector2(0, realSize.Y / 2f - measure.Y / 2f);
-            }
-
-            var io = this.IOs[0];
-            var ioPos = this.GetPositionForIO(io, out var lineEnd);
-            var lineEndPos = new Vector2(lineEnd.X * Constants.GRIDSIZE, lineEnd.Y * Constants.GRIDSIZE);
-
-            // Draw the group
-            var gPos = new Vector2(ioPos.X * Constants.GRIDSIZE, ioPos.Y * Constants.GRIDSIZE);
-            int lineThickness = 2;
-            var groupCol = this.GetIOColor(0);
-
-            PrimitiveRenderer.RenderLine(gPos, lineEndPos, lineThickness, groupCol.Darken(0.5f));
-            PrimitiveRenderer.RenderCircle(gPos, Constants.IO_GROUP_RADIUS, 0f, groupCol);
-
-            PrimitiveRenderer.RenderRectangle(rect, Vector2.Zero, 0f, ColorF.White);
-
-            for (int i = 0; i < this._data.Bits; i++)
-            {
-                var bitPos = pos + GetBitPosition(i);
-                var bitRect = bitPos.CreateRect(new Vector2(Constants.GRIDSIZE, Constants.GRIDSIZE));
-                var bitCol = Utilities.GetValueColor(this.CurrentValues[i]);
-                PrimitiveRenderer.RenderCircle(bitPos + new Vector2(Constants.GRIDSIZE / 2f), Constants.GRIDSIZE / 2f - 1, 0f, bitCol);
-            }
-
-            TextRenderer.RenderText(font, this._data.Label, textPos, 1f, 0f, ColorF.Black, camera);
-        }
+    public override Vector2i GetSize()
+    {
+        return new Vector2i(this._data.Bits * 2, 2);
     }
 }

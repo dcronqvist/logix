@@ -2,28 +2,26 @@ using LogiX.Architecture.Serialization;
 
 namespace LogiX.Architecture.Commands;
 
-public class CRotateComponent : Command<Editor>
+public class CDeleteNode : Command<Editor>
 {
     public Guid Node { get; set; }
-    public int Rotation { get; set; }
 
-    public CRotateComponent(Guid node, int rotation)
+    public CDeleteNode(Guid node)
     {
         this.Node = node;
-        this.Rotation = rotation;
     }
 
     public override void Execute(Editor arg)
     {
         arg.Sim.LockedAction(s =>
         {
-            s.GetNodeFromID(this.Node).Rotate(this.Rotation);
-            s.RecalculateWirePositions();
+            var comp = s.GetNodeFromID(this.Node);
+            s.RemoveNode(comp);
         });
     }
 
     public override string GetDescription()
     {
-        return $"Rotate {this.Node} {this.Rotation} times";
+        return $"Delete {this.Node}";
     }
 }

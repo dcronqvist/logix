@@ -96,13 +96,16 @@ public struct ColorF
     public static ColorF Transparent { get { return new ColorF(0, 0, 0, 0); } }
     public static ColorF PearlGray { get { return new ColorF(0xf6f5f5); } }
     public static ColorF BlueGray { get { return new ColorF(0x145374); } }
+    public static ColorF Beige { get { return new ColorF(0xf5f5dc); } }
     public static ColorF DeepBlue { get { return new ColorF(0x00334e); } }
     public static ColorF Shrimp { get { return new ColorF(0xee6f57); } }
     public static ColorF Orange { get { return new ColorF(0xFA8601); } }
     public static ColorF RoyalBlue { get { return new ColorF(0x4876ff); } }
+    public static ColorF BrightBlue { get { return new ColorF(0x0a86ea); } }
     public static ColorF DarkGoldenRod { get { return new ColorF(0xffb90f); } }
     public static ColorF Red { get { return new ColorF(0xff0000); } }
     public static ColorF Green { get { return new ColorF(0x00ff00); } }
+    public static ColorF LimeGreen { get { return new ColorF(0x32cd32); } }
     public static ColorF Blue { get { return new ColorF(0x0000ff); } }
     public static ColorF Yellow { get { return new ColorF(0xffff00); } }
     public static ColorF Cyan { get { return new ColorF(0x00ffff); } }

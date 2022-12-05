@@ -108,10 +108,10 @@ public class Wire
         return _leafPoints;
     }
 
-    public void Render(Simulation simulation, Camera2D cam)
+    public void Render(LogicValue[] values, Camera2D cam)
     {
         var pShader = LogiX.ContentManager.GetContentItem<ShaderProgram>("core.shader_program.primitive");
-        var color = GetWireColor(this.GetLeafPoints().ToArray(), simulation);
+        var color = Utilities.GetValueColor(values);
 
         foreach (var segment in this.Segments)
         {
@@ -149,13 +149,13 @@ public class Wire
         var positions = points;
 
         List<LogicValue[]> values = new();
-        foreach (var pos in positions)
-        {
-            if (simulation.TryGetLogicValuesAtPosition(pos, out var vs, out var status))
-            {
-                values.Add(vs);
-            }
-        }
+        // foreach (var pos in positions)
+        // {
+        //     if (simulation.)
+        //     {
+        //         values.Add(vs);
+        //     }
+        // }
 
         if (values.Count == 0)
         {

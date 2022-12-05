@@ -12,7 +12,7 @@ public class Camera2D
     {
         get
         {
-            Vector2 windowSize = DisplayManager.GetWindowSizeInPixels();
+            Vector2 windowSize = this.GetViewSize();
 
             float left = FocusPosition.X - windowSize.X / 2f / Zoom;
             float top = FocusPosition.Y - windowSize.Y / 2f / Zoom;
@@ -36,16 +36,30 @@ public class Camera2D
     }
 
     public float Zoom { get; set; }
+    public Vector2 FixedViewSize { get; set; }
 
-    public Camera2D(Vector2 focusPosition, float zoom)
+    public Camera2D(Vector2 focusPosition, float zoom, Vector2 fixedViewSize = default)
     {
         FocusPosition = focusPosition;
         Zoom = zoom;
+        FixedViewSize = fixedViewSize;
+    }
+
+    public Vector2 GetViewSize()
+    {
+        if (FixedViewSize != default)
+        {
+            return FixedViewSize;
+        }
+        else
+        {
+            return DisplayManager.GetWindowSizeInPixels();
+        }
     }
 
     public Matrix4x4 GetProjectionMatrix()
     {
-        return GetProjectionMatrix(DisplayManager.GetWindowSizeInPixels());
+        return GetProjectionMatrix(GetViewSize());
     }
 
     public Matrix4x4 GetProjectionMatrix(Vector2 viewSize)

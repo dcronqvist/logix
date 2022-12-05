@@ -1,3 +1,4 @@
+using System.Drawing;
 using System.Numerics;
 using ImGuiNET;
 using LogiX.Architecture.Serialization;
@@ -8,183 +9,296 @@ using LogiX.Rendering;
 
 namespace LogiX.Architecture.BuiltinComponents;
 
-public class IntegratedData : IComponentDescriptionData
+public class IntegratedData : INodeDescriptionData
 {
     public Guid CircuitID { get; set; }
 
-    public static IComponentDescriptionData GetDefault()
+    [NodeDescriptionProperty("Chip Color", HelpTooltip = "The color of the chip in the circuit editor")]
+    public ColorF Color { get; set; }
+
+    public static INodeDescriptionData GetDefault()
     {
         return new IntegratedData()
         {
-            CircuitID = Guid.Empty
+            CircuitID = Guid.Empty,
+            Color = ColorF.White,
         };
     }
 }
 
-public class IntegratedError : SimulationError
+[ScriptType("INTEGRATED"), NodeInfo("INTEGRATED", "BuiltIn", null, true)]
+public class Integrated : Node<IntegratedData>
 {
-    public SimulationError Error { get; set; }
-    public Integrated Comp { get; set; }
-
-    public IntegratedError(SimulationError internalError, Integrated comp) : base($"INTERNAL ERROR: {internalError.Message}")
-    {
-        this.Error = internalError;
-        this.Comp = comp;
-    }
-
-    public override void Render(Camera2D cam)
-    {
-        var pos = this.Comp.Position;
-        var size = this.Comp.GetBoundingBox(out _).GetSize().ToVector2i(Constants.GRIDSIZE);
-
-        var middle = new Vector2i(pos.X + size.X / 2, pos.Y + size.Y / 2).ToVector2(Constants.GRIDSIZE);
-        var tShader = LogiX.ContentManager.GetContentItem<ShaderProgram>("core.shader_program.text");
-        var font = Utilities.GetFont("core.font.default", 8); //LogiX.ContentManager.GetContentItem<Font>("core.font.default-regular-8");
-
-        TextRenderer.RenderText(font, this.Message, middle, 0.5f, 0f, ColorF.Red, cam);
-    }
-}
-
-[ScriptType("INTEGRATED"), ComponentInfo("INTEGRATED", "BuiltIn", "", true)]
-public class Integrated : Component<IntegratedData>
-{
-    public override string Name => this._circuit.Name;
-    public override bool DisplayIOGroupIdentifiers => true;
-    public override bool ShowPropertyWindow => true;
-
     private IntegratedData _data;
-    private Simulation _simulation;
-    private Dictionary<string, Vector2i> _switchPositions;
-    private Circuit _circuit;
+    private string _name;
 
-    public override IComponentDescriptionData GetDescriptionData()
+    private List<Node> _evaluateNodes = new();
+    public override void Register(Scheduler scheduler)
     {
-        return _data;
+        var circ = NodeDescription.GetIntegratedProjectCircuitByID(this._data.CircuitID);
+        var simulation = Simulation.FromCircuit(circ);
+        var circPins = circ.GetAllPins().Select(p => (p.Data as PinData, p)).ToList();
+
+        var pinToNodeID = circ.GetAllPins().ToDictionary(x => (x.Data as PinData).Label, x => x.ID);
+        var pinPositions = new Dictionary<string, Vector2i>();
+
+        foreach (var (ident, id) in pinToNodeID)
+        {
+            var node = simulation.GetNodeFromID(id);
+            var internalPins = simulation.Scheduler.GetPinCollectionForNode(node);
+            var pinPos = node.GetPinPosition(internalPins, "Q");
+            pinPositions.Add(ident, pinPos);
+        }
+
+        foreach (var (ident, id) in pinToNodeID)
+        {
+            var node = simulation.GetNodeFromID(id);
+            simulation.RemoveNode(node);
+        }
+
+        var nodes = simulation.Scheduler.Nodes;
+        foreach (var node in nodes)
+        {
+            scheduler.AddNode(node);
+        }
+
+        foreach (var (ident, pos) in pinPositions)
+        {
+            var node = simulation.GetNodeFromID(pinToNodeID[ident]);
+
+            if (simulation.TryGetWireAtPos(pos, out var wire))
+            {
+                var pinsConnectedToNode = simulation.GetPinsConnectedToWire(wire);
+
+                foreach (var (n, i) in pinsConnectedToNode)
+                {
+                    if (!this._evaluateNodes.Contains(n))
+                        _evaluateNodes.Add(n);
+
+                    scheduler.AddConnection(this, ident, n, i);
+                }
+            }
+        }
+
+
+        foreach (var (n1, p1, n2, p2) in simulation.Scheduler.NodePinConnections)
+        {
+            scheduler.AddConnection(n1, p1, n2, p2);
+        }
     }
 
-    public static ComponentDescription CreateDescriptionFromCircuit(string circuitName, Circuit circuit)
+    public override IEnumerable<(ObservableValue, LogicValue[], int)> Evaluate(PinCollection pins)
     {
-        var data = new IntegratedData()
-        {
-            CircuitID = circuit.ID
-        };
+        yield break;
+    }
+
+    public static NodeDescription CreateDescriptionFromCircuit(string circuitName, Circuit circuit)
+    {
+        var data = IntegratedData.GetDefault() as IntegratedData;
+        data.CircuitID = circuit.ID;
+
         var integrated = new Integrated();
         integrated.Initialize(data);
-
         return integrated.GetDescriptionOfInstance();
+    }
+
+    public override Vector2i GetSize()
+    {
+        var pinLayout = this.GetPinLayout();
+        var topPins = pinLayout[ComponentSide.TOP];
+        var bottomPins = pinLayout[ComponentSide.BOTTOM];
+        var leftPins = pinLayout[ComponentSide.LEFT];
+        var rightPins = pinLayout[ComponentSide.RIGHT];
+
+        var leftPinsMaxLabel = leftPins.Count > 0 ? leftPins.Select(x => x.Label.Length).Max() : 0;
+        var rightPinsMaxLabel = rightPins.Count > 0 ? rightPins.Select(x => x.Label.Length).Max() : 0;
+
+        var font = Utilities.GetFont("core.font.default", 8);
+        var scale = 1f;
+        var measure = font.MeasureString("_", scale).X;
+        var leftMax = (int)((leftPinsMaxLabel * measure).CeilToMultipleOf(Constants.GRIDSIZE) / Constants.GRIDSIZE);
+        var rightMax = (int)((rightPinsMaxLabel * measure).CeilToMultipleOf(Constants.GRIDSIZE) / Constants.GRIDSIZE);
+
+        var widthMax = Math.Max(leftMax, rightMax);
+
+        var width = Math.Max(widthMax * 2, 4);
+        var height = Math.Max(leftPins.Count, rightPins.Count) + 1;
+
+        if (this.Rotation == 1 || this.Rotation == 3)
+        {
+            var tmp = width;
+            width = height;
+            height = tmp;
+        }
+
+        return new Vector2i(width.CeilToOdd(), height.CeilToOdd());
+    }
+
+    public override INodeDescriptionData GetNodeData()
+    {
+        return this._data;
+    }
+
+    private Dictionary<ComponentSide, List<PinData>> GetPinLayout()
+    {
+        var data = this._data;
+        var circ = NodeDescription.GetIntegratedProjectCircuitByID(this._data.CircuitID);
+        var pinDescs = circ.GetAllPins().Select(x => (x.Data as PinData, x.Position)).ToList();
+
+        var pinLayout = new Dictionary<ComponentSide, List<PinData>>();
+
+        // Top
+        var topPins = pinDescs.Where(x => (x.Item1.Side == ComponentSide.TOP)).OrderBy(x => x.Position.X).Select(x => x.Item1).ToList();
+        var buttomPins = pinDescs.Where(x => (x.Item1.Side == ComponentSide.BOTTOM)).OrderBy(x => x.Position.X).Select(x => x.Item1).ToList();
+        var leftPins = pinDescs.Where(x => (x.Item1.Side == ComponentSide.LEFT)).OrderBy(x => x.Position.Y).Select(x => x.Item1).ToList();
+        var rightPins = pinDescs.Where(x => (x.Item1.Side == ComponentSide.RIGHT)).OrderBy(x => x.Position.Y).Select(x => x.Item1).ToList();
+
+        pinLayout.Add(ComponentSide.TOP, topPins);
+        pinLayout.Add(ComponentSide.BOTTOM, buttomPins);
+        pinLayout.Add(ComponentSide.LEFT, leftPins);
+        pinLayout.Add(ComponentSide.RIGHT, rightPins);
+
+        return pinLayout;
+    }
+
+    public override IEnumerable<PinConfig> GetPinConfiguration()
+    {
+        var pinLayout = this.GetPinLayout();
+        var topPins = pinLayout[ComponentSide.TOP];
+        var bottomPins = pinLayout[ComponentSide.BOTTOM];
+        var leftPins = pinLayout[ComponentSide.LEFT];
+        var rightPins = pinLayout[ComponentSide.RIGHT];
+
+        var getLabel = (PinData pin, int i) => pin.Label == "" ? $"{i}" : pin.Label;
+
+        int i = 1;
+        foreach (var pin in topPins)
+        {
+            yield return new PinConfig(getLabel(pin, i), pin.Bits, true, new Vector2i(i++, 0));
+        }
+
+        i = 1;
+        foreach (var pin in bottomPins)
+        {
+            yield return new PinConfig(getLabel(pin, i), pin.Bits, true, new Vector2i(i++, this.GetSize().Y));
+        }
+
+        i = 1;
+        foreach (var pin in leftPins)
+        {
+            yield return new PinConfig(getLabel(pin, i), pin.Bits, true, new Vector2i(0, i++));
+        }
+
+        i = 1;
+        foreach (var pin in rightPins)
+        {
+            yield return new PinConfig(getLabel(pin, i), pin.Bits, true, new Vector2i(this.GetSize().X, i++));
+        }
     }
 
     public override void Initialize(IntegratedData data)
     {
         this._data = data;
-        this._switchPositions = new();
-        this._circuit = ComponentDescription.GetIntegratedProjectCircuitByID(this._data.CircuitID);
-        this._simulation = Simulation.FromCircuit(this._circuit, "logix_builtin.script_type.PIN");
-        var switches = this._circuit.GetAllPins();
-
-        int i = 0;
-        foreach (var s in switches)
-        {
-            var sData = s.Data as PinData;
-            var label = sData.Label == "" || sData.Label is null ? $"{i++}" : sData.Label;
-            this.RegisterIO(label, sData.Bits, sData.Side);
-            this._switchPositions.Add(label, s.CreateComponent().GetPositionForIO(0, out _));
-        }
+        var circ = NodeDescription.GetIntegratedProjectCircuitByID(this._data.CircuitID);
+        this._name = circ.Name;
     }
 
-    private Simulation integSim;
-    public override void Update(Simulation simulation, bool performLogic = true)
+    public override bool IsNodeInRect(RectangleF rect)
     {
-        this.integSim = simulation;
-        var ios = this.IOs;
-        var amountOfIOs = ios.Length;
+        var size = this.GetSize();
+        var width = size.X;
+        var height = size.Y;
 
-        this._simulation.PreviousErrors = this._simulation.Errors;
-        this._simulation.Errors.Clear();
-        this._simulation.NewValues = new();
-
-        var inputs = new List<IO>();
-        var outputs = new List<IO>();
-
-        for (int i = 0; i < amountOfIOs; i++)
-        {
-            var io = ios[i];
-            var ioPos = this.GetPositionForIO(io, out _);
-            if (simulation.TryGetLogicValuesAtPosition(ioPos, io.Bits, out var values, out var status, out var fromIO, out var fromComp) && fromIO != io)
-            {
-                // If there are values that can be read from the parent sim,
-                // then we will assume this IO to be an input and read from them
-                inputs.Add(io);
-            }
-            else
-            {
-                // If there are no values that can be read from the parent sim,
-                // then we will assume this IO to be an output and write to them
-                outputs.Add(io);
-            }
-        }
-
-        foreach (var ioInput in inputs)
-        {
-            var ioPos = this.GetPositionForIO(ioInput, out _);
-            var internalPos = this._switchPositions[ioInput.Identifier];
-
-            if (simulation.TryGetLogicValuesAtPosition(ioPos, ioInput.Bits, out var values, out var status, out var fromIO, out var fromComp))
-            {
-                ioInput.SetValues(values);
-                this._simulation.PushValuesAt(internalPos, ioInput, this, values);
-            }
-        }
-
-        foreach (Component component in this._simulation.Components)
-        {
-            component.Update(this._simulation);
-        }
-
-        foreach (var ioOutput in outputs)
-        {
-            var ioPos = this.GetPositionForIO(ioOutput, out _);
-            var internalPos = this._switchPositions[ioOutput.Identifier];
-
-            if (this._simulation.TryGetLogicValuesAtPosition(internalPos, ioOutput.Bits, out var values, out var status, out var fromIO, out var fromComp) && fromIO != ioOutput)
-            {
-                ioOutput.SetValues(values);
-                simulation.PushValuesAt(ioPos, ioOutput, this, values);
-            }
-            else
-            {
-                ioOutput.SetValues(Enumerable.Repeat(LogicValue.UNDEFINED, ioOutput.Bits).ToArray());
-            }
-        }
-
-
-        this._simulation.CurrentValues = this._simulation.NewValues;
-
-        if (this._simulation.Errors.Count > 0)
-        {
-            foreach (var error in this._simulation.Errors)
-            {
-                simulation.AddError(new IntegratedError(error, this));
-            }
-        }
+        return this.Position.ToVector2(Constants.GRIDSIZE).CreateRect(new Vector2(width, height) * Constants.GRIDSIZE).IntersectsWith(rect);
     }
 
-    public override void PerformLogic()
+    public override void RenderSelected(Camera2D camera)
     {
-        var ios = this.IOs;
-        this._simulation.Tick(typeof(Pin));
+        var size = this.GetSize();
+        var width = size.X;
+        var height = size.Y;
+
+        PrimitiveRenderer.RenderRectangle(this.Position.ToVector2(Constants.GRIDSIZE).CreateRect(new Vector2(width, height) * Constants.GRIDSIZE).Inflate(2), Vector2.Zero, 0f, Constants.COLOR_SELECTED);
     }
 
-    public override void Render(Camera2D camera)
+    protected override bool Interact(Scheduler scheduler, PinCollection pins, Camera2D camera)
     {
-        base.Render(camera);
+        return false;
     }
 
-    public override void SubmitUISelected(Editor editor, int componentIndex)
+    protected override IEnumerable<(ObservableValue, LogicValue[])> Prepare(PinCollection pins)
     {
-        ImGui.Text($"ID: {this._circuit.ID}");
-        ImGui.Text($"ITERATION: {this._circuit.IterationID}");
-        ImGui.Text($"NAME: {this._circuit.Name}");
-        ImGui.Text($"INDEX: {componentIndex}");
+        return Enumerable.Empty<(ObservableValue, LogicValue[])>();
+    }
+
+    public override void Render(PinCollection pins, Camera2D camera)
+    {
+        var size = this.GetSize();
+        var width = size.X;
+        var height = size.Y;
+
+        var rect = this.Position.ToVector2(Constants.GRIDSIZE).CreateRect(new Vector2(width, height) * Constants.GRIDSIZE);
+
+        PrimitiveRenderer.RenderRectangleWithBorder(rect, Vector2.Zero, 0f, 1, this._data.Color, this._data.Color.Darken(0.5f));
+
+        var pos = this.Position;
+
+        if (pins is not null)
+        {
+            foreach (var (side, ps) in this.GetPinLayout())
+            {
+                foreach (var p in ps)
+                {
+                    var ident = p.Label;
+                    var (config, value) = pins[ident];
+
+                    var iFont = Utilities.GetFont("core.font.default", 8);
+                    var iScale = 0.65f;
+                    var iMeasure = iFont.MeasureString(ident, iScale);
+                    var pinPos = this.GetPinPosition(pins, ident);
+                    var color = value is null ? ColorF.Black : value.Read().GetValueColor();
+                    PrimitiveRenderer.RenderCircle(pinPos.ToVector2(Constants.GRIDSIZE), Constants.PIN_RADIUS, 0f, color, 1f);
+
+                    var onside = side.ApplyRotation(this.Rotation);
+
+                    var offset = (onside) switch
+                    {
+                        ComponentSide.LEFT => new Vector2(2, -iMeasure.Y / 2f),
+                        ComponentSide.RIGHT => new Vector2(-iMeasure.X - 2, -iMeasure.Y / 2f),
+                        ComponentSide.TOP => new Vector2(iMeasure.Y / 2f, 2),
+                        ComponentSide.BOTTOM => new Vector2(iMeasure.Y / 2f, -iMeasure.X - 2),
+                        _ => new Vector2(0, 0)
+                    };
+
+                    var rot = (onside) switch
+                    {
+                        ComponentSide.LEFT => 0f,
+                        ComponentSide.RIGHT => 0f,
+                        ComponentSide.TOP => MathF.PI / 2f,
+                        ComponentSide.BOTTOM => MathF.PI / 2f,
+                        _ => 0f
+                    };
+
+                    TextRenderer.RenderText(iFont, ident, pinPos.ToVector2(Constants.GRIDSIZE) + offset, iScale, rot, ColorF.Black);
+                }
+            }
+        }
+
+        var name = this._name;
+        var font = Utilities.GetFont("core.font.default", 8);
+        var realPos = this.Position.ToVector2(Constants.GRIDSIZE) + this.GetMiddleOffset();
+        var scale = 1f;
+        var measure = font.MeasureString(name, scale);
+        var textPos = this.Rotation switch
+        {
+            0 => realPos + new Vector2(measure.Y / 2f, -measure.X / 2f),
+            1 => realPos + new Vector2(-measure.X / 2f, -measure.Y / 2f),
+            2 => realPos + new Vector2(measure.Y / 2f, -measure.X / 2f),
+            3 => realPos + new Vector2(-measure.X / 2f, -measure.Y / 2f),
+            _ => realPos
+        };
+        var rotation = (MathF.PI / 2f) * ((this.Rotation + 1) % 2);
+
+        TextRenderer.RenderText(font, name, textPos, scale, rotation, ColorF.Black);
     }
 }

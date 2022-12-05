@@ -11,6 +11,9 @@ public class Framebuffer
     private static uint _quadVAO;
     private uint renderedTexture;
 
+    private int width;
+    private int height;
+
     public Framebuffer(bool acquireGLContext = false)
     {
         DisplayManager.OnFramebufferResize += (window, size) =>
@@ -18,6 +21,8 @@ public class Framebuffer
             DisplayManager.LockedGLContext(() =>
             {
                 this.Resize((int)size.X, (int)size.Y);
+                this.width = (int)size.X;
+                this.height = (int)size.Y;
             });
         };
 
@@ -25,12 +30,37 @@ public class Framebuffer
         {
             DisplayManager.LockedGLContext(() =>
             {
-                this.InitGL();
+                var size = DisplayManager.GetWindowSizeInPixels();
+                this.InitGL((int)size.X, (int)size.Y);
+                this.width = (int)size.X;
+                this.height = (int)size.Y;
             });
         }
         else
         {
-            this.InitGL();
+            var size = DisplayManager.GetWindowSizeInPixels();
+            this.InitGL((int)size.X, (int)size.Y);
+            this.width = (int)size.X;
+            this.height = (int)size.Y;
+        }
+    }
+
+    public Framebuffer(int width, int height, bool acquireGLContext = false)
+    {
+        if (acquireGLContext)
+        {
+            DisplayManager.LockedGLContext(() =>
+            {
+                this.InitGL(width, height);
+                this.width = width;
+                this.height = height;
+            });
+        }
+        else
+        {
+            this.InitGL(width, height);
+            this.width = width;
+            this.height = height;
         }
     }
 
@@ -81,13 +111,9 @@ public class Framebuffer
         glVertexAttribPointer(1, 2, GL_FLOAT, false, 4 * sizeof(float), (void*)(2 * sizeof(float)));
     }
 
-    public unsafe void InitGL()
+    public unsafe void InitGL(int width, int height)
     {
         InitQuad();
-
-        var size = DisplayManager.GetWindowSizeInPixels();
-        int width = (int)size.X;
-        int height = (int)size.Y;
 
         this._framebuffer = glGenFramebuffer();
         glBindFramebuffer(GL_FRAMEBUFFER, this._framebuffer);
@@ -120,10 +146,14 @@ public class Framebuffer
 
     public void Bind(Action performInBuffer)
     {
+        // Get old viewport
+        int[] oldViewport = glGetIntegerv(GL_VIEWPORT, 4);
         var prev = GetCurrentBoundBuffer();
         glBindFramebuffer(GL_FRAMEBUFFER, this._framebuffer);
+        glViewport(0, 0, this.width, this.height);
         performInBuffer();
         glBindFramebuffer(GL_FRAMEBUFFER, prev);
+        glViewport(oldViewport[0], oldViewport[1], oldViewport[2], oldViewport[3]);
     }
 
     // STATIC STUFF
@@ -134,8 +164,7 @@ public class Framebuffer
 
     public static uint GetCurrentBoundBuffer()
     {
-        int[] buffer = new int[1];
-        glGetIntegerv(GL_FRAMEBUFFER_BINDING, 1);
+        int[] buffer = glGetIntegerv(GL_FRAMEBUFFER_BINDING, 1);
         return (uint)buffer[0];
     }
 

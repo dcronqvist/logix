@@ -8,7 +8,7 @@ namespace LogiX.Architecture.StateMachine;
 public class StateMovingSelection : State<Editor, int>
 {
     private Vector2 startWorldPos;
-    private List<Component> components;
+    private List<(Node, PinCollection)> nodes;
     private List<(Vector2i, Vector2i)> segments;
     private Circuit stateBefore;
 
@@ -17,7 +17,7 @@ public class StateMovingSelection : State<Editor, int>
         this.startWorldPos = Input.GetMousePosition(updateArg.Camera);
         updateArg.Sim.LockedAction(s =>
         {
-            this.components = s.SelectedComponents.ToList();
+            this.nodes = s.SelectedNodes.Select(n => (n, s.Scheduler.GetPinCollectionForNode(n))).ToList();
             this.segments = s.SelectedWireSegments.ToList();
             this.stateBefore = updateArg.GetCurrentInvokerState();
             s.PickUpSelection();
@@ -54,7 +54,7 @@ public class StateMovingSelection : State<Editor, int>
                 s.CommitMovedPickedUpSelection(delta);
                 if (delta != Vector2i.Zero)
                 {
-                    arg.Execute(stateBefore, new CMoveSelection(components.Select(c => c.ID).ToList(), segments.ToList(), delta), arg, false);
+                    arg.Execute(stateBefore, new CMoveSelection(nodes.Select(c => c.Item1.ID).ToList(), delta), arg, false);
                 }
             });
             this.GoToState<StateIdle>(0);
@@ -67,21 +67,21 @@ public class StateMovingSelection : State<Editor, int>
         var currentSnap = currentMouse.ToVector2i(Constants.GRIDSIZE);
         var delta = currentSnap - this.startWorldPos.ToVector2i(Constants.GRIDSIZE);
 
-        foreach (var (start, end) in this.segments)
+        foreach (var (node, pins) in this.nodes)
         {
-            Wire.RenderSegment((start + delta, end + delta), Constants.COLOR_UNDEFINED);
+            var realPos = node.Position;
+            var pos = node.Position + delta;
+
+            node.Position = pos;
+            node.RenderSelected(arg.Camera);
+            node.Render(pins, arg.Camera);
+            node.Position = realPos;
         }
 
-        foreach (var comp in this.components)
+        foreach (var segment in this.segments)
         {
-            var realPos = comp.Position;
-            var pos = comp.Position + delta;
-
-            comp.Position = pos;
-            comp.TriggerSizeRecalculation();
-            comp.RenderSelected(arg.Camera);
-            comp.Render(arg.Camera);
-            comp.Position = realPos;
+            Wire.RenderSegmentAsSelected((segment.Item1 + delta, segment.Item2 + delta));
+            Wire.RenderSegment((segment.Item1 + delta, segment.Item2 + delta), Constants.COLOR_UNDEFINED);
         }
     }
 }

@@ -207,6 +207,12 @@ public static class PrimitiveRenderer
         }
     }
 
+    public static void RenderRectangleWithBorder(RectangleF rect, Vector2 origin, float rotation, float borderSize, ColorF color, ColorF borderColor)
+    {
+        RenderRectangle(rect, origin, rotation, borderColor);
+        RenderRectangle(rect.Inflate(-borderSize), origin, rotation, color);
+    }
+
     public static void RenderCircle(Vector2 position, float radius, float rotation, ColorF color, float segmentPercentage = 1f, int sides = 10)
     {
         var model = Utilities.CreateModelMatrixFromPosition(position, rotation, Vector2.Zero, new Vector2(radius, radius));
@@ -215,6 +221,22 @@ public static class PrimitiveRenderer
         foreach (var tri in tris)
         {
             AddInstance(new PrimitiveInstance(tri, model, color));
+        }
+    }
+
+    public static void RenderCircleOutline(Vector2 position, float radius, int borderSize, ColorF color, float rotation = 0f, float segmentPercentage = 1f, int sides = 10)
+    {
+        var perSide = MathF.PI * 2f / sides;
+
+        for (var i = 0; i < sides * segmentPercentage; i++)
+        {
+            var angle = (i * perSide) + rotation;
+            var angle2 = ((i + 1) * perSide) + rotation;
+
+            var v1 = new Vector2(MathF.Cos(angle), MathF.Sin(angle)) * radius;
+            var v2 = new Vector2(MathF.Cos(angle2), MathF.Sin(angle2)) * radius;
+
+            RenderLine(position + v1, position + v2, borderSize, color);
         }
     }
 

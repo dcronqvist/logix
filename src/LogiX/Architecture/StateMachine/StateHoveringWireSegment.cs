@@ -15,14 +15,14 @@ public class StateHoveringWireSegment : State<Editor, int>
 
         arg.Sim.LockedAction(s =>
         {
-            if (s.TryGetIOFromPosition(mouseWorldPos, out var group, out var comp))
+            if (s.TryGetPinAtPos(mouseWorldPos, out var node, out var ident))
             {
-                this.GoToState<StateHoveringIOGroup>(0);
+                this.GoToState<StateHoveringPin>(0);
             }
-            // else if (s.TryGetWireVertexAtPos(mouseWorldPos, out var pos, out var wire))
-            // {
-            //     this.GoToState<StateHoveringWireVertex>(0);
-            // }
+            // // else if (s.TryGetWireVertexAtPos(mouseWorldPos, out var pos, out var wire))
+            // // {
+            // //     this.GoToState<StateHoveringWireVertex>(0);
+            // // }
             else if (s.TryGetWireSegmentAtPos(mouseWorldPos, out var edge, out var wire))
             {
                 if (Input.IsMouseButtonPressed(MouseButton.Left))

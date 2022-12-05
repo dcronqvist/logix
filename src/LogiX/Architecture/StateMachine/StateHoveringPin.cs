@@ -5,7 +5,7 @@ using LogiX.Rendering;
 
 namespace LogiX.Architecture.StateMachine;
 
-public class StateHoveringIOGroup : State<Editor, int>
+public class StateHoveringPin : State<Editor, int>
 {
     public override void Update(Editor arg)
     {
@@ -13,7 +13,7 @@ public class StateHoveringIOGroup : State<Editor, int>
 
         arg.Sim.LockedAction(s =>
         {
-            if (s.TryGetIOFromPosition(mouseWorldPos, out var ioGroup, out var component))
+            if (s.TryGetPinAtPos(mouseWorldPos, out var node, out var identifier))
             {
                 if (Input.IsMouseButtonPressed(MouseButton.Left))
                 {
@@ -34,9 +34,9 @@ public class StateHoveringIOGroup : State<Editor, int>
         var pShader = LogiX.ContentManager.GetContentItem<ShaderProgram>("core.shader_program.primitive");
         arg.Sim.LockedAction(s =>
         {
-            if (s.TryGetIOFromPosition(mouseWorld, out var io, out var comp))
+            if (s.TryGetPinAtPos(mouseWorld, out var node, out var identifier))
             {
-                PrimitiveRenderer.RenderCircle(comp.GetPositionForIO(io, out var le).ToVector2(Constants.GRIDSIZE), Constants.IO_GROUP_RADIUS, 0, Constants.COLOR_SELECTED);
+                PrimitiveRenderer.RenderCircle(mouseWorld.ToVector2i(Constants.GRIDSIZE).ToVector2(Constants.GRIDSIZE), Constants.PIN_RADIUS, 0, Constants.COLOR_SELECTED);
             }
         });
     }
@@ -46,10 +46,9 @@ public class StateHoveringIOGroup : State<Editor, int>
         var mouseWorld = Input.GetMousePosition(arg.Camera);
         arg.Sim.LockedAction(s =>
         {
-            if (s.TryGetIOFromPosition(mouseWorld, out var io, out var comp))
+            if (s.TryGetPinAtPos(mouseWorld, out var node, out var ident))
             {
-                if (comp.DisplayIOGroupIdentifiers)
-                    Utilities.MouseToolTip($"{io.Identifier} : {io.Bits}");
+                Utilities.MouseToolTip($"{ident} : {s.Scheduler.GetPinCollectionForNode(node).GetConfig(ident).Bits}");
             }
         });
     }

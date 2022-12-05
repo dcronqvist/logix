@@ -1,86 +1,86 @@
-using ImGuiNET;
-using LogiX.Architecture.Serialization;
-using LogiX.Content.Scripting;
+// using ImGuiNET;
+// using LogiX.Architecture.Serialization;
+// using LogiX.Content.Scripting;
 
-namespace LogiX.Architecture.BuiltinComponents;
+// namespace LogiX.Architecture.BuiltinComponents;
 
-public class RegisterData : IComponentDescriptionData
-{
-    [ComponentDescriptionProperty("Bits", IntMinValue = 1, IntMaxValue = 32)]
-    public int DataBits { get; set; }
+// public class RegisterData : IComponentDescriptionData
+// {
+//     [ComponentDescriptionProperty("Bits", IntMinValue = 1, IntMaxValue = 32)]
+//     public int DataBits { get; set; }
 
-    public static IComponentDescriptionData GetDefault()
-    {
-        return new RegisterData()
-        {
-            DataBits = 8
-        };
-    }
-}
+//     public static IComponentDescriptionData GetDefault()
+//     {
+//         return new RegisterData()
+//         {
+//             DataBits = 8
+//         };
+//     }
+// }
 
-[ScriptType("REGISTER"), ComponentInfo("Register", "Memory", "core.markdown.register")]
-public class Register : Component<RegisterData>
-{
-    public override string Name => $"{this._currentState.Reverse().GetAsHexString()}";
-    public override bool DisplayIOGroupIdentifiers => true;
-    public override bool ShowPropertyWindow => true;
+// [ScriptType("REGISTER"), ComponentInfo("Register", "Memory", "core.markdown.register")]
+// public class Register : Component<RegisterData>
+// {
+//     public override string Name => $"{this._currentState.Reverse().GetAsHexString()}";
+//     public override bool DisplayIOGroupIdentifiers => true;
+//     public override bool ShowPropertyWindow => true;
 
-    private RegisterData _data;
-    private LogicValue[] _currentState;
+//     private RegisterData _data;
+//     private LogicValue[] _currentState;
 
-    public override IComponentDescriptionData GetDescriptionData()
-    {
-        return _data;
-    }
+//     public override IComponentDescriptionData GetDescriptionData()
+//     {
+//         return _data;
+//     }
 
-    public override void Initialize(RegisterData data)
-    {
-        this.ClearIOs();
-        this._data = data;
-        this._currentState = Enumerable.Repeat(LogicValue.UNDEFINED, data.DataBits).ToArray();
+//     public override void Initialize(RegisterData data)
+//     {
+//         this.ClearIOs();
+//         this._data = data;
+//         this._currentState = Enumerable.Repeat(LogicValue.UNDEFINED, data.DataBits).ToArray();
 
-        this.RegisterIO("D", data.DataBits, ComponentSide.LEFT, "data");
-        this.RegisterIO(">", 1, ComponentSide.LEFT, "clk");
-        this.RegisterIO("EN", 1, ComponentSide.TOP, "enable");
-        this.RegisterIO("R", 1, ComponentSide.TOP, "reset");
+//         this.RegisterIO("D", data.DataBits, ComponentSide.LEFT, "data");
+//         this.RegisterIO(">", 1, ComponentSide.LEFT, "clk");
+//         this.RegisterIO("EN", 1, ComponentSide.TOP, "enable");
+//         this.RegisterIO("R", 1, ComponentSide.TOP, "reset");
 
-        this.RegisterIO("Q", data.DataBits, ComponentSide.RIGHT);
+//         this.RegisterIO("Q", data.DataBits, ComponentSide.RIGHT);
 
-        this.TriggerSizeRecalculation();
-    }
+//         this.TriggerSizeRecalculation();
+//     }
 
-    private LogicValue previousClk;
-    public override void PerformLogic()
-    {
-        var data = this.GetIOFromIdentifier("D").GetValues();
-        var clk = this.GetIOFromIdentifier(">").GetValues().First();
-        var enable = this.GetIOFromIdentifier("EN").GetValues().First();
-        var reset = this.GetIOFromIdentifier("R").GetValues().First();
+//     private LogicValue previousClk;
+//     public override void PerformLogic()
+//     {
+//         var data = this.GetIOFromIdentifier("D").GetValues();
+//         var clk = this.GetIOFromIdentifier(">").GetValues().First();
+//         var enable = this.GetIOFromIdentifier("EN").GetValues().First();
+//         var reset = this.GetIOFromIdentifier("R").GetValues().First();
 
-        var q = this.GetIOFromIdentifier("Q");
+//         var q = this.GetIOFromIdentifier("Q");
 
-        if (reset == LogicValue.HIGH)
-        {
-            this._currentState = Enumerable.Repeat(LogicValue.LOW, this._data.DataBits).ToArray();
-        }
-        else
-        {
-            if (enable == LogicValue.HIGH)
-            {
-                if (clk == LogicValue.HIGH && previousClk == LogicValue.LOW)
-                {
-                    _currentState = data;
-                }
-            }
+//         if (reset == LogicValue.HIGH)
+//         {
+//             this._currentState = Enumerable.Repeat(LogicValue.LOW, this._data.DataBits).ToArray();
+//         }
+//         else
+//         {
+//             if (enable == LogicValue.HIGH)
+//             {
+//                 if (clk == LogicValue.HIGH && previousClk == LogicValue.LOW)
+//                 {
+//                     _currentState = data;
+//                 }
+//             }
 
-            if (clk == LogicValue.UNDEFINED || enable == LogicValue.UNDEFINED || reset == LogicValue.UNDEFINED)
-            {
-                this._currentState = Enumerable.Repeat(LogicValue.UNDEFINED, this._data.DataBits).ToArray();
-                return;
-            }
-        }
+//             if (clk == LogicValue.UNDEFINED || enable == LogicValue.UNDEFINED || reset == LogicValue.UNDEFINED)
+//             {
+//                 this._currentState = Enumerable.Repeat(LogicValue.UNDEFINED, this._data.DataBits).ToArray();
+//                 return;
+//             }
+//         }
 
-        q.Push(this._currentState);
-        previousClk = clk;
-    }
-}
+//         q.Push(this._currentState);
+//         previousClk = clk;
+//     }
+// }

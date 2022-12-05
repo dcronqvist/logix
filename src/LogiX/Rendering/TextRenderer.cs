@@ -232,9 +232,9 @@ public static class TextRenderer
         _instances.Clear();
     }
 
-    public static unsafe void RenderText(Font f, string s, Vector2 position, float scale, float rotation, ColorF color, Camera2D cam, bool pixelAlign = true, float fixedAdvance = -1f)
+    public static unsafe void RenderText(Font f, string s, Vector2 position, float scale, float rotation, ColorF color, bool pixelAlign = true, float fixedAdvance = -1f)
     {
-        AddCharacterInstances(s, f, position, scale, rotation, color, fixedAdvance);
+        AddCharacterInstances(s, f, pixelAlign ? position.PixelAlign() : position, scale, rotation, color, fixedAdvance);
     }
 
     // private static unsafe void RenderTextInternal(ShaderProgram shader, Font f, string s, Vector2 position, float scale, float rotation, ColorF color, Camera2D cam, bool pixelAlign = true)

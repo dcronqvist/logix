@@ -22,7 +22,8 @@ public class StateRectangleSelecting : State<Editor, int>
 
         arg.Sim.LockedAction(s =>
         {
-            s.SelectComponentsInRectangle(rect);
+            s.ClearSelection();
+            s.SelectNodesInRect(rect);
             s.SelectWireSegmentsInRectangle(rect);
         });
 

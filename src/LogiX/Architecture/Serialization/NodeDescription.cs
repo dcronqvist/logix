@@ -6,7 +6,7 @@ using ImGuiNET;
 namespace LogiX.Architecture.Serialization;
 
 [AttributeUsage(AttributeTargets.Property)]
-public class ComponentDescriptionPropertyAttribute : Attribute
+public class NodeDescriptionPropertyAttribute : Attribute
 {
     public string DisplayName { get; set; }
     public string HelpTooltip { get; set; } = null;
@@ -20,56 +20,56 @@ public class ComponentDescriptionPropertyAttribute : Attribute
     public ImGuiInputTextFlags StringFlags { get; set; } = ImGuiInputTextFlags.CallbackCharFilter;
     public string StringRegexFilter { get; set; } = null;
 
-    public ComponentDescriptionPropertyAttribute(string displayName)
+    public NodeDescriptionPropertyAttribute(string displayName)
     {
         this.DisplayName = displayName;
     }
 }
 
-public interface IComponentDescriptionData
+public interface INodeDescriptionData
 {
-    public static abstract IComponentDescriptionData GetDefault();
+    public static abstract INodeDescriptionData GetDefault();
 }
 
-public class ComponentDescription
+public class NodeDescription
 {
-    public string ComponentTypeID { get; set; }
-    public IComponentDescriptionData Data { get; set; }
+    public string NodeTypeID { get; set; }
+    public INodeDescriptionData Data { get; set; }
     public Vector2i Position { get; set; }
     public int Rotation { get; set; }
     public Guid ID { get; set; }
 
-    public ComponentDescription(string componentTypeID, Vector2i position, int rotation, Guid id, IComponentDescriptionData data)
+    public NodeDescription(string nodeTypeID, Vector2i position, int rotation, Guid id, INodeDescriptionData data)
     {
-        this.ComponentTypeID = componentTypeID;
+        this.NodeTypeID = nodeTypeID;
         this.Data = data;
         this.Position = position;
         this.Rotation = rotation;
         this.ID = id;
     }
 
-    private static Dictionary<string, ScriptType> _componentTypes;
-    public static void RegisterComponentTypes()
+    private static Dictionary<string, ScriptType> _nodeTypes;
+    public static void RegisterNodeTypes()
     {
-        _componentTypes = new();
+        _nodeTypes = new();
         var types = ScriptManager.GetScriptTypes();
         foreach (var t in types)
         {
-            if (t.Type.IsAssignableTo(typeof(Component)))
+            if (t.Type.IsAssignableTo(typeof(Node)))
             {
-                if (t.Type.GetCustomAttribute<ComponentInfoAttribute>() is not null)
+                if (t.Type.GetCustomAttribute<NodeInfoAttribute>() is not null)
                 {
-                    _componentTypes.Add(t.Identifier, t);
+                    _nodeTypes.Add(t.Identifier, t);
                 }
             }
         }
     }
 
-    public static ComponentInfoAttribute GetComponentInfo(string identifier)
+    public static NodeInfoAttribute GetNodeInfo(string identifier)
     {
-        if (_componentTypes.TryGetValue(identifier, out var type))
+        if (_nodeTypes.TryGetValue(identifier, out var type))
         {
-            return type.Type.GetCustomAttribute<ComponentInfoAttribute>();
+            return type.Type.GetCustomAttribute<NodeInfoAttribute>();
         }
         else
         {
@@ -77,9 +77,9 @@ public class ComponentDescription
         }
     }
 
-    public static string GetComponentTypeID(Type type)
+    public static string GetNodeTypeID(Type type)
     {
-        foreach (var t in _componentTypes)
+        foreach (var t in _nodeTypes)
         {
             if (t.Value.Type == type)
             {
@@ -89,70 +89,70 @@ public class ComponentDescription
         return null;
     }
 
-    public Component CreateComponent()
+    public Node CreateNode()
     {
-        var type = _componentTypes[this.ComponentTypeID];
-        var component = type.CreateInstance<Component>();
-        component.Initialize(this.Data);
-        component.Position = this.Position;
-        component.Rotation = this.Rotation;
-        component.ID = this.ID;
-        return component;
+        var type = _nodeTypes[this.NodeTypeID];
+        var node = type.CreateInstance<Node>();
+        node.Initialize(this.Data);
+        node.Position = this.Position;
+        node.Rotation = this.Rotation;
+        node.ID = this.ID;
+        return node;
     }
 
-    public static Component CreateDefaultComponent(string identifier)
+    public static Node CreateDefaultNode(string identifier)
     {
-        var type = _componentTypes[identifier];
+        var type = _nodeTypes[identifier];
 
-        if (Utilities.IsSubclassOfRawGeneric(typeof(Component<>), type.Type))
+        if (Utilities.IsSubclassOfRawGeneric(typeof(Node<>), type.Type))
         {
             // Has data parameter
-            var h = Utilities.RecursivelyCheckBaseclassUntilRawGeneric(typeof(Component<>), type.Type);
+            var h = Utilities.RecursivelyCheckBaseclassUntilRawGeneric(typeof(Node<>), type.Type);
 
             var x = type.Type.BaseType.GetGenericArguments();
             var instance = x.First().GetMethod("GetDefault").Invoke(null, null);
-            var component = type.CreateInstance<Component>();
-            component.Initialize((IComponentDescriptionData)instance);
+            var component = type.CreateInstance<Node>();
+            component.Initialize((INodeDescriptionData)instance);
             return component;
         }
         else
         {
-            var component = type.CreateInstance<Component>();
+            var component = type.CreateInstance<Node>();
             component.Initialize(null);
             return component;
         }
     }
 
-    public static ComponentDescription CreateDefaultComponentDescription(string identifier)
+    public static NodeDescription CreateDefaultNodeDescription(string identifier)
     {
-        return CreateDefaultComponent(identifier).GetDescriptionOfInstance();
+        return CreateDefaultNode(identifier).GetDescriptionOfInstance();
     }
 
-    public static IComponentDescriptionData CreateDefaultComponentDescriptionData(string identifier)
+    public static INodeDescriptionData CreateDefaultNodeDescriptionData(string identifier)
     {
-        var type = _componentTypes[identifier];
+        var type = _nodeTypes[identifier];
 
-        if (Utilities.IsSubclassOfRawGeneric(typeof(Component<>), type.Type))
+        if (Utilities.IsSubclassOfRawGeneric(typeof(Node<>), type.Type))
         {
             // Has data parameter
             var x = type.Type.BaseType.GetGenericArguments();
             var instance = x.First().GetMethod("GetDefault").Invoke(null, null);
-            return (IComponentDescriptionData)instance;
+            return (INodeDescriptionData)instance;
         }
         else
         {
-            throw new Exception("Component does not inherit from Component<TData>");
+            throw new Exception("Node does not inherit from Node<T>");
         }
     }
 
-    public static string[] GetRegisteredComponentTypes()
+    public static string[] GetRegisteredNodeTypes()
     {
-        return _componentTypes.Keys.ToArray();
+        return _nodeTypes.Keys.ToArray();
     }
 
-    public static ScriptType GetComponentScriptTypeFromIdentifier(string identifier)
+    public static ScriptType GetNodeScriptTypeFromIdentifier(string identifier)
     {
-        return _componentTypes[identifier];
+        return _nodeTypes[identifier];
     }
 
     public void SaveToFile(string path)
@@ -161,7 +161,7 @@ public class ComponentDescription
         {
             WriteIndented = true,
             PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-            Converters = { new IComponentDescriptionDataConverter() }
+            Converters = { new INodeDescriptionDataConverter() }
         };
 
         string json = JsonSerializer.Serialize(this, options);
@@ -172,7 +172,7 @@ public class ComponentDescription
         }
     }
 
-    public static ComponentDescription LoadFromFile(string path)
+    public static NodeDescription LoadFromFile(string path)
     {
         using (var file = new StreamReader(path))
         {
@@ -180,18 +180,18 @@ public class ComponentDescription
             {
                 WriteIndented = true,
                 PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-                Converters = { new IComponentDescriptionDataConverter() }
+                Converters = { new INodeDescriptionDataConverter() }
             };
 
-            return JsonSerializer.Deserialize<ComponentDescription>(file.ReadToEnd(), options);
+            return JsonSerializer.Deserialize<NodeDescription>(file.ReadToEnd(), options);
         }
     }
 
-    public static Type GetComponentTypesDataParameterType(string identifier)
+    public static Type GetNodeTypesDataParameterType(string identifier)
     {
-        var type = _componentTypes[identifier];
+        var type = _nodeTypes[identifier];
 
-        if (Utilities.IsSubclassOfRawGeneric(typeof(Component<>), type.Type))
+        if (Utilities.IsSubclassOfRawGeneric(typeof(Node<>), type.Type))
         {
             // Has data parameter
             var x = type.Type.BaseType.GetGenericArguments();
@@ -199,16 +199,16 @@ public class ComponentDescription
         }
         else
         {
-            throw new Exception("Component does not inherit from Component<TData>");
+            throw new Exception("Node does not inherit from Node<T>");
         }
     }
 
-    public static SortedDictionary<string, string[]> GetAllComponentCategories()
+    public static SortedDictionary<string, string[]> GetAllNodeCategories()
     {
         var categories = new Dictionary<string, List<string>>();
-        foreach (var t in _componentTypes)
+        foreach (var t in _nodeTypes)
         {
-            var info = t.Value.Type.GetCustomAttribute<ComponentInfoAttribute>();
+            var info = t.Value.Type.GetCustomAttribute<NodeInfoAttribute>();
             if (info is not null)
             {
                 if (info.Hidden)
@@ -240,7 +240,7 @@ public class ComponentDescription
     }
 }
 
-public class ComponentDescription<TData> : ComponentDescription where TData : IComponentDescriptionData
+public class ComponentDescription<TData> : NodeDescription where TData : INodeDescriptionData
 {
     public new TData Data { get; set; }
 

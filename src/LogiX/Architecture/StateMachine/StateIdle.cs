@@ -24,13 +24,34 @@ public class StateIdle : State<Editor, int>
 
         if (!ImGui.GetIO().WantCaptureMouse)
         {
-            arg.Sim.LockedAction(s => s.Interact(arg.Camera));
+            bool interactPrecedence = arg.Sim.LockedAction(s => s.Interact(arg.Camera));
 
             var done = arg.Sim.LockedAction(s =>
             {
-                if (s.TryGetIOFromPosition(mouseWorldPosition, out var group, out var comp))
+                if (s.TryGetPinAtPos(mouseWorldPosition, out var node, out var identifier))
                 {
-                    this.GoToState<StateHoveringIOGroup>(0);
+                    this.GoToState<StateHoveringPin>(0);
+                    return true;
+                }
+
+                return false;
+            });
+            if (done) return;
+
+            done = arg.Sim.LockedAction(s =>
+            {
+                if (s.TryGetNodeFromPos(mouseWorldPosition, out var node) && s.IsNodeSelected(node) && !interactPrecedence && Input.IsMouseButtonPressed(MouseButton.Right))
+                {
+                    arg.OpenContextMenu(() =>
+                    {
+                        if (ImGui.MenuItem("Delete Node"))
+                        {
+                            var deleteNode = new CDeleteNode(node.ID);
+                            arg.Execute(deleteNode, arg);
+                            ImGui.CloseCurrentPopup();
+                        }
+                    });
+
                     return true;
                 }
 
@@ -67,22 +88,22 @@ public class StateIdle : State<Editor, int>
                 arg.Sim.LockedAction(s =>
                 {
                     // Check if we clicked on a component
-                    if (s.TryGetComponentAtPos(mouseWorldPosition, out var comp))
+                    if (s.TryGetNodeFromPos(mouseWorldPosition, out var node))
                     {
                         // If we clicked on a component and it isn't selected, select it.
-                        if (!s.IsComponentSelected(comp))
+                        if (!s.IsNodeSelected(node))
                         {
                             if (!Input.IsKeyDown(Keys.LeftShift))
                             {
                                 s.ClearSelection();
                             }
-                            s.SelectComponent(comp);
+                            s.SelectNode(node);
                         }
                         else
                         {
                             if (Input.IsKeyDown(Keys.LeftShift))
                             {
-                                s.DeselectComponent(comp);
+                                s.DeselectNode(node);
                             }
                         }
                     }

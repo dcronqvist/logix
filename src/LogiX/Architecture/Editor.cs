@@ -23,7 +23,7 @@ public class Editor : Invoker<Circuit, Editor>
     // Currently loaded project and the currently open circuit from that project
     public LogiXProject Project { get; private set; }
     public Circuit CurrentlyOpenCircuit { get; private set; }
-    public ComponentInfoAttribute CurrentlyOpenCircuitInfoDocumentation { get; private set; }
+    public NodeInfoAttribute CurrentlyOpenCircuitInfoDocumentation { get; private set; }
 
     // GUI stuff, ImGui controller and framebuffers for both the circuit and the GUI
     public ImGuiController ImGuiController { get; private set; }
@@ -43,7 +43,7 @@ public class Editor : Invoker<Circuit, Editor>
     // How many ticks per second the simulation is currently running at
     public float CurrentTicksPerSecond { get; set; }
     // The available "target" ticks per second for the simulation
-    public int[] AvailableTickRates { get; } = new int[] { 1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024, 2048, 4096, 8192, 16384 };
+    public int[] AvailableTickRates { get; } = new int[] { 1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024, 2048, 4096, 8192, 16384, 32768 };
     // The currently selected "target" ticks per second for the simulation, defaults to 64 ticks per second
     public int CurrentlySelectedTickRate { get; set; } = 6;
     // The currently inputted custom tick rate
@@ -70,7 +70,7 @@ public class Editor : Invoker<Circuit, Editor>
     public Vector2 MouseStartPosition { get; set; }
 
     // Some variables for the AddNewComponent coroutine
-    public ComponentDescription NewComponent { get; set; }
+    public NodeDescription NewComponent { get; set; }
 
     // All editor actions that should be visible in the main menu bar, and have shortcuts etc.
     public List<(string, List<(string, EditorAction)>)> EditorActions { get; private set; }
@@ -118,7 +118,7 @@ public class Editor : Invoker<Circuit, Editor>
                 Camera.Zoom /= 1.1f;
 
             // Clamp the zoom to a minimum of 0.3f and a maximum of 10f, so we don't zoom in too far or out too far
-            Camera.Zoom = Math.Clamp(Camera.Zoom, 0.3f, 10f);
+            Camera.Zoom = Math.Clamp(Camera.Zoom, 0.5f, 10f);
         };
 
         // This event is called every time a key that represents a character is pressed.
@@ -183,12 +183,11 @@ public class Editor : Invoker<Circuit, Editor>
                     continue;
                 }
 
-                // Run a single tick in the simulation
                 this.Sim.LockedAction(s =>
                 {
                     try
                     {
-                        s.Tick();
+                        s.Step();
                     }
                     catch (System.Exception ex)
                     {
@@ -327,7 +326,7 @@ public class Editor : Invoker<Circuit, Editor>
 
         this.AddMainMenuItem("Edit", "Copy", new EditorAction((e) => this.Sim.LockedAction(s => s.HasSelection()), (e) => false, (e) =>
         {
-            this._currentComponentClipboard = this.Sim.LockedAction(s => s.SelectedComponents.Select(c => c.ID)).ToList();
+            this._currentComponentClipboard = this.Sim.LockedAction(s => s.SelectedNodes.Select(c => c.ID)).ToList();
             this._currentSegmentClipboard = this.Sim.LockedAction(s => s.SelectedWireSegments).ToList();
 
             this.SetMessage(TimedMessages(("Copied to clipboard!", 3000), ("", 0)));
@@ -344,20 +343,20 @@ public class Editor : Invoker<Circuit, Editor>
         this.AddMainMenuItem("Edit", "Delete Selection", new EditorAction((e) => this.Sim.LockedAction(s => s.HasSelection()), (e) => false, (e) =>
         {
             var commands = new List<Command<Editor>>();
-            commands.AddRange(this.Sim.LockedAction(s => s.SelectedComponents.Select(c => new CDeleteComponent(c.ID))));
+            commands.AddRange(this.Sim.LockedAction(s => s.SelectedNodes.Select(c => new CDeleteNode(c.ID))));
             commands.AddRange(this.Sim.LockedAction(s => s.SelectedWireSegments.Select(w => new CDeleteWireSegment(w))));
             this.Execute(new CMulti("Delete Selection", commands.ToArray()), this);
         }, 0, Keys.Delete));
 
-        this.AddMainMenuItem("Edit", "Rotate Clockwise", new EditorAction((e) => this.Sim.LockedAction(s => s.SelectedComponents).Count > 0, (e) => false, (e) =>
+        this.AddMainMenuItem("Edit", "Rotate Clockwise", new EditorAction((e) => this.Sim.LockedAction(s => s.SelectedNodes).Count > 0, (e) => false, (e) =>
         {
-            var commands = this.Sim.LockedAction(s => s.SelectedComponents.Select(c => new CRotateComponent(c.ID, 1)));
+            var commands = this.Sim.LockedAction(s => s.SelectedNodes.Select(c => new CRotateComponent(c.ID, 1)));
             this.Execute(new CMulti("Rotate Selection CW", commands.ToArray()), this);
         }, ModifierKeys.Control, Keys.Right));
 
-        this.AddMainMenuItem("Edit", "Rotate Counter Clockwise", new EditorAction((e) => this.Sim.LockedAction(s => s.SelectedComponents).Count > 0, (e) => false, (e) =>
+        this.AddMainMenuItem("Edit", "Rotate Counter Clockwise", new EditorAction((e) => this.Sim.LockedAction(s => s.SelectedNodes).Count > 0, (e) => false, (e) =>
         {
-            var commands = this.Sim.LockedAction(s => s.SelectedComponents.Select(c => new CRotateComponent(c.ID, -1)));
+            var commands = this.Sim.LockedAction(s => s.SelectedNodes.Select(c => new CRotateComponent(c.ID, -1)));
             this.Execute(new CMulti("Rotate Selection CCW", commands.ToArray()), this);
         }, ModifierKeys.Control, Keys.Left));
 
@@ -403,7 +402,7 @@ public class Editor : Invoker<Circuit, Editor>
 
         this.AddMainMenuItem("Simulation", "Tick Once", new EditorAction((e) => this.CurrentlyOpenCircuit is not null, (e) => false, (e) =>
         {
-            this.Sim.LockedAction(s => s.Tick());
+            this.Sim.LockedAction(s => s.Step());
         }, 0, Keys.F6));
 
         // ALL HELP ACTIONS
@@ -565,7 +564,7 @@ Under *projects*, you can see your circuits, and right clicking them in the side
             this.CurrentlyOpenCircuit = null;
         }
 
-        ComponentDescription.CurrentProject = project;
+        NodeDescription.CurrentProject = project;
         this.Project = project;
         DisplayManager.SetWindowTitle($"LogiX - {this.Project.Name}");
         this.Camera = new Camera2D(Vector2.Zero, 1f);
@@ -646,7 +645,7 @@ Under *projects*, you can see your circuits, and right clicking them in the side
 
     #region UPDATE METHODS
 
-    public void AddNewComponent(ComponentDescription desc)
+    public void AddNewComponent(NodeDescription desc)
     {
         this.NewComponent = desc;
         this.FSM.SetState<StateAddingNewComponent>(this, 0);
@@ -727,7 +726,7 @@ Under *projects*, you can see your circuits, and right clicking them in the side
                 {
                     this.DrawGrid();
                 }
-                this.Sim.LockedAction(s => s.Render(this.Camera, this.RenderWires));
+                this.Sim.LockedAction(s => s.Render(this.Camera));
 
                 if (!this.FSM.CurrentState.RenderAboveGUI())
                 {
@@ -753,6 +752,10 @@ Under *projects*, you can see your circuits, and right clicking them in the side
 
             this.GUIFramebuffer.Bind(() =>
             {
+
+                var hasContext = DisplayManager.HasGLContext();
+                var current = Framebuffer.GetCurrentBoundBuffer();
+
                 Framebuffer.Clear(ColorF.Transparent);
                 var font = Utilities.GetFont("core.font.opensans", _guiFontSize);
                 Utilities.WithImGuiFont(font, () =>
@@ -958,6 +961,8 @@ Under *projects*, you can see your circuits, and right clicking them in the side
         ImGui.Separator();
         ImGui.Text($"Zoom: {(this.Camera.Zoom * 100f).ToString("0")}%");
         ImGui.Text($"{this.FSM.CurrentState.GetType().Name}");
+        //ImGui.Text($"{this.Sim.LockedAction(s => s.Scheduler.ScheduledEvents.Count)}:{this.Sim.LockedAction(s => s.Scheduler.ScheduledEvents.Select(x => x.Count).Sum())} events");
+        ImGui.Text($"Wires: {this.Sim.LockedAction(s => s.Wires.Count)}");
     }
 
     private bool _projectsOpen = false;
@@ -988,9 +993,20 @@ Under *projects*, you can see your circuits, and right clicking them in the side
                     }
                     if (ImGui.BeginPopupContextItem())
                     {
-                        if (ImGui.MenuItem("Edit", this.CurrentlyOpenCircuit is null ? true : this.CurrentlyOpenCircuit.ID != circuit.ID))
+                        if (ImGui.MenuItem("Edit Circuit", this.CurrentlyOpenCircuit is null ? true : this.CurrentlyOpenCircuit.ID != circuit.ID))
                         {
                             this.OpenCircuit(circuit.ID);
+                        }
+                        if (ImGui.MenuItem("Edit Appearance"))
+                        {
+                            if (this.CurrentlyOpenCircuit.ID == circuit.ID)
+                            {
+                                var newCircuit = this.Sim.LockedAction(s => s.GetCircuitInSimulation(this.CurrentlyOpenCircuit.Name));
+                                newCircuit.ID = this.CurrentlyOpenCircuit.ID;
+                                this.Project.UpdateCircuit(newCircuit);
+                            }
+
+                            this.OpenPopup(new CircuitAppearanceDialog(circuit));
                         }
                         if (ImGui.MenuItem("Delete", this.CurrentlyOpenCircuit is null ? true : this.CurrentlyOpenCircuit.ID != circuit.ID))
                         {
@@ -1072,7 +1088,7 @@ Under *projects*, you can see your circuits, and right clicking them in the side
                 ImGui.TreePop();
             }
 
-            var componentCategories = ComponentDescription.GetAllComponentCategories();
+            var componentCategories = NodeDescription.GetAllNodeCategories();
 
             foreach (var category in componentCategories)
             {
@@ -1081,12 +1097,12 @@ Under *projects*, you can see your circuits, and right clicking them in the side
                     ImGui.TreePush(category.Key.ToString());
                     foreach (var c in category.Value)
                     {
-                        var cInfo = ComponentDescription.GetComponentInfo(c);
+                        var cInfo = NodeDescription.GetNodeInfo(c);
                         ImGui.MenuItem(cInfo.DisplayName);
 
                         if (ImGui.IsItemClicked())
                         {
-                            this.AddNewComponent(ComponentDescription.CreateDefaultComponentDescription(c));
+                            this.AddNewComponent(NodeDescription.CreateDefaultNodeDescription(c));
                         }
 
                         if (ImGui.BeginPopupContextItem())
@@ -1115,10 +1131,10 @@ Under *projects*, you can see your circuits, and right clicking them in the side
 
     public void SubmitSingleSelectedPropertyWindow()
     {
-        if (this.Sim?.LockedAction(s => s.SelectedComponents.Count == 1) == true)
+        if (this.Sim?.LockedAction(s => s.SelectedNodes.Count == 1) == true)
         {
-            var selected = this.Sim.LockedAction(s => s.SelectedComponents.First());
-            var index = this.Sim.LockedAction(s => s.Components.IndexOf(selected));
+            var selected = this.Sim.LockedAction(s => s.SelectedNodes.First());
+            var index = this.Sim.LockedAction(s => s.Nodes.IndexOf(selected));
             selected.CompleteSubmitUISelected(this, index);
         }
     }
@@ -1197,7 +1213,7 @@ Under *projects*, you can see your circuits, and right clicking them in the side
                     }
                     else if (url.StartsWith("component://"))
                     {
-                        var component = ComponentDescription.GetComponentInfo(url.Substring("component://".Length));
+                        var component = NodeDescription.GetNodeInfo(url.Substring("component://".Length));
                         this.CurrentlyOpenCircuitInfoDocumentation = component;
                     }
                 });
@@ -1263,6 +1279,23 @@ Under *projects*, you can see your circuits, and right clicking them in the side
         // }
 
         // ImGui.End();
+
+        ImGui.Begin("New System");
+
+        this.Sim.LockedAction(s =>
+        {
+            foreach (var timeFrame in s.Scheduler.EventQueue)
+            {
+                ImGui.BeginChild(timeFrame.GetHashCode().ToString());
+                foreach (var e in timeFrame)
+                {
+                    ImGui.Text(e.ToString());
+                }
+                ImGui.EndChild();
+            }
+        });
+
+        ImGui.End();
     }
 
     #endregion

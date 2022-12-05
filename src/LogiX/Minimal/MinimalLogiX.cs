@@ -58,7 +58,7 @@ public class MinimalLogiX
     public void Simulate(string projectPath, string circuitName, string actionSequencePath)
     {
         var project = LogiXProject.FromFile(projectPath);
-        ComponentDescription.CurrentProject = project;
+        NodeDescription.CurrentProject = project;
 
         if (!project.HasCircuitWithName(circuitName))
         {
@@ -80,27 +80,27 @@ public class MinimalLogiX
             using (StreamReader sr = new StreamReader(actionSequencePath, new FileStreamOptions() { Access = FileAccess.Read, Share = FileShare.ReadWrite }))
             {
                 var text = sr.ReadToEnd();
-                var validator = new ActionSequenceValidator(circuit, text);
-                if (validator.TryValidatePins(out var errors))
-                {
-                    var actionRunner = new ActionSequenceRunner(circuit, text, Path.GetDirectoryName(actionSequencePath));
-                    actionRunner.Run();
-                }
-                else
-                {
-                    // Some errors.
-                    foreach (var error in errors)
-                    {
-                        Console.WriteLine(error);
-                    }
-                }
+                // var validator = new ActionSequenceValidator(circuit, text);
+                // if (validator.TryValidatePins(out var errors))
+                // {
+                //     var actionRunner = new ActionSequenceRunner(circuit, text, Path.GetDirectoryName(actionSequencePath));
+                //     actionRunner.Run();
+                // }
+                // else
+                // {
+                //     // Some errors.
+                //     foreach (var error in errors)
+                //     {
+                //         Console.WriteLine(error);
+                //     }
+                // }
             }
         }
         else
         {
             while (true)
             {
-                simulation.Tick();
+                simulation.Step();
             }
         }
     }
@@ -119,6 +119,6 @@ public class MinimalLogiX
         ContentManager.Load();
 
         ScriptManager.Initialize(ContentManager);
-        ComponentDescription.RegisterComponentTypes();
+        NodeDescription.RegisterNodeTypes();
     }
 }

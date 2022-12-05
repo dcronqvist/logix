@@ -79,7 +79,7 @@ public class LogiXProject
         {
             WriteIndented = false,
             PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-            Converters = { new IComponentDescriptionDataConverter() }
+            Converters = { new INodeDescriptionDataConverter() }
         };
 
         string json = JsonSerializer.Serialize(this, options);
@@ -109,7 +109,7 @@ public class LogiXProject
             var options = new JsonSerializerOptions()
             {
                 PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-                Converters = { new IComponentDescriptionDataConverter() }
+                Converters = { new INodeDescriptionDataConverter() }
             };
 
             var proj = JsonSerializer.Deserialize<LogiXProject>(file.ReadToEnd(), options);

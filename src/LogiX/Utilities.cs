@@ -216,7 +216,7 @@ public static class Utilities
 
         for (int i = 0; i < a.Length; i++)
         {
-            if (a[i] == LogicValue.UNDEFINED || b[i] == LogicValue.UNDEFINED)
+            if (a[i] == LogicValue.Z || b[i] == LogicValue.Z)
                 continue;
 
             if (a[i] != b[i])
@@ -251,9 +251,9 @@ public static class Utilities
         };
     }
 
-    public static ColorF GetValueColor(LogicValue[] values)
+    public static ColorF GetValueColor(this LogicValue[] values)
     {
-        if (values.All(v => v == LogicValue.UNDEFINED))
+        if (values.All(v => v == LogicValue.Z))
         {
             return Constants.COLOR_UNDEFINED;
         }
@@ -309,6 +309,48 @@ public static class Utilities
             toCheck = toCheck.BaseType;
         }
         return false;
+    }
+
+    public static int CeilToOdd(this int value)
+    {
+        if (value % 2 == 0)
+            return value + 1;
+        else
+            return value;
+    }
+
+    public static int CeilToEven(this int value)
+    {
+        if (value % 2 == 0)
+            return value;
+        else
+            return value + 1;
+    }
+
+    public static ComponentSide GetComponentSide(this Vector2i pinOffset, Vector2i size)
+    {
+        var real = pinOffset.ToVector2(Constants.GRIDSIZE);
+
+        if (pinOffset.X == 0)
+        {
+            return ComponentSide.LEFT;
+        }
+        else if (pinOffset.Y == 0)
+        {
+            return ComponentSide.TOP;
+        }
+        else if (pinOffset.X == size.X)
+        {
+            return ComponentSide.RIGHT;
+        }
+        else if (pinOffset.Y == size.Y)
+        {
+            return ComponentSide.BOTTOM;
+        }
+        else
+        {
+            throw new Exception("Invalid pin offset");
+        }
     }
 
     public static Vector2i ToVector2i(this Vector2 worldPosition, int gridSize)
@@ -650,7 +692,7 @@ public static class Utilities
         if (ImGui.IsItemHovered())
         {
             ImGui.BeginTooltip();
-            ImGui.Text(text);
+            text.Split('\n').ToList().ForEach(t => ImGui.Text(t));
             ImGui.EndTooltip();
         }
     }
@@ -658,7 +700,7 @@ public static class Utilities
     public static void MouseToolTip(string text)
     {
         ImGui.BeginTooltip();
-        ImGui.Text(text);
+        text.Split('\n').ToList().ForEach(t => ImGui.Text(t));
         ImGui.EndTooltip();
     }
 
@@ -746,12 +788,12 @@ public static class Utilities
 
     public static bool AnyUndefined(this IEnumerable<LogicValue> values)
     {
-        return values.Any(v => v == LogicValue.UNDEFINED);
+        return values.Any(v => v == LogicValue.Z);
     }
 
     public static bool IsUndefined(this LogicValue value)
     {
-        return value == LogicValue.UNDEFINED;
+        return value == LogicValue.Z;
     }
 
     public static string GetAsByteString(long byteCount)
@@ -944,7 +986,7 @@ public static class Utilities
 
     public static string ToBinaryString(this IEnumerable<LogicValue> values)
     {
-        return string.Join("", values.Select(v => v == LogicValue.HIGH ? "1" : (v == LogicValue.UNDEFINED ? "X" : "0")));
+        return string.Join("", values.Select(v => v == LogicValue.HIGH ? "1" : (v == LogicValue.Z ? "X" : "0")));
     }
 
     public static RectangleF GetSegmentBoundingBox((Vector2i, Vector2i) wireSegment)
@@ -973,5 +1015,10 @@ public static class Utilities
     public static ColorF ToColorF(this Vector4 vec)
     {
         return new ColorF(vec.X, vec.Y, vec.Z, vec.W);
+    }
+
+    public static LogicValue[] Multiple(this LogicValue value, int count)
+    {
+        return Enumerable.Repeat(value, count).ToArray();
     }
 }

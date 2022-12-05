@@ -10,533 +10,156 @@ using LogiX.Rendering;
 
 namespace LogiX;
 
-public class ValueCollection : List<(LogicValue[], IO, Component)>
-{
-    public bool AnyPushed()
-    {
-        return this.Count > 0;
-    }
-
-    public bool AllAgree(out LogicValue[] correctValues)
-    {
-        if (this.Count == 0)
-        {
-            correctValues = null;
-            return false;
-        }
-
-        LogicValue[] agreedValues = this[0].Item1;
-
-        for (int i = 1; i < this.Count; i++)
-        {
-            var arr = this[i].Item1;
-
-            for (int j = 0; j < arr.Length; j++)
-            {
-                if (arr[j] != agreedValues[j])
-                {
-                    if (arr[j] == LogicValue.UNDEFINED)
-                    {
-                        agreedValues[j] = agreedValues[j];
-                    }
-                    else if (agreedValues[j] == LogicValue.UNDEFINED)
-                    {
-                        agreedValues[j] = arr[j];
-                    }
-                    else
-                    {
-                        correctValues = null;
-                        return false;
-                    }
-                }
-            }
-        }
-
-        correctValues = agreedValues;
-        return true;
-    }
-
-    public bool AllSameWidth()
-    {
-        if (this.Count == 0)
-        {
-            return false;
-        }
-
-        int width = this[0].Item1.Length;
-
-        foreach ((LogicValue[] pushedValues, _, _) in this)
-        {
-            if (pushedValues.Length != width)
-            {
-                return false;
-            }
-        }
-
-        return true;
-    }
-}
-
-public enum LogicValueRetrievalStatus
-{
-    SUCCESS,
-    DIFF_WIDTH,
-    NOTHING_PUSHED,
-    DISAGREE,
-}
-public abstract class SimulationError
-{
-    public string Message { get; set; }
-
-    public SimulationError(string message)
-    {
-        this.Message = message;
-    }
-
-    public abstract void Render(Camera2D cam);
-}
-
-public class ReadWrongAmountOfBitsError : SimulationError
-{
-    public Component Comp { get; set; }
-    public Vector2i Pos { get; set; }
-    public int Expected { get; set; }
-    public int Actual { get; set; }
-
-    public ReadWrongAmountOfBitsError(Component comp, Vector2i pos, int expected, int actual) : base($"DIFF_BITWIDTH")
-    {
-        this.Comp = comp;
-        this.Pos = pos;
-        this.Expected = expected;
-        this.Actual = actual;
-    }
-
-    public override void Render(Camera2D cam)
-    {
-        var shader = LogiX.ContentManager.GetContentItem<ShaderProgram>("core.shader_program.primitive");
-        PrimitiveRenderer.RenderCircle(this.Pos.ToVector2(Constants.GRIDSIZE), 8, 0f, ColorF.Red);
-        var tShader = LogiX.ContentManager.GetContentItem<ShaderProgram>("core.shader_program.text");
-        var font = Utilities.GetFont("core.font.default", 8); //LogiX.ContentManager.GetContentItem<Font>("core.font.default-regular-8");
-        var measure = font.MeasureString(this.Message, 1f);
-        TextRenderer.RenderText(font, this.Message, this.Pos.ToVector2(Constants.GRIDSIZE) - measure / 2f, 1f, 0f, ColorF.Black, cam);
-    }
-}
-public class PushingDifferentValuesError : SimulationError
-{
-    public Wire Wire { get; set; }
-
-    public PushingDifferentValuesError(Wire wire) : base($"DISAGREE")
-    {
-        this.Wire = wire;
-    }
-
-    public override void Render(Camera2D cam)
-    {
-        var pShader = LogiX.ContentManager.GetContentItem<ShaderProgram>("core.shader_program.primitive");
-        var color = ColorF.Red;
-
-        for (int i = 0; i < Wire.Segments.Count; i++)
-        {
-            var segment = Wire.Segments[i];
-            var a = segment.Item1.ToVector2(Constants.GRIDSIZE);
-            var b = segment.Item2.ToVector2(Constants.GRIDSIZE);
-
-            PrimitiveRenderer.RenderLine(a, b, Constants.WIRE_WIDTH, color);
-        }
-
-        var segmentPoints = Wire.Segments.SelectMany(s => new Vector2i[] { s.Item1, s.Item2 }).Distinct().ToArray();
-
-        foreach (var point in segmentPoints)
-        {
-            var worldPos = point.ToVector2(Constants.GRIDSIZE);
-            //PrimitiveRenderer.RenderCircle(pShader, worldPos, Constants.WIRE_POINT_RADIUS, 0, color, cam);
-            PrimitiveRenderer.RenderRectangle(new RectangleF(worldPos.X, worldPos.Y, 0, 0).Inflate(Constants.WIRE_WIDTH / 2f), Vector2.Zero, 0, color);
-        }
-
-        var firstSegment = Wire.Segments[0];
-        var tShader = LogiX.ContentManager.GetContentItem<ShaderProgram>("core.shader_program.text");
-        var font = Utilities.GetFont("core.font.default", 8); //LogiX.ContentManager.GetContentItem<Font>("core.font.default-regular-8");
-        var measure = font.MeasureString(this.Message, 0.5f);
-        TextRenderer.RenderText(font, this.Message, Utilities.GetMiddleOfVec2(firstSegment.Item1.ToVector2(Constants.GRIDSIZE), firstSegment.Item2.ToVector2(Constants.GRIDSIZE)) - measure / 2f, 0.5f, 0f, ColorF.Black, cam);
-    }
-}
-
-public class ICIsOldError : SimulationError
-{
-    public Integrated IC { get; set; }
-
-    public ICIsOldError(Integrated ic) : base($"IC_IS_OLD")
-    {
-        this.IC = ic;
-    }
-
-    public override void Render(Camera2D cam)
-    {
-        var tShader = LogiX.ContentManager.GetContentItem<ShaderProgram>("core.shader_program.text");
-        var font = Utilities.GetFont("core.font.default", 8); //LogiX.ContentManager.GetContentItem<Font>("core.font.default-regular-8");
-        var size = this.IC.GetBoundingBox(out _).GetSize();
-        var pos = this.IC.Position.ToVector2(Constants.GRIDSIZE);
-
-        var measure = font.MeasureString(this.Message, 1f);
-        TextRenderer.RenderText(font, this.Message, pos + new Vector2(size.X / 2f, -15) - measure / 2f, 1f, 0f, ColorF.Red, cam);
-    }
-}
-
 public class Simulation
 {
-    public List<Component> Components { get; private set; } = new();
-    public Dictionary<Vector2i, ValueCollection> NewValues { get; set; } = new();
-    public Dictionary<Vector2i, ValueCollection> CurrentValues { get; set; } = new();
-    public List<Wire> Wires { get; private set; } = new();
-    public List<Component> SelectedComponents { get; set; } = new();
-    public List<(Vector2i, Vector2i)> SelectedWireSegments { get; set; } = new();
-    public List<SimulationError> PreviousErrors { get; set; } = new();
-    public List<SimulationError> Errors { get; set; } = new();
-    public Dictionary<Vector2i, List<(Component, IO)>> ComponentIOPositions { get; set; } = new();
+    public Scheduler Scheduler { get; set; }
+    public List<Node> Nodes { get; set; }
+    public List<Wire> Wires { get; set; }
+
+    public List<Node> SelectedNodes { get; set; }
+    public List<(Vector2i, Vector2i)> SelectedWireSegments { get; set; }
     public Dictionary<Vector2i, Wire> WirePositions { get; set; } = new();
 
     public Simulation()
     {
+        this.Scheduler = new Scheduler();
+        this.Nodes = new();
+        this.Wires = new();
+        this.SelectedNodes = new();
+        this.SelectedWireSegments = new();
     }
 
-    public bool HasSelection()
+    public void Step()
     {
-        return this.SelectedComponents.Count > 0 || this.SelectedWireSegments.Count > 0;
+        this.Scheduler.Step();
     }
 
-    public bool TryGetLogicValuesAtPosition(Vector2i position, int expectedWidth, [NotNullWhen(true)] out LogicValue[] values, [NotNullWhen(false)] out LogicValueRetrievalStatus status, out IO fromIO, out Component fromComp)
+    public void AddNode(Node node)
     {
-        // Find all driven values at that position, if any.
-        // If there are no driven values, return UNDEFINED.
+        this.Nodes.Add(node);
+        this.Scheduler.AddNode(node);
+        node.Register(this.Scheduler);
 
-        if (!CurrentValues.ContainsKey(position))
-        {
-            values = Enumerable.Repeat(LogicValue.UNDEFINED, expectedWidth).ToArray();
-            status = LogicValueRetrievalStatus.NOTHING_PUSHED;
-            fromIO = null;
-            fromComp = null;
-            return false;
-        }
-
-        var pushedValues = CurrentValues[position];
-
-        if (!pushedValues.AnyPushed())
-        {
-            values = Enumerable.Repeat(LogicValue.UNDEFINED, expectedWidth).ToArray();
-            status = LogicValueRetrievalStatus.NOTHING_PUSHED;
-            fromIO = null;
-            fromComp = null;
-            return false;
-        }
-
-        if (pushedValues.AllAgree(out var agreedValues) && pushedValues.AllSameWidth())
-        {
-            if (agreedValues.Length == expectedWidth)
-            {
-                values = agreedValues;
-                status = LogicValueRetrievalStatus.SUCCESS;
-                fromIO = pushedValues[0].Item2;
-                fromComp = pushedValues[0].Item3;
-                return true;
-            }
-            else
-            {
-                values = agreedValues;
-                status = LogicValueRetrievalStatus.DIFF_WIDTH;
-                fromIO = null;
-                fromComp = null;
-                return false;
-            }
-        }
-
-        if (!pushedValues.AllSameWidth())
-        {
-            values = Enumerable.Repeat(LogicValue.UNDEFINED, expectedWidth).ToArray();
-            status = LogicValueRetrievalStatus.DIFF_WIDTH;
-            fromIO = null;
-            fromComp = null;
-            return false;
-        }
-
-        if (!pushedValues.AllAgree(out _))
-        {
-            values = Enumerable.Repeat(LogicValue.UNDEFINED, expectedWidth).ToArray();
-            status = LogicValueRetrievalStatus.DISAGREE;
-            fromIO = null;
-            fromComp = null;
-            return false;
-        }
-
-        throw new Exception("This should never happen.");
+        this.RecalculateWirePositions();
     }
 
-    public bool TryGetLogicValuesAtPosition(Vector2i position, [NotNullWhen(true)] out LogicValue[] values, [NotNullWhen(false)] out LogicValueRetrievalStatus status)
+    public void RemoveNode(Node node)
     {
-        // Find all driven values at that position, if any.
-        // If there are no driven values, return UNDEFINED.
-
-        if (!CurrentValues.ContainsKey(position))
+        this.Nodes.Remove(node);
+        if (this.SelectedNodes.Contains(node))
         {
-            values = null;
-            status = LogicValueRetrievalStatus.NOTHING_PUSHED;
-            return false;
+            this.SelectedNodes.Remove(node);
         }
+        this.Scheduler.RemoveNode(node);
 
-        var pushedValues = CurrentValues[position];
-        if (pushedValues.AllAgree(out var agreedValues) && pushedValues.AllSameWidth())
-        {
-            values = agreedValues;
-            status = LogicValueRetrievalStatus.SUCCESS;
-            return true;
-        }
-
-        if (!pushedValues.AllSameWidth())
-        {
-            values = null;
-            status = LogicValueRetrievalStatus.DIFF_WIDTH;
-            return false;
-        }
-
-        if (!pushedValues.AllAgree(out _))
-        {
-            values = null;
-            status = LogicValueRetrievalStatus.DISAGREE;
-            return false;
-        }
-
-        throw new Exception("This should never happen.");
-    }
-
-    public bool TryGetWireAtPos(Vector2i position, [NotNullWhen(true)] out Wire wire)
-    {
-        if (this.WirePositions.TryGetValue(position, out var w))
-        {
-            wire = w;
-            return true;
-        }
-
-        wire = null;
-        return false;
-    }
-
-    public bool TryGetWireSegmentAtPos(Vector2 worldPosition, out (Vector2i, Vector2i) edge, out Wire wire)
-    {
-        foreach (var w in this.Wires)
-        {
-            foreach (var seg in w.Segments)
-            {
-                var start = seg.Item1;
-                var end = seg.Item2;
-                var rect = Utilities.GetWireRectangle(start, end);
-
-                if (rect.Contains(worldPosition))
-                {
-                    edge = seg;
-                    wire = w;
-                    return true;
-                }
-            }
-        }
-
-        edge = default;
-        wire = null;
-        return false;
-    }
-
-    public bool TryGetWireVertexAtPos(Vector2 worldPosition, out Vector2i pos, out Wire wire)
-    {
-        foreach (var w in this.Wires)
-        {
-            foreach (var seg in w.Segments)
-            {
-                var start = seg.Item1.ToVector2(Constants.GRIDSIZE);
-                var end = seg.Item2.ToVector2(Constants.GRIDSIZE);
-
-                if (Vector2.Distance(start, worldPosition) <= Constants.WIRE_POINT_RADIUS)
-                {
-                    wire = w;
-                    pos = seg.Item1;
-                    return true;
-                }
-
-                if (Vector2.Distance(end, worldPosition) <= Constants.WIRE_POINT_RADIUS)
-                {
-                    wire = w;
-                    pos = seg.Item2;
-                    return true;
-                }
-            }
-        }
-
-        wire = null;
-        pos = default;
-        return false;
-    }
-
-    public void PushValuesAt(Vector2i position, IO fromIO, Component fromComponent, params LogicValue[] values)
-    {
-        // Attempt to push values to this grid position.
-        if (!NewValues.ContainsKey(position))
-        {
-            NewValues[position] = new ValueCollection();
-        }
-
-        if (this.TryGetWireAtPos(position, out var wire))
-        {
-            var positions = wire.GetLeafPoints(true);
-            foreach (var pos in positions)
-            {
-                if (this.TryGetIOFromPosition(pos, out var group, out var comp) || wire.HasEdgeVertexAt(pos))
-                {
-                    if (!NewValues.ContainsKey(pos))
-                    {
-                        NewValues[pos] = new ValueCollection();
-                    }
-
-                    NewValues[pos].Add((values, fromIO, fromComponent));
-
-                    if (!NewValues[pos].AllAgree(out _))
-                    {
-                        this.AddError(new PushingDifferentValuesError(wire));
-                    }
-                }
-            }
-        }
-        else
-        {
-            NewValues[position].Add((values, fromIO, fromComponent));
-        }
-    }
-
-    public void AddError(SimulationError error)
-    {
-        this.Errors.Add(error);
-    }
-
-    public void AddComponent(Component component, Vector2i position)
-    {
-        component.Position = position;
-        this.Components.Add(component);
-
-        foreach (var io in component.IOs)
-        {
-            var ioPos = component.GetPositionForIO(io, out _);
-
-            if (!this.ComponentIOPositions.ContainsKey(ioPos))
-            {
-                this.ComponentIOPositions[ioPos] = new List<(Component, IO)>();
-            }
-
-            this.ComponentIOPositions[ioPos].Add((component, io));
-        }
-    }
-
-    public void RemoveComponent(Component component)
-    {
-        this.Components.Remove(component);
-        if (this.SelectedComponents.Contains(component))
-        {
-            this.SelectedComponents.Remove(component);
-        }
+        this.RecalculateWirePositions();
     }
 
     public void AddWire(Wire wire)
     {
         this.Wires.Add(wire);
+        this.RecalculateWirePositions();
+    }
 
-        foreach (var point in wire.GetLeafPoints())
+    public (Node, string)[] GetPinsConnectedToWire(Wire wire)
+    {
+        var points = wire.GetLeafPoints();
+        var pins = new List<(Node, string)>();
+
+        foreach (var p in points)
         {
-            this.WirePositions[point] = wire;
-        }
-    }
-
-    public void RemoveWire(Wire wire)
-    {
-        this.Wires.Remove(wire);
-        this.WirePositions.Where(x => x.Value == wire).ToList().ForEach(x => this.WirePositions.Remove(x.Key));
-    }
-
-    public T[] GetComponentsOfType<T>()
-    {
-        return this.Components.OfType<T>().ToArray();
-    }
-
-    public void Tick(params Type[] noUpdate)
-    {
-        this.PreviousErrors = Errors;
-        this.Errors.Clear();
-
-        // Allow components to perform their logic
-        foreach (Component component in Components)
-        {
-            if (!noUpdate.Contains(component.GetType()))
+            if (this.TryGetPinAtPos(p.ToVector2(Constants.GRIDSIZE), out var node, out var identifier))
             {
-                component.Update(this);
+                pins.Add((node, identifier));
+            }
+        }
+        return pins.ToArray();
+    }
+
+    private void RecalculateConnectionsInScheduler()
+    {
+        var wires = this.Wires;
+
+        this.Scheduler.ClearConnections();
+
+        foreach (var node in this.Nodes)
+        {
+            node.Register(this.Scheduler);
+        }
+
+        foreach (var wire in wires)
+        {
+            var pins = this.GetPinsConnectedToWire(wire);
+
+            if (pins.Length > 1)
+            {
+                var first = pins.First();
+                foreach (var pin in pins.Skip(1))
+                {
+                    this.Scheduler.AddConnection(first.Item1, first.Item2, pin.Item1, pin.Item2);
+                }
             }
         }
 
-        // Swap pushed values
-        CurrentValues = NewValues;
-        NewValues = new Dictionary<Vector2i, ValueCollection>();
+        this.Scheduler.Prepare();
     }
 
-    public void Interact(Camera2D cam)
+    public void Render(Camera2D camera)
     {
-        foreach (var component in this.Components)
+        foreach (var node in this.SelectedNodes)
         {
-            component.Interact(cam);
-        }
-    }
-
-    public void Render(Camera2D cam, bool renderWires = true)
-    {
-        // Render selected components
-        foreach (Component component in SelectedComponents)
-        {
-            component.RenderSelected(cam);
+            node.RenderSelected(camera);
         }
 
-        if (renderWires)
+        foreach (var node in this.Nodes)
         {
-            foreach (var selectedSegment in this.SelectedWireSegments)
+            node.Render(this.Scheduler.GetPinCollectionForNode(node), camera);
+        }
+
+        foreach (var segment in this.SelectedWireSegments)
+        {
+            Wire.RenderSegmentAsSelected(segment);
+        }
+
+        foreach (var wire in this.Wires)
+        {
+            var pins = this.GetPinsConnectedToWire(wire);
+
+            if (pins.Length > 0)
             {
-                Wire.RenderSegmentAsSelected(selectedSegment);
+                var (node, ident) = pins.First();
+                var nodePinCollection = this.Scheduler.GetPinCollectionForNode(node);
+                var (config, observableValue) = nodePinCollection[ident];
+                var values = observableValue.Read();
+                wire.Render(values, camera);
             }
-
-            // Allow wires to render themselves
-            foreach (Wire wire in Wires)
+            else
             {
-                wire.Render(this, cam);
+                wire.Render(LogicValue.Z.Multiple(1), camera);
             }
         }
-        //Allow components to render themselves
-        foreach (Component component in Components)
-        {
-            component.Render(cam);
-        }
-
-        // Render errors
-        foreach (var error in this.Errors)
-        {
-            error.Render(cam);
-        }
     }
 
-    public Circuit GetCircuitInSimulation(string name)
+    public bool Interact(Camera2D camera)
     {
-        return new Circuit(name, this.Components, this.Wires);
+        bool precedence = false;
+        foreach (var node in this.Nodes)
+        {
+            precedence |= node.Interact(this.Scheduler.GetPinCollectionForNode(node), camera);
+        }
+        return precedence;
     }
 
-    public static Simulation FromCircuit(Circuit circuit, params string[] excludeComps)
+    public static Simulation FromCircuit(Circuit circuit, params string[] excludeNodes)
     {
         var sim = new Simulation();
-        foreach (var component in circuit.Components)
+        foreach (var node in circuit.Nodes)
         {
-            if (excludeComps.Contains(component.ComponentTypeID))
+            if (excludeNodes.Contains(node.NodeTypeID))
                 continue;
 
-            var c = component.CreateComponent();
-            sim.AddComponent(c, c.Position);
+            var c = node.CreateNode();
+            sim.AddNode(c);
         }
 
         foreach (var wire in circuit.Wires)
@@ -548,18 +171,23 @@ public class Simulation
         return sim;
     }
 
+    public Circuit GetCircuitInSimulation(string name)
+    {
+        return new Circuit(name, this.Nodes, this.Wires);
+    }
+
     public void SetCircuitInSimulation(Circuit circuit)
     {
-        this.Components.Clear();
+        this.Nodes.Clear();
         this.Wires.Clear();
 
-        this.SelectedComponents.Clear();
+        this.SelectedNodes.Clear();
         this.SelectedWireSegments.Clear();
 
-        foreach (var component in circuit.Components)
+        foreach (var node in circuit.Nodes)
         {
-            var c = component.CreateComponent();
-            this.AddComponent(c, c.Position);
+            var c = node.CreateNode();
+            this.AddNode(c);
         }
 
         foreach (var wire in circuit.Wires)
@@ -570,285 +198,73 @@ public class Simulation
         this.RecalculateWirePositions();
     }
 
-    public Component GetComponentFromID(Guid id)
+    #region SELECTION METHODS
+
+    public void SelectNode(Node node)
     {
-        return this.Components.FirstOrDefault(x => x.ID == id);
+        if (!this.SelectedNodes.Contains(node))
+            this.SelectedNodes.Add(node);
     }
 
-    public bool TryGetIOFromPosition(Vector2i gridPosition, out IO io, out Component component)
+    public void DeselectNode(Node node)
     {
-        if (this.ComponentIOPositions.TryGetValue(gridPosition, out var found))
-        {
-            io = found.First().Item2;
-            component = found.First().Item1;
-            return true;
-        }
-
-        io = null;
-        component = null;
-        return false;
-    }
-
-    public bool TryGetIOFromPosition(Vector2 worldPosition, out IO io, out Component component)
-    {
-        foreach (var c in this.Components)
-        {
-            var positions = c.GetAllIOPositions();
-
-            int i = 0;
-            foreach (var p in positions)
-            {
-                var pos = p.ToVector2(Constants.GRIDSIZE);
-                var _io = c.GetIO(i);
-
-                if (Vector2.Distance(pos, worldPosition) <= Constants.IO_GROUP_RADIUS)
-                {
-                    io = _io;
-                    component = c;
-                    return true;
-                }
-
-                i++;
-            }
-        }
-
-        io = null;
-        component = null;
-        return false;
-    }
-
-    public void RecalculateWirePositions()
-    {
-        this.WirePositions.Clear();
-        foreach (var wire in this.Wires)
-        {
-            foreach (var point in wire.GetPoints())
-            {
-                this.WirePositions[point] = wire;
-            }
-        }
-    }
-
-    public void ConnectPointsWithWire(Vector2i point1, Vector2i point2)
-    {
-        if (point1 == point2)
-        {
-            return;
-        }
-
-        if (this.TryGetWireAtPos(point1, out var w1))
-        {
-            if (this.TryGetWireAtPos(point2, out var w2))
-            {
-                if (w1 == w2)
-                {
-                    // Same wire? Just add the segment
-                    w1.AddSegment(point1, point2);
-                }
-                else
-                {
-                    // Different wires? Merge them
-                    w1.MergeWith(w2);
-                    w1.AddSegment(point1, point2);
-                    this.Wires.Remove(w2);
-                }
-            }
-            else
-            {
-                // Add segment to wire
-                w1.AddSegment(point1, point2);
-            }
-        }
-        else
-        {
-            if (this.TryGetWireAtPos(point2, out var w2))
-            {
-                // Add segment to wire
-                w2.AddSegment(point2, point1);
-            }
-            else
-            {
-                // Create new wire
-                var wire = new Wire(point1, point2);
-                this.AddWire(wire);
-            }
-        }
-
-        this.RecalculateWirePositions();
-    }
-
-    public bool TryGetWireSegmentAtPos(Vector2i pos, out (Vector2i, Vector2i) edge, out Wire wire)
-    {
-        foreach (var w in this.Wires)
-        {
-            if (w.TryGetSegmentAtPos(pos, out edge))
-            {
-                wire = w;
-                return true;
-            }
-        }
-
-        edge = (Vector2i.Zero, Vector2i.Zero);
-        wire = null;
-        return false;
-    }
-
-    public bool TryGetWireVertexAtPos(Vector2i pos, out Wire wire)
-    {
-        foreach (var w in this.Wires)
-        {
-            if (Utilities.IsPointInGraph(w.Segments, pos))
-            {
-                wire = w;
-                return true;
-            }
-        }
-
-        wire = null;
-        return false;
-    }
-
-    public bool TryGetComponentAtPos(Vector2i pos, out Component component)
-    {
-        foreach (var c in this.Components)
-        {
-            if (c.GetBoundingBox(out var tz).Contains(pos.ToVector2(Constants.GRIDSIZE)))
-            {
-                component = c;
-                return true;
-            }
-        }
-
-        component = null;
-        return false;
-    }
-
-    public bool TryGetComponentAtPos(Vector2 pos, out Component component)
-    {
-        foreach (var c in this.Components)
-        {
-            if (c.GetBoundingBox(out var tz).Contains(pos))
-            {
-                component = c;
-                return true;
-            }
-        }
-
-        component = null;
-        return false;
-    }
-
-    public void DisconnectPoints(Vector2i point1, Vector2i point2)
-    {
-        if (this.TryGetWireAtPos(point1, out var w1))
-        {
-            if (this.TryGetWireAtPos(point2, out var w2))
-            {
-                if (w1 == w2)
-                {
-                    // Same wire? Remove the segment
-                    Wire[] newWires = Wire.RemoveSegmentFromWire(w1, (point1, point2));
-                    this.Wires.Remove(w1);
-                    this.Wires.AddRange(newWires);
-                    this.RecalculateWirePositions();
-
-                    // if (this.SelectedWireSegments.Contains((point1, point2)))
-                    // {
-                    //     this.SelectedWireSegments.Remove((point1, point2));
-                    // }
-                }
-                else
-                {
-                    // Should never be different wires? Two points are only connected if they are on the same wire
-                    throw new Exception("Two points are only connected if they are on the same wire");
-                }
-            }
-            else
-            {
-                throw new Exception("No wire at point 2");
-            }
-        }
-        else
-        {
-            throw new Exception("No wire at point 1");
-        }
-    }
-
-    public void RemoveWirePoint(Vector2i point)
-    {
-        if (this.TryGetWireVertexAtPos(point, out var wire))
-        {
-            Wire[] newWires = wire.RemoveVertex(point);
-            this.Wires.Remove(wire);
-            this.Wires.AddRange(newWires);
-        }
-    }
-
-    public void SelectComponent(Component component)
-    {
-        if (!this.SelectedComponents.Contains(component))
-        {
-            this.SelectedComponents.Add(component);
-        }
-    }
-
-    public void DeselectComponent(Component component)
-    {
-        if (this.SelectedComponents.Contains(component))
-        {
-            this.SelectedComponents.Remove(component);
-        }
-    }
-
-    public void ToggleSelection(Component component)
-    {
-        if (this.SelectedComponents.Contains(component))
-        {
-            this.SelectedComponents.Remove(component);
-        }
-        else
-        {
-            this.SelectedComponents.Add(component);
-        }
+        if (this.SelectedNodes.Contains(node))
+            this.SelectedNodes.Remove(node);
     }
 
     public void ClearSelection()
     {
-        this.SelectedComponents.Clear();
+        this.SelectedNodes.Clear();
         this.SelectedWireSegments.Clear();
     }
 
-    public void SelectAllComponents()
+    public void SelectNodesInRect(RectangleF rect)
     {
-        this.SelectedComponents.Clear();
-        this.SelectedComponents.AddRange(this.Components);
-    }
-
-    public void SelectComponentsInRectangle(RectangleF rectangle)
-    {
-        this.SelectedComponents.Clear();
-
-        foreach (var c in this.Components)
+        foreach (var node in this.Nodes)
         {
-            if (c.GetBoundingBox(out var tz).IntersectsWith(rectangle))
-            {
-                this.SelectedComponents.Add(c);
-            }
+            if (node.IsNodeInRect(rect))
+                this.SelectNode(node);
         }
     }
 
-    public bool IsComponentSelected(Component component)
+    public bool IsNodeSelected(Node node)
     {
-        return this.SelectedComponents.Contains(component);
+        return this.SelectedNodes.Contains(node);
     }
 
-    public void MoveSelection(Vector2i delta)
+    private List<Node> _pickedNodes = new();
+    private List<(Vector2i, Vector2i)> _pickedSegments = new();
+    public void PickUpSelection()
     {
-        foreach (var c in this.SelectedComponents)
-        {
-            c.Move(delta);
-        }
-        this.ComponentIOPositions.Clear();
+        this._pickedNodes = this.SelectedNodes.ToList();
+        this._pickedSegments = this.SelectedWireSegments.ToList();
+
+        this.SelectedNodes.ForEach(s => { this.Nodes.Remove(s); this.Scheduler.RemoveNode(s); });
+        this.SelectedWireSegments.ForEach(s => this.DisconnectPoints(s.Item1, s.Item2));
+
+        this.SelectedNodes.Clear();
+        this.SelectedWireSegments.Clear();
+
+        this.RecalculateWirePositions();
+    }
+
+    public void CommitMovedPickedUpSelection(Vector2i delta)
+    {
+        this._pickedNodes.ForEach(s => s.Move(delta));
+        this._pickedSegments.ForEach(s => this.ConnectPointsWithWire(s.Item1 + delta, s.Item2 + delta));
+
+        this.Nodes.AddRange(this._pickedNodes);
+        this._pickedNodes.ForEach(s => this.Scheduler.AddNode(s));
+
+        this.SelectedNodes = this._pickedNodes.ToList();
+        this.SelectedWireSegments = this._pickedSegments.Select(s => (s.Item1 + delta, s.Item2 + delta)).ToList();
+
+        this.RecalculateWirePositions();
+    }
+
+    public bool HasSelection()
+    {
+        return this.SelectedNodes.Count > 0 || this.SelectedWireSegments.Count > 0;
     }
 
     public void SelectWireSegment((Vector2i, Vector2i) segment)
@@ -917,47 +333,184 @@ public class Simulation
         }
     }
 
-    private List<Component> _pickedComponents = new();
-    private List<(Vector2i, Vector2i)> _pickedWireSegments = new();
+    #endregion
 
-    public void PickUpSelection()
+    public bool TryGetNodeFromPos(Vector2 worldPosition, out Node node)
     {
-        this._pickedComponents = this.SelectedComponents.ToList();
-        this._pickedWireSegments = this.SelectedWireSegments.ToList();
-
-        this.SelectedComponents.ForEach(s => this.Components.Remove(s));
-        this.SelectedWireSegments.ForEach(s => this.DisconnectPoints(s.Item1, s.Item2));
-
-        this.SelectedComponents.Clear();
-        this.SelectedWireSegments.Clear();
-
-        this.RecalculateWirePositions();
-    }
-
-    public void CommitMovedPickedUpSelection(Vector2i delta)
-    {
-        this._pickedComponents.ForEach(s => { s.Move(delta); });
-        this._pickedWireSegments.ForEach(s => this.ConnectPointsWithWire(s.Item1 + delta, s.Item2 + delta));
-
-        this.Components.AddRange(this._pickedComponents);
-
-        this.SelectedComponents = this._pickedComponents.ToList();
-        this.SelectedWireSegments = this._pickedWireSegments.Select(s => (s.Item1 + delta, s.Item2 + delta)).ToList();
-
-        this.RecalculateWirePositions();
-    }
-
-    public void MoveWireSegment((Vector2i, Vector2i) segment, Vector2i delta)
-    {
-        this.DisconnectPoints(segment.Item1, segment.Item2);
-        this.ConnectPointsWithWire(segment.Item1 + delta, segment.Item2 + delta);
-
-        if (this.SelectedWireSegments.Contains(segment))
+        foreach (var n in this.Nodes)
         {
-            this.SelectedWireSegments.Remove(segment);
-            this.SelectedWireSegments.Add((segment.Item1 + delta, segment.Item2 + delta));
+            if (n.IsNodeInRect(worldPosition.CreateRect(new Vector2(1, 1))))
+            {
+                node = n;
+                return true;
+            }
         }
 
-        this.RecalculateWirePositions();
+        node = null;
+        return false;
+    }
+
+    public Node GetNodeFromID(Guid id)
+    {
+        return this.Nodes.FirstOrDefault(n => n.ID == id);
+    }
+
+    public void ConnectPointsWithWire(Vector2i point1, Vector2i point2, bool recalculate = true)
+    {
+        if (point1 == point2)
+        {
+            return;
+        }
+
+        if (this.TryGetWireAtPos(point1, out var w1))
+        {
+            if (this.TryGetWireAtPos(point2, out var w2))
+            {
+                if (w1 == w2)
+                {
+                    // Same wire? Just add the segment
+                    w1.AddSegment(point1, point2);
+                }
+                else
+                {
+                    // Different wires? Merge them
+                    w1.MergeWith(w2);
+                    w1.AddSegment(point1, point2);
+                    this.Wires.Remove(w2);
+                }
+            }
+            else
+            {
+                // Add segment to wire
+                w1.AddSegment(point1, point2);
+            }
+        }
+        else
+        {
+            if (this.TryGetWireAtPos(point2, out var w2))
+            {
+                // Add segment to wire
+                w2.AddSegment(point2, point1);
+            }
+            else
+            {
+                // Create new wire
+                var wire = new Wire(point1, point2);
+                this.AddWire(wire);
+            }
+        }
+
+        if (recalculate)
+            this.RecalculateWirePositions();
+    }
+
+    public void DisconnectPoints(Vector2i point1, Vector2i point2)
+    {
+        if (this.TryGetWireAtPos(point1, out var w1))
+        {
+            if (this.TryGetWireAtPos(point2, out var w2))
+            {
+                if (w1 == w2)
+                {
+                    // Same wire? Remove the segment
+                    Wire[] newWires = Wire.RemoveSegmentFromWire(w1, (point1, point2));
+                    this.Wires.Remove(w1);
+                    this.Wires.AddRange(newWires);
+                    this.RecalculateWirePositions();
+
+                    // if (this.SelectedWireSegments.Contains((point1, point2)))
+                    // {
+                    //     this.SelectedWireSegments.Remove((point1, point2));
+                    // }
+                }
+                else
+                {
+                    // Should never be different wires? Two points are only connected if they are on the same wire
+                    throw new Exception("Two points are only connected if they are on the same wire");
+                }
+            }
+            else
+            {
+                throw new Exception("No wire at point 2");
+            }
+        }
+        else
+        {
+            throw new Exception("No wire at point 1");
+        }
+    }
+
+    public void RecalculateWirePositions()
+    {
+        this.WirePositions.Clear();
+        foreach (var wire in this.Wires)
+        {
+            foreach (var point in wire.GetPoints())
+            {
+                this.WirePositions[point] = wire;
+            }
+        }
+
+        RecalculateConnectionsInScheduler();
+    }
+
+    public bool TryGetWireAtPos(Vector2i position, [NotNullWhen(true)] out Wire wire)
+    {
+        if (this.WirePositions.TryGetValue(position, out var w))
+        {
+            wire = w;
+            return true;
+        }
+
+        wire = null;
+        return false;
+    }
+
+    public bool TryGetPinAtPos(Vector2 position, [NotNullWhen(true)] out Node node, out string identifier)
+    {
+        foreach (var n in this.Nodes)
+        {
+            var pins = this.Scheduler.GetPinCollectionForNode(n);
+            foreach (var (ident, _) in pins)
+            {
+                var pinPos = n.GetPinPosition(pins, ident).ToVector2(Constants.GRIDSIZE);
+                var maxDist = Constants.PIN_RADIUS;
+
+                if ((pinPos - position).Length() < maxDist)
+                {
+                    identifier = ident;
+                    node = n;
+                    return true;
+                }
+            }
+        }
+
+        identifier = null;
+        node = null;
+        return false;
+    }
+
+    public bool TryGetWireSegmentAtPos(Vector2 worldPosition, out (Vector2i, Vector2i) edge, out Wire wire)
+    {
+        foreach (var w in this.Wires)
+        {
+            foreach (var seg in w.Segments)
+            {
+                var start = seg.Item1;
+                var end = seg.Item2;
+                var rect = Utilities.GetWireRectangle(start, end);
+
+                if (rect.Contains(worldPosition))
+                {
+                    edge = seg;
+                    wire = w;
+                    return true;
+                }
+            }
+        }
+
+        edge = default;
+        wire = null;
+        return false;
     }
 }

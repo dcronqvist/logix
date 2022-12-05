@@ -4,12 +4,12 @@ namespace LogiX.Architecture.Commands;
 
 public class CAddComponent : Command<Editor>
 {
-    public ComponentDescription Component { get; set; }
+    public NodeDescription Node { get; set; }
     public Vector2i Position { get; set; }
 
-    public CAddComponent(ComponentDescription comp, Vector2i position)
+    public CAddComponent(NodeDescription node, Vector2i position)
     {
-        this.Component = comp;
+        this.Node = node;
         this.Position = position;
     }
 
@@ -17,16 +17,16 @@ public class CAddComponent : Command<Editor>
     {
         arg.Sim.LockedAction(s =>
         {
-            var comp = this.Component.CreateComponent();
-            comp.Position = this.Position;
-            s.AddComponent(comp, this.Position);
+            var n = this.Node.CreateNode();
+            n.Position = this.Position;
+            s.AddNode(n);
             s.ClearSelection();
-            s.SelectComponent(comp);
+            s.SelectNode(n);
         });
     }
 
     public override string GetDescription()
     {
-        return $"Add {this.Component.ComponentTypeID} at {this.Position.X},{this.Position.Y}";
+        return $"Add {this.Node.NodeTypeID} at {this.Position.X},{this.Position.Y}";
     }
 }

@@ -20,10 +20,11 @@ public class CModifyComponentDataProp : Command<Editor>
     {
         arg.Sim.LockedAction(s =>
         {
-            var comp = s.GetComponentFromID(this.Component);
-            var data = Utilities.GetCopyOfInstance(comp.GetDescriptionData()) as IComponentDescriptionData;
+            var comp = s.GetNodeFromID(this.Component);
+            var data = Utilities.GetCopyOfInstance(comp.GetNodeData()) as INodeDescriptionData;
             this.Property.SetValue(data, this.Value);
             comp.Initialize(data);
+            s.RecalculateWirePositions();
         });
     }
 
