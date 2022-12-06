@@ -106,6 +106,7 @@ public struct ColorF
     public static ColorF Red { get { return new ColorF(0xff0000); } }
     public static ColorF Green { get { return new ColorF(0x00ff00); } }
     public static ColorF LimeGreen { get { return new ColorF(0x32cd32); } }
+    public static ColorF SoftGreen { get { return new ColorF(0x00d200); } }
     public static ColorF Blue { get { return new ColorF(0x0000ff); } }
     public static ColorF Yellow { get { return new ColorF(0xffff00); } }
     public static ColorF Cyan { get { return new ColorF(0x00ffff); } }

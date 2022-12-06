@@ -11,8 +11,8 @@ public static class Constants
     public static float PIN_RADIUS => 2f;
     public static int GRIDSIZE => 10;
 
-    public static ColorF COLOR_HIGH => ColorF.Green;
+    public static ColorF COLOR_HIGH => ColorF.SoftGreen;
     public static ColorF COLOR_LOW => ColorF.Darken(COLOR_HIGH, 0.3f);
-    public static ColorF COLOR_UNDEFINED => ColorF.Gray;
+    public static ColorF COLOR_UNDEFINED => ColorF.BlueGray;
     public static ColorF COLOR_ERROR => ColorF.Red;
 }

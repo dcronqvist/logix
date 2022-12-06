@@ -721,7 +721,7 @@ Under *projects*, you can see your circuits, and right clicking them in the side
         int pixelsInBetweenLines = Constants.GRIDSIZE;
 
         var pShader = LogiX.ContentManager.GetContentItem<ShaderProgram>("core.shader_program.primitive");
-        var color = ColorF.Darken(ColorF.LightGray, 0.8f);
+        var color = ColorF.Darken(ColorF.LightGray, 0.63f);
 
         // Draw vertical lines
         for (int i = (int)((camPos.X - viewSize.X / 2.0F) / pixelsInBetweenLines); i < ((camPos.X + viewSize.X / 2.0F) / pixelsInBetweenLines); i++)
@@ -764,7 +764,7 @@ Under *projects*, you can see your circuits, and right clicking them in the side
 
             this.WorkspaceFramebuffer.Bind(() =>
             {
-                Framebuffer.Clear(ColorF.Darken(ColorF.LightGray, 0.9f));
+                Framebuffer.Clear(ColorF.Darken(ColorF.LightGray, 0.7f));
 
                 if (this._drawGrid)
                 {
