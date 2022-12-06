@@ -22,7 +22,7 @@ public class CAddComponent : Command<Editor>
             s.AddNode(n);
             s.ClearSelection();
             s.SelectNode(n);
-        });
+        }, (e) => { throw e; });
     }
 
     public override string GetDescription()

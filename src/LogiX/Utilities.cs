@@ -131,6 +131,16 @@ public static class Utilities
                            -dir.X * MathF.Sin(angle) + dir.Y * MathF.Cos(angle)) + pivot;
     }
 
+    public static Vector2i ApplyRotation(this Vector2i v, int rotation)
+    {
+        return rotation switch
+        {
+            1 => new Vector2i(v.Y, v.X),
+            3 => new Vector2i(v.Y, v.X),
+            _ => v
+        };
+    }
+
     public static bool Contains(this RectangleF rect, Vector2 vec)
     {
         return rect.Contains(vec.X, vec.Y);

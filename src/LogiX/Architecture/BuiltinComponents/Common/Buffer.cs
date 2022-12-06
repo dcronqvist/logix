@@ -69,6 +69,6 @@ public class Buffer : BoxNode<BufferData>
 
     public override Vector2i GetSize()
     {
-        return new Vector2i(3, 2);
+        return new Vector2i(3, 2).ApplyRotation(this.Rotation);
     }
 }

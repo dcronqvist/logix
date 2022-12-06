@@ -16,7 +16,7 @@ public class CAddWire : Command<Editor>
         arg.Sim.LockedAction(s =>
         {
             s.ConnectPointsWithWire(_startPos, _endPos);
-        });
+        }, (e) => { throw e; });
     }
 
     public override string GetDescription()

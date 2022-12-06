@@ -102,7 +102,6 @@ public class Scheduler
 
         foreach (var connections in this.GetConnectedPins(this.NodePinConnections))
         {
-            // TODO: This should make sure that all connected pins have the same bit width, if not, then throw an exception.
             var anyNodePin = connections.First();
             var anyConfig = anyNodePin.Item1.GetPinConfiguration().First();
             var value = new ObservableValue(anyConfig.Bits);
@@ -122,6 +121,19 @@ public class Scheduler
                 if (config.EvaluateOnValueChange)
                 {
                     value.AddObserver(node);
+                }
+            }
+
+            // TODO: This should make sure that all connected pins have the same bit width, if not, then throw an exception.
+            foreach (var (node, port) in connections)
+            {
+                var nodePortConfig = node.GetPinConfiguration().ToArray();
+                var config = nodePortConfig.First(c => c.Identifier == port);
+
+                if (config.Bits != anyConfig.Bits)
+                {
+                    var v = this.NodePins[node].Get(port);
+                    v.Error = ObservableValueError.PIN_WIDTHS_MISMATCH;
                 }
             }
         }

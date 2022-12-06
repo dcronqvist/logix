@@ -25,7 +25,7 @@ public class CModifyComponentDataProp : Command<Editor>
             this.Property.SetValue(data, this.Value);
             comp.Initialize(data);
             s.RecalculateWirePositions();
-        });
+        }, (e) => { throw e; });
     }
 
     public override string GetDescription()

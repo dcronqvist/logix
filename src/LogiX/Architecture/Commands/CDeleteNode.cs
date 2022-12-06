@@ -17,7 +17,7 @@ public class CDeleteNode : Command<Editor>
         {
             var comp = s.GetNodeFromID(this.Node);
             s.RemoveNode(comp);
-        });
+        }, (e) => { throw e; });
     }
 
     public override string GetDescription()

@@ -48,7 +48,7 @@ public class CPaste : Command<Editor>
             }
 
             s.RecalculateWirePositions();
-        });
+        }, (e) => { throw e; });
     }
 
     public override string GetDescription()

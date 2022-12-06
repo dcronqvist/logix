@@ -19,7 +19,7 @@ public class CMoveSelection : Command<Editor>
             s.SelectedNodes = this.Nodes.Select(c => s.GetNodeFromID(c)).ToList();
             s.PickUpSelection();
             s.CommitMovedPickedUpSelection(this.Delta);
-        });
+        }, (e) => { throw e; });
     }
 
     public override string GetDescription()

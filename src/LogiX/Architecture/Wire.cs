@@ -108,10 +108,9 @@ public class Wire
         return _leafPoints;
     }
 
-    public void Render(LogicValue[] values, Camera2D cam)
+    public void Render(ColorF color, Camera2D cam)
     {
         var pShader = LogiX.ContentManager.GetContentItem<ShaderProgram>("core.shader_program.primitive");
-        var color = Utilities.GetValueColor(values);
 
         foreach (var segment in this.Segments)
         {

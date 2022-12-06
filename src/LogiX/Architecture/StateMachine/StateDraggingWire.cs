@@ -14,6 +14,8 @@ public class StateDraggingWire : State<Editor, int>
 
     private Vector2 _determinedDirection;
 
+    private int _startBits = -1;
+
     public override void OnEnter(Editor updateArg, int arg)
     {
         var mouseWorldPos = Input.GetMousePosition(updateArg.Camera);
@@ -21,6 +23,25 @@ public class StateDraggingWire : State<Editor, int>
         _cornerPos = _startPos;
         _endPos = _startPos;
         _determinedDirection = Vector2.Zero;
+
+        updateArg.Sim.LockedAction(s =>
+        {
+            if (s.TryGetPinAtPos(_startPos.ToVector2(Constants.GRIDSIZE), out var n, out var i))
+            {
+                var (config, v) = s.Scheduler.GetPinCollectionForNode(n)[i];
+                _startBits = config.Bits;
+            }
+            else if (s.TryGetWireAtPos(_startPos, out var w))
+            {
+                var pins = s.GetPinsConnectedToWire(w);
+
+                if (pins.Length > 0)
+                {
+                    var (node, ident) = pins.First();
+                    _startBits = s.Scheduler.GetPinCollectionForNode(node)[ident].Item1.Bits;
+                }
+            }
+        });
     }
 
     public override void Update(Editor arg)
@@ -84,16 +105,132 @@ public class StateDraggingWire : State<Editor, int>
                 Console.WriteLine($"Create wire between {_startPos.ToString()}, {_cornerPos.ToString()} and {_endPos.ToString()}, CORNER: {this.CornerNeeded()}");
                 if (CornerNeeded())
                 {
-                    var commands = new Command<Editor>[]
+                    if (this._startBits != -1)
                     {
-                        new CAddWire(_startPos, _cornerPos),
-                        new CAddWire(_cornerPos, _endPos)
-                    };
-                    arg.Execute(new CMulti("Create wire with corner", commands), arg);
+                        if (s.TryGetPinAtPos(_endPos.ToVector2(Constants.GRIDSIZE), out var n, out var i))
+                        {
+                            var (config, v) = s.Scheduler.GetPinCollectionForNode(n)[i];
+                            if (config.Bits != this._startBits)
+                            {
+                                // Cannot do this
+                            }
+                            else
+                            {
+                                // This is allowed
+                                var commands = new Command<Editor>[]
+                                {
+                                    new CAddWire(_startPos, _cornerPos),
+                                    new CAddWire(_cornerPos, _endPos)
+                                };
+                                arg.Execute(new CMulti("Create wire with corner", commands), arg);
+                            }
+                        }
+                        else if (s.TryGetWireAtPos(_endPos, out var wire))
+                        {
+                            var pins = s.GetPinsConnectedToWire(wire);
+
+                            if (pins.Length > 0)
+                            {
+                                var (node, ident) = pins.First();
+                                var (config, v) = s.Scheduler.GetPinCollectionForNode(node)[ident];
+                                if (config.Bits != this._startBits)
+                                {
+                                    // Cannot do this
+                                }
+                                else
+                                {
+                                    // This is allowed
+                                    var commands = new Command<Editor>[]
+                                    {
+                                        new CAddWire(_startPos, _cornerPos),
+                                        new CAddWire(_cornerPos, _endPos)
+                                    };
+                                    arg.Execute(new CMulti("Create wire with corner", commands), arg);
+                                }
+                            }
+                            else
+                            {
+                                // This is allowed
+                                var commands = new Command<Editor>[]
+                                {
+                                    new CAddWire(_startPos, _cornerPos),
+                                    new CAddWire(_cornerPos, _endPos)
+                                };
+                                arg.Execute(new CMulti("Create wire with corner", commands), arg);
+                            }
+                        }
+                        else
+                        {
+                            // This is allowed
+                            var commands = new Command<Editor>[]
+                            {
+                                new CAddWire(_startPos, _cornerPos),
+                                new CAddWire(_cornerPos, _endPos)
+                            };
+                            arg.Execute(new CMulti("Create wire with corner", commands), arg);
+                        }
+                    }
+                    else
+                    {
+                        var commands = new Command<Editor>[]
+                        {
+                            new CAddWire(_startPos, _cornerPos),
+                            new CAddWire(_cornerPos, _endPos)
+                        };
+                        arg.Execute(new CMulti("Create wire with corner", commands), arg);
+                    }
                 }
                 else
                 {
-                    arg.Execute(new CAddWire(_startPos, _endPos), arg);
+                    if (this._startBits != -1)
+                    {
+                        if (s.TryGetPinAtPos(_endPos.ToVector2(Constants.GRIDSIZE), out var n, out var i))
+                        {
+                            var (config, v) = s.Scheduler.GetPinCollectionForNode(n)[i];
+                            if (config.Bits != this._startBits)
+                            {
+                                // Cannot do this
+                            }
+                            else
+                            {
+                                // This is allowed
+                                arg.Execute(new CAddWire(_startPos, _endPos), arg);
+                            }
+                        }
+                        else if (s.TryGetWireAtPos(_endPos, out var w))
+                        {
+                            var pins = s.GetPinsConnectedToWire(w);
+
+                            if (pins.Length > 0)
+                            {
+                                var (node, ident) = pins.First();
+                                var (config, v) = s.Scheduler.GetPinCollectionForNode(node)[ident];
+                                if (config.Bits != this._startBits)
+                                {
+                                    // Cannot do this
+                                }
+                                else
+                                {
+                                    // This is allowed
+                                    arg.Execute(new CAddWire(_startPos, _endPos), arg);
+                                }
+                            }
+                            else
+                            {
+                                // This is allowed
+                                arg.Execute(new CAddWire(_startPos, _endPos), arg);
+                            }
+                        }
+                        else
+                        {
+                            // This is allowed
+                            arg.Execute(new CAddWire(_startPos, _endPos), arg);
+                        }
+                    }
+                    else
+                    {
+                        arg.Execute(new CAddWire(_startPos, _endPos), arg);
+                    }
                 }
             });
             this.GoToState<StateIdle>(0);
@@ -111,8 +248,81 @@ public class StateDraggingWire : State<Editor, int>
         var cornerWorld = _cornerPos.ToVector2(Constants.GRIDSIZE);
         var endWorld = _endPos.ToVector2(Constants.GRIDSIZE);
 
+        var color = ColorF.Green;
+
+        arg.Sim.LockedAction(s =>
+        {
+            if (this._startBits != -1)
+            {
+                if (s.TryGetPinAtPos(endWorld, out var n, out var i))
+                {
+                    var (config, v) = s.Scheduler.GetPinCollectionForNode(n)[i];
+                    if (config.Bits != this._startBits)
+                    {
+                        // Cannot do this
+                        color = ColorF.Red;
+                    }
+                }
+                else if (s.TryGetWireAtPos(_endPos, out var wire))
+                {
+                    var pins = s.GetPinsConnectedToWire(wire);
+
+                    if (pins.Length > 0)
+                    {
+                        var (node, ident) = pins.First();
+                        var (config, v) = s.Scheduler.GetPinCollectionForNode(node)[ident];
+                        if (config.Bits != this._startBits)
+                        {
+                            // Cannot do this
+                            color = ColorF.Red;
+                        }
+                    }
+                }
+            }
+        });
+
         var pShader = LogiX.ContentManager.GetContentItem<ShaderProgram>("core.shader_program.primitive");
-        PrimitiveRenderer.RenderLine(startWorld, cornerWorld, Constants.WIRE_WIDTH, ColorF.Green);
-        PrimitiveRenderer.RenderLine(cornerWorld, endWorld, Constants.WIRE_WIDTH, ColorF.Green);
+        PrimitiveRenderer.RenderLine(startWorld, cornerWorld, Constants.WIRE_WIDTH, color);
+        PrimitiveRenderer.RenderLine(cornerWorld, endWorld, Constants.WIRE_WIDTH, color);
+    }
+
+    public override void SubmitUI(Editor arg)
+    {
+        var startWorld = _startPos.ToVector2(Constants.GRIDSIZE);
+        var cornerWorld = _cornerPos.ToVector2(Constants.GRIDSIZE);
+        var endWorld = _endPos.ToVector2(Constants.GRIDSIZE);
+
+        var color = ColorF.Green;
+
+        arg.Sim.LockedAction(s =>
+        {
+            if (this._startBits != -1)
+            {
+                if (s.TryGetPinAtPos(endWorld, out var n, out var i))
+                {
+                    var (config, v) = s.Scheduler.GetPinCollectionForNode(n)[i];
+                    if (config.Bits != this._startBits)
+                    {
+                        // Cannot do this
+                        Utilities.MouseToolTip("Cannot connect pins with different bit widths");
+                    }
+                }
+                else if (s.TryGetWireAtPos(_endPos, out var wire))
+                {
+                    var pins = s.GetPinsConnectedToWire(wire);
+
+                    if (pins.Length > 0)
+                    {
+                        var (node, ident) = pins.First();
+                        var (config, v) = s.Scheduler.GetPinCollectionForNode(node)[ident];
+                        if (config.Bits != this._startBits)
+                        {
+                            // Cannot do this
+                            Utilities.MouseToolTip("Cannot connect pins with different bit widths");
+                        }
+                    }
+                }
+            }
+        });
     }
 }

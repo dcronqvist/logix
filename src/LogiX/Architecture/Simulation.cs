@@ -130,12 +130,20 @@ public class Simulation
                 var (node, ident) = pins.First();
                 var nodePinCollection = this.Scheduler.GetPinCollectionForNode(node);
                 var (config, observableValue) = nodePinCollection[ident];
-                var values = observableValue.Read();
-                wire.Render(values, camera);
+
+                if (observableValue.Error != ObservableValueError.NONE)
+                {
+                    wire.Render(Constants.COLOR_ERROR, camera);
+                }
+                else
+                {
+                    var values = observableValue.Read();
+                    wire.Render(Utilities.GetValueColor(values), camera);
+                }
             }
             else
             {
-                wire.Render(LogicValue.Z.Multiple(1), camera);
+                wire.Render(Constants.COLOR_UNDEFINED, camera);
             }
         }
     }

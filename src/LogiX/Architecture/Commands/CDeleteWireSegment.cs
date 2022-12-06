@@ -20,7 +20,7 @@ public class CDeleteWireSegment : Command<Editor>
             {
                 s.SelectedWireSegments.Remove(this.Segment);
             }
-        });
+        }, (e) => { throw e; });
     }
 
     public override string GetDescription()

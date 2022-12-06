@@ -641,6 +641,50 @@ Under *projects*, you can see your circuits, and right clicking them in the side
         return circ;
     }
 
+    public override void Execute(Command<Editor> command, Editor arg, bool doExecute = true)
+    {
+        try
+        {
+            base.Execute(command, arg, doExecute);
+        }
+        catch (Exception ex)
+        {
+            // If an exception occurs, show a popup of it and stop the simulation
+            this.OpenErrorPopup("Simulation Error", true, () =>
+            {
+                ImGui.Text(ex.Message);
+                if (ImGui.Button("OK"))
+                {
+                    this.Undo(this);
+                    this.FSM.SetState<StateIdle>(this, 0);
+                    ImGui.CloseCurrentPopup();
+                }
+            });
+        }
+    }
+
+    public override void Execute(Circuit stateBefore, Command<Editor> command, Editor arg, bool doExecute = true)
+    {
+        try
+        {
+            base.Execute(stateBefore, command, arg, doExecute);
+        }
+        catch (Exception ex)
+        {
+            // If an exception occurs, show a popup of it and stop the simulation
+            this.OpenErrorPopup("Simulation Error", true, () =>
+            {
+                ImGui.Text(ex.Message);
+                if (ImGui.Button("OK"))
+                {
+                    this.Undo(this);
+                    this.FSM.SetState<StateIdle>(this, 0);
+                    ImGui.CloseCurrentPopup();
+                }
+            });
+        }
+    }
+
     #endregion
 
     #region UPDATE METHODS
@@ -726,7 +770,7 @@ Under *projects*, you can see your circuits, and right clicking them in the side
                 {
                     this.DrawGrid();
                 }
-                this.Sim.LockedAction(s => s.Render(this.Camera));
+                this.Sim.LockedAction(s => s.Render(this.Camera), (e) => { });
 
                 if (!this.FSM.CurrentState.RenderAboveGUI())
                 {

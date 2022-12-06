@@ -19,7 +19,7 @@ public class CRotateComponent : Command<Editor>
         {
             s.GetNodeFromID(this.Node).Rotate(this.Rotation);
             s.RecalculateWirePositions();
-        });
+        }, (e) => { throw e; });
     }
 
     public override string GetDescription()

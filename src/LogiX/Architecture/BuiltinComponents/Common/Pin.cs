@@ -90,7 +90,16 @@ public class Pin : Node<PinData>
     public override IEnumerable<(ObservableValue, LogicValue[], int)> Evaluate(PinCollection pins)
     {
         var q = pins.Get("Q");
-        this._data.Values = q.Read();
+        var vals = q.Read();
+
+        if (vals.Length != this._data.Bits)
+        {
+            q.Error = ObservableValueError.PIN_WIDTHS_MISMATCH;
+        }
+        else
+        {
+            this._data.Values = vals;
+        }
 
         return Enumerable.Empty<(ObservableValue, LogicValue[], int)>();
     }
@@ -148,7 +157,7 @@ public class Pin : Node<PinData>
 
         PrimitiveRenderer.RenderRectangleWithBorder(rect, Vector2.Zero, 0f, 1, ColorF.White, ColorF.Black);
 
-        for (int i = 0; i < this._data.Bits; i++)
+        for (int i = 0; i < Math.Min(this._data.Bits, this._data.Values.Length); i++)
         {
             var value = this._data.Values[i];
             var x = i * 2 * Constants.GRIDSIZE;
