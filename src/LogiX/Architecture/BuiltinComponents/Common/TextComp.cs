@@ -13,7 +13,7 @@ public class TextCompData : INodeDescriptionData
     [NodeDescriptionProperty("Text", StringMultiline = true)]
     public string Text { get; set; }
 
-    public static INodeDescriptionData GetDefault()
+    public INodeDescriptionData GetDefault()
     {
         return new TextCompData()
         {
@@ -63,6 +63,11 @@ public class TextComp : BoxNode<TextCompData>
         var size = new Vector2(Math.Max(textWidth, Constants.GRIDSIZE), Math.Max(textHeight, Constants.GRIDSIZE));
 
         return new Vector2i((int)size.X.CeilToMultipleOf(Constants.GRIDSIZE) / Constants.GRIDSIZE + 2, (int)size.Y.CeilToMultipleOf(Constants.GRIDSIZE) / Constants.GRIDSIZE + 2);
+    }
+
+    public override Vector2i GetSizeRotated()
+    {
+        return this.GetSize();
     }
 
     public override void Initialize(TextCompData data)

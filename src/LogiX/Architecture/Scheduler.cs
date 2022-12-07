@@ -21,16 +21,20 @@ public class Scheduler
     public List<(Node, string, Node, string)> NodePinConnections { get; set; } = new();
     public Dictionary<Node, PinCollection> NodePins { get; set; } = new();
 
-    public void AddNode(Node node)
+    public void AddNode(Node node, bool prepare = true)
     {
         this.Nodes.Add(node);
-        this.Prepare();
+
+        if (prepare)
+            this.Prepare();
     }
 
-    public void RemoveNode(Node node)
+    public void RemoveNode(Node node, bool prepare = true)
     {
         this.Nodes.Remove(node);
-        this.Prepare();
+
+        if (prepare)
+            this.Prepare();
     }
 
     public void ClearConnections()
@@ -38,10 +42,12 @@ public class Scheduler
         this.NodePinConnections.Clear();
     }
 
-    public void AddConnection(Node n1, string i1, Node n2, string i2)
+    public void AddConnection(Node n1, string i1, Node n2, string i2, bool prepare = true)
     {
         this.NodePinConnections.Add((n1, i1, n2, i2));
-        this.Prepare();
+
+        if (prepare)
+            this.Prepare();
     }
 
     private List<List<(Node, string)>> GetConnectedPins(List<(Node, string, Node, string)> connections)
@@ -200,7 +206,11 @@ public class Scheduler
 
     public PinCollection GetPinCollectionForNode(Node node)
     {
-        this.NodePins.TryGetValue(node, out var pins);
-        return pins ?? null;
+        if (this.NodePins.ContainsKey(node))
+        {
+            return this.NodePins[node];
+        }
+
+        return null;
     }
 }

@@ -56,6 +56,8 @@ public class Editor : Invoker<Circuit, Editor>
     public EditorFSM FSM { get; private set; }
     // If the simulation rendering should render wires
     public bool RenderWires { get; set; } = true;
+    // If the editor should show what position the mouse is on in the workspace
+    public bool ShowMousePosition { get; set; } = false;
 
     // Some variables for popups, like the FileDialog modal and stuff
     public bool RequestedPopupModal { get; set; }
@@ -441,6 +443,11 @@ Under *projects*, you can see your circuits, and right clicking them in the side
             this._drawGrid = !this._drawGrid;
         }, 0, Keys.Unknown));
 
+        this.AddMainMenuItem("View", "Show Mouse Position", new EditorAction((e) => true, (e) => this.ShowMousePosition, (e) =>
+        {
+            this.ShowMousePosition = !this.ShowMousePosition;
+        }, 0, Keys.Unknown));
+
         var uiScales = new (string, int)[] {
             ("Small", 16),
             ("Medium", 20),
@@ -820,6 +827,7 @@ Under *projects*, you can see your circuits, and right clicking them in the side
                     }
                     this.FSM?.SubmitUI(this);
                 });
+
                 this.ImGuiController.Render();
             });
 
@@ -1002,7 +1010,57 @@ Under *projects*, you can see your circuits, and right clicking them in the side
         ImGui.Text($"{this.CurrentTicksPerSecond.GetAsHertzString()}");
         ImGui.Text($"{this._submittedInstances} @ {this._previousRenderMillis} ms");
         ImGui.Separator();
-        ImGui.Text($"Zoom: {(this.Camera.Zoom * 100f).ToString("0")}%");
+
+        if (ImGui.BeginMenu($"Zoom: {(this.Camera.Zoom * 100f).ToString("0")}%###zoomMenu"))
+        {
+            if (ImGui.BeginMenu("Set Zoom to..."))
+            {
+                if (ImGui.MenuItem("25%"))
+                {
+                    this.Camera.Zoom = 0.25f;
+                }
+                if (ImGui.MenuItem("50%"))
+                {
+                    this.Camera.Zoom = 0.5f;
+                }
+                if (ImGui.MenuItem("75%"))
+                {
+                    this.Camera.Zoom = 0.75f;
+                }
+                if (ImGui.MenuItem("100%"))
+                {
+                    this.Camera.Zoom = 1f;
+                }
+                if (ImGui.MenuItem("125%"))
+                {
+                    this.Camera.Zoom = 1.25f;
+                }
+                if (ImGui.MenuItem("150%"))
+                {
+                    this.Camera.Zoom = 1.5f;
+                }
+                if (ImGui.MenuItem("175%"))
+                {
+                    this.Camera.Zoom = 1.75f;
+                }
+                if (ImGui.MenuItem("200%"))
+                {
+                    this.Camera.Zoom = 2f;
+                }
+
+                ImGui.EndMenu();
+            }
+
+            ImGui.Separator();
+            if (ImGui.MenuItem("Reset Zoom"))
+            {
+                this.Camera.Zoom = 1f;
+            }
+
+
+            ImGui.EndMenu();
+        }
+
         ImGui.Text($"{this.FSM.CurrentState.GetType().Name}");
         //ImGui.Text($"{this.Sim.LockedAction(s => s.Scheduler.ScheduledEvents.Count)}:{this.Sim.LockedAction(s => s.Scheduler.ScheduledEvents.Select(x => x.Count).Sum())} events");
         ImGui.Text($"Wires: {this.Sim.LockedAction(s => s.Wires.Count)}");
@@ -1293,41 +1351,13 @@ Under *projects*, you can see your circuits, and right clicking them in the side
         // Show the currently open popup modal
         this.SubmitPopupModals();
 
-        // ImGui.SetNextWindowSize(new Vector2(250, 300), ImGuiCond.Appearing);
-        // ImGui.Begin("Commands", ImGuiWindowFlags.AlwaysVerticalScrollbar | ImGuiWindowFlags.HorizontalScrollbar);
-
-        // var currComm = this.CurrentCommandIndex;
-        // for (int i = this.Commands.Count - 1; i > 0; i--)
-        // {
-        //     var command = this.Commands[i];
-        //     if (currComm >= i)
-        //     {
-        //         ImGui.Selectable(command.Item2.GetDescription());
-        //     }
-        //     else
-        //     {
-        //         ImGui.TextDisabled(command.Item2.GetDescription());
-        //     }
-        // }
-
-        // ImGui.End();
-
-        ImGui.Begin("New System");
-
-        this.Sim.LockedAction(s =>
+        if (this.ShowMousePosition)
         {
-            foreach (var timeFrame in s.Scheduler.EventQueue)
-            {
-                ImGui.BeginChild(timeFrame.GetHashCode().ToString());
-                foreach (var e in timeFrame)
-                {
-                    ImGui.Text(e.ToString());
-                }
-                ImGui.EndChild();
-            }
-        });
+            var mousePos = Input.GetMousePosition(this.Camera);
+            var aligned = mousePos.ToVector2i(Constants.GRIDSIZE);
 
-        ImGui.End();
+            Utilities.MouseToolTip($"({aligned.X}, {aligned.Y})");
+        }
     }
 
     #endregion

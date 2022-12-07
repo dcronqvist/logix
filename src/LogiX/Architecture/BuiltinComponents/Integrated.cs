@@ -16,7 +16,16 @@ public class IntegratedData : INodeDescriptionData
     [NodeDescriptionProperty("Chip Color", HelpTooltip = "The color of the chip in the circuit editor")]
     public ColorF Color { get; set; }
 
-    public static INodeDescriptionData GetDefault()
+    public INodeDescriptionData GetDefault()
+    {
+        return new IntegratedData()
+        {
+            CircuitID = Guid.Empty,
+            Color = ColorF.White,
+        };
+    }
+
+    public static INodeDescriptionData GetDefaultData()
     {
         return new IntegratedData()
         {
@@ -94,7 +103,7 @@ public class Integrated : Node<IntegratedData>
 
     public static NodeDescription CreateDescriptionFromCircuit(string circuitName, Circuit circuit)
     {
-        var data = IntegratedData.GetDefault() as IntegratedData;
+        var data = IntegratedData.GetDefaultData() as IntegratedData;
         data.CircuitID = circuit.ID;
 
         var integrated = new Integrated();

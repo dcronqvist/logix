@@ -13,7 +13,7 @@ public class GateData : INodeDescriptionData
     [NodeDescriptionProperty("Bits", IntMinValue = 2, IntMaxValue = 32)]
     public int DataBits { get; set; } // Setting this to something other than 1 will create a bitwise gate
 
-    public static INodeDescriptionData GetDefault()
+    public INodeDescriptionData GetDefault()
     {
         return new GateData()
         {
@@ -28,9 +28,11 @@ public interface IGateLogic
     public LogicValue GetValueToPush(LogicValue a, LogicValue b);
 }
 
-public abstract class LogicGate<TData> : Node<TData> where TData : GateData
+public abstract class LogicGate<TData> : BoxNode<TData> where TData : GateData
 {
     public IGateLogic Logic { get; set; }
+    public override string Text => this.Logic.Name;
+    public override float TextScale => 1f;
     private TData _data;
 
     public override IEnumerable<PinConfig> GetPinConfiguration()
@@ -71,76 +73,13 @@ public abstract class LogicGate<TData> : Node<TData> where TData : GateData
     {
         var width = 3;
         var height = this._data.DataBits * 2 - 2;
-
-        if (this.Rotation == 1 || this.Rotation == 3)
-        {
-            var tmp = width;
-            width = height;
-            height = tmp;
-        }
-
         return new Vector2i(width, height);
-    }
-
-    public override bool IsNodeInRect(RectangleF rect)
-    {
-        var middle = this.GetMiddleOffset();
-        var doubleMiddle = (middle * 2);
-
-        var pos = this.Position.ToVector2(Constants.GRIDSIZE);
-
-        return pos.CreateRect(doubleMiddle).IntersectsWith(rect);
     }
 
     protected override bool Interact(Scheduler scheduler, PinCollection pins, Camera2D camera)
     {
         // Nothing
         return false;
-    }
-
-    public override void RenderSelected(Camera2D camera)
-    {
-        var pos = this.Position;
-
-        var size = this.GetSize();
-
-        var rect = pos.ToVector2(Constants.GRIDSIZE).CreateRect(size.ToVector2(Constants.GRIDSIZE));
-
-        PrimitiveRenderer.RenderRectangle(rect.Inflate(2), Vector2.Zero, 0f, Constants.COLOR_SELECTED);
-    }
-
-    public override void Render(PinCollection pins, Camera2D camera)
-    {
-        var pos = this.Position;
-        var size = this.GetSize();
-
-        var rect = pos.ToVector2(Constants.GRIDSIZE).CreateRect(size.ToVector2(Constants.GRIDSIZE));
-
-        PrimitiveRenderer.RenderRectangleWithBorder(rect, Vector2.Zero, 0f, 1, ColorF.White, ColorF.Black);
-
-        var root = pos.ToVector2(Constants.GRIDSIZE);
-        var sizeReal = size.ToVector2(Constants.GRIDSIZE);
-        var font = Utilities.GetFont("core.font.default", 8);
-        var scale = 0.75f;
-        var measure = font.MeasureString(this.Logic.Name, scale);
-
-        var rot = this.Rotation switch
-        {
-            1 => MathF.PI / 2f,
-            3 => MathF.PI / 2f,
-            _ => 0
-        };
-
-        var offset = this.Rotation switch
-        {
-            1 => new Vector2(measure.Y / 2f, -measure.X / 2f),
-            3 => new Vector2(measure.Y / 2f, -measure.X / 2f),
-            _ => -measure / 2f
-        };
-
-        TextRenderer.RenderText(Utilities.GetFont("core.font.default", 8), this.Logic.Name, root + sizeReal / 2f + offset, scale, rot, ColorF.Black);
-
-        base.Render(pins, camera);
     }
 
     public override void Initialize(TData data)

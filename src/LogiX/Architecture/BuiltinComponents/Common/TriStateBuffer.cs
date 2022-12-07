@@ -10,7 +10,7 @@ public class NoData : INodeDescriptionData
     [NodeDescriptionProperty("Bits", IntMinValue = 1, IntMaxValue = 256)]
     public int DataBits { get; set; }
 
-    public static INodeDescriptionData GetDefault()
+    public INodeDescriptionData GetDefault()
     {
         return new NoData()
         {
@@ -57,7 +57,7 @@ public class TriStateBuffer : BoxNode<NoData>
 
     public override Vector2i GetSize()
     {
-        return new Vector2i(3, 2).ApplyRotation(this.Rotation);
+        return new Vector2i(3, 2);
     }
 
     public override void Initialize(NoData data)

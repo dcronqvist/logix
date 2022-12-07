@@ -756,6 +756,11 @@ public static class Utilities
         return result;
     }
 
+    public static bool GetAsBool(this LogicValue value)
+    {
+        return value == LogicValue.HIGH;
+    }
+
     public static int GetAsTwosComplementInt(this IEnumerable<LogicValue> values)
     {
         int result = 0;

@@ -25,7 +25,7 @@ public abstract class BoxNode<TData> : Node<TData> where TData : INodeDescriptio
     {
         var pos = this.Position;
 
-        var size = this.GetSize();
+        var size = this.GetSizeRotated();
 
         var rect = pos.ToVector2(Constants.GRIDSIZE).CreateRect(size.ToVector2(Constants.GRIDSIZE));
 
@@ -35,7 +35,7 @@ public abstract class BoxNode<TData> : Node<TData> where TData : INodeDescriptio
     public override void Render(PinCollection pins, Camera2D camera)
     {
         var pos = this.Position;
-        var size = this.GetSize();
+        var size = this.GetSizeRotated();
 
         var rect = pos.ToVector2(Constants.GRIDSIZE).CreateRect(size.ToVector2(Constants.GRIDSIZE));
 

@@ -19,7 +19,7 @@ public class MultiplexerData : INodeDescriptionData
     [NodeDescriptionProperty("Data Pins Mode", HelpTooltip = "When set to 'Combined', the data pins will be a single pin\nwith the data bits combined into a single value.\n\nWhen set to 'Separate', the pins will be a set of pins\nwith each pin representing a single data bit.")]
     public PinModeMulti DataBitsMode { get; set; }
 
-    public static INodeDescriptionData GetDefault()
+    public INodeDescriptionData GetDefault()
     {
         return new MultiplexerData()
         {

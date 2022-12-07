@@ -32,8 +32,9 @@ public abstract class Node : Observer
     protected abstract bool Interact(Scheduler scheduler, PinCollection pins, Camera2D camera);
     public abstract void RenderSelected(Camera2D camera);
     public abstract Vector2i GetSize();
+    public virtual Vector2i GetSizeRotated() => this.GetSize().ApplyRotation(this.Rotation);
 
-    public Vector2 GetMiddleOffset() { return this.GetSize().ToVector2(Constants.GRIDSIZE) / 2f; }
+    public Vector2 GetMiddleOffset() { return this.GetSizeRotated().ToVector2(Constants.GRIDSIZE) / 2f; }
     /// <summary>
     /// Used to interact with the node in some way.
     /// Must return true if right clicking the node should take precedence over other interactions.
@@ -67,21 +68,21 @@ public abstract class Node : Observer
         else if (this.Rotation == 1)
         {
             // Left -> Top etc.
-            var newOrigin = this.Position + new Vector2i(this.GetSize().X, 0);
+            var newOrigin = this.Position + new Vector2i(this.GetSizeRotated().X, 0);
             var offset = pins[identifier].Item1.Offset;
             return newOrigin + new Vector2i(-offset.Y, offset.X);
         }
         else if (this.Rotation == 2)
         {
             // Left -> Right etc.
-            var newOrigin = this.Position + new Vector2i(this.GetSize().X, this.GetSize().Y);
+            var newOrigin = this.Position + new Vector2i(this.GetSizeRotated().X, this.GetSizeRotated().Y);
             var offset = pins[identifier].Item1.Offset;
             return newOrigin + new Vector2i(-offset.X, -offset.Y);
         }
         else
         {
             // Left -> Bottom etc.
-            var newOrigin = this.Position + new Vector2i(0, this.GetSize().Y);
+            var newOrigin = this.Position + new Vector2i(0, this.GetSizeRotated().Y);
             var offset = pins[identifier].Item1.Offset;
             return newOrigin + new Vector2i(offset.Y, -offset.X);
         }

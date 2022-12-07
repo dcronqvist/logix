@@ -28,7 +28,7 @@ public class NodeDescriptionPropertyAttribute : Attribute
 
 public interface INodeDescriptionData
 {
-    public static abstract INodeDescriptionData GetDefault();
+    public abstract INodeDescriptionData GetDefault();
 }
 
 public class NodeDescription
@@ -108,9 +108,9 @@ public class NodeDescription
         {
             // Has data parameter
             var h = Utilities.RecursivelyCheckBaseclassUntilRawGeneric(typeof(Node<>), type.Type);
-
             var x = type.Type.BaseType.GetGenericArguments();
-            var instance = x.First().GetMethod("GetDefault").Invoke(null, null);
+            var instanceOfType = Activator.CreateInstance(x.First());
+            var instance = x.First().GetMethod("GetDefault").Invoke(instanceOfType, null);
             var component = type.CreateInstance<Node>();
             component.Initialize((INodeDescriptionData)instance);
             return component;
@@ -136,7 +136,8 @@ public class NodeDescription
         {
             // Has data parameter
             var x = type.Type.BaseType.GetGenericArguments();
-            var instance = x.First().GetMethod("GetDefault").Invoke(null, null);
+            var instanceOfType = Activator.CreateInstance(x.First());
+            var instance = x.First().GetMethod("GetDefault").Invoke(instanceOfType, null);
             return (INodeDescriptionData)instance;
         }
         else

@@ -24,7 +24,7 @@ public class SplitterData : INodeDescriptionData
     [NodeDescriptionProperty("Direction")]
     public SplitterDirection Direction { get; set; }
 
-    public static INodeDescriptionData GetDefault()
+    public INodeDescriptionData GetDefault()
     {
         return new SplitterData
         {
@@ -83,17 +83,17 @@ public class Splitter : BoxNode<SplitterData>
         }
         else
         {
-            yield return new PinConfig("multi", this._data.BitsToSplit, false, new Vector2i(0, 1));
+            yield return new PinConfig("multi", this._data.BitsToSplit, false, new Vector2i(3, 1));
             for (int i = 0; i < this._data.BitsToSplit; i++)
             {
-                yield return new PinConfig($"single_{i}", 1, true, new Vector2i(3, i + 1));
+                yield return new PinConfig($"single_{i}", 1, true, new Vector2i(0, i + 1));
             }
         }
     }
 
     public override Vector2i GetSize()
     {
-        return new Vector2i(3, this._data.BitsToSplit + 1).ApplyRotation(this.Rotation);
+        return new Vector2i(3, this._data.BitsToSplit + 1);
     }
 
     public override void Initialize(SplitterData data)

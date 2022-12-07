@@ -22,7 +22,7 @@ public class DecoderData : INodeDescriptionData
     [NodeDescriptionProperty("Output Pins Mode", HelpTooltip = "When set to 'Combined', the pin will be a single pin\nwith the output bits combined into a single value.\n\nWhen set to 'Separate', the pin will be a set of pins\nwith each pin representing a single output bit.")]
     public PinModeMulti OutputBitsMode { get; set; }
 
-    public static INodeDescriptionData GetDefault()
+    public INodeDescriptionData GetDefault()
     {
         return new DecoderData()
         {

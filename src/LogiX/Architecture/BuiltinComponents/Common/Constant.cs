@@ -14,7 +14,7 @@ public class ConstantData : INodeDescriptionData
     // Will be rendered by this component.
     public uint Value { get; set; }
 
-    public static INodeDescriptionData GetDefault()
+    public INodeDescriptionData GetDefault()
     {
         return new ConstantData()
         {
@@ -88,42 +88,4 @@ public class Constant : BoxNode<ConstantData>
             }
         }
     }
-
-    // public override INodeDescriptionData GetDescriptionData()
-    // {
-    //     return _data;
-    // }
-
-    // public override void Initialize(ConstantData data)
-    // {
-    //     this.ClearIOs();
-    //     this._data = data;
-
-    //     this.RegisterIO("Y", data.DataBits, ComponentSide.RIGHT);
-    //     this.TriggerSizeRecalculation();
-    // }
-
-    // public override void PerformLogic()
-    // {
-    //     var asBits = this._data.Value.GetAsLogicValues(this._data.DataBits);
-    //     var y = this.GetIOFromIdentifier("Y");
-
-    //     y.Push(asBits);
-    // }
-
-    // public override void SubmitUISelected(Editor editor, int componentIndex)
-    // {
-    //     base.SubmitUISelected(editor, componentIndex);
-
-    //     var id = this.GetUniqueIdentifier();
-    //     var symbols = (int)Math.Ceiling(this._data.DataBits / 4f);
-    //     var currVal = (int)this._data.Value;
-    //     if (ImGui.InputInt($"Value##{id}", ref currVal, 1, 1, ImGuiInputTextFlags.CharsHexadecimal | ImGuiInputTextFlags.CharsUppercase))
-    //     {
-    //         if (IsInputValid((uint)currVal, this._data.DataBits))
-    //         {
-    //             editor.Execute(new CModifyComponentDataProp(this.ID, this._data.GetType().GetProperty(nameof(this._data.Value)), (uint)currVal), editor);
-    //         }
-    //     }
-    // }
 }

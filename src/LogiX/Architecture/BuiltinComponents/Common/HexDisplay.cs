@@ -13,11 +13,15 @@ public class HexDisplayData : INodeDescriptionData
     [NodeDescriptionProperty("Bits", IntMinValue = 1, IntMaxValue = 256)]
     public int DataBits { get; set; }
 
-    public static INodeDescriptionData GetDefault()
+    [NodeDescriptionProperty("Segment Color")]
+    public ColorF SegmentColor { get; set; }
+
+    public INodeDescriptionData GetDefault()
     {
         return new HexDisplayData()
         {
             DataBits = 4,
+            SegmentColor = ColorF.Red
         };
     }
 }
@@ -51,6 +55,11 @@ public class HexDisplay : BoxNode<HexDisplayData>
     public override Vector2i GetSize()
     {
         return new Vector2i(3 * (int)Math.Ceiling(this._data.DataBits / 4f), 5);
+    }
+
+    public override Vector2i GetSizeRotated()
+    {
+        return this.GetSize();
     }
 
     private Dictionary<uint, (Vector2, Vector2)[]> _segments;
@@ -120,7 +129,7 @@ public class HexDisplay : BoxNode<HexDisplayData>
                 var start = segment.Item1 * Constants.GRIDSIZE + pos + (i * new Vector2(3 * Constants.GRIDSIZE, 0));
                 var end = segment.Item2 * Constants.GRIDSIZE + pos + (i * new Vector2(3 * Constants.GRIDSIZE, 0));
 
-                PrimitiveRenderer.RenderLine(start, end, 3, ColorF.Red);
+                PrimitiveRenderer.RenderLine(start, end, 3, this._data.SegmentColor);
             }
         }
     }

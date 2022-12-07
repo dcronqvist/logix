@@ -15,7 +15,7 @@ public class ClockData : INodeDescriptionData
     [NodeDescriptionProperty("Low Duration", HelpTooltip = "Amount of ticks the clock will remain LOW", IntMinValue = 1)]
     public int LowDuration { get; set; }
 
-    public static INodeDescriptionData GetDefault()
+    public INodeDescriptionData GetDefault()
     {
         return new ClockData
         {
@@ -40,7 +40,7 @@ public class Clock : BoxNode<ClockData>
 
     public override IEnumerable<PinConfig> GetPinConfiguration()
     {
-        yield return new PinConfig("Q", 1, true, new Vector2i(3, 1));
+        yield return new PinConfig("Q", 1, true, new Vector2i(this.GetSize().X, 1));
     }
 
     protected override IEnumerable<(ObservableValue, LogicValue[])> Prepare(PinCollection pins)
@@ -74,7 +74,7 @@ public class Clock : BoxNode<ClockData>
 
     public override Vector2i GetSize()
     {
-        return new Vector2i(3, 2).ApplyRotation(this.Rotation);
+        return new Vector2i(3, 2);
     }
 
     // public override INodeDescriptionData GetDescriptionData()

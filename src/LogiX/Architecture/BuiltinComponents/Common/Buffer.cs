@@ -13,7 +13,7 @@ public class BufferData : INodeDescriptionData
     [NodeDescriptionProperty("Buffer Size", HelpTooltip = "The amount of ticks before the input is visible on the output.", IntMinValue = 1)]
     public int BufferSize { get; set; }
 
-    public static INodeDescriptionData GetDefault()
+    public INodeDescriptionData GetDefault()
     {
         return new BufferData()
         {
@@ -41,7 +41,7 @@ public class Buffer : BoxNode<BufferData>
     public override IEnumerable<PinConfig> GetPinConfiguration()
     {
         yield return new PinConfig("in", this._data.DataBits, true, new Vector2i(0, 1));
-        yield return new PinConfig("out", this._data.DataBits, false, new Vector2i(3, 1));
+        yield return new PinConfig("out", this._data.DataBits, false, new Vector2i(this.GetSize().X, 1));
     }
 
     protected override IEnumerable<(ObservableValue, LogicValue[])> Prepare(PinCollection pins)
@@ -69,6 +69,6 @@ public class Buffer : BoxNode<BufferData>
 
     public override Vector2i GetSize()
     {
-        return new Vector2i(3, 2).ApplyRotation(this.Rotation);
+        return new Vector2i(3, 2);
     }
 }

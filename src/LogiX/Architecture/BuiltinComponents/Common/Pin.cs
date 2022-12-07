@@ -35,7 +35,7 @@ public class PinData : INodeDescriptionData
     [NodeDescriptionProperty("Visible on component")]
     public bool IsExternal { get; set; }
 
-    public static INodeDescriptionData GetDefault()
+    public INodeDescriptionData GetDefault()
     {
         return new PinData()
         {
@@ -150,8 +150,8 @@ public class Pin : Node<PinData>
     public override void Render(PinCollection pins, Camera2D camera)
     {
         var pos = this.Position;
-        var width = this._data.Bits * 2;
-        var height = 2;
+        var width = this.GetSize().X;
+        var height = this.GetSize().Y;
 
         var rect = pos.ToVector2(Constants.GRIDSIZE).CreateRect(new Vector2(width, height) * Constants.GRIDSIZE);
 
@@ -204,5 +204,10 @@ public class Pin : Node<PinData>
     public override Vector2i GetSize()
     {
         return new Vector2i(this._data.Bits * 2, 2);
+    }
+
+    public override Vector2i GetSizeRotated()
+    {
+        return this.GetSize();
     }
 }

@@ -34,16 +34,16 @@ public class Simulation
         this.Scheduler.Step();
     }
 
-    public void AddNode(Node node)
+    public void AddNode(Node node, bool recalculate = true)
     {
         this.Nodes.Add(node);
-        this.Scheduler.AddNode(node);
-        node.Register(this.Scheduler);
+        this.Scheduler.AddNode(node, false);
 
-        this.RecalculateWirePositions();
+        if (recalculate)
+            this.RecalculateWirePositions();
     }
 
-    public void RemoveNode(Node node)
+    public void RemoveNode(Node node, bool recalculate = true)
     {
         this.Nodes.Remove(node);
         if (this.SelectedNodes.Contains(node))
@@ -52,13 +52,16 @@ public class Simulation
         }
         this.Scheduler.RemoveNode(node);
 
-        this.RecalculateWirePositions();
+        if (recalculate)
+            this.RecalculateWirePositions();
     }
 
-    public void AddWire(Wire wire)
+    public void AddWire(Wire wire, bool recalculate = true)
     {
         this.Wires.Add(wire);
-        this.RecalculateWirePositions();
+
+        if (recalculate)
+            this.RecalculateWirePositions();
     }
 
     public (Node, string)[] GetPinsConnectedToWire(Wire wire)
@@ -96,7 +99,7 @@ public class Simulation
                 var first = pins.First();
                 foreach (var pin in pins.Skip(1))
                 {
-                    this.Scheduler.AddConnection(first.Item1, first.Item2, pin.Item1, pin.Item2);
+                    this.Scheduler.AddConnection(first.Item1, first.Item2, pin.Item1, pin.Item2, false);
                 }
             }
         }
@@ -167,12 +170,14 @@ public class Simulation
                 continue;
 
             var c = node.CreateNode();
-            sim.AddNode(c);
+            sim.AddNode(c, false);
         }
+
+        sim.Scheduler.Prepare();
 
         foreach (var wire in circuit.Wires)
         {
-            sim.AddWire(wire.CreateWire());
+            sim.AddWire(wire.CreateWire(), false);
         }
 
         sim.RecalculateWirePositions();
@@ -192,15 +197,19 @@ public class Simulation
         this.SelectedNodes.Clear();
         this.SelectedWireSegments.Clear();
 
+        this.Scheduler = new Scheduler();
+
         foreach (var node in circuit.Nodes)
         {
             var c = node.CreateNode();
-            this.AddNode(c);
+            this.AddNode(c, false);
         }
+
+        this.Scheduler.Prepare();
 
         foreach (var wire in circuit.Wires)
         {
-            this.AddWire(wire.CreateWire());
+            this.AddWire(wire.CreateWire(), false);
         }
 
         this.RecalculateWirePositions();
@@ -247,8 +256,8 @@ public class Simulation
         this._pickedNodes = this.SelectedNodes.ToList();
         this._pickedSegments = this.SelectedWireSegments.ToList();
 
-        this.SelectedNodes.ForEach(s => { this.Nodes.Remove(s); this.Scheduler.RemoveNode(s); });
-        this.SelectedWireSegments.ForEach(s => this.DisconnectPoints(s.Item1, s.Item2));
+        this.SelectedNodes.ForEach(s => { this.Nodes.Remove(s); this.Scheduler.RemoveNode(s, false); });
+        this.SelectedWireSegments.ForEach(s => this.DisconnectPoints(s.Item1, s.Item2, false));
 
         this.SelectedNodes.Clear();
         this.SelectedWireSegments.Clear();
@@ -259,10 +268,10 @@ public class Simulation
     public void CommitMovedPickedUpSelection(Vector2i delta)
     {
         this._pickedNodes.ForEach(s => s.Move(delta));
-        this._pickedSegments.ForEach(s => this.ConnectPointsWithWire(s.Item1 + delta, s.Item2 + delta));
+        this._pickedSegments.ForEach(s => this.ConnectPointsWithWire(s.Item1 + delta, s.Item2 + delta, false));
 
         this.Nodes.AddRange(this._pickedNodes);
-        this._pickedNodes.ForEach(s => this.Scheduler.AddNode(s));
+        this._pickedNodes.ForEach(s => this.Scheduler.AddNode(s, false));
 
         this.SelectedNodes = this._pickedNodes.ToList();
         this.SelectedWireSegments = this._pickedSegments.Select(s => (s.Item1 + delta, s.Item2 + delta)).ToList();
@@ -322,23 +331,6 @@ public class Simulation
     public bool IsWireSegmentSelected((Vector2i, Vector2i) segment)
     {
         return this.SelectedWireSegments.Contains(segment);
-    }
-
-    public void MoveSelectedWireSegments(Vector2i delta)
-    {
-        foreach (var s in this.SelectedWireSegments)
-        {
-            this.DisconnectPoints(s.Item1, s.Item2);
-        }
-
-        var selected = this.SelectedWireSegments.ToList();
-        this.SelectedWireSegments.Clear();
-
-        foreach (var s in selected)
-        {
-            this.ConnectPointsWithWire(s.Item1 + delta, s.Item2 + delta);
-            this.SelectedWireSegments.Add((s.Item1 + delta, s.Item2 + delta));
-        }
     }
 
     #endregion
@@ -412,7 +404,7 @@ public class Simulation
             this.RecalculateWirePositions();
     }
 
-    public void DisconnectPoints(Vector2i point1, Vector2i point2)
+    public void DisconnectPoints(Vector2i point1, Vector2i point2, bool recalculate = true)
     {
         if (this.TryGetWireAtPos(point1, out var w1))
         {
@@ -424,7 +416,9 @@ public class Simulation
                     Wire[] newWires = Wire.RemoveSegmentFromWire(w1, (point1, point2));
                     this.Wires.Remove(w1);
                     this.Wires.AddRange(newWires);
-                    this.RecalculateWirePositions();
+
+                    if (recalculate)
+                        this.RecalculateWirePositions();
 
                     // if (this.SelectedWireSegments.Contains((point1, point2)))
                     // {
