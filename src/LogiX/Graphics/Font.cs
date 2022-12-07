@@ -50,9 +50,12 @@ public class Font : GLContentItem<FontData>
     public int AtlasWidth { get; private set; }
     public int AtlasHeight { get; private set; }
 
-    public Font(string identifier, IContentSource source, FontData content) : base(identifier, source, content)
+    public bool ApplyIconRange { get; private set; }
+
+    public Font(string identifier, IContentSource source, FontData content, bool applyIconRange) : base(identifier, source, content)
     {
         this.Characters = new Dictionary<char, FontCharacter>();
+        this.ApplyIconRange = applyIconRange;
         this.InitNoGL();
     }
 
@@ -184,11 +187,13 @@ public class Font : GLContentItem<FontData>
         uint width = 0;
         uint height = 0;
 
+        int flags = FT_LOAD_RENDER;
+
         // Loop 128 times, first 128 characters for this font
         for (uint i = 0; i < 256; i++)
         {
             // Check if the character exists for this font.
-            FT_Error error = FT_Load_Char(aFace, i, FT_LOAD_RENDER);
+            FT_Error error = FT_Load_Char(aFace, i, flags);
             if (error != FT_Error.FT_Err_Ok)
             {
                 // TODO: Fix this shit man, should use integrated console when that is done.
@@ -198,6 +203,24 @@ public class Font : GLContentItem<FontData>
 
             width += ftff.GlyphBitmap.width;
             height = Math.Max(height, ftff.GlyphBitmap.rows);
+        }
+
+        if (this.ApplyIconRange)
+        {
+            for (uint i = 0xe000; i < 0xf8ff; i++)
+            {
+                // Check if the character exists for this font.
+                FT_Error error = FT_Load_Char(aFace, i, flags);
+                if (error != FT_Error.FT_Err_Ok)
+                {
+                    // TODO: Fix this shit man, should use integrated console when that is done.
+                    //Debug.WriteLine("FREETYPE ERROR: FAILED TO LOAD GLYPH FOR INDEX: " + i);
+                    continue;
+                }
+
+                width += ftff.GlyphBitmap.width;
+                height = Math.Max(height, ftff.GlyphBitmap.rows);
+            }
         }
 
         int atlasWidth = (int)width;
@@ -218,7 +241,7 @@ public class Font : GLContentItem<FontData>
         for (uint i = 0; i < 256; i++)
         {
             // Check if the character exists for this font.
-            FT_Error error = FT_Load_Char(aFace, i, FT_LOAD_RENDER);
+            FT_Error error = FT_Load_Char(aFace, i, flags);
             if (error != FT_Error.FT_Err_Ok)
             {
                 // TODO: Fix this shit man, should use integrated console when that is done.
@@ -241,6 +264,37 @@ public class Font : GLContentItem<FontData>
             Characters.Add((char)i, character);
 
             x += ftff.GlyphBitmap.width;
+        }
+
+        if (this.ApplyIconRange)
+        {
+            for (uint i = 0xe000; i < 0xf8ff; i++)
+            {
+                // Check if the character exists for this font.
+                FT_Error error = FT_Load_Char(aFace, i, flags);
+                if (error != FT_Error.FT_Err_Ok)
+                {
+                    // TODO: Fix this shit man, should use integrated console when that is done.
+                    //Debug.WriteLine("FREETYPE ERROR: FAILED TO LOAD GLYPH FOR INDEX: " + i);
+                    continue;
+                }
+
+                glTexSubImage2D(GL_TEXTURE_2D, 0, (int)x, 0, (int)ftff.GlyphBitmap.width, (int)ftff.GlyphBitmap.rows, GL_RED, GL_UNSIGNED_BYTE, ftff.GlyphBitmap.buffer);
+
+                FontCharacter character = new FontCharacter()
+                {
+                    Size = new Vector2(ftff.GlyphBitmap.width, ftff.GlyphBitmap.rows),
+                    Bearing = new Vector2(ftff.GlyphBitmapLeft, ftff.GlyphBitmapTop),
+                    Advance = ftff.GlyphMetricHorizontalAdvance,
+                    Chara = ((char)i).ToString(),
+                    Rectangle = new Rectangle((int)x, 0, (int)ftff.GlyphBitmap.width, (int)ftff.GlyphBitmap.rows)
+                };
+
+                // Add it to the character dictionary
+                Characters.Add((char)i, character);
+
+                x += ftff.GlyphBitmap.width;
+            }
         }
 
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);

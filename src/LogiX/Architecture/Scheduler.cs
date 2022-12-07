@@ -103,7 +103,7 @@ public class Scheduler
         foreach (var connections in this.GetConnectedPins(this.NodePinConnections))
         {
             var anyNodePin = connections.First();
-            var anyConfig = anyNodePin.Item1.GetPinConfiguration().First();
+            var anyConfig = anyNodePin.Item1.GetPinConfiguration().First(c => c.Identifier == anyNodePin.Item2);
             var value = new ObservableValue(anyConfig.Bits);
 
             foreach (var (node, port) in connections)

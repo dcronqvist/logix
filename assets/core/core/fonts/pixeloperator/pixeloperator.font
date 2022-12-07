@@ -5,5 +5,6 @@
 	"fileBoldItalic": "PixelOperatorMono-Bold.ttf",
     "sizes": [12, 24, 36, 48],
     "magFilter": "nearestNeighbour",
-    "minFilter": "nearestNeighbour"
+    "minFilter": "nearestNeighbour",
+    "applyIconRange": false
 }

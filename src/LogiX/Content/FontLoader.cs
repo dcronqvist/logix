@@ -14,6 +14,7 @@ public class FontFileData
     public string FileBold { get; set; }
     public string FileItalic { get; set; }
     public string FileBoldItalic { get; set; }
+    public bool ApplyIconRange { get; set; }
 
     // Which sizes that should be available for this font
     public int[] Sizes { get; set; }
@@ -59,7 +60,7 @@ public class FontLoader : IContentItemLoader
                             foreach (var size in fontFileDesc.Sizes)
                             {
                                 var fd = new FontData(data, (uint)size, fontFileDesc.MagFilter, fontFileDesc.MinFilter);
-                                var font = new Font($"{source.GetIdentifier()}.font.{fileName}-{id}-{size}", source, fd);
+                                var font = new Font($"{source.GetIdentifier()}.font.{fileName}-{id}-{size}", source, fd, fontFileDesc.ApplyIconRange);
                                 yield return await LoadEntryResult.CreateSuccessAsync(font);
                             }
                         }

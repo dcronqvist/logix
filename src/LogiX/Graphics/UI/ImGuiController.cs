@@ -10,6 +10,7 @@ using LogiX;
 using LogiX.GLFW;
 using LogiX.Architecture;
 using System.Numerics;
+using System.Text;
 
 namespace LogiX.Graphics.UI
 {
@@ -31,6 +32,7 @@ namespace LogiX.Graphics.UI
         private int _windowHeight;
 
         private System.Numerics.Vector2 _scaleFactor = System.Numerics.Vector2.One;
+        private ushort[] ranges = { 0xe000, 0xf8ff, 0 };
 
         /// <summary>
         /// Constructs a new ImGuiController.
@@ -51,8 +53,23 @@ namespace LogiX.Graphics.UI
             {
                 fixed (byte* pFontData = &font.Content.Data[0])
                 {
-                    var f = io.Fonts.AddFontFromMemoryTTF((IntPtr)pFontData, font.Content.Data.Length, font.Content.Size);
-                    Utilities.AddImGuiFont(font, f);
+                    if (font.ApplyIconRange)
+                    {
+                        var config = new ImFontConfig();
+                        config.MergeMode = 0;
+
+                        fixed (ushort* pRanges = &ranges[0])
+                        {
+                            config.GlyphRanges = pRanges;
+                            var f = io.Fonts.AddFontFromMemoryTTF((IntPtr)pFontData, font.Content.Data.Length, font.Content.Size, &config, (IntPtr)pRanges);
+                            Utilities.AddImGuiFont(font, f);
+                        }
+                    }
+                    else
+                    {
+                        var f = io.Fonts.AddFontFromMemoryTTF((IntPtr)pFontData, font.Content.Data.Length, font.Content.Size);
+                        Utilities.AddImGuiFont(font, f);
+                    }
                 }
             }
 

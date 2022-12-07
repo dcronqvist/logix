@@ -164,6 +164,7 @@ public class Editor : Invoker<Circuit, Editor>
         #endregion
 
         #region CREATE SIMULATION THREAD
+
         var thread = new Thread(async () =>
         {
             // Create a stopwatch to measure a tick's time
@@ -204,26 +205,18 @@ public class Editor : Invoker<Circuit, Editor>
                 });
 
                 // Get target tick rate
-                int targetTps = this.CurrentEffectiveTickRate;
-                if (this.CurrentEffectiveTickRate != -1)
-                {
-                    // Get how much time that the target tick rate should take
-                    long targetDiff = TimeSpan.TicksPerSecond / targetTps;
+                long targetTps = this.CurrentEffectiveTickRate == -1 ? Stopwatch.Frequency : this.CurrentEffectiveTickRate;
+                // Get how much time that the target tick rate should take
+                long targetDiff = Stopwatch.Frequency / targetTps;
 
-                    // While the time that has passed is less than the target time, sleep for some time.
-                    while (sw.Elapsed.Ticks < start + targetDiff)
-                    {
-                        await Task.Delay(TimeSpan.FromTicks(targetDiff / 10));
-                    }
-                }
-                else
+                // While the time that has passed is less than the target time, sleep for some time.
+                while (sw.Elapsed.Ticks < start + targetDiff)
                 {
-                    targetTps = 1;
+                    await Task.Delay(TimeSpan.FromTicks(targetDiff / 10));
                 }
-
                 // Once we are done, set the current ticks per second to the target ticks per second
                 long diff = sw.Elapsed.Ticks - start;
-                double seconds = diff / (double)TimeSpan.TicksPerSecond;
+                double seconds = diff / (double)Stopwatch.Frequency;
                 this.CurrentTicksPerSecond = this.CurrentTicksPerSecond + (1f / (float)seconds - this.CurrentTicksPerSecond) * (0.8f / MathF.Sqrt(targetTps));
             }
         });
@@ -1046,17 +1039,6 @@ Under *projects*, you can see your circuits, and right clicking them in the side
                         if (ImGui.MenuItem("Edit Circuit", this.CurrentlyOpenCircuit is null ? true : this.CurrentlyOpenCircuit.ID != circuit.ID))
                         {
                             this.OpenCircuit(circuit.ID);
-                        }
-                        if (ImGui.MenuItem("Edit Appearance"))
-                        {
-                            if (this.CurrentlyOpenCircuit.ID == circuit.ID)
-                            {
-                                var newCircuit = this.Sim.LockedAction(s => s.GetCircuitInSimulation(this.CurrentlyOpenCircuit.Name));
-                                newCircuit.ID = this.CurrentlyOpenCircuit.ID;
-                                this.Project.UpdateCircuit(newCircuit);
-                            }
-
-                            this.OpenPopup(new CircuitAppearanceDialog(circuit));
                         }
                         if (ImGui.MenuItem("Delete", this.CurrentlyOpenCircuit is null ? true : this.CurrentlyOpenCircuit.ID != circuit.ID))
                         {
