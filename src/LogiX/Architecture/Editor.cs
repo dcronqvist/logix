@@ -205,14 +205,20 @@ public class Editor : Invoker<Circuit, Editor>
 
                 // Get target tick rate
                 int targetTps = this.CurrentEffectiveTickRate;
-
-                // Get how much time that the target tick rate should take
-                long targetDiff = TimeSpan.TicksPerSecond / targetTps;
-
-                // While the time that has passed is less than the target time, sleep for some time.
-                while (sw.Elapsed.Ticks < start + targetDiff)
+                if (this.CurrentEffectiveTickRate != -1)
                 {
-                    await Task.Delay(TimeSpan.FromTicks(targetDiff / 10));
+                    // Get how much time that the target tick rate should take
+                    long targetDiff = TimeSpan.TicksPerSecond / targetTps;
+
+                    // While the time that has passed is less than the target time, sleep for some time.
+                    while (sw.Elapsed.Ticks < start + targetDiff)
+                    {
+                        await Task.Delay(TimeSpan.FromTicks(targetDiff / 10));
+                    }
+                }
+                else
+                {
+                    targetTps = 1;
                 }
 
                 // Once we are done, set the current ticks per second to the target ticks per second
@@ -382,7 +388,7 @@ public class Editor : Invoker<Circuit, Editor>
                 var custom = this.CustomTickRate;
                 if (ImGui.InputInt("Tick Rate", ref custom))
                 {
-                    this.CustomTickRate = Math.Clamp(custom, 1, this.AvailableTickRates.Max());
+                    this.CustomTickRate = Math.Clamp(custom, -1, this.AvailableTickRates.Max());
                 }
 
                 if (ImGui.Button("OK"))

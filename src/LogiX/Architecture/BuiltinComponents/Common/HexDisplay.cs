@@ -1,154 +1,127 @@
-// using System.Drawing;
-// using System.Numerics;
-// using ImGuiNET;
-// using LogiX.Architecture.Serialization;
-// using LogiX.Content.Scripting;
-// using LogiX.Graphics;
-// using LogiX.Rendering;
+using System.Drawing;
+using System.Numerics;
+using ImGuiNET;
+using LogiX.Architecture.Serialization;
+using LogiX.Content.Scripting;
+using LogiX.Graphics;
+using LogiX.Rendering;
 
-// namespace LogiX.Architecture.BuiltinComponents;
+namespace LogiX.Architecture.BuiltinComponents;
 
-// public class HexDisplayData : INodeDescriptionData
-// {
-//     [NodeDescriptionProperty("Bits", IntMinValue = 1, IntMaxValue = 256)]
-//     public int DataBits { get; set; }
+public class HexDisplayData : INodeDescriptionData
+{
+    [NodeDescriptionProperty("Bits", IntMinValue = 1, IntMaxValue = 256)]
+    public int DataBits { get; set; }
 
-//     public static INodeDescriptionData GetDefault()
-//     {
-//         return new HexDisplayData()
-//         {
-//             DataBits = 4,
-//         };
-//     }
-// }
+    public static INodeDescriptionData GetDefault()
+    {
+        return new HexDisplayData()
+        {
+            DataBits = 4,
+        };
+    }
+}
 
-// [ScriptType("HEXDISPLAY"), NodeInfo("Hex Display", "Common", "core.markdown.hexdisplay")]
-// public class HexDisplay : Component<HexDisplayData>
-// {
-//     public override string Name => "";
-//     public override bool DisplayIOGroupIdentifiers => true;
-//     public override bool ShowPropertyWindow => true;
+[ScriptType("HEXDISPLAY"), NodeInfo("Hex Display", "Common", "core.markdown.hexdisplay")]
+public class HexDisplay : BoxNode<HexDisplayData>
+{
+    public override string Text => "";
+    public override float TextScale => 1f;
 
-//     private HexDisplayData _data;
+    private HexDisplayData _data;
 
-//     private LogicValue[] _values;
-//     public override INodeDescriptionData GetDescriptionData()
-//     {
-//         return _data;
-//     }
+    public override IEnumerable<(ObservableValue, LogicValue[], int)> Evaluate(PinCollection pins)
+    {
+        var values = pins.Get("in").Read();
+        this._values = values.ToArray();
 
-//     private Dictionary<uint, (Vector2, Vector2)[]> segments;
-//     public override void Initialize(HexDisplayData data)
-//     {
-//         this.ClearIOs();
-//         this._data = data;
+        return Enumerable.Empty<(ObservableValue, LogicValue[], int)>();
+    }
 
-//         this.RegisterIO("IN", this._data.DataBits, ComponentSide.LEFT);
-//         this.TriggerSizeRecalculation();
+    public override INodeDescriptionData GetNodeData()
+    {
+        return this._data;
+    }
 
-//         // RENDER SEGMENTS
-//         var top = (new Vector2(0.65f, 0.5f), new Vector2(2.35f, 0.5f));
-//         var bottom = (new Vector2(0.65f, 4.5f), new Vector2(2.35f, 4.5f));
-//         var leftTop = (new Vector2(0.5f, 0.65f), new Vector2(0.5f, 2.35f));
-//         var leftBottom = (new Vector2(0.5f, 2.65f), new Vector2(0.5f, 4.35f));
-//         var rightTop = (new Vector2(2.5f, 0.65f), new Vector2(2.5f, 2.35f));
-//         var rightBottom = (new Vector2(2.5f, 2.65f), new Vector2(2.5f, 4.35f));
-//         var middle = (new Vector2(0.65f, 2.5f), new Vector2(2.35f, 2.5f));
+    public override IEnumerable<PinConfig> GetPinConfiguration()
+    {
+        yield return new PinConfig("in", this._data.DataBits, true, new Vector2i(0, 1));
+    }
 
-//         segments = new Dictionary<uint, (Vector2, Vector2)[]>()
-//         {
-//             { 0x0u, Utilities.Arrayify(top, bottom, leftBottom, leftTop, rightBottom, rightTop) },
-//             { 0x1u, Utilities.Arrayify(rightBottom, rightTop) },
-//             { 0x2u, Utilities.Arrayify(top, bottom, middle, leftBottom, rightTop) },
-//             { 0x3u, Utilities.Arrayify(top, bottom, middle, rightBottom, rightTop) },
-//             { 0x4u, Utilities.Arrayify(middle, leftTop, rightBottom, rightTop) },
-//             { 0x5u, Utilities.Arrayify(top, bottom, middle, leftTop, rightBottom) },
-//             { 0x6u, Utilities.Arrayify(top, bottom, middle, leftTop, leftBottom, rightBottom) },
-//             { 0x7u, Utilities.Arrayify(top, rightBottom, rightTop) },
-//             { 0x8u, Utilities.Arrayify(top, bottom, middle, leftBottom, leftTop, rightBottom, rightTop) },
-//             { 0x9u, Utilities.Arrayify(top, bottom, middle, leftTop, rightBottom, rightTop) },
-//             { 0xAu, Utilities.Arrayify(top, middle, leftBottom, leftTop, rightBottom, rightTop) },
-//             { 0xBu, Utilities.Arrayify(bottom, middle, leftBottom, rightBottom, leftTop) },
-//             { 0xCu, Utilities.Arrayify(top, bottom, leftBottom, leftTop) },
-//             { 0xDu, Utilities.Arrayify(bottom, leftBottom, rightBottom, rightTop, middle) },
-//             { 0xEu, Utilities.Arrayify(top, bottom, middle, leftBottom, leftTop) },
-//             { 0xFu, Utilities.Arrayify(top, middle, leftBottom, leftTop) },
-//         };
+    public override Vector2i GetSize()
+    {
+        return new Vector2i(3 * (int)Math.Ceiling(this._data.DataBits / 4f), 5);
+    }
 
-//         this._values = Enumerable.Repeat(LogicValue.Z, this._data.DataBits).ToArray();
-//     }
+    private Dictionary<uint, (Vector2, Vector2)[]> _segments;
+    private LogicValue[] _values;
 
-//     public override void PerformLogic()
-//     {
-//         var io = this.GetIOFromIdentifier("IN");
-//         this._values = io.GetValues();
-//     }
+    public override void Initialize(HexDisplayData data)
+    {
+        this._data = data;
 
-//     public override RectangleF GetBoundingBox(out Vector2 textSize)
-//     {
-//         if (this._bounds != RectangleF.Empty)
-//         {
-//             textSize = _textSize;
-//             return this._bounds;
-//         }
+        // RENDER SEGMENTS
+        var top = (new Vector2(0.65f, 0.5f), new Vector2(2.35f, 0.5f));
+        var bottom = (new Vector2(0.65f, 4.5f), new Vector2(2.35f, 4.5f));
+        var leftTop = (new Vector2(0.5f, 0.65f), new Vector2(0.5f, 2.35f));
+        var leftBottom = (new Vector2(0.5f, 2.65f), new Vector2(0.5f, 4.35f));
+        var rightTop = (new Vector2(2.5f, 0.65f), new Vector2(2.5f, 2.35f));
+        var rightBottom = (new Vector2(2.5f, 2.65f), new Vector2(2.5f, 4.35f));
+        var middle = (new Vector2(0.65f, 2.5f), new Vector2(2.35f, 2.5f));
 
-//         var gridSize = Constants.GRIDSIZE;
-//         var digits = (int)Math.Ceiling(this._data.DataBits / 4f);
-//         var spacing = 1 * gridSize;
-//         var digitWidth = 2 * gridSize;
-//         var digitHeight = 4 * gridSize;
-//         var size = new Vector2(digitWidth * digits + 1 * gridSize + spacing * (digits - 1), digitHeight + 1 * gridSize);
+        this._segments = new Dictionary<uint, (Vector2, Vector2)[]>()
+        {
+            { 0x0u, Utilities.Arrayify(top, bottom, leftBottom, leftTop, rightBottom, rightTop) },
+            { 0x1u, Utilities.Arrayify(rightBottom, rightTop) },
+            { 0x2u, Utilities.Arrayify(top, bottom, middle, leftBottom, rightTop) },
+            { 0x3u, Utilities.Arrayify(top, bottom, middle, rightBottom, rightTop) },
+            { 0x4u, Utilities.Arrayify(middle, leftTop, rightBottom, rightTop) },
+            { 0x5u, Utilities.Arrayify(top, bottom, middle, leftTop, rightBottom) },
+            { 0x6u, Utilities.Arrayify(top, bottom, middle, leftTop, leftBottom, rightBottom) },
+            { 0x7u, Utilities.Arrayify(top, rightBottom, rightTop) },
+            { 0x8u, Utilities.Arrayify(top, bottom, middle, leftBottom, leftTop, rightBottom, rightTop) },
+            { 0x9u, Utilities.Arrayify(top, bottom, middle, leftTop, rightBottom, rightTop) },
+            { 0xAu, Utilities.Arrayify(top, middle, leftBottom, leftTop, rightBottom, rightTop) },
+            { 0xBu, Utilities.Arrayify(bottom, middle, leftBottom, rightBottom, leftTop) },
+            { 0xCu, Utilities.Arrayify(top, bottom, leftBottom, leftTop) },
+            { 0xDu, Utilities.Arrayify(bottom, leftBottom, rightBottom, rightTop, middle) },
+            { 0xEu, Utilities.Arrayify(top, bottom, middle, leftBottom, leftTop) },
+            { 0xFu, Utilities.Arrayify(top, middle, leftBottom, leftTop) },
+        };
 
-//         this._bounds = this.Position.ToVector2(Constants.GRIDSIZE).CreateRect(size);
-//         textSize = Vector2.Zero;
-//         return this._bounds;
-//     }
+        this._values = LogicValue.Z.Multiple(this._data.DataBits);
+    }
 
-//     public override void Render(Camera2D camera)
-//     {
-//         //this.TriggerSizeRecalculation();
-//         // Position of component
+    protected override bool Interact(Scheduler scheduler, PinCollection pins, Camera2D camera)
+    {
+        return false; // No interaction
+    }
 
-//         var pShader = LogiX.ContentManager.GetContentItem<ShaderProgram>("core.shader_program.primitive");
+    protected override IEnumerable<(ObservableValue, LogicValue[])> Prepare(PinCollection pins)
+    {
+        yield break; // No preparation needed
+    }
 
-//         var pos = this.Position.ToVector2(Constants.GRIDSIZE);
-//         var rect = this.GetBoundingBox(out var textSize);
-//         var size = rect.GetSize().ToVector2i(Constants.GRIDSIZE);
-//         var realSize = size.ToVector2(Constants.GRIDSIZE);
+    public override void Render(PinCollection pins, Camera2D camera)
+    {
+        base.Render(pins, camera);
 
-//         PrimitiveRenderer.RenderRectangle(rect, Vector2.Zero, 0f, ColorF.White);
+        uint val = this._values.Reverse().GetAsUInt();
+        var digits = (int)Math.Ceiling(this._data.DataBits / 4f);
+        var pos = this.Position.ToVector2(Constants.GRIDSIZE);
 
-//         var ios = this.IOs;
-//         for (int i = 0; i < ios.Length; i++)
-//         {
-//             var io = ios[i];
-//             var ioPos = this.GetPositionForIO(io, out var lineEnd);
-//             var lineEndPos = new Vector2(lineEnd.X * Constants.GRIDSIZE, lineEnd.Y * Constants.GRIDSIZE);
+        for (int i = 0; i < digits; i++)
+        {
+            var digit = (val >> ((digits - i - 1) * 4)) & 0xFu;
+            var segmentsForValue = this._segments[digit];
 
-//             // Draw the group
-//             var gPos = new Vector2(ioPos.X * Constants.GRIDSIZE, ioPos.Y * Constants.GRIDSIZE);
-//             int lineThickness = 2;
-//             var groupCol = this.GetIOColor(i);
+            foreach (var segment in segmentsForValue)
+            {
+                var start = segment.Item1 * Constants.GRIDSIZE + pos + (i * new Vector2(3 * Constants.GRIDSIZE, 0));
+                var end = segment.Item2 * Constants.GRIDSIZE + pos + (i * new Vector2(3 * Constants.GRIDSIZE, 0));
 
-//             PrimitiveRenderer.RenderLine(gPos, lineEndPos, lineThickness, groupCol.Darken(0.5f));
-//             PrimitiveRenderer.RenderCircle(gPos, Constants.IO_GROUP_RADIUS, 0f, groupCol);
-//         }
-
-//         uint val = this._values.Reverse().GetAsUInt();
-//         var digits = (int)Math.Ceiling(this._data.DataBits / 4f);
-
-//         for (int i = 0; i < digits; i++)
-//         {
-//             var digit = (val >> ((digits - i - 1) * 4)) & 0xFu;
-//             var segmentsForValue = segments[digit];
-
-//             foreach (var segment in segmentsForValue)
-//             {
-//                 var start = segment.Item1 * Constants.GRIDSIZE + pos + (i * new Vector2(3 * Constants.GRIDSIZE, 0));
-//                 var end = segment.Item2 * Constants.GRIDSIZE + pos + (i * new Vector2(3 * Constants.GRIDSIZE, 0));
-
-//                 PrimitiveRenderer.RenderLine(start, end, 3, ColorF.Red);
-//             }
-//         }
-//     }
-// }
+                PrimitiveRenderer.RenderLine(start, end, 3, ColorF.Red);
+            }
+        }
+    }
+}
