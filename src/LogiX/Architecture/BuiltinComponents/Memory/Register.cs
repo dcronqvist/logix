@@ -1,86 +1,92 @@
-// using ImGuiNET;
-// using LogiX.Architecture.Serialization;
-// using LogiX.Content.Scripting;
+using ImGuiNET;
+using LogiX.Architecture.Serialization;
+using LogiX.Content.Scripting;
+using LogiX.Rendering;
 
-// namespace LogiX.Architecture.BuiltinComponents;
+namespace LogiX.Architecture.BuiltinComponents;
 
-// public class RegisterData : IComponentDescriptionData
-// {
-//     [ComponentDescriptionProperty("Bits", IntMinValue = 1, IntMaxValue = 32)]
-//     public int DataBits { get; set; }
+public class RegisterData : INodeDescriptionData
+{
+    [NodeDescriptionProperty("Bits", IntMinValue = 1, IntMaxValue = 32)]
+    public int DataBits { get; set; }
 
-//     public static IComponentDescriptionData GetDefault()
-//     {
-//         return new RegisterData()
-//         {
-//             DataBits = 8
-//         };
-//     }
-// }
+    public INodeDescriptionData GetDefault()
+    {
+        return new RegisterData()
+        {
+            DataBits = 8
+        };
+    }
+}
 
-// [ScriptType("REGISTER"), ComponentInfo("Register", "Memory", "core.markdown.register")]
-// public class Register : Component<RegisterData>
-// {
-//     public override string Name => $"{this._currentState.Reverse().GetAsHexString()}";
-//     public override bool DisplayIOGroupIdentifiers => true;
-//     public override bool ShowPropertyWindow => true;
+[ScriptType("REGISTER"), NodeInfo("Register", "Memory", "core.markdown.register")]
+public class Register : BoxNode<RegisterData>
+{
+    public override string Text => this._currV.ToString($"X{(int)Math.Ceiling(this._data.DataBits / 4f)}");
+    public override float TextScale => 1f;
 
-//     private RegisterData _data;
-//     private LogicValue[] _currentState;
+    private RegisterData _data;
 
-//     public override IComponentDescriptionData GetDescriptionData()
-//     {
-//         return _data;
-//     }
+    private LogicValue _prevCLK = LogicValue.LOW;
+    private uint _currV = 0;
+    public override IEnumerable<(ObservableValue, LogicValue[], int)> Evaluate(PinCollection pins)
+    {
+        var D = pins.Get("D").Read();
+        var WE = pins.Get("WE").Read().First();
+        var CLK = pins.Get("CLK").Read().First();
+        var R = pins.Get("R").Read().First();
 
-//     public override void Initialize(RegisterData data)
-//     {
-//         this.ClearIOs();
-//         this._data = data;
-//         this._currentState = Enumerable.Repeat(LogicValue.UNDEFINED, data.DataBits).ToArray();
+        var Q = pins.Get("Q");
 
-//         this.RegisterIO("D", data.DataBits, ComponentSide.LEFT, "data");
-//         this.RegisterIO(">", 1, ComponentSide.LEFT, "clk");
-//         this.RegisterIO("EN", 1, ComponentSide.TOP, "enable");
-//         this.RegisterIO("R", 1, ComponentSide.TOP, "reset");
+        if (R == LogicValue.HIGH)
+        {
+            _prevCLK = CLK;
+            _currV = 0;
+            yield return (Q, LogicValue.LOW.Multiple(this._data.DataBits), 1);
+            yield break;
+        }
 
-//         this.RegisterIO("Q", data.DataBits, ComponentSide.RIGHT);
+        var prevCLK = _prevCLK;
+        _prevCLK = CLK;
+        if (CLK == LogicValue.HIGH && prevCLK == LogicValue.LOW && WE == LogicValue.HIGH)
+        {
+            _currV = D.Reverse().GetAsUInt();
+            yield return (Q, D, 1);
+        }
+    }
 
-//         this.TriggerSizeRecalculation();
-//     }
+    public override INodeDescriptionData GetNodeData()
+    {
+        return this._data;
+    }
 
-//     private LogicValue previousClk;
-//     public override void PerformLogic()
-//     {
-//         var data = this.GetIOFromIdentifier("D").GetValues();
-//         var clk = this.GetIOFromIdentifier(">").GetValues().First();
-//         var enable = this.GetIOFromIdentifier("EN").GetValues().First();
-//         var reset = this.GetIOFromIdentifier("R").GetValues().First();
+    public override IEnumerable<PinConfig> GetPinConfiguration()
+    {
+        yield return new PinConfig("D", this._data.DataBits, false, new Vector2i(0, 1));
+        yield return new PinConfig("WE", 1, false, new Vector2i(0, 2));
+        yield return new PinConfig("CLK", 1, true, new Vector2i(0, 3));
 
-//         var q = this.GetIOFromIdentifier("Q");
+        yield return new PinConfig("Q", this._data.DataBits, true, new Vector2i(4, 1));
+        yield return new PinConfig("R", 1, true, new Vector2i(1, 4));
+    }
 
-//         if (reset == LogicValue.HIGH)
-//         {
-//             this._currentState = Enumerable.Repeat(LogicValue.LOW, this._data.DataBits).ToArray();
-//         }
-//         else
-//         {
-//             if (enable == LogicValue.HIGH)
-//             {
-//                 if (clk == LogicValue.HIGH && previousClk == LogicValue.LOW)
-//                 {
-//                     _currentState = data;
-//                 }
-//             }
+    public override Vector2i GetSize()
+    {
+        return new Vector2i(4, 4);
+    }
 
-//             if (clk == LogicValue.UNDEFINED || enable == LogicValue.UNDEFINED || reset == LogicValue.UNDEFINED)
-//             {
-//                 this._currentState = Enumerable.Repeat(LogicValue.UNDEFINED, this._data.DataBits).ToArray();
-//                 return;
-//             }
-//         }
+    public override void Initialize(RegisterData data)
+    {
+        this._data = data;
+    }
 
-//         q.Push(this._currentState);
-//         previousClk = clk;
-//     }
-// }
+    protected override bool Interact(Scheduler scheduler, PinCollection pins, Camera2D camera)
+    {
+        return false;
+    }
+
+    protected override IEnumerable<(ObservableValue, LogicValue[])> Prepare(PinCollection pins)
+    {
+        yield return (pins.Get("Q"), LogicValue.LOW.Multiple(this._data.DataBits));
+    }
+}
