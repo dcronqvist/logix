@@ -1,76 +1,90 @@
-// using ImGuiNET;
-// using LogiX.Architecture.Serialization;
-// using LogiX.Content.Scripting;
+using ImGuiNET;
+using LogiX.Architecture.Serialization;
+using LogiX.Content.Scripting;
+using LogiX.Rendering;
 
-// namespace LogiX.Architecture.BuiltinComponents;
+namespace LogiX.Architecture.BuiltinComponents;
 
-// public class MultiplierData : IComponentDescriptionData
-// {
-//     [ComponentDescriptionProperty("Bits", IntMinValue = 1, IntMaxValue = 32)]
-//     public int DataBits { get; set; }
+public class MultiplierData : INodeDescriptionData
+{
+    [NodeDescriptionProperty("Bits", IntMinValue = 1, IntMaxValue = 32)]
+    public int DataBits { get; set; }
 
-//     public static IComponentDescriptionData GetDefault()
-//     {
-//         return new MultiplierData()
-//         {
-//             DataBits = 1
-//         };
-//     }
-// }
+    public INodeDescriptionData GetDefault()
+    {
+        return new MultiplierData()
+        {
+            DataBits = 1
+        };
+    }
+}
 
-// [ScriptType("MULTIPLIER"), ComponentInfo("Multiplier", "Arithmetic", "core.markdown.multiplier")]
-// public class Multiplier : Component<MultiplierData>
-// {
-//     public override string Name => "MUL";
-//     public override bool DisplayIOGroupIdentifiers => true;
-//     public override bool ShowPropertyWindow => true;
+[ScriptType("MULTIPLIER"), NodeInfo("Multiplier", "Arithmetic", "core.markdown.multiplier")]
+public class Multiplier : BoxNode<MultiplierData>
+{
+    private MultiplierData _data;
 
-//     private MultiplierData _data;
+    public override string Text => "MUL";
+    public override float TextScale => 1f;
 
-//     public override IComponentDescriptionData GetDescriptionData()
-//     {
-//         return _data;
-//     }
+    public override IEnumerable<(ObservableValue, LogicValue[], int)> Evaluate(PinCollection pins)
+    {
+        var A = pins.Get("A").Read();
+        var B = pins.Get("B").Read();
+        var CIN = pins.Get("CIN").Read();
 
-//     public override void Initialize(MultiplierData data)
-//     {
-//         this.ClearIOs();
-//         this._data = data;
+        var P = pins.Get("P");
+        var COUT = pins.Get("COUT");
 
-//         this.RegisterIO("A", data.DataBits, ComponentSide.LEFT, "input");
-//         this.RegisterIO("B", data.DataBits, ComponentSide.LEFT, "input");
-//         this.RegisterIO("CIN", 1, ComponentSide.TOP, "borrowin");
-//         this.RegisterIO("COUT", data.DataBits, ComponentSide.BOTTOM, "borrowout");
-//         this.RegisterIO("S", data.DataBits, ComponentSide.RIGHT, "output");
-//     }
+        if (A.AnyUndefined() || B.AnyUndefined() || CIN.AnyUndefined())
+        {
+            yield return (P, LogicValue.Z.Multiple(this._data.DataBits), 1);
+            yield return (COUT, LogicValue.Z.Multiple(this._data.DataBits), 1);
+        }
+        else
+        {
+            uint product = A.Reverse().GetAsUInt() * B.Reverse().GetAsUInt() + CIN.Reverse().GetAsUInt();
+            uint p = product & (uint)((1 << this._data.DataBits) - 1);
+            uint cout = (product >> this._data.DataBits) & (uint)((1 << this._data.DataBits) - 1);
 
-//     public override void PerformLogic()
-//     {
-//         var a = this.GetIOFromIdentifier("A");
-//         var b = this.GetIOFromIdentifier("B");
-//         var bin = this.GetIOFromIdentifier("CIN");
-//         var bout = this.GetIOFromIdentifier("COUT");
-//         var s = this.GetIOFromIdentifier("S");
+            yield return (P, p.GetAsLogicValues(this._data.DataBits), 1);
+            yield return (COUT, cout.GetAsLogicValues(this._data.DataBits), 1);
+        }
+    }
 
-//         var aValues = a.GetValues();
-//         var bValues = b.GetValues();
-//         var binValues = bin.GetValues();
+    public override INodeDescriptionData GetNodeData()
+    {
+        return this._data;
+    }
 
-//         if (aValues.AnyUndefined() || bValues.AnyUndefined() || binValues.AnyUndefined())
-//         {
-//             return; // Can't do anything if we don't have all the values
-//         }
+    public override IEnumerable<PinConfig> GetPinConfiguration()
+    {
+        yield return new PinConfig("A", this._data.DataBits, true, new Vector2i(0, 1));
+        yield return new PinConfig("B", this._data.DataBits, true, new Vector2i(0, 2));
 
-//         var aAsuint = aValues.Reverse().GetAsUInt();
-//         var bAsuint = bValues.Reverse().GetAsUInt();
-//         var binAsuint = binValues.Reverse().GetAsUInt();
+        yield return new PinConfig("CIN", 1, true, new Vector2i(1, 0));
+        yield return new PinConfig("COUT", this._data.DataBits, false, new Vector2i(1, 3));
 
-//         var sum = aAsuint * bAsuint + binAsuint;
+        yield return new PinConfig("P", this._data.DataBits, false, new Vector2i(3, 1));
+    }
 
-//         var sumAsBits = sum.GetAsLogicValues(this._data.DataBits);
-//         var boutAsBits = (sum >> this._data.DataBits).GetAsLogicValues(this._data.DataBits);
+    public override Vector2i GetSize()
+    {
+        return new Vector2i(3, 3);
+    }
 
-//         s.Push(sumAsBits);
-//         bout.Push(boutAsBits);
-//     }
-// }
+    public override void Initialize(MultiplierData data)
+    {
+        this._data = data;
+    }
+
+    protected override bool Interact(Scheduler scheduler, PinCollection pins, Camera2D camera)
+    {
+        return false;
+    }
+
+    protected override IEnumerable<(ObservableValue, LogicValue[])> Prepare(PinCollection pins)
+    {
+        yield break;
+    }
+}

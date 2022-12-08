@@ -1,84 +1,100 @@
-// using ImGuiNET;
-// using LogiX.Architecture.Serialization;
-// using LogiX.Content.Scripting;
+using ImGuiNET;
+using LogiX.Architecture.Serialization;
+using LogiX.Content.Scripting;
+using LogiX.Rendering;
 
-// namespace LogiX.Architecture.BuiltinComponents;
+namespace LogiX.Architecture.BuiltinComponents;
 
-// public class DividerData : IComponentDescriptionData
-// {
-//     [ComponentDescriptionProperty("Bits", IntMinValue = 1, IntMaxValue = 32)]
-//     public int DataBits { get; set; }
+public class DividerData : INodeDescriptionData
+{
+    [NodeDescriptionProperty("Bits", IntMinValue = 1, IntMaxValue = 32)]
+    public int DataBits { get; set; }
 
-//     public static IComponentDescriptionData GetDefault()
-//     {
-//         return new DividerData()
-//         {
-//             DataBits = 1
-//         };
-//     }
-// }
+    public INodeDescriptionData GetDefault()
+    {
+        return new DividerData()
+        {
+            DataBits = 1
+        };
+    }
+}
 
-// [ScriptType("DIVIDER"), ComponentInfo("Divider", "Arithmetic", "core.markdown.divider")]
-// public class Divider : Component<DividerData>
-// {
-//     public override string Name => "DIV";
-//     public override bool DisplayIOGroupIdentifiers => true;
-//     public override bool ShowPropertyWindow => true;
+[ScriptType("DIVIDER"), NodeInfo("Divider", "Arithmetic", "core.markdown.divider")]
+public class Divider : BoxNode<DividerData>
+{
+    private DividerData _data;
 
-//     private DividerData _data;
+    public override string Text => "DIV";
+    public override float TextScale => 1f;
 
-//     public override IComponentDescriptionData GetDescriptionData()
-//     {
-//         return _data;
-//     }
+    public override IEnumerable<(ObservableValue, LogicValue[], int)> Evaluate(PinCollection pins)
+    {
+        var dividend = pins.Get("DIVIDEND").Read().Reverse();
+        var divisor = pins.Get("DIVISOR").Read().Reverse();
 
-//     public override void Initialize(DividerData data)
-//     {
-//         this.ClearIOs();
-//         this._data = data;
+        var quotient = pins.Get("QUOTIENT");
+        var remainder = pins.Get("REMAINDER");
 
-//         this.RegisterIO("A", data.DataBits, ComponentSide.LEFT, "divisor");
-//         this.RegisterIO("B", data.DataBits, ComponentSide.LEFT, "dividend");
-//         this.RegisterIO("DUP", data.DataBits, ComponentSide.TOP, "divisorUpper");
-//         this.RegisterIO("REM", data.DataBits, ComponentSide.BOTTOM, "remainder");
-//         this.RegisterIO("S", data.DataBits, ComponentSide.RIGHT, "output");
-//         this.RegisterIO("Z", 1, ComponentSide.RIGHT, "zero");
-//     }
+        if (dividend.AnyUndefined() || divisor.AnyUndefined())
+        {
+            yield return (quotient, LogicValue.Z.Multiple(this._data.DataBits), 1);
+            yield return (remainder, LogicValue.Z.Multiple(this._data.DataBits), 1);
+        }
+        else
+        {
+            var divisorVal = divisor.GetAsUInt();
+            var dividendVal = dividend.GetAsUInt();
 
-//     public override void PerformLogic()
-//     {
-//         var a = this.GetIOFromIdentifier("A");
-//         var b = this.GetIOFromIdentifier("B");
-//         var dup = this.GetIOFromIdentifier("DUP");
-//         var rem = this.GetIOFromIdentifier("REM");
-//         var s = this.GetIOFromIdentifier("S");
-//         var z = this.GetIOFromIdentifier("Z");
+            if (divisorVal == 0)
+            {
+                yield return (quotient, LogicValue.LOW.Multiple(this._data.DataBits), 1);
+                yield return (remainder, LogicValue.LOW.Multiple(this._data.DataBits), 1);
+                yield return (pins.Get("DBZ"), LogicValue.HIGH.Multiple(1), 1);
+                yield break;
+            }
 
-//         var aValues = a.GetValues();
-//         var bValues = b.GetValues();
-//         var dupValues = dup.GetValues();
+            var quotientVal = dividendVal / divisorVal;
+            var remainderVal = dividendVal % divisorVal;
 
-//         if (aValues.AnyUndefined() || bValues.AnyUndefined() || dupValues.AnyUndefined())
-//         {
-//             return; // Can't do anything if we don't have all the values
-//         }
+            yield return (quotient, quotientVal.GetAsLogicValues(this._data.DataBits), 1);
+            yield return (remainder, remainderVal.GetAsLogicValues(this._data.DataBits), 1);
+            yield return (pins.Get("DBZ"), LogicValue.LOW.Multiple(1), 1);
+        }
+    }
 
-//         var aAsuint = aValues.Reverse().GetAsUInt() + (dupValues.Reverse().GetAsUInt() << this._data.DataBits);
-//         var bAsuint = bValues.Reverse().GetAsUInt();
+    public override INodeDescriptionData GetNodeData()
+    {
+        return this._data;
+    }
 
-//         if (bAsuint == 0)
-//         {
-//             z.Push(LogicValue.HIGH);
-//             return;
-//         }
+    public override IEnumerable<PinConfig> GetPinConfiguration()
+    {
+        yield return new PinConfig("DIVIDEND", this._data.DataBits, true, new Vector2i(0, 1));
+        yield return new PinConfig("DIVISOR", this._data.DataBits, true, new Vector2i(0, 2));
 
-//         var sum = aAsuint / bAsuint;
+        yield return new PinConfig("QUOTIENT", this._data.DataBits, false, new Vector2i(3, 1));
+        yield return new PinConfig("REMAINDER", this._data.DataBits, false, new Vector2i(3, 2));
 
-//         var sumAsBits = sum.GetAsLogicValues(this._data.DataBits);
-//         var remainder = aAsuint - (sum * bAsuint);
+        yield return new PinConfig("DBZ", 1, false, new Vector2i(1, 3));
+    }
 
-//         s.Push(sumAsBits);
-//         rem.Push(remainder.GetAsLogicValues(this._data.DataBits));
-//         z.Push(LogicValue.LOW);
-//     }
-// }
+    public override Vector2i GetSize()
+    {
+        return new Vector2i(3, 3);
+    }
+
+    public override void Initialize(DividerData data)
+    {
+        this._data = data;
+    }
+
+    protected override bool Interact(Scheduler scheduler, PinCollection pins, Camera2D camera)
+    {
+        return false;
+    }
+
+    protected override IEnumerable<(ObservableValue, LogicValue[])> Prepare(PinCollection pins)
+    {
+        yield break;
+    }
+}

@@ -112,18 +112,39 @@ public class Wire
     {
         var pShader = LogiX.ContentManager.GetContentItem<ShaderProgram>("core.shader_program.primitive");
 
+        var pointDegrees = new Dictionary<Vector2i, int>();
         foreach (var segment in this.Segments)
         {
+            if (!pointDegrees.ContainsKey(segment.Item1))
+            {
+                pointDegrees.Add(segment.Item1, 0);
+            }
+            if (!pointDegrees.ContainsKey(segment.Item2))
+            {
+                pointDegrees.Add(segment.Item2, 0);
+            }
+
+            pointDegrees[segment.Item1]++;
+            pointDegrees[segment.Item2]++;
+
             RenderSegment(segment, color);
         }
 
         var segmentPoints = this.Segments.SelectMany(s => new Vector2i[] { s.Item1, s.Item2 }).Distinct().ToArray();
 
+
         foreach (var point in segmentPoints)
         {
             var worldPos = point.ToVector2(Constants.GRIDSIZE);
-            //PrimitiveRenderer.RenderCircle(pShader, worldPos, Constants.WIRE_POINT_RADIUS, 0, color, cam);
-            PrimitiveRenderer.RenderRectangle(new RectangleF(worldPos.X, worldPos.Y, 0, 0).Inflate(Constants.WIRE_WIDTH / 2f), Vector2.Zero, 0, color);
+
+            if (pointDegrees[point] > 2)
+            {
+                PrimitiveRenderer.RenderCircle(worldPos, Constants.WIRE_WIDTH * 1.5f, 0f, color);
+            }
+            else
+            {
+                PrimitiveRenderer.RenderRectangle(new RectangleF(worldPos.X, worldPos.Y, 0, 0).Inflate(Constants.WIRE_WIDTH / 2f), Vector2.Zero, 0, color);
+            }
         }
     }
 

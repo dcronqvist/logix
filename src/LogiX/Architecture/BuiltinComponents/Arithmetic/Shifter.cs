@@ -1,103 +1,93 @@
-// using ImGuiNET;
-// using LogiX.Architecture.Serialization;
-// using LogiX.Content.Scripting;
+using ImGuiNET;
+using LogiX.Architecture.Serialization;
+using LogiX.Content.Scripting;
+using LogiX.Rendering;
 
-// namespace LogiX.Architecture.BuiltinComponents;
+namespace LogiX.Architecture.BuiltinComponents;
 
-// public enum ShiftDirection
-// {
-//     LEFT = 0,
-//     RIGHT = 1
-// }
+public enum ShiftDirection
+{
+    LEFT = 0,
+    RIGHT = 1
+}
 
-// public class ShifterData : IComponentDescriptionData
-// {
-//     [ComponentDescriptionProperty("Bits", IntMinValue = 1, IntMaxValue = 32)]
-//     public int DataBits { get; set; }
+public class ShifterData : INodeDescriptionData
+{
+    [NodeDescriptionProperty("Bits", IntMinValue = 1, IntMaxValue = 32)]
+    public int DataBits { get; set; }
 
-//     [ComponentDescriptionProperty("Direction")]
-//     public ShiftDirection Direction { get; set; }
+    [NodeDescriptionProperty("Direction")]
+    public ShiftDirection Direction { get; set; }
 
-//     public static IComponentDescriptionData GetDefault()
-//     {
-//         return new ShifterData()
-//         {
-//             DataBits = 4,
-//             Direction = ShiftDirection.LEFT
-//         };
-//     }
-// }
+    public INodeDescriptionData GetDefault()
+    {
+        return new ShifterData()
+        {
+            DataBits = 4,
+            Direction = ShiftDirection.LEFT
+        };
+    }
+}
 
-// [ScriptType("SHIFTER"), ComponentInfo("Shifter", "Arithmetic", "core.markdown.shifter")]
-// public class Shifter : Component<ShifterData>
-// {
-//     public override string Name => "SHIFT";
-//     public override bool DisplayIOGroupIdentifiers => true;
-//     public override bool ShowPropertyWindow => true;
+[ScriptType("SHIFTER"), NodeInfo("Shifter", "Arithmetic", "core.markdown.shifter")]
+public class Shifter : BoxNode<ShifterData>
+{
+    private ShifterData _data;
 
-//     private ShifterData _data;
+    public override string Text => "SHIFT";
+    public override float TextScale => 1f;
 
-//     public override IComponentDescriptionData GetDescriptionData()
-//     {
-//         return _data;
-//     }
+    public override IEnumerable<(ObservableValue, LogicValue[], int)> Evaluate(PinCollection pins)
+    {
+        var X = pins.Get("X").Read().Reverse();
+        var IN = pins.Get("IN").Read().First();
+        var Y = pins.Get("Y");
 
-//     public override void Initialize(ShifterData data)
-//     {
-//         this.ClearIOs();
-//         this._data = data;
+        if (X.AnyUndefined() || IN.IsUndefined())
+        {
+            yield return (Y, LogicValue.Z.Multiple(this._data.DataBits), 1);
+        }
+        else
+        {
+            var x = X.GetAsUInt();
+            uint i = IN == LogicValue.HIGH ? 1u : 0u;
 
-//         this.RegisterIO("X", data.DataBits, ComponentSide.LEFT, "input");
-//         this.RegisterIO("Y", data.DataBits, ComponentSide.RIGHT, "output");
-//         this.RegisterIO("S", (int)Math.Ceiling(Math.Log2(data.DataBits)), ComponentSide.LEFT, "shift");
-//         this.RegisterIO("IN", 1, ComponentSide.LEFT, "input");
-//     }
+            uint y = this._data.Direction == ShiftDirection.LEFT ? (uint)(x << 1) | i : (uint)(x >> 1) | (uint)(i << (this._data.DataBits - 1));
 
-//     public override void PerformLogic()
-//     {
-//         var x = this.GetIOFromIdentifier("X");
-//         var y = this.GetIOFromIdentifier("Y");
-//         var s = this.GetIOFromIdentifier("S");
-//         var shiftIn = this.GetIOFromIdentifier("IN");
+            yield return (Y, y.GetAsLogicValues(this._data.DataBits), 1);
+        }
+    }
 
-//         var xBits = x.GetValues();
-//         var sBits = s.GetValues();
-//         var shiftInBits = shiftIn.GetValues().First();
+    public override INodeDescriptionData GetNodeData()
+    {
+        return this._data;
+    }
 
-//         if (xBits.AnyUndefined() || sBits.AnyUndefined() || shiftInBits.IsUndefined())
-//         {
-//             return; // Can't do anything if we don't have all the values
-//         }
+    public override IEnumerable<PinConfig> GetPinConfiguration()
+    {
+        yield return new PinConfig("X", this._data.DataBits, true, new Vector2i(0, 1));
+        yield return new PinConfig("Y", this._data.DataBits, false, new Vector2i(4, 1));
 
-//         var xint = xBits.Reverse().GetAsUInt();
-//         var shift = sBits.Reverse().GetAsUInt();
+        yield return new PinConfig("IN", 1, true, new Vector2i(1, 0));
+    }
 
-//         if (this._data.Direction == ShiftDirection.LEFT)
-//         {
-//             var yint = xint << (int)shift;
+    public override Vector2i GetSize()
+    {
+        return new Vector2i(4, 2);
+    }
 
-//             if (shiftInBits == LogicValue.HIGH)
-//             {
-//                 yint |= 1;
-//             }
+    public override void Initialize(ShifterData data)
+    {
+        this._data = data;
+    }
 
-//             var yBits = yint.GetAsLogicValues(y.Bits);
+    protected override bool Interact(Scheduler scheduler, PinCollection pins, Camera2D camera)
+    {
+        return false;
+    }
 
-//             y.Push(yBits);
-//         }
-//         else
-//         {
-//             var yint = xint >> (int)shift;
-
-//             if (shiftInBits == LogicValue.HIGH)
-//             {
-//                 var highestValue = (uint)Math.Pow(2, y.Bits - 1);
-//                 yint |= highestValue;
-//             }
-
-//             var yBits = yint.GetAsLogicValues(y.Bits);
-
-//             y.Push(yBits);
-//         }
-//     }
-// }
+    protected override IEnumerable<(ObservableValue, LogicValue[])> Prepare(PinCollection pins)
+    {
+        yield break;
+    }
+}
