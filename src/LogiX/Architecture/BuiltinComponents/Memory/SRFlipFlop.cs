@@ -5,23 +5,24 @@ using LogiX.Rendering;
 
 namespace LogiX.Architecture.BuiltinComponents;
 
-public class DFlipFlopData : INodeDescriptionData
+public class SRFlipFlopData : INodeDescriptionData
 {
     public INodeDescriptionData GetDefault()
     {
-        return new DFlipFlopData();
+        return new SRFlipFlopData();
     }
 }
 
-[ScriptType("DFLIPFLOP"), NodeInfo("D Flip Flop", "Memory", "core.markdown.dflipflop")]
-public class DFlipFlop : BoxNode<DFlipFlopData>
+[ScriptType("SRFF"), NodeInfo("SR Flip-Flop", "Memory", "core.markdown.srff")]
+public class SRFlipFlop : BoxNode<SRFlipFlopData>
 {
-    public override string Text => "D FF";
+    public override string Text => "SR FF";
     public override float TextScale => 1f;
 
     public override IEnumerable<(ObservableValue, LogicValue[], int)> Evaluate(PinCollection pins)
     {
-        var D = pins.Get("D").Read().First();
+        var S = pins.Get("S").Read().First();
+        var R = pins.Get("R").Read().First();
         var CLK = pins.Get("CLK").Read().First();
 
         var Q = pins.Get("Q");
@@ -29,12 +30,12 @@ public class DFlipFlop : BoxNode<DFlipFlopData>
 
         if (CLK == LogicValue.HIGH)
         {
-            if (D == LogicValue.HIGH)
+            if (S == LogicValue.HIGH && R == LogicValue.LOW)
             {
                 yield return (Q, LogicValue.HIGH.Multiple(1), 1);
                 yield return (Qn, LogicValue.LOW.Multiple(1), 1);
             }
-            else if (D == LogicValue.LOW)
+            else if (R == LogicValue.HIGH && S == LogicValue.LOW)
             {
                 yield return (Q, LogicValue.LOW.Multiple(1), 1);
                 yield return (Qn, LogicValue.HIGH.Multiple(1), 1);
@@ -44,24 +45,25 @@ public class DFlipFlop : BoxNode<DFlipFlopData>
 
     public override INodeDescriptionData GetNodeData()
     {
-        return new DFlipFlopData();
+        return new SRFlipFlopData();
     }
 
     public override IEnumerable<PinConfig> GetPinConfiguration()
     {
-        yield return new PinConfig("D", 1, false, new Vector2i(0, 1));
-        yield return new PinConfig("CLK", 1, true, new Vector2i(0, 2));
+        yield return new PinConfig("S", 1, false, new Vector2i(0, 1));
+        yield return new PinConfig("R", 1, false, new Vector2i(0, 2));
+        yield return new PinConfig("CLK", 1, true, new Vector2i(0, 3));
 
-        yield return new PinConfig("Q", 1, false, new Vector2i(3, 1));
-        yield return new PinConfig("Q'", 1, false, new Vector2i(3, 2));
+        yield return new PinConfig("Q", 1, false, new Vector2i(4, 1));
+        yield return new PinConfig("Q'", 1, false, new Vector2i(4, 3));
     }
 
     public override Vector2i GetSize()
     {
-        return new Vector2i(3, 3);
+        return new Vector2i(4, 4);
     }
 
-    public override void Initialize(DFlipFlopData data)
+    public override void Initialize(SRFlipFlopData data)
     {
         // Nothing to do here
     }
