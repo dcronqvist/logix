@@ -1036,4 +1036,9 @@ public static class Utilities
     {
         return Enumerable.Repeat(value, count).ToArray();
     }
+
+    public static bool AllSame(this IEnumerable<LogicValue> values)
+    {
+        return values.All(v => v == values.First());
+    }
 }

@@ -62,12 +62,14 @@ public class Register : BoxNode<RegisterData>
 
     public override IEnumerable<PinConfig> GetPinConfiguration()
     {
+        var size = this.GetSize();
+
         yield return new PinConfig("D", this._data.DataBits, false, new Vector2i(0, 1));
         yield return new PinConfig("WE", 1, false, new Vector2i(0, 2));
         yield return new PinConfig("CLK", 1, true, new Vector2i(0, 3));
 
-        yield return new PinConfig("Q", this._data.DataBits, true, new Vector2i(4, 1));
-        yield return new PinConfig("R", 1, true, new Vector2i(1, 4));
+        yield return new PinConfig("Q", this._data.DataBits, true, new Vector2i(size.X, 1));
+        yield return new PinConfig("R", 1, true, new Vector2i(1, size.Y));
     }
 
     public override Vector2i GetSize()

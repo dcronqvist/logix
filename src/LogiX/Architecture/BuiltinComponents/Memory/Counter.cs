@@ -1,108 +1,109 @@
-// using ImGuiNET;
-// using LogiX.Architecture.Serialization;
-// using LogiX.Content.Scripting;
+using ImGuiNET;
+using LogiX.Architecture.Serialization;
+using LogiX.Content.Scripting;
+using LogiX.Rendering;
 
-// namespace LogiX.Architecture.BuiltinComponents;
+namespace LogiX.Architecture.BuiltinComponents;
 
-// public class CounterData : INodeDescriptionData
-// {
-//     [NodeDescriptionProperty("Bits", IntMinValue = 1, IntMaxValue = 32)]
-//     public int DataBits { get; set; }
+public class CounterData : INodeDescriptionData
+{
+    [NodeDescriptionProperty("Bits", IntMinValue = 1, IntMaxValue = 32)]
+    public int DataBits { get; set; }
 
-//     public static INodeDescriptionData GetDefault()
-//     {
-//         return new CounterData()
-//         {
-//             DataBits = 4,
-//         };
-//     }
-// }
+    public INodeDescriptionData GetDefault()
+    {
+        return new CounterData()
+        {
+            DataBits = 4,
+        };
+    }
+}
 
-// [ScriptType("COUNTER"), NodeInfo("Counter", "Memory", "core.markdown.counter")]
-// public class Counter : Component<CounterData>
-// {
-//     public override string Name => "CNT";
-//     public override bool DisplayIOGroupIdentifiers => true;
-//     public override bool ShowPropertyWindow => true;
+[ScriptType("COUNTER"), NodeInfo("Counter", "Memory", "core.markdown.counter")]
+public class Counter : BoxNode<CounterData>
+{
+    public override string Text => "CNT";
+    public override float TextScale => 1f;
 
-//     private CounterData _data;
+    private CounterData _data;
 
-//     public override INodeDescriptionData GetDescriptionData()
-//     {
-//         return _data;
-//     }
+    private LogicValue _prevCLK = LogicValue.LOW;
+    public override IEnumerable<(ObservableValue, LogicValue[], int)> Evaluate(PinCollection pins)
+    {
+        var D = pins.Get("D").Read();
+        var CLK = pins.Get("CLK").Read().First();
 
-//     public override void Initialize(CounterData data)
-//     {
-//         this.ClearIOs();
-//         this._data = data;
+        var EN = pins.Get("EN").Read().First();
+        var CNT = pins.Get("CNT").Read().First();
+        var LOAD = pins.Get("LOAD").Read().First();
 
-//         this.RegisterIO("LD", 1, ComponentSide.LEFT); // Load value
-//         this.RegisterIO("C", 1, ComponentSide.LEFT); // increment or decrement current value
-//         this.RegisterIO("D", data.DataBits, ComponentSide.LEFT); // Data input
+        var Q = pins.Get("Q");
+        var R = pins.Get("R").Read().First();
 
-//         this.RegisterIO("EN", 1, ComponentSide.BOTTOM); // only apply if enabled
-//         this.RegisterIO("CLK", 1, ComponentSide.BOTTOM); // Update value
-//         this.RegisterIO("R", 1, ComponentSide.BOTTOM); // reset value to 0
+        if (R == LogicValue.HIGH)
+        {
+            yield return (Q, LogicValue.LOW.Multiple(this._data.DataBits), 1);
+        }
+        else if (this._prevCLK == LogicValue.LOW && CLK == LogicValue.HIGH && EN == LogicValue.HIGH)
+        {
+            if (LOAD == LogicValue.HIGH)
+            {
+                var dVal = D.Reverse().GetAsUInt();
+                yield return (Q, dVal.GetAsLogicValues(this._data.DataBits), 1);
+            }
+            else if (CNT == LogicValue.HIGH)
+            {
+                var qVal = Q.Read().Reverse().GetAsUInt();
+                qVal++;
+                yield return (Q, qVal.GetAsLogicValues(this._data.DataBits), 1);
+            }
+            else if (CNT == LogicValue.LOW)
+            {
+                var qVal = Q.Read().Reverse().GetAsUInt();
+                qVal--;
+                yield return (Q, qVal.GetAsLogicValues(this._data.DataBits), 1);
+            }
+        }
 
-//         this.RegisterIO("Q", data.DataBits, ComponentSide.RIGHT); // current value
+        this._prevCLK = CLK;
+        yield break;
+    }
 
-//         this._value = 0;
-//     }
+    public override INodeDescriptionData GetNodeData()
+    {
+        return this._data;
+    }
 
-//     private bool _previousClock;
-//     private uint _value;
-//     public override void PerformLogic()
-//     {
-//         var ld = this.GetIOFromIdentifier("LD").GetValues().First();
-//         var c = this.GetIOFromIdentifier("C").GetValues().First();
-//         var d = this.GetIOFromIdentifier("D").GetValues();
+    public override IEnumerable<PinConfig> GetPinConfiguration()
+    {
+        yield return new PinConfig("D", this._data.DataBits, false, new Vector2i(0, 1));
+        yield return new PinConfig("CLK", 1, true, new Vector2i(0, 2));
 
-//         var en = this.GetIOFromIdentifier("EN").GetValues().First();
-//         var clk = this.GetIOFromIdentifier("CLK").GetValues().First();
-//         var r = this.GetIOFromIdentifier("R").GetValues().First();
+        yield return new PinConfig("EN", 1, false, new Vector2i(1, 0));
+        yield return new PinConfig("CNT", 1, false, new Vector2i(2, 0));
+        yield return new PinConfig("LOAD", 1, false, new Vector2i(3, 0));
 
-//         var q = this.GetIOFromIdentifier("Q");
+        yield return new PinConfig("Q", this._data.DataBits, false, new Vector2i(this.GetSize().X, 1));
+        yield return new PinConfig("R", 1, true, new Vector2i(1, this.GetSize().Y));
+    }
 
-//         if (ld.IsUndefined() || en.IsUndefined() || clk.IsUndefined())
-//         {
-//             return; // Undefined values
-//         }
+    public override Vector2i GetSize()
+    {
+        return new Vector2i(4, 4);
+    }
 
-//         var enabled = en == LogicValue.HIGH;
-//         var clock = clk == LogicValue.HIGH;
-//         var reset = r == LogicValue.HIGH;
-//         var load = ld == LogicValue.HIGH;
+    public override void Initialize(CounterData data)
+    {
+        this._data = data;
+    }
 
-//         if (reset)
-//         {
-//             // Asynchronous reset
-//             this._value = 0;
-//         }
-//         else if (enabled && clock && !_previousClock)
-//         {
-//             // Clock rising edge.
-//             if (load)
-//             {
-//                 // Load from data input.
-//                 this._value = d.Reverse().GetAsUInt();
-//             }
-//             else
-//             {
-//                 if (c == LogicValue.HIGH)
-//                 {
-//                     // Increment
-//                     this._value++;
-//                 }
-//                 else if (c == LogicValue.LOW)
-//                 {
-//                     // Decrement
-//                     this._value--;
-//                 }
-//             }
-//         }
+    protected override bool Interact(Scheduler scheduler, PinCollection pins, Camera2D camera)
+    {
+        return false;
+    }
 
-//         q.Push(this._value.GetAsLogicValues(this._data.DataBits));
-//         _previousClock = clock;
-//     }
-// }
+    protected override IEnumerable<(ObservableValue, LogicValue[])> Prepare(PinCollection pins)
+    {
+        yield return (pins.Get("Q"), LogicValue.LOW.Multiple(this._data.DataBits));
+    }
+}
