@@ -267,7 +267,18 @@ public class Editor : Invoker<Circuit, Editor>
         {
             // Verify that the user wants to create a new project
             // Currently very unforgiving, and should be changed later.
-            this.SetProject(LogiXProject.New("Untitled"));
+
+            string projectName = "";
+            this.OpenPopup("New Project", (e) =>
+            {
+                ImGui.InputTextWithHint("Project Name", "project name...", ref projectName, 100);
+                if (ImGui.Button("OK"))
+                {
+                    this.SetProject(LogiXProject.New(projectName));
+                    ImGui.CloseCurrentPopup();
+                }
+            });
+
         }, ModifierKeys.Control, Keys.N));
 
         this.AddMainMenuItem("File", "Open Project", new EditorAction((e) => true, (e) => false, (e) =>
@@ -284,10 +295,49 @@ public class Editor : Invoker<Circuit, Editor>
                 this.SetProject(project);
                 Settings.SetSetting(Settings.LAST_OPEN_PROJECT, project.LoadedFromPath);
 
+                var currProjHistory = Settings.GetSetting<List<string>>(Settings.RECENT_OPEN_PROJECTS);
+                currProjHistory.Remove(s);
+                currProjHistory.Insert(0, s);
+
+                while (currProjHistory.Count > 10)
+                {
+                    currProjHistory.RemoveAt(10);
+                }
+
+                Settings.SetSetting(Settings.RECENT_OPEN_PROJECTS, currProjHistory);
+
             }, ".lxprojj");
 
             this.OpenPopup(fileDialog);
         }, ModifierKeys.Control, Keys.O));
+
+        var recentProjects = Settings.GetSetting<List<string>>(Settings.RECENT_OPEN_PROJECTS);
+        this.AddMainMenuItem("File", "Open Recent", new NestedEditorAction((e) => recentProjects.Count > 0, recentProjects.Select(rp =>
+        {
+            var rpCopy = rp;
+            return (rp, new EditorAction((e) => true, (e) => false, (e) =>
+            {
+                if (this.Project is not null)
+                {
+                    this.SetMessage(this.QuickSaveProject());
+                }
+
+                var project = LogiXProject.FromFile(rpCopy);
+                this.SetProject(project);
+                Settings.SetSetting(Settings.LAST_OPEN_PROJECT, project.LoadedFromPath);
+
+                var currProjHistory = Settings.GetSetting<List<string>>(Settings.RECENT_OPEN_PROJECTS);
+                currProjHistory.Remove(rpCopy);
+                currProjHistory.Insert(0, rpCopy);
+
+                while (currProjHistory.Count > 10)
+                {
+                    currProjHistory.RemoveAt(10);
+                }
+
+                Settings.SetSetting(Settings.RECENT_OPEN_PROJECTS, currProjHistory);
+            }));
+        }).ToArray()));
 
         this.AddMainMenuItem("File", "Save Project", new EditorAction((e) => this.Project is not null, (e) => false, (e) =>
         {
@@ -613,7 +663,7 @@ Under *projects*, you can see your circuits, and right clicking them in the side
                 Settings.SetSetting(Settings.LAST_OPEN_PROJECT, Path.GetFullPath(path));
                 File.Create(path).Close();
                 this.SetMessage(this.QuickSaveProject());
-            });
+            }, this.Project.Name.Replace(" ", "_").ToLower() + ".lxprojj");
 
             this.OpenPopup(fileDialog);
         }

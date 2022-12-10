@@ -41,13 +41,13 @@ public class FileDialog : Modal
     public FileDialogType Type { get; set; }
     private Action<string> OnSelect { get; set; }
 
-    public FileDialog(string startDirectory, string title, FileDialogType fdt, Action<string> onSelect, params string[] filteredExtensions) : base(title, ImGuiWindowFlags.AlwaysAutoResize, ImGuiPopupFlags.None)
+    public FileDialog(string startDirectory, string title, FileDialogType fdt, Action<string> onSelect, string initialFileName = null, params string[] filteredExtensions) : base(title, ImGuiWindowFlags.AlwaysAutoResize, ImGuiPopupFlags.None)
     {
         this.CurrentFolder = startDirectory;
         this.SelectedFile = null;
         this.FilteredExtensions = filteredExtensions;
         this.Type = fdt;
-        this.currentSelectedFile = "";
+        this.currentSelectedFile = initialFileName ?? "";
         this.OnSelect = onSelect;
     }
 

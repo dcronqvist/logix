@@ -22,6 +22,7 @@ public static class Settings
 {
     // SETTING CONSTANTS
     public const string LAST_OPEN_PROJECT = "lastOpenProject";
+    public const string RECENT_OPEN_PROJECTS = "recentOpenProjects";
 
     private static string _settingsFileLocation = "./";
     private static string _settingsFile = "settings.json";
@@ -37,7 +38,8 @@ public static class Settings
     private static List<Setting> GetDefaultSettings()
     {
         return new List<Setting>() {
-            new Setting() { Name = LAST_OPEN_PROJECT, Value = "" }
+            new Setting() { Name = LAST_OPEN_PROJECT, Value = "" },
+            new Setting() { Name = RECENT_OPEN_PROJECTS, Value = new List<string>() }
         };
     }
 
