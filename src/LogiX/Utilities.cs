@@ -1041,4 +1041,22 @@ public static class Utilities
     {
         return values.All(v => v == values.First());
     }
+
+    public static bool CheckCircleRectangleCollision(Vector2 circlePosition, float circleRadius, RectangleF rect)
+    {
+        var closestX = Math.Clamp(circlePosition.X, rect.X, rect.X + rect.Width);
+        var closestY = Math.Clamp(circlePosition.Y, rect.Y, rect.Y + rect.Height);
+
+        var distanceX = circlePosition.X - closestX;
+        var distanceY = circlePosition.Y - closestY;
+
+        var distanceSquared = (distanceX * distanceX) + (distanceY * distanceY);
+
+        return distanceSquared < (circleRadius * circleRadius);
+    }
+
+    public static float DistanceTo(this Vector2 v, Vector2 other)
+    {
+        return (v - other).Length();
+    }
 }

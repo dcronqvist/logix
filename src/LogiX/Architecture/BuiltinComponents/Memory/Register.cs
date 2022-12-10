@@ -23,7 +23,7 @@ public class RegisterData : INodeDescriptionData
 public class Register : BoxNode<RegisterData>
 {
     public override string Text => this._currV.ToString($"X{(int)Math.Ceiling(this._data.DataBits / 4f)}");
-    public override float TextScale => 1f;
+    public override float TextScale => 2f;
 
     private RegisterData _data;
 
@@ -89,6 +89,6 @@ public class Register : BoxNode<RegisterData>
 
     protected override IEnumerable<(ObservableValue, LogicValue[])> Prepare(PinCollection pins)
     {
-        yield return (pins.Get("Q"), LogicValue.LOW.Multiple(this._data.DataBits));
+        yield return (pins.Get("Q"), this._currV.GetAsLogicValues(this._data.DataBits));
     }
 }
