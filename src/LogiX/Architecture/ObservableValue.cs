@@ -76,11 +76,11 @@ public class ObservableValue : Observable
 
     }
 
-    public void Set(Node originator, LogicValue[] values)
+    public int Set(Node originator, LogicValue[] values)
     {
         if (values.Length != this._bits)
         {
-            return; // Cannot do this
+            return 0;
         }
 
         var oldVal = this.Read();
@@ -98,9 +98,11 @@ public class ObservableValue : Observable
         var newVal = this.Read();
         var newError = this.Error;
 
-        if (newVal != oldVal || oldError != newError)
+        if (!newVal.SequenceEqual(oldVal) || oldError != newError)
         {
-            this.NotifyObservers();
+            this.NotifyObservers(skip: originator);
         }
+
+        return 1;
     }
 }

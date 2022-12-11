@@ -42,57 +42,64 @@ public class Integrated : Node<IntegratedData>
     private string _name;
 
     private List<Node> _evaluateNodes = new();
+    private Simulation _simulation;
+    private Dictionary<string, Vector2i> _pinPositions;
+    private Dictionary<string, Guid> _pinToNodeID;
     public override void Register(Scheduler scheduler)
     {
-        var circ = NodeDescription.GetIntegratedProjectCircuitByID(this._data.CircuitID);
-        var simulation = Simulation.FromCircuit(circ);
-        var circPins = circ.GetAllPins().Select(p => (p.Data as PinData, p)).ToList();
-
-        var pinToNodeID = circ.GetAllPins().ToDictionary(x => (x.Data as PinData).Label, x => x.ID);
-        var pinPositions = new Dictionary<string, Vector2i>();
-
-        foreach (var (ident, id) in pinToNodeID)
+        if (_simulation is null)
         {
-            var node = simulation.GetNodeFromID(id);
-            var internalPins = simulation.Scheduler.GetPinCollectionForNode(node);
-            var pinPos = node.GetPinPosition(internalPins, "Q");
-            pinPositions.Add(ident, pinPos);
+            var circ = NodeDescription.GetIntegratedProjectCircuitByID(this._data.CircuitID);
+            var simulation = Simulation.FromCircuit(circ);
+            var circPins = circ.GetAllPins().Select(p => (p.Data as PinData, p)).ToList();
+
+            var pinToNodeID = circ.GetAllPins().ToDictionary(x => (x.Data as PinData).Label, x => x.ID);
+            var pinPositions = new Dictionary<string, Vector2i>();
+
+            foreach (var (ident, id) in pinToNodeID)
+            {
+                var node = simulation.GetNodeFromID(id);
+                var internalPins = simulation.Scheduler.GetPinCollectionForNode(node);
+                var pinPos = node.GetPinPosition(internalPins, "Q");
+                pinPositions.Add(ident, pinPos);
+            }
+
+            foreach (var (ident, id) in pinToNodeID)
+            {
+                var node = simulation.GetNodeFromID(id);
+                simulation.RemoveNode(node);
+            }
+
+            this._simulation = simulation;
+            this._pinPositions = pinPositions;
+            this._pinToNodeID = pinToNodeID;
         }
 
-        foreach (var (ident, id) in pinToNodeID)
-        {
-            var node = simulation.GetNodeFromID(id);
-            simulation.RemoveNode(node);
-        }
-
-        var nodes = simulation.Scheduler.Nodes;
+        var nodes = this._simulation.Scheduler.Nodes;
         foreach (var node in nodes)
         {
-            scheduler.AddNode(node);
+            scheduler.AddNode(node, false);
         }
 
-        foreach (var (ident, pos) in pinPositions)
+        foreach (var (ident, pos) in this._pinPositions)
         {
-            var node = simulation.GetNodeFromID(pinToNodeID[ident]);
-
-            if (simulation.TryGetWireAtPos(pos, out var wire))
+            if (this._simulation.TryGetWireAtPos(pos, out var wire))
             {
-                var pinsConnectedToNode = simulation.GetPinsConnectedToWire(wire);
+                var pinsConnectedToNode = this._simulation.GetPinsConnectedToWire(wire);
 
                 foreach (var (n, i) in pinsConnectedToNode)
                 {
                     if (!this._evaluateNodes.Contains(n))
                         _evaluateNodes.Add(n);
 
-                    scheduler.AddConnection(this, ident, n, i);
+                    scheduler.AddConnection(this, ident, n, i, false);
                 }
             }
         }
 
-
-        foreach (var (n1, p1, n2, p2) in simulation.Scheduler.NodePinConnections)
+        foreach (var (n1, p1, n2, p2) in this._simulation.Scheduler.NodePinConnections)
         {
-            scheduler.AddConnection(n1, p1, n2, p2);
+            scheduler.AddConnection(n1, p1, n2, p2, false);
         }
     }
 
@@ -133,14 +140,7 @@ public class Integrated : Node<IntegratedData>
         var width = Math.Max(widthMax * 2, 4);
         var height = Math.Max(leftPins.Count, rightPins.Count) + 1;
 
-        if (this.Rotation == 1 || this.Rotation == 3)
-        {
-            var tmp = width;
-            width = height;
-            height = tmp;
-        }
-
-        return new Vector2i(width.CeilToOdd(), height.CeilToOdd());
+        return new Vector2i(width, height);
     }
 
     public override INodeDescriptionData GetNodeData()
@@ -214,7 +214,7 @@ public class Integrated : Node<IntegratedData>
 
     public override bool IsNodeInRect(RectangleF rect)
     {
-        var size = this.GetSize();
+        var size = this.GetSizeRotated();
         var width = size.X;
         var height = size.Y;
 
@@ -223,7 +223,7 @@ public class Integrated : Node<IntegratedData>
 
     public override void RenderSelected(Camera2D camera)
     {
-        var size = this.GetSize();
+        var size = this.GetSizeRotated();
         var width = size.X;
         var height = size.Y;
 
@@ -242,7 +242,7 @@ public class Integrated : Node<IntegratedData>
 
     public override void Render(PinCollection pins, Camera2D camera)
     {
-        var size = this.GetSize();
+        var size = this.GetSizeRotated();
         var width = size.X;
         var height = size.Y;
 

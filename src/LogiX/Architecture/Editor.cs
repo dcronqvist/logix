@@ -59,6 +59,8 @@ public class Editor : Invoker<Circuit, Editor>
     // If the editor should show what position the mouse is on in the workspace
     public bool ShowMousePosition { get; set; } = false;
 
+    public float CurrentActivity { get; set; } = 0f;
+
     // Some variables for popups, like the FileDialog modal and stuff
     public bool RequestedPopupModal { get; set; }
     public Modal PopupModal { get; set; }
@@ -163,6 +165,15 @@ public class Editor : Invoker<Circuit, Editor>
             }
         }
 
+        var projectHistory = Settings.GetSetting<List<string>>(Settings.RECENT_OPEN_PROJECTS);
+        var keepHistory = new List<string>();
+        foreach (var p in projectHistory)
+        {
+            if (File.Exists(p))
+                keepHistory.Add(p);
+        }
+        Settings.SetSetting(Settings.RECENT_OPEN_PROJECTS, keepHistory);
+
         #endregion
 
         #region CREATE SIMULATION THREAD
@@ -190,7 +201,10 @@ public class Editor : Invoker<Circuit, Editor>
                 {
                     try
                     {
-                        s.Step();
+                        (int changed, int total) = s.Step();
+                        float activity = (float)changed / total;
+
+                        this.CurrentActivity = MathF.Max(this.CurrentActivity + (activity - this.CurrentActivity) * (0.8f / MathF.Sqrt(MathF.Max(this.CurrentTicksPerSecond, 1))), 0);
                     }
                     catch (System.Exception ex)
                     {
@@ -687,6 +701,8 @@ Under *projects*, you can see your circuits, and right clicking them in the side
 
         this.Sim = new(Simulation.FromCircuit(circuit));
         this.Project.SetLastOpenedCircuit(id);
+        this.Commands.Clear();
+        this.CurrentCommandIndex = -1;
     }
 
     public Circuit GetCurrentCircuit()
@@ -1058,6 +1074,7 @@ Under *projects*, you can see your circuits, and right clicking them in the side
     public void SubmitStatusMenuBar()
     {
         ImGui.Text($"{this.CurrentTicksPerSecond.GetAsHertzString()}");
+        ImGui.TextUnformatted($"Activity: {MathF.Round(this.CurrentActivity * 100f, 1)}%");
         ImGui.Text($"{this._submittedInstances} @ {this._previousRenderMillis} ms");
         ImGui.Separator();
 

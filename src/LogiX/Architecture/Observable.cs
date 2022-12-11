@@ -24,6 +24,11 @@ public abstract class Observable
         this.Observers.ForEach(o => o.Update());
     }
 
+    public void NotifyObservers(params Observer[] skip)
+    {
+        this.NotifyObservers((IEnumerable<Observer>)skip);
+    }
+
     public void NotifyObservers(IEnumerable<Observer> skip)
     {
         this.Observers.Except(skip).ToList().ForEach(o => o.Update());

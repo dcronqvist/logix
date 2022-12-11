@@ -35,6 +35,11 @@ public class TriStateBuffer : BoxNode<NoData>
 
         if (pEnabled.Read().First() == LogicValue.HIGH)
         {
+            var cOut = pOut.Read();
+
+            if (cOut.SequenceEqual(pIn.Read()))
+                yield break;
+
             yield return (pOut, pIn.Read(), 1);
         }
         else

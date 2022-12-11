@@ -29,9 +29,9 @@ public class Simulation
         this.SelectedWireSegments = new();
     }
 
-    public void Step()
+    public (int, int) Step()
     {
-        this.Scheduler.Step();
+        return this.Scheduler.Step();
     }
 
     public void AddNode(Node node, bool recalculate = true)
@@ -173,7 +173,7 @@ public class Simulation
             sim.AddNode(c, false);
         }
 
-        sim.Scheduler.Prepare();
+        sim.RecalculateWirePositions();
 
         foreach (var wire in circuit.Wires)
         {
@@ -452,6 +452,8 @@ public class Simulation
                 this.WirePositions[point] = wire;
             }
         }
+
+        this.Scheduler.Prepare();
 
         RecalculateConnectionsInScheduler();
     }

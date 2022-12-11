@@ -45,16 +45,24 @@ public class RAM : BoxNode<RamData>
         var clk = pins.Get("CLK").Read().First();
         var we = pins.Get("WE").Read().First();
 
-        if (address.AnyUndefined() || clk.IsUndefined() || we.IsUndefined())
+        if (!address.AnyUndefined())
+        {
+            this.hasSelectedAddress = true;
+            var aVal = address.GetAsUInt();
+            this.currentlySelectedAddress = aVal;
+        }
+        else
         {
             this.hasSelectedAddress = false;
+        }
+
+        if (address.AnyUndefined() || clk.IsUndefined() || we.IsUndefined())
+        {
             yield return (pins.Get("DATA"), LogicValue.Z.Multiple(8), 1);
             yield break;
         }
 
         var addressValue = address.GetAsUInt();
-        this.currentlySelectedAddress = addressValue;
-        this.hasSelectedAddress = true;
 
         if (clk == LogicValue.HIGH && this._prevCLK == LogicValue.LOW)
         {
@@ -100,8 +108,16 @@ public class RAM : BoxNode<RamData>
 
     public override void Initialize(RamData data)
     {
-        this._data = data;
-        this._data.Memory = data.Memory;
+        if (this._data is not null)
+        {
+            var newMem = data.AddressBits == this._data.AddressBits ? this._data.Memory : new ByteAddressableMemory((int)Math.Pow(2, data.AddressBits), false);
+            this._data = data;
+            this._data.Memory = newMem;
+        }
+        else
+        {
+            this._data = data;
+        }
     }
 
     protected override bool Interact(Scheduler scheduler, PinCollection pins, Camera2D camera)

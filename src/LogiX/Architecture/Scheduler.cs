@@ -181,27 +181,30 @@ public class Scheduler
             this.EventQueue.Enqueue(new LinkedList<ValueEvent>());
         }
 
-        if (this.EventQueue.ElementAt(time - 1).Any(x => x.AffectedValue == value))
-        {
-            // Remove the old event and replace it with the new one.
-            this.EventQueue.ElementAt(time - 1).Remove(this.EventQueue.ElementAt(time - 1).First(x => x.AffectedValue == value));
-        }
+        // if (this.EventQueue.ElementAt(time - 1).Any(x => x.AffectedValue == value))
+        // {
+        //     // Remove the old event and replace it with the new one.
+        //     this.EventQueue.ElementAt(time - 1).Remove(this.EventQueue.ElementAt(time - 1).First(x => x.AffectedValue == value));
+        // }
 
         this.EventQueue.ElementAt(time - 1).AddLast(valueEvent);
     }
 
-    public int Step()
+    public (int, int) Step()
     {
-        int eventsExecuted = 0;
+        // Return the number of values changed and the total number of obversable values
+        var totalObservableValues = this.NodePins.Values.SelectMany(x => x.GetObservableValues()).Count();
+
+        int valuesChanged = 0;
         if (this.EventQueue.TryDequeue(out var events))
         {
             foreach (var e in events)
             {
-                e.AffectedValue.Set(e.Originator, e.NewValues);
-                eventsExecuted++;
+                valuesChanged += e.AffectedValue.Set(e.Originator, e.NewValues);
             }
         }
-        return eventsExecuted;
+
+        return (valuesChanged, totalObservableValues);
     }
 
     public PinCollection GetPinCollectionForNode(Node node)
