@@ -100,7 +100,7 @@ public class ObservableValue : Observable
 
         if (!newVal.SequenceEqual(oldVal) || oldError != newError)
         {
-            this.NotifyObservers(skip: originator);
+            this.NotifyObservers();
         }
 
         return 1;

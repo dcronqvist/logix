@@ -16,3 +16,6 @@ mkdir -Force build/osx-x64/assets
 
 Copy-Item -Recurse assets/* build/osx-x64/assets
 
+# Zip the build/osx folder and name it logix-osx-x64-{date}.zip in the format of 20221210
+mkdir -Force build/zip
+Compress-Archive -Path build/osx-x64 -DestinationPath "build/zip/logix-osx-x64-$(Get-Date -Format 'yyyyMMdd').zip"

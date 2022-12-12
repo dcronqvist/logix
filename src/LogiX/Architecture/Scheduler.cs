@@ -105,6 +105,7 @@ public class Scheduler
         var currPins = this.NodePins.ToDictionary(x => x.Key, x => x.Value);
         this.NodePins.Clear();
         this.Nodes.ForEach(n => n.SetScheduler(this));
+        this.EventQueue.Clear();
 
         foreach (var connections in this.GetConnectedPins(this.NodePinConnections))
         {

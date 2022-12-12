@@ -1074,8 +1074,8 @@ Under *projects*, you can see your circuits, and right clicking them in the side
     public void SubmitStatusMenuBar()
     {
         ImGui.Text($"{this.CurrentTicksPerSecond.GetAsHertzString()}");
-        ImGui.TextUnformatted($"Activity: {MathF.Round(this.CurrentActivity * 100f, 1)}%");
-        ImGui.Text($"{this._submittedInstances} @ {this._previousRenderMillis} ms");
+        ImGui.TextUnformatted($"Activity: {MathF.Round(this.CurrentActivity * 100f, 1).ToString("0.0")}%");
+        ImGui.Text($"{this._submittedInstances} @ {this._previousRenderMillis.ToString("00")} ms");
         ImGui.Separator();
 
         if (ImGui.BeginMenu($"Zoom: {(this.Camera.Zoom * 100f).ToString("0")}%###zoomMenu"))

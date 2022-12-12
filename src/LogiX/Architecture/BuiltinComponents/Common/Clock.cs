@@ -76,39 +76,4 @@ public class Clock : BoxNode<ClockData>
     {
         return new Vector2i(3, 2);
     }
-
-    // public override INodeDescriptionData GetDescriptionData()
-    // {
-    //     return _data;
-    // }
-
-    // public override void Initialize(ClockData data)
-    // {
-    //     this.ClearIOs();
-
-    //     this._data = data;
-    //     this.RegisterIO("c", 1, ComponentSide.RIGHT);
-    // }
-
-    // private int _counter = 0;
-    // public override void PerformLogic()
-    // {
-    //     var output = this.GetIOFromIdentifier("c");
-
-    //     if (_counter < _data.HighDuration)
-    //     {
-    //         output.Push(LogicValue.HIGH);
-    //         _counter++;
-    //     }
-    //     else if (_counter < _data.HighDuration + _data.LowDuration)
-    //     {
-    //         output.Push(LogicValue.LOW);
-    //         _counter++;
-    //     }
-    //     else
-    //     {
-    //         _counter = 0;
-    //         output.Push(LogicValue.LOW);
-    //     }
-    // }
 }

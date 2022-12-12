@@ -289,9 +289,9 @@ public static class Utilities
         if (ticksPerSeconds < 1000)
             return $"{Math.Round(ticksPerSeconds)} Hz";
         else if (ticksPerSeconds < 1000000)
-            return $"{Math.Round(ticksPerSeconds / 1000D, 2)} kHz";
+            return $"{Math.Round(ticksPerSeconds / 1000D, 2).ToString("0.00")} kHz";
         else
-            return $"{Math.Round(ticksPerSeconds / 1000000D, 2)} MHz";
+            return $"{Math.Round(ticksPerSeconds / 1000000D, 2).ToString("0.00")} MHz";
     }
 
     public static IEnumerable<Type> FindDerivedTypesInAssembly(Assembly assembly, Type baseType)

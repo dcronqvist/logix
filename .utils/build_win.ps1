@@ -16,3 +16,6 @@ mkdir -Force build/win-x64/assets
 
 Copy-Item -Recurse assets/* build/win-x64/assets
 
+# Zip the build/win-x64 folder and name it logix-win-x64-{date}.zip in the format of 20221210
+mkdir -Force build/zip
+Compress-Archive -Path build/win-x64 -DestinationPath "build/zip/logix-win-x64-$(Get-Date -Format 'yyyyMMdd').zip"
