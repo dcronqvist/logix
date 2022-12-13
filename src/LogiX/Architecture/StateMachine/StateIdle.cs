@@ -59,20 +59,20 @@ public class StateIdle : State<Editor, int>
             });
             if (done) return;
 
-            // done = arg.Sim.LockedAction(s =>
-            // {
-            //     if (s.TryGetWireVertexAtPos(mouseWorldPosition, out var pos, out var wire))
-            //     {
-            //         this.GoToState<StateHoveringWireVertex>(0);
-            //         return true;
-            //     }
-            //     return false;
-            // });
-            // if (done) return;
+            done = arg.Sim.LockedAction(s =>
+            {
+                if (s.TryGetWireVertexAtPos(mouseWorldPosition, out var pos, out var degree, out var parallel))
+                {
+                    this.GoToState<StateHoveringWireVertex>(0);
+                    return true;
+                }
+                return false;
+            });
+            if (done) return;
 
             done = arg.Sim.LockedAction(s =>
             {
-                if (s.TryGetWireSegmentAtPos(mouseWorldPosition, out var edge, out var wire))
+                if (s.TryGetWireSegmentAtPos(mouseWorldPosition, out var edge))
                 {
                     this.GoToState<StateHoveringWireSegment>(0);
                     return true;

@@ -12,7 +12,8 @@ public abstract class State<TUpdate, TOnEnter>
     }
 
     public abstract void Update(TUpdate arg);
-    public virtual void Render(TUpdate arg) { }
+    public virtual void PostSimRender(TUpdate arg) { }
+    public virtual void PreSimRender(TUpdate arg) { }
     public virtual void SubmitUI(TUpdate arg) { }
     public virtual void OnEnter(TUpdate updateArg, TOnEnter arg) { }
     public virtual bool RenderAboveGUI() => false;

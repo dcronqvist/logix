@@ -83,9 +83,12 @@ public class Integrated : Node<IntegratedData>
 
         foreach (var (ident, pos) in this._pinPositions)
         {
-            if (this._simulation.TryGetWireAtPos(pos, out var wire))
+            if (this._simulation.TryGetWireVertexAtPos(pos.ToVector2(Constants.GRIDSIZE), out var v, out var deg, out var para))
             {
-                var pinsConnectedToNode = this._simulation.GetPinsConnectedToWire(wire);
+                var conns = this._simulation.GetPinConnections();
+                var comp = this._simulation.GetWireComponentForWireVertex(v);
+
+                var pinsConnectedToNode = conns[comp];
 
                 foreach (var (n, i) in pinsConnectedToNode)
                 {

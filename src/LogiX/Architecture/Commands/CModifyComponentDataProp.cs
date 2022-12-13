@@ -24,7 +24,7 @@ public class CModifyComponentDataProp : Command<Editor>
             var data = Utilities.GetCopyOfInstance(comp.GetNodeData()) as INodeDescriptionData;
             this.Property.SetValue(data, this.Value);
             comp.Initialize(data);
-            s.RecalculateWirePositions();
+            s.RecalculateConnectionsInScheduler();
         }, (e) => { throw e; });
     }
 

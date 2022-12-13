@@ -60,9 +60,14 @@ public class FSM<TUpdate, TOnEnter>
         }
     }
 
-    public void Render(TUpdate arg)
+    public void PreSimRender(TUpdate arg)
     {
-        this.CurrentState?.Render(arg);
+        this.CurrentState?.PreSimRender(arg);
+    }
+
+    public void PostSimRender(TUpdate arg)
+    {
+        this.CurrentState?.PostSimRender(arg);
     }
 
     public void SubmitUI(TUpdate arg)

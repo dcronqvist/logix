@@ -16,10 +16,6 @@ public class CDeleteWireSegment : Command<Editor>
         arg.Sim.LockedAction(s =>
         {
             s.DisconnectPoints(this.Segment.Item1, this.Segment.Item2);
-            if (s.SelectedWireSegments.Contains(this.Segment))
-            {
-                s.SelectedWireSegments.Remove(this.Segment);
-            }
         }, (e) => { throw e; });
     }
 

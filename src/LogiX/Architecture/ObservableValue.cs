@@ -45,7 +45,7 @@ public class ObservableValue : Observable
 
         for (int i = 0; i < this._bits; i++)
         {
-            var bitValues = values.Select(x => x[i]).ToArray();
+            var bitValues = values.Select(x => x[i]);
 
             if (bitValues.All(x => x == LogicValue.Z))
             {
@@ -53,11 +53,11 @@ public class ObservableValue : Observable
                 continue;
             }
 
-            var nonZ = bitValues.Where(x => x != LogicValue.Z).ToArray();
+            var nonZ = bitValues.Where(x => x != LogicValue.Z);
 
             if (nonZ.AllSame())
             {
-                result[i] = nonZ[0];
+                result[i] = nonZ.First();
                 continue;
             }
 
@@ -101,8 +101,9 @@ public class ObservableValue : Observable
         if (!newVal.SequenceEqual(oldVal) || oldError != newError)
         {
             this.NotifyObservers();
+            return 1;
         }
 
-        return 1;
+        return 0;
     }
 }

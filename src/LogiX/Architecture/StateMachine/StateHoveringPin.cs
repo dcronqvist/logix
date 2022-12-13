@@ -28,7 +28,7 @@ public class StateHoveringPin : State<Editor, int>
         });
     }
 
-    public override void Render(Editor arg)
+    public override void PostSimRender(Editor arg)
     {
         var mouseWorld = Input.GetMousePosition(arg.Camera);
         var pShader = LogiX.ContentManager.GetContentItem<ShaderProgram>("core.shader_program.primitive");

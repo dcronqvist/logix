@@ -18,7 +18,7 @@ public class CRotateComponent : Command<Editor>
         arg.Sim.LockedAction(s =>
         {
             s.GetNodeFromID(this.Node).Rotate(this.Rotation);
-            s.RecalculateWirePositions();
+            s.RecalculateConnectionsInScheduler();
         }, (e) => { throw e; });
     }
 

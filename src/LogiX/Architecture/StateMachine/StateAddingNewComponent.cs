@@ -33,7 +33,7 @@ public class StateAddingNewComponent : State<Editor, int>
         }
     }
 
-    public override void Render(Editor arg)
+    public override void PostSimRender(Editor arg)
     {
         var currentMouse = Input.GetMousePosition(arg.Camera);
         var pos = currentMouse.ToVector2i(Constants.GRIDSIZE);

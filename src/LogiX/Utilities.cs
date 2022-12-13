@@ -395,6 +395,59 @@ public static class Utilities
         return closest;
     }
 
+    public static Vector2i GetClosestPoint(Vector2i point, params Vector2i[] points)
+    {
+        Vector2i closest = points[0];
+        float closestDist = (point - closest).Length();
+        for (int i = 1; i < points.Length; i++)
+        {
+            float dist = (point - points[i]).Length();
+            if (dist < closestDist)
+            {
+                closest = points[i];
+                closestDist = dist;
+            }
+        }
+        return closest;
+    }
+
+    public static Vector2i GetFurthestPoint(Vector2i point, params Vector2i[] points)
+    {
+        Vector2i furthest = points[0];
+        float furthestDist = (point - furthest).Length();
+        for (int i = 1; i < points.Length; i++)
+        {
+            float dist = (point - points[i]).Length();
+            if (dist > furthestDist)
+            {
+                furthest = points[i];
+                furthestDist = dist;
+            }
+        }
+        return furthest;
+    }
+
+    public static (Vector2i, Vector2i) GetPointsFurthestApart(params Vector2i[] points)
+    {
+        Vector2i furthest1 = points[0];
+        Vector2i furthest2 = points[1];
+        float furthestDist = (furthest1 - furthest2).Length();
+        for (int i = 0; i < points.Length; i++)
+        {
+            for (int j = i + 1; j < points.Length; j++)
+            {
+                float dist = (points[i] - points[j]).Length();
+                if (dist > furthestDist)
+                {
+                    furthest1 = points[i];
+                    furthest2 = points[j];
+                    furthestDist = dist;
+                }
+            }
+        }
+        return (furthest1, furthest2);
+    }
+
     public static Vector2i[] GetAllGridPointsBetween(Vector2i v1, Vector2i v2)
     {
         // Assume to be aligned on the x or y axis

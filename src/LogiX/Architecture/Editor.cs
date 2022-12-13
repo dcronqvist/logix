@@ -392,7 +392,7 @@ public class Editor : Invoker<Circuit, Editor>
         this.AddMainMenuItem("Edit", "Copy", new EditorAction((e) => this.Sim.LockedAction(s => s.HasSelection()), (e) => false, (e) =>
         {
             this._currentComponentClipboard = this.Sim.LockedAction(s => s.SelectedNodes.Select(c => c.ID)).ToList();
-            this._currentSegmentClipboard = this.Sim.LockedAction(s => s.SelectedWireSegments).ToList();
+            // this._currentSegmentClipboard = this.Sim.LockedAction(s => s.SelectedWireSegments).ToList();
 
             this.SetMessage(TimedMessages(("Copied to clipboard!", 3000), ("", 0)));
         }, ModifierKeys.Control, Keys.C));
@@ -409,7 +409,7 @@ public class Editor : Invoker<Circuit, Editor>
         {
             var commands = new List<Command<Editor>>();
             commands.AddRange(this.Sim.LockedAction(s => s.SelectedNodes.Select(c => new CDeleteNode(c.ID))));
-            commands.AddRange(this.Sim.LockedAction(s => s.SelectedWireSegments.Select(w => new CDeleteWireSegment(w))));
+            // commands.AddRange(this.Sim.LockedAction(s => s.SelectedWireSegments.Select(w => new CDeleteWireSegment(w))));
             this.Execute(new CMulti("Delete Selection", commands.ToArray()), this);
         }, 0, Keys.Delete));
 
@@ -842,11 +842,14 @@ Under *projects*, you can see your circuits, and right clicking them in the side
                 {
                     this.DrawGrid();
                 }
+
+                this.FSM.PreSimRender(this);
+
                 this.Sim.LockedAction(s => s.Render(this.Camera), (e) => { });
 
                 if (!this.FSM.CurrentState.RenderAboveGUI())
                 {
-                    this.FSM.Render(this);
+                    this.FSM.PostSimRender(this);
                 }
 
                 this._submittedInstances += PrimitiveRenderer._submittedInstances;
@@ -859,7 +862,7 @@ Under *projects*, you can see your circuits, and right clicking them in the side
                 Framebuffer.Clear(ColorF.Transparent);
                 if (this.FSM.CurrentState.RenderAboveGUI())
                 {
-                    this.FSM.Render(this);
+                    this.FSM.PostSimRender(this);
                     this._submittedInstances += PrimitiveRenderer._submittedInstances;
                     PrimitiveRenderer.FinalizeRender(pShader, this.Camera);
                     TextRenderer.FinalizeRender(tShader, this.Camera);
@@ -1130,7 +1133,6 @@ Under *projects*, you can see your circuits, and right clicking them in the side
 
         ImGui.Text($"{this.FSM.CurrentState.GetType().Name}");
         //ImGui.Text($"{this.Sim.LockedAction(s => s.Scheduler.ScheduledEvents.Count)}:{this.Sim.LockedAction(s => s.Scheduler.ScheduledEvents.Select(x => x.Count).Sum())} events");
-        ImGui.Text($"Wires: {this.Sim.LockedAction(s => s.Wires.Count)}");
     }
 
     private bool _projectsOpen = false;

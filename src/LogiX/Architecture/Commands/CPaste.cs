@@ -43,11 +43,11 @@ public class CPaste : Command<Editor>
 
             foreach (var (s1, s2) in this.Segments)
             {
-                s.ConnectPointsWithWire(s1 - middleOfComps + this.NewBasePosition, s2 - middleOfComps + this.NewBasePosition, false);
+                s.ConnectPointsWithWire(s1 - middleOfComps + this.NewBasePosition, s2 - middleOfComps + this.NewBasePosition);
                 s.SelectWireSegment((s1 - middleOfComps + this.NewBasePosition, s2 - middleOfComps + this.NewBasePosition));
             }
 
-            s.RecalculateWirePositions();
+            // s.RecalculateWirePositions();
         }, (e) => { throw e; });
     }
 

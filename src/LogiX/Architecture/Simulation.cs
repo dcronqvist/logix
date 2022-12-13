@@ -7,26 +7,24 @@ using LogiX.Architecture.BuiltinComponents;
 using LogiX.Architecture.Serialization;
 using LogiX.Graphics;
 using LogiX.Rendering;
+using QuikGraph;
+using QuikGraph.Algorithms;
 
 namespace LogiX;
 
-public class Simulation
+public class Simulation : UndirectedGraph<Vector2i, Edge<Vector2i>>
 {
     public Scheduler Scheduler { get; set; }
     public List<Node> Nodes { get; set; }
-    public List<Wire> Wires { get; set; }
-
     public List<Node> SelectedNodes { get; set; }
-    public List<(Vector2i, Vector2i)> SelectedWireSegments { get; set; }
-    public Dictionary<Vector2i, Wire> WirePositions { get; set; } = new();
+    public List<Edge<Vector2i>> SelectedEdges { get; set; }
 
     public Simulation()
     {
         this.Scheduler = new Scheduler();
         this.Nodes = new();
-        this.Wires = new();
         this.SelectedNodes = new();
-        this.SelectedWireSegments = new();
+        this.SelectedEdges = new();
     }
 
     public (int, int) Step()
@@ -34,16 +32,56 @@ public class Simulation
         return this.Scheduler.Step();
     }
 
-    public void AddNode(Node node, bool recalculate = true)
+    public IDictionary<Vector2i, int> GetConnectedComponents()
     {
-        this.Nodes.Add(node);
-        this.Scheduler.AddNode(node, false);
-
-        if (recalculate)
-            this.RecalculateWirePositions();
+        var comps = new QuikGraph.Algorithms.ConnectedComponents.ConnectedComponentsAlgorithm<Vector2i, Edge<Vector2i>>(this);
+        comps.Compute();
+        return comps.Components;
     }
 
-    public void RemoveNode(Node node, bool recalculate = true)
+    public IEnumerable<Edge<Vector2i>> GetEdgesForComponent(IDictionary<Vector2i, int> comps, int comp)
+    {
+        return this.Edges.Where(x => comps[x.Source] == comp).Distinct();
+    }
+
+    public Dictionary<int, (Node, string)[]> GetPinConnections()
+    {
+        var comps = this.GetConnectedComponents();
+        var connections = new Dictionary<int, List<(Node, string)>>();
+        comps.Values.Distinct().ToList().ForEach(x => connections.TryAdd(x, new()));
+
+        foreach (var node in this.Nodes)
+        {
+            var pins = this.Scheduler.GetPinCollectionForNode(node);
+            foreach (var (id, (conf, obser)) in pins)
+            {
+                var pos = node.GetPinPosition(pins, id);
+
+                if (comps.ContainsKey(pos))
+                {
+                    var comp = comps[pos];
+                    connections[comp].Add((node, id));
+                }
+            }
+        }
+
+        return connections.ToDictionary(x => x.Key, x => x.Value.ToArray());
+    }
+
+    public int GetWireComponentForWireVertex(Vector2i pos)
+    {
+        var comps = this.GetConnectedComponents();
+        return comps[pos];
+    }
+
+    public void AddNode(Node node)
+    {
+        this.Nodes.Add(node);
+        this.Scheduler.AddNode(node, true);
+        RecalculateConnectionsInScheduler();
+    }
+
+    public void RemoveNode(Node node)
     {
         this.Nodes.Remove(node);
         if (this.SelectedNodes.Contains(node))
@@ -51,53 +89,36 @@ public class Simulation
             this.SelectedNodes.Remove(node);
         }
         this.Scheduler.RemoveNode(node);
+        RecalculateConnectionsInScheduler();
 
-        if (recalculate)
-            this.RecalculateWirePositions();
     }
 
-    public void AddWire(Wire wire, bool recalculate = true)
+    public void RecalculateConnectionsInScheduler()
     {
-        this.Wires.Add(wire);
+        this.Scheduler.ClearConnections();
 
-        if (recalculate)
-            this.RecalculateWirePositions();
-    }
-
-    public (Node, string)[] GetPinsConnectedToWire(Wire wire)
-    {
-        var points = wire.GetLeafPoints();
-        var pins = new List<(Node, string)>();
-
-        foreach (var p in points)
+        var l = this.Vertices.ToList();
+        foreach (var v in l)
         {
-            if (this.TryGetPinAtPos(p.ToVector2(Constants.GRIDSIZE), out var node, out var identifier))
+            if (this.AdjacentDegree(v) == 0)
             {
-                pins.Add((node, identifier));
+                this.RemoveVertex(v);
             }
         }
-        return pins.ToArray();
-    }
-
-    private void RecalculateConnectionsInScheduler()
-    {
-        var wires = this.Wires;
-
-        this.Scheduler.ClearConnections();
 
         foreach (var node in this.Nodes)
         {
             node.Register(this.Scheduler);
         }
 
-        foreach (var wire in wires)
-        {
-            var pins = this.GetPinsConnectedToWire(wire);
+        var connections = this.GetPinConnections();
 
-            if (pins.Length > 1)
+        foreach (var (comp, nodes) in connections)
+        {
+            if (nodes.Length > 1)
             {
-                var first = pins.First();
-                foreach (var pin in pins.Skip(1))
+                var first = nodes.First();
+                foreach (var pin in nodes.Skip(1))
                 {
                     this.Scheduler.AddConnection(first.Item1, first.Item2, pin.Item1, pin.Item2, false);
                 }
@@ -119,34 +140,36 @@ public class Simulation
             node.Render(this.Scheduler.GetPinCollectionForNode(node), camera);
         }
 
-        foreach (var segment in this.SelectedWireSegments)
+        foreach (var edge in this.SelectedEdges)
         {
-            Wire.RenderSegmentAsSelected(segment);
+            Wire.RenderSegmentAsSelected(edge);
         }
 
-        foreach (var wire in this.Wires)
+        var connections = this.GetPinConnections();
+        var comps = this.GetConnectedComponents();
+
+        foreach (var (comp, nodes) in connections)
         {
-            var pins = this.GetPinsConnectedToWire(wire);
-
-            if (pins.Length > 0)
+            if (nodes.Length == 0)
             {
-                var (node, ident) = pins.First();
-                var nodePinCollection = this.Scheduler.GetPinCollectionForNode(node);
-                var (config, observableValue) = nodePinCollection[ident];
-
-                if (observableValue.Error != ObservableValueError.NONE)
-                {
-                    wire.Render(Constants.COLOR_ERROR, camera);
-                }
-                else
-                {
-                    var values = observableValue.Read();
-                    wire.Render(Utilities.GetValueColor(values), camera);
-                }
+                Wire.Render(this.GetEdgesForComponent(comps, comp), Constants.COLOR_UNDEFINED, camera);
             }
             else
             {
-                wire.Render(Constants.COLOR_UNDEFINED, camera);
+                var (n, i) = nodes.First();
+                var pins = this.Scheduler.GetPinCollectionForNode(n);
+                var (conf, obser) = pins[i];
+                var edges = this.GetEdgesForComponent(comps, comp);
+
+                if (obser.Error != ObservableValueError.NONE)
+                {
+                    Wire.Render(edges, Constants.COLOR_ERROR, camera);
+                }
+                else
+                {
+                    var values = obser.Read();
+                    Wire.Render(edges, Utilities.GetValueColor(values), camera);
+                }
             }
         }
     }
@@ -164,55 +187,64 @@ public class Simulation
     public static Simulation FromCircuit(Circuit circuit, params string[] excludeNodes)
     {
         var sim = new Simulation();
+        sim.SetCircuitInSimulation(circuit, excludeNodes);
+        return sim;
+    }
+
+    private List<Wire> GetWires()
+    {
+        var conns = this.GetConnectedComponents();
+        var wires = new List<Wire>();
+
+        foreach (var comp in conns.Values.Distinct())
+        {
+            var edges = this.GetEdgesForComponent(conns, comp);
+            var wire = new Wire(edges.ToList());
+            wires.Add(wire);
+        }
+
+        return wires;
+    }
+
+    public Circuit GetCircuitInSimulation(string name)
+    {
+        return new Circuit(name, this.Nodes, this.GetWires());
+    }
+
+    public void SetCircuitInSimulation(Circuit circuit, params string[] excludeNodes)
+    {
+        this.Nodes.Clear();
+        this.RemoveEdgeIf(x => true);
+
+        this.SelectedNodes.Clear();
+        this.SelectedEdges.Clear();
+
+        this.Scheduler = new Scheduler();
+
         foreach (var node in circuit.Nodes)
         {
             if (excludeNodes.Contains(node.NodeTypeID))
                 continue;
 
             var c = node.CreateNode();
-            sim.AddNode(c, false);
+            this.AddNode(c);
         }
-
-        sim.RecalculateWirePositions();
 
         foreach (var wire in circuit.Wires)
         {
-            sim.AddWire(wire.CreateWire(), false);
+            var w = wire.CreateWire();
+            foreach (var s in w.Segments)
+            {
+                if (!this.ContainsVertex(s.Item1))
+                    this.AddVertex(s.Item1);
+                if (!this.ContainsVertex(s.Item2))
+                    this.AddVertex(s.Item2);
+
+                this.AddEdge(new Edge<Vector2i>(s.Item1, s.Item2));
+            }
         }
 
-        sim.RecalculateWirePositions();
-        return sim;
-    }
-
-    public Circuit GetCircuitInSimulation(string name)
-    {
-        return new Circuit(name, this.Nodes, this.Wires);
-    }
-
-    public void SetCircuitInSimulation(Circuit circuit)
-    {
-        this.Nodes.Clear();
-        this.Wires.Clear();
-
-        this.SelectedNodes.Clear();
-        this.SelectedWireSegments.Clear();
-
-        this.Scheduler = new Scheduler();
-
-        foreach (var node in circuit.Nodes)
-        {
-            var c = node.CreateNode();
-            this.AddNode(c, false);
-        }
-
-        this.Scheduler.Prepare();
-
-        foreach (var wire in circuit.Wires)
-        {
-            this.AddWire(wire.CreateWire(), false);
-        }
-
-        this.RecalculateWirePositions();
+        this.RecalculateConnectionsInScheduler();
     }
 
     #region SELECTION METHODS
@@ -232,7 +264,6 @@ public class Simulation
     public void ClearSelection()
     {
         this.SelectedNodes.Clear();
-        this.SelectedWireSegments.Clear();
     }
 
     public void SelectNodesInRect(RectangleF rect)
@@ -254,83 +285,86 @@ public class Simulation
     public void PickUpSelection()
     {
         this._pickedNodes = this.SelectedNodes.ToList();
-        this._pickedSegments = this.SelectedWireSegments.ToList();
+        // this._pickedSegments = this.SelectedWireSegments.ToList();
 
         this.SelectedNodes.ForEach(s => { this.Nodes.Remove(s); this.Scheduler.RemoveNode(s, false); });
-        this.SelectedWireSegments.ForEach(s => this.DisconnectPoints(s.Item1, s.Item2, false));
+        // this.SelectedWireSegments.ForEach(s => this.DisconnectPoints(s.Item1, s.Item2, false));
 
         this.SelectedNodes.Clear();
-        this.SelectedWireSegments.Clear();
+        // this.SelectedWireSegments.Clear();
 
-        this.RecalculateWirePositions();
+        this.Scheduler.Prepare();
+        this.RecalculateConnectionsInScheduler();
     }
 
     public void CommitMovedPickedUpSelection(Vector2i delta)
     {
         this._pickedNodes.ForEach(s => s.Move(delta));
-        this._pickedSegments.ForEach(s => this.ConnectPointsWithWire(s.Item1 + delta, s.Item2 + delta, false));
+        this._pickedSegments.ForEach(s => this.ConnectPointsWithWire(s.Item1 + delta, s.Item2 + delta));
 
         this.Nodes.AddRange(this._pickedNodes);
         this._pickedNodes.ForEach(s => this.Scheduler.AddNode(s, false));
 
         this.SelectedNodes = this._pickedNodes.ToList();
-        this.SelectedWireSegments = this._pickedSegments.Select(s => (s.Item1 + delta, s.Item2 + delta)).ToList();
+        // this.SelectedWireSegments = this._pickedSegments.Select(s => (s.Item1 + delta, s.Item2 + delta)).ToList();
 
-        this.RecalculateWirePositions();
+        this.Scheduler.Prepare();
+        this.RecalculateConnectionsInScheduler();
     }
 
     public bool HasSelection()
     {
-        return this.SelectedNodes.Count > 0 || this.SelectedWireSegments.Count > 0;
+        return this.SelectedNodes.Count > 0; // || this.SelectedWireSegments.Count > 0;
     }
 
     public void SelectWireSegment((Vector2i, Vector2i) segment)
     {
-        if (!this.SelectedWireSegments.Contains(segment))
-        {
-            this.SelectedWireSegments.Add(segment);
-        }
+        // if (!this.SelectedWireSegments.Contains(segment))
+        // {
+        //     this.SelectedWireSegments.Add(segment);
+        // }
     }
 
     public void DeselectWireSegment((Vector2i, Vector2i) segment)
     {
-        if (this.SelectedWireSegments.Contains(segment))
-        {
-            this.SelectedWireSegments.Remove(segment);
-        }
+        // if (this.SelectedWireSegments.Contains(segment))
+        // {
+        //     this.SelectedWireSegments.Remove(segment);
+        // }
     }
 
     public void ToggleSelection((Vector2i, Vector2i) segment)
     {
-        if (this.SelectedWireSegments.Contains(segment))
-        {
-            this.SelectedWireSegments.Remove(segment);
-        }
-        else
-        {
-            this.SelectedWireSegments.Add(segment);
-        }
+        // if (this.SelectedWireSegments.Contains(segment))
+        // {
+        //     this.SelectedWireSegments.Remove(segment);
+        // }
+        // else
+        // {
+        //     this.SelectedWireSegments.Add(segment);
+        // }
     }
 
     public void SelectWireSegmentsInRectangle(RectangleF rectangle)
     {
-        this.SelectedWireSegments.Clear();
+        // this.SelectedWireSegments.Clear();
 
-        foreach (var w in this.Wires)
-        {
-            foreach (var s in w.Segments)
-            {
-                if (Utilities.GetSegmentBoundingBox(s).IntersectsWith(rectangle))
-                {
-                    this.SelectedWireSegments.Add(s);
-                }
-            }
-        }
+        // foreach (var w in this.Wires)
+        // {
+        //     foreach (var s in w.Segments)
+        //     {
+        //         if (Utilities.GetSegmentBoundingBox(s).IntersectsWith(rectangle))
+        //         {
+        //             this.SelectedWireSegments.Add(s);
+        //         }
+        //     }
+        // }
     }
 
     public bool IsWireSegmentSelected((Vector2i, Vector2i) segment)
     {
-        return this.SelectedWireSegments.Contains(segment);
+        // return this.SelectedWireSegments.Contains(segment);
+        return false;
     }
 
     #endregion
@@ -355,119 +389,101 @@ public class Simulation
         return this.Nodes.FirstOrDefault(n => n.ID == id);
     }
 
-    public void ConnectPointsWithWire(Vector2i point1, Vector2i point2, bool recalculate = true)
+    public void ConnectPointsWithWire(Vector2i point1, Vector2i point2)
     {
         if (point1 == point2)
         {
             return;
         }
 
-        if (this.TryGetWireAtPos(point1, out var w1))
+        if (!this.TryGetWireVertexAtPos(point1.ToVector2(Constants.GRIDSIZE), out var v1, out var d1, out var p1))
         {
-            if (this.TryGetWireAtPos(point2, out var w2))
+            if (this.TryGetWireSegmentAtPos(point1.ToVector2(Constants.GRIDSIZE), out var segment))
             {
-                if (w1 == w2)
-                {
-                    // Same wire? Just add the segment
-                    w1.AddSegment(point1, point2);
-                }
-                else
-                {
-                    // Different wires? Merge them
-                    w1.MergeWith(w2);
-                    w1.AddSegment(point1, point2);
-                    this.Wires.Remove(w2);
-                }
+                this.SplitAtPoint(point1);
             }
             else
             {
-                // Add segment to wire
-                w1.AddSegment(point1, point2);
+                this.AddVertex(point1);
             }
         }
-        else
+
+        if (!this.TryGetWireVertexAtPos(point2.ToVector2(Constants.GRIDSIZE), out var v2, out var d2, out var p2))
         {
-            if (this.TryGetWireAtPos(point2, out var w2))
+            if (this.TryGetWireSegmentAtPos(point2.ToVector2(Constants.GRIDSIZE), out var segment))
             {
-                // Add segment to wire
-                w2.AddSegment(point2, point1);
+                this.SplitAtPoint(point2);
             }
             else
             {
-                // Create new wire
-                var wire = new Wire(point1, point2);
-                this.AddWire(wire);
+                this.AddVertex(point2);
             }
         }
 
-        if (recalculate)
-            this.RecalculateWirePositions();
+        this.AddEdge(new Edge<Vector2i>(point1, point2));
+        this.RecalculateConnectionsInScheduler();
     }
 
-    public void DisconnectPoints(Vector2i point1, Vector2i point2, bool recalculate = true)
+    public void DisconnectPoints(Vector2i point1, Vector2i point2)
     {
-        if (this.TryGetWireAtPos(point1, out var w1))
+        if (point1 == point2)
         {
-            if (this.TryGetWireAtPos(point2, out var w2))
-            {
-                if (w1 == w2)
-                {
-                    // Same wire? Remove the segment
-                    Wire[] newWires = Wire.RemoveSegmentFromWire(w1, (point1, point2));
-                    this.Wires.Remove(w1);
-                    this.Wires.AddRange(newWires);
-
-                    if (recalculate)
-                        this.RecalculateWirePositions();
-
-                    // if (this.SelectedWireSegments.Contains((point1, point2)))
-                    // {
-                    //     this.SelectedWireSegments.Remove((point1, point2));
-                    // }
-                }
-                else
-                {
-                    // Should never be different wires? Two points are only connected if they are on the same wire
-                    throw new Exception("Two points are only connected if they are on the same wire");
-                }
-            }
-            else
-            {
-                throw new Exception("No wire at point 2");
-            }
+            return;
         }
-        else
+
+        this.RemoveEdgeIf(e => e.Source == point1 && e.Target == point2);
+
+        if (this.AdjacentDegree(point1) == 0)
         {
-            throw new Exception("No wire at point 1");
+            this.RemoveVertex(point1);
         }
+
+        if (this.AdjacentDegree(point2) == 0)
+        {
+            this.RemoveVertex(point2);
+        }
+
+        this.RecalculateConnectionsInScheduler();
     }
 
-    public void RecalculateWirePositions()
+    public void SplitAtPoint(Vector2i point)
     {
-        this.WirePositions.Clear();
-        foreach (var wire in this.Wires)
+        if (this.ContainsVertex(point))
         {
-            foreach (var point in wire.GetPoints())
-            {
-                this.WirePositions[point] = wire;
-            }
+            return;
         }
 
-        this.Scheduler.Prepare();
+        this.AddVertex(point);
 
-        RecalculateConnectionsInScheduler();
+        if (this.TryGetWireSegmentAtPos(point.ToVector2(Constants.GRIDSIZE), out var segment))
+        {
+            this.RemoveEdgeIf(e => e.Source == segment.Item1 && e.Target == segment.Item2);
+            this.AddEdge(new Edge<Vector2i>(segment.Item1, point));
+            this.AddEdge(new Edge<Vector2i>(segment.Item2, point));
+        }
+
+        this.RecalculateConnectionsInScheduler();
     }
 
-    public bool TryGetWireAtPos(Vector2i position, [NotNullWhen(true)] out Wire wire)
+    public void MergeAtPoint(Vector2i point)
     {
-        if (this.WirePositions.TryGetValue(position, out var w))
+        if (!this.ContainsVertex(point))
         {
-            wire = w;
-            return true;
+            return;
         }
 
-        wire = null;
-        return false;
+        var edges = this.Edges.Where(e => e.Source == point || e.Target == point).ToList();
+        var points = edges.SelectMany(e => new[] { e.Source, e.Target }).Distinct().ToArray();
+        var (a, b) = Utilities.GetPointsFurthestApart(points);
+        foreach (var e in edges)
+        {
+            this.RemoveEdge(e);
+        }
+
+        this.AddEdge(new Edge<Vector2i>(a, b));
+        this.RemoveVertex(point);
+
+        this.RecalculateConnectionsInScheduler();
     }
 
     public bool TryGetPinAtPos(Vector2 position, [NotNullWhen(true)] out Node node, out string identifier)
@@ -494,27 +510,48 @@ public class Simulation
         return false;
     }
 
-    public bool TryGetWireSegmentAtPos(Vector2 worldPosition, out (Vector2i, Vector2i) edge, out Wire wire)
+    public bool TryGetWireSegmentAtPos(Vector2 position, out (Vector2i, Vector2i) segment)
     {
-        foreach (var w in this.Wires)
+        foreach (var e in this.Edges)
         {
-            foreach (var seg in w.Segments)
-            {
-                var start = seg.Item1;
-                var end = seg.Item2;
-                var rect = Utilities.GetWireRectangle(start, end);
+            var p1 = e.Source.ToVector2(Constants.GRIDSIZE);
+            var p2 = e.Target.ToVector2(Constants.GRIDSIZE);
 
-                if (rect.Contains(worldPosition))
-                {
-                    edge = seg;
-                    wire = w;
-                    return true;
-                }
+            var wrec = Utilities.GetWireRectangle(e.Source, e.Target);
+
+            var dist = Utilities.DistanceToLine(p1, p2, position);
+            if (dist < Constants.WIRE_WIDTH && wrec.Contains(position))
+            {
+                segment = (e.Source, e.Target);
+                return true;
             }
         }
 
-        edge = default;
-        wire = null;
+        segment = default;
+        return false;
+    }
+
+    public bool TryGetWireVertexAtPos(Vector2 position, out Vector2i vertex, out int degree, out bool parallel)
+    {
+        foreach (var v in this.Vertices)
+        {
+            var vpos = v.ToVector2(Constants.GRIDSIZE);
+            var maxDist = Constants.WIRE_POINT_RADIUS;
+
+            if ((vpos - position).Length() < maxDist)
+            {
+                vertex = v;
+                degree = this.AdjacentDegree(v);
+                parallel = false;
+                var edgesToThisVertex = this.AdjacentEdges(v).Select(e => (e.Source, e.Target)).ToList();
+                parallel = Utilities.AreEdgesParallel(edgesToThisVertex.First(), edgesToThisVertex.Last());
+                return true;
+            }
+        }
+
+        degree = 0;
+        parallel = false;
+        vertex = default;
         return false;
     }
 }

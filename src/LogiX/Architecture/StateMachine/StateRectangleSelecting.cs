@@ -33,7 +33,7 @@ public class StateRectangleSelecting : State<Editor, int>
         }
     }
 
-    public override void Render(Editor arg)
+    public override void PostSimRender(Editor arg)
     {
         var currentPos = Input.GetMousePosition(arg.Camera);
         var shader = LogiX.ContentManager.GetContentItem<ShaderProgram>("core.shader_program.primitive");

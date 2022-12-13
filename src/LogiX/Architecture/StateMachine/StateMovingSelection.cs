@@ -18,7 +18,7 @@ public class StateMovingSelection : State<Editor, int>
         updateArg.Sim.LockedAction(s =>
         {
             this.nodes = s.SelectedNodes.Select(n => (n, s.Scheduler.GetPinCollectionForNode(n))).ToList();
-            this.segments = s.SelectedWireSegments.ToList();
+            // this.segments = s.SelectedWireSegments.ToList();
             this.stateBefore = updateArg.GetCurrentInvokerState();
             s.PickUpSelection();
         });
@@ -61,7 +61,7 @@ public class StateMovingSelection : State<Editor, int>
         }
     }
 
-    public override void Render(Editor arg)
+    public override void PostSimRender(Editor arg)
     {
         var currentMouse = Input.GetMousePosition(arg.Camera);
         var currentSnap = currentMouse.ToVector2i(Constants.GRIDSIZE);
@@ -78,10 +78,10 @@ public class StateMovingSelection : State<Editor, int>
             node.Position = realPos;
         }
 
-        foreach (var segment in this.segments)
-        {
-            Wire.RenderSegmentAsSelected((segment.Item1 + delta, segment.Item2 + delta));
-            Wire.RenderSegment((segment.Item1 + delta, segment.Item2 + delta), Constants.COLOR_UNDEFINED);
-        }
+        // foreach (var segment in this.segments)
+        // {
+        //     Wire.RenderSegmentAsSelected((segment.Item1 + delta, segment.Item2 + delta));
+        //     Wire.RenderSegment((segment.Item1 + delta, segment.Item2 + delta), Constants.COLOR_UNDEFINED);
+        // }
     }
 }
