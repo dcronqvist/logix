@@ -93,6 +93,11 @@ public class Simulation : UndirectedGraph<Vector2i, Edge<Vector2i>>
 
     }
 
+    public IEnumerable<T> GetNodesOfType<T>() where T : Node
+    {
+        return this.Nodes.Where(x => x is T).Cast<T>();
+    }
+
     public void RecalculateConnectionsInScheduler()
     {
         this.Scheduler.ClearConnections();

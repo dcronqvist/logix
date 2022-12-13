@@ -80,20 +80,20 @@ public class MinimalLogiX
             using (StreamReader sr = new StreamReader(actionSequencePath, new FileStreamOptions() { Access = FileAccess.Read, Share = FileShare.ReadWrite }))
             {
                 var text = sr.ReadToEnd();
-                // var validator = new ActionSequenceValidator(circuit, text);
-                // if (validator.TryValidatePins(out var errors))
-                // {
-                //     var actionRunner = new ActionSequenceRunner(circuit, text, Path.GetDirectoryName(actionSequencePath));
-                //     actionRunner.Run();
-                // }
-                // else
-                // {
-                //     // Some errors.
-                //     foreach (var error in errors)
-                //     {
-                //         Console.WriteLine(error);
-                //     }
-                // }
+                var validator = new ActionSequenceValidator(circuit, text);
+                if (validator.TryValidatePins(out var errors))
+                {
+                    var actionRunner = new ActionSequenceRunner(circuit, text, Path.GetDirectoryName(actionSequencePath));
+                    actionRunner.Run();
+                }
+                else
+                {
+                    // Some errors.
+                    foreach (var error in errors)
+                    {
+                        Console.WriteLine(error);
+                    }
+                }
             }
         }
         else

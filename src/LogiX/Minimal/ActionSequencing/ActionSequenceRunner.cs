@@ -1,417 +1,420 @@
-// using System.Diagnostics;
-// using System.Text;
-// using Antlr4.Runtime;
-// using Antlr4.Runtime.Misc;
-// using LogiX.Architecture.BuiltinComponents;
-// using LogiX.Architecture.Serialization;
+using System.Diagnostics;
+using System.Text;
+using Antlr4.Runtime;
+using Antlr4.Runtime.Misc;
+using LogiX.Architecture.BuiltinComponents;
+using LogiX.Architecture.Serialization;
 
-// namespace LogiX.Minimal.ActionSequencing;
+namespace LogiX.Minimal.ActionSequencing;
 
-// public class ActionSequenceRunner : ActionSequenceBaseVisitor<object>
-// {
-//     public string Text { get; private set; }
-//     public Circuit Circuit { get; private set; }
-//     public string PathToActionSequenceFile { get; private set; }
+public class ActionSequenceRunner : ActionSequenceBaseVisitor<object>
+{
+    public string Text { get; private set; }
+    public Circuit Circuit { get; private set; }
+    public string PathToActionSequenceFile { get; private set; }
 
-//     public Simulation Simulation { get; private set; }
-//     public Dictionary<string, Pin> Pins { get; private set; }
-//     public Dictionary<string, PushButton> PushButtons { get; private set; }
+    public Simulation Simulation { get; private set; }
+    public Dictionary<string, Pin> Pins { get; private set; }
+    public Dictionary<string, PushButton> PushButtons { get; private set; }
 
-//     private Keyboard CurrentKeyboard { get; set; }
-//     private TTY CurrentTTY { get; set; }
-//     private LEDMatrix CurrentLEDMatrix { get; set; }
-//     private int LedMatrixScale { get; set; }
+    // private Keyboard CurrentKeyboard { get; set; }
+    // private TTY CurrentTTY { get; set; }
+    // private LEDMatrix CurrentLEDMatrix { get; set; }
+    private int LedMatrixScale { get; set; }
 
-//     private bool Terminate { get; set; } = false;
+    private bool Terminate { get; set; } = false;
 
-//     public ActionSequenceRunner(Circuit circuit, string text, string pathToActionSequenceFile)
-//     {
-//         this.Text = text;
-//         this.Circuit = circuit;
-//         this.PathToActionSequenceFile = pathToActionSequenceFile;
-//     }
+    public ActionSequenceRunner(Circuit circuit, string text, string pathToActionSequenceFile)
+    {
+        this.Text = text;
+        this.Circuit = circuit;
+        this.PathToActionSequenceFile = pathToActionSequenceFile;
+    }
 
-//     public void Run()
-//     {
-//         var stopwatch = new Stopwatch();
+    public void Run()
+    {
+        var stopwatch = new Stopwatch();
 
-//         this.Simulation = Simulation.FromCircuit(this.Circuit);
-//         this.Pins = this.Simulation.GetComponentsOfType<Pin>().Where(p => ((PinData)p.GetDescriptionData()).Label != "").ToDictionary(p => ((PinData)p.GetDescriptionData()).Label, p => p);
-//         this.PushButtons = this.Simulation.GetComponentsOfType<PushButton>().Where(p => ((PushButtonData)p.GetDescriptionData()).Label != "").ToDictionary(p => ((PushButtonData)p.GetDescriptionData()).Label, p => p);
+        this.Simulation = Simulation.FromCircuit(this.Circuit);
+        this.Pins = this.Simulation.GetNodesOfType<Pin>().Where(p => ((PinData)p.GetNodeData()).Label != "").ToDictionary(p => ((PinData)p.GetNodeData()).Label, p => p);
+        this.PushButtons = this.Simulation.GetNodesOfType<PushButton>().Where(p => ((PushButtonData)p.GetNodeData()).Label != "").ToDictionary(p => ((PushButtonData)p.GetNodeData()).Label, p => p);
 
-//         var inputStream = new AntlrInputStream(this.Text);
-//         var lexer = new ActionSequencing.ActionSequenceLexer(inputStream);
-//         var tokenStream = new CommonTokenStream(lexer);
-//         var parser = new ActionSequencing.ActionSequenceParser(tokenStream);
+        var inputStream = new AntlrInputStream(this.Text);
+        var lexer = new ActionSequencing.ActionSequenceLexer(inputStream);
+        var tokenStream = new CommonTokenStream(lexer);
+        var parser = new ActionSequencing.ActionSequenceParser(tokenStream);
 
-//         var tree = parser.program();
+        var tree = parser.program();
 
-//         this.Simulation.RecalculateWirePositions();
-//         this.Simulation.Tick();
+        stopwatch.Start();
+        this.Visit(tree);
+        stopwatch.Stop();
 
-//         stopwatch.Start();
-//         this.Visit(tree);
-//         stopwatch.Stop();
+        if (!this.Terminate)
+        {
+            // if (this.CurrentLEDMatrix is not null)
+            // {
+            //     var ledMatrixData = this.CurrentLEDMatrix.GetDescriptionData() as LEDMatrixData;
+            //     var width = ledMatrixData.Columns;
+            //     var height = ledMatrixData.Rows;
+            //     var scale = this.LedMatrixScale;
+            //     var ledmatrixWindow = new LEDMatrixWindow(this.LedMatrixScale, width * scale, height * scale, this.Simulation, this.CurrentLEDMatrix, this.CurrentKeyboard);
 
-//         if (!this.Terminate)
-//         {
-//             if (this.CurrentLEDMatrix is not null)
-//             {
-//                 var ledMatrixData = this.CurrentLEDMatrix.GetDescriptionData() as LEDMatrixData;
-//                 var width = ledMatrixData.Columns;
-//                 var height = ledMatrixData.Rows;
-//                 var scale = this.LedMatrixScale;
-//                 var ledmatrixWindow = new LEDMatrixWindow(this.LedMatrixScale, width * scale, height * scale, this.Simulation, this.CurrentLEDMatrix, this.CurrentKeyboard);
+            //     ledmatrixWindow.Run(width * scale, height * scale, $"LogiX - {ledMatrixData.Label}", new string[] { }, width * scale, height * scale);
+            // }
+            // else
+            // {
+            // if (this.CurrentKeyboard is not null)
+            // {
+            //     _ = Task.Run(() =>
+            //     {
+            //         while (true)
+            //         {
+            //             var key = Console.ReadKey(true);
+            //             if (this.CurrentKeyboard is not null)
+            //             {
+            //                 if (key.KeyChar == 0x0D)
+            //                 {
+            //                     // Instead of carriage return, send line feed
+            //                     this.CurrentKeyboard.RegisterChar((char)0x0A);
+            //                 }
+            //                 else
+            //                 {
+            //                     this.CurrentKeyboard.RegisterChar(key.KeyChar);
+            //                 }
+            //             }
+            //         }
+            //     });
+            // }
 
-//                 ledmatrixWindow.Run(width * scale, height * scale, $"LogiX - {ledMatrixData.Label}", new string[] { }, width * scale, height * scale);
-//             }
-//             else
-//             {
-//                 if (this.CurrentKeyboard is not null)
-//                 {
-//                     _ = Task.Run(() =>
-//                     {
-//                         while (true)
-//                         {
-//                             var key = Console.ReadKey(true);
-//                             if (this.CurrentKeyboard is not null)
-//                             {
-//                                 if (key.KeyChar == 0x0D)
-//                                 {
-//                                     // Instead of carriage return, send line feed
-//                                     this.CurrentKeyboard.RegisterChar((char)0x0A);
-//                                 }
-//                                 else
-//                                 {
-//                                     this.CurrentKeyboard.RegisterChar(key.KeyChar);
-//                                 }
-//                             }
-//                         }
-//                     });
-//                 }
+            while (true)
+            {
+                this.Simulation.Step();
+            }
+        }
+        // }
 
-//                 while (true)
-//                 {
-//                     this.Simulation.Tick();
-//                 }
-//             }
-//         }
+        Console.WriteLine($"Execution time: {stopwatch.ElapsedMilliseconds} ms");
+    }
 
-//         Console.WriteLine($"Execution time: {stopwatch.ElapsedMilliseconds} ms");
-//     }
+    private void PrintCurrentPins()
+    {
+        foreach (var pin in this.Pins)
+        {
+            Console.WriteLine($"{pin.Key}: 0b{(pin.Value.GetNodeData() as PinData).Values.Select(v => v == LogicValue.Z ? "Z" : (v == LogicValue.HIGH ? "1" : "0")).Aggregate((a, b) => a + b)}");
+        }
+    }
 
-//     private void PrintCurrentPins()
-//     {
-//         foreach (var pin in this.Pins)
-//         {
-//             Console.WriteLine($"{pin.Key}: 0b{pin.Value.CurrentValues.Select(v => v == LogicValue.UNDEFINED ? "X" : (v == LogicValue.HIGH ? "1" : "0")).Aggregate((a, b) => a + b)}");
-//         }
-//     }
+    private (uint, int) GetValueStringAsUInt(string valueString)
+    {
+        if (valueString.StartsWith("0b"))
+        {
+            return (Convert.ToUInt32(valueString.Substring(2), 2), valueString.Length - 2);
+        }
+        else if (valueString.StartsWith("0x"))
+        {
+            return (Convert.ToUInt32(valueString.Substring(2), 16), (valueString.Length - 2) * 4);
+        }
+        else
+        {
+            return (Convert.ToUInt32(valueString), valueString.Length);
+        }
+    }
 
-//     private (uint, int) GetValueStringAsUInt(string valueString)
-//     {
-//         if (valueString.StartsWith("0b"))
-//         {
-//             return (Convert.ToUInt32(valueString.Substring(2), 2), valueString.Length - 2);
-//         }
-//         else if (valueString.StartsWith("0x"))
-//         {
-//             return (Convert.ToUInt32(valueString.Substring(2), 16), (valueString.Length - 2) * 4);
-//         }
-//         else
-//         {
-//             return (Convert.ToUInt32(valueString), valueString.Length);
-//         }
-//     }
+    private LogicValue[] EvaluateExp(ActionSequenceParser.ExpContext exp)
+    {
+        if (exp.pinexp() != null)
+        {
+            return this.EvaluateExp(exp.pinexp());
+        }
+        else if (exp.ramexp() != null)
+        {
+            return this.EvaluateExp(exp.ramexp());
+        }
+        else if (exp.literalexp() != null)
+        {
+            return this.EvaluateExp(exp.literalexp());
+        }
 
-//     private LogicValue[] EvaluateExp(ActionSequenceParser.ExpContext exp)
-//     {
-//         if (exp.pinexp() != null)
-//         {
-//             return this.EvaluateExp(exp.pinexp());
-//         }
-//         else if (exp.ramexp() != null)
-//         {
-//             return this.EvaluateExp(exp.ramexp());
-//         }
-//         else if (exp.literalexp() != null)
-//         {
-//             return this.EvaluateExp(exp.literalexp());
-//         }
+        return null;
+    }
 
-//         return null;
-//     }
+    private LogicValue[] EvaluateExp(ActionSequenceParser.LiteralexpContext literal)
+    {
+        var text = literal.GetText();
+        var (value, width) = GetValueStringAsUInt(text);
+        return value.GetAsLogicValues(width);
+    }
 
-//     private LogicValue[] EvaluateExp(ActionSequenceParser.LiteralexpContext literal)
-//     {
-//         var text = literal.GetText();
-//         var (value, width) = GetValueStringAsUInt(text);
-//         return value.GetAsLogicValues(width);
-//     }
+    private LogicValue[] EvaluateExp(ActionSequenceParser.RamexpContext ram)
+    {
+        var r = this.Simulation.GetNodesOfType<RAM>().Where(r => ((RamData)r.GetNodeData()).Label == ram.PIN_ID().GetText()).First();
 
-//     private LogicValue[] EvaluateExp(ActionSequenceParser.RamexpContext ram)
-//     {
-//         var r = this.Simulation.GetComponentsOfType<RAM>().Where(r => ((RamData)r.GetDescriptionData()).Label == ram.PIN_ID().GetText()).First();
+        if (ram.HEX_LITERAL() != null)
+        {
+            var (address, width) = GetValueStringAsUInt(ram.HEX_LITERAL().GetText());
+            return ((RamData)r.GetNodeData()).Memory[address].GetAsLogicValues(8);
+        }
+        else
+        {
+            var (address, width) = GetValueStringAsUInt(ram.BINARY_LITERAL().GetText());
+            return ((RamData)r.GetNodeData()).Memory[address].GetAsLogicValues(8);
+        }
+    }
 
-//         if (ram.HEX_LITERAL() != null)
-//         {
-//             var (address, width) = GetValueStringAsUInt(ram.HEX_LITERAL().GetText());
-//             return ((RamData)r.GetDescriptionData()).Memory[address].GetAsLogicValues(8);
-//         }
-//         else
-//         {
-//             var (address, width) = GetValueStringAsUInt(ram.BINARY_LITERAL().GetText());
-//             return ((RamData)r.GetDescriptionData()).Memory[address].GetAsLogicValues(8);
-//         }
-//     }
+    private LogicValue[] EvaluateExp(ActionSequenceParser.PinexpContext pin)
+    {
+        var pinID = pin.PIN_ID().GetText();
+        var p = this.Pins[pinID];
+        return p.GetValues();
+    }
 
-//     private LogicValue[] EvaluateExp(ActionSequenceParser.PinexpContext pin)
-//     {
-//         var pinID = pin.PIN_ID().GetText();
-//         var p = this.Pins[pinID];
-//         return p.CurrentValues;
-//     }
+    public override object VisitAssignment([NotNull] ActionSequenceParser.AssignmentContext context)
+    {
+        if (context.pinexp() != null)
+        {
+            var pin = context.pinexp().PIN_ID().GetText();
+            var value = EvaluateExp(context.exp());
 
-//     public override object VisitAssignment([NotNull] ActionSequenceParser.AssignmentContext context)
-//     {
-//         if (context.pinexp() != null)
-//         {
-//             var pin = context.pinexp().PIN_ID().GetText();
-//             var value = EvaluateExp(context.exp());
+            this.Pins[pin].SetValues(value);
+            return this.VisitChildren(context);
+        }
+        else
+        {
+            var ram = context.ramexp().PIN_ID().GetText();
+            var r = this.Simulation.GetNodesOfType<RAM>().Where(r => ((RamData)r.GetNodeData()).Label == ram).First();
 
-//             this.Pins[pin].CurrentValues = value;
-//             return this.VisitChildren(context);
-//         }
-//         else
-//         {
-//             var ram = context.ramexp().PIN_ID().GetText();
-//             var r = this.Simulation.GetComponentsOfType<RAM>().Where(r => ((RamData)r.GetDescriptionData()).Label == ram).First();
+            if (context.ramexp().HEX_LITERAL() != null)
+            {
+                // address using hex literal
+                var (address, width) = GetValueStringAsUInt(context.ramexp().HEX_LITERAL().GetText());
+                var value = EvaluateExp(context.exp());
 
-//             if (context.ramexp().HEX_LITERAL() != null)
-//             {
-//                 // address using hex literal
-//                 var (address, width) = GetValueStringAsUInt(context.ramexp().HEX_LITERAL().GetText());
-//                 var value = EvaluateExp(context.exp());
+                ((RamData)r.GetNodeData()).Memory[address] = value.Reverse().GetAsByte();
+                r.TriggerEvaluationNextTick();
+            }
+            else
+            {
+                // address using binary literal
+                var (address, width) = GetValueStringAsUInt(context.ramexp().BINARY_LITERAL().GetText());
+                var value = EvaluateExp(context.exp());
 
-//                 ((RamData)r.GetDescriptionData()).Memory[address] = value.Reverse().GetAsByte();
-//             }
-//             else
-//             {
-//                 // address using binary literal
-//                 var (address, width) = GetValueStringAsUInt(context.ramexp().BINARY_LITERAL().GetText());
-//                 var value = EvaluateExp(context.exp());
+                ((RamData)r.GetNodeData()).Memory[address] = value.Reverse().GetAsByte();
+                r.TriggerEvaluationNextTick();
+            }
 
-//                 ((RamData)r.GetDescriptionData()).Memory[address] = value.Reverse().GetAsByte();
-//             }
+            return this.VisitChildren(context);
+        }
+    }
 
-//             return this.VisitChildren(context);
-//         }
-//     }
+    public override object VisitEnd([NotNull] ActionSequenceParser.EndContext context)
+    {
+        this.Terminate = true;
+        return base.VisitEnd(context);
+    }
 
-//     public override object VisitEnd([NotNull] ActionSequenceParser.EndContext context)
-//     {
-//         this.Terminate = true;
-//         return base.VisitEnd(context);
-//     }
+    public override object VisitContinue([NotNull] ActionSequenceParser.ContinueContext context)
+    {
+        this.Terminate = false;
+        return base.VisitContinue(context);
+    }
 
-//     public override object VisitContinue([NotNull] ActionSequenceParser.ContinueContext context)
-//     {
-//         this.Terminate = false;
-//         return base.VisitContinue(context);
-//     }
+    public override object VisitWait([NotNull] ActionSequenceParser.WaitContext context)
+    {
+        if (context.DECIMAL_LITERAL() != null)
+        {
+            // We are going to wait for a specified number of ticks, and then continue.
+            var ticks = Convert.ToInt32(context.DECIMAL_LITERAL().GetText());
+            for (int i = 0; i < ticks; i++)
+            {
+                this.Simulation.Step();
+            }
+        }
+        else
+        {
+            // We are going to wait until a specified boolexp is true, and then continue.
+            var boolexp = context.boolexp();
 
-//     public override object VisitWait([NotNull] ActionSequenceParser.WaitContext context)
-//     {
-//         if (context.DECIMAL_LITERAL() != null)
-//         {
-//             // We are going to wait for a specified number of ticks, and then continue.
-//             var ticks = Convert.ToInt32(context.DECIMAL_LITERAL().GetText());
-//             for (int i = 0; i < ticks; i++)
-//             {
-//                 this.Simulation.Tick();
-//             }
-//         }
-//         else
-//         {
-//             // We are going to wait until a specified boolexp is true, and then continue.
-//             var boolexp = context.boolexp();
+            while (!EvaluateBoolExp(boolexp))
+            {
+                this.Simulation.Step();
+            }
+        }
 
-//             while (!EvaluateBoolExp(boolexp))
-//             {
-//                 this.Simulation.Tick();
-//             }
-//         }
+        return base.VisitWait(context);
+    }
 
-//         return base.VisitWait(context);
-//     }
+    public override object VisitPush([NotNull] ActionSequenceParser.PushContext context)
+    {
+        var pin = context.PIN_ID().GetText();
+        var pushButton = this.PushButtons[pin];
+        pushButton._hotkeyDown = true;
 
-//     public override object VisitPush([NotNull] ActionSequenceParser.PushContext context)
-//     {
-//         var pin = context.PIN_ID().GetText();
-//         var pushButton = this.PushButtons[pin];
-//         pushButton._hotkeyDown = true;
+        if (context.DECIMAL_LITERAL() != null)
+        {
+            var literalText = context.DECIMAL_LITERAL().GetText();
+            var (ticks, width) = GetValueStringAsUInt(literalText);
+            for (int i = 0; i < ticks; i++)
+            {
+                this.Simulation.Step();
+            }
+        }
+        else
+        {
+            var boolexp = context.boolexp();
+            while (!EvaluateBoolExp(boolexp))
+            {
+                this.Simulation.Step();
+            }
+        }
+        pushButton._hotkeyDown = false;
+        return base.VisitPush(context);
+    }
 
-//         if (context.DECIMAL_LITERAL() != null)
-//         {
-//             var literalText = context.DECIMAL_LITERAL().GetText();
-//             var (ticks, width) = GetValueStringAsUInt(literalText);
-//             for (int i = 0; i < ticks; i++)
-//             {
-//                 this.Simulation.Tick();
-//             }
-//         }
-//         else
-//         {
-//             var boolexp = context.boolexp();
-//             while (!EvaluateBoolExp(boolexp))
-//             {
-//                 this.Simulation.Tick();
-//             }
-//         }
-//         pushButton._hotkeyDown = false;
-//         return base.VisitPush(context);
-//     }
+    private bool EvaluateBoolExp(ActionSequenceParser.BoolexpContext context)
+    {
+        if (context.exp(0) != null)
+        {
+            // We can evaluate
+            var left = EvaluateExp(context.exp(0));
+            var right = EvaluateExp(context.exp(1));
 
-//     private bool EvaluateBoolExp(ActionSequenceParser.BoolexpContext context)
-//     {
-//         if (context.exp(0) != null)
-//         {
-//             // We can evaluate
-//             var left = EvaluateExp(context.exp(0));
-//             var right = EvaluateExp(context.exp(1));
+            if (context.GetText().Contains("=="))
+            {
+                // Equals
+                return left.SequenceEqual(right);
+            }
+            else
+            {
+                // Not equals
+                return !left.SequenceEqual(right);
+            }
+        }
+        else
+        {
+            var left = EvaluateBoolExp(context.boolexp(0));
+            var right = EvaluateBoolExp(context.boolexp(1));
 
-//             if (context.GetText().Contains("=="))
-//             {
-//                 // Equals
-//                 return left.SequenceEqual(right);
-//             }
-//             else
-//             {
-//                 // Not equals
-//                 return !left.SequenceEqual(right);
-//             }
-//         }
-//         else
-//         {
-//             var left = EvaluateBoolExp(context.boolexp(0));
-//             var right = EvaluateBoolExp(context.boolexp(1));
+            if (context.GetText().Contains("&&"))
+            {
+                // And
+                return left && right;
+            }
+            else
+            {
+                // Or
+                return left || right;
+            }
+        }
+    }
 
-//             if (context.GetText().Contains("&&"))
-//             {
-//                 // And
-//                 return left && right;
-//             }
-//             else
-//             {
-//                 // Or
-//                 return left || right;
-//             }
-//         }
-//     }
+    public override object VisitPrint([NotNull] ActionSequenceParser.PrintContext context)
+    {
+        var text = context.GetText().Substring(7, context.GetText().Length - 8);
 
-//     public override object VisitPrint([NotNull] ActionSequenceParser.PrintContext context)
-//     {
-//         var text = context.GetText().Substring(7, context.GetText().Length - 8);
+        var sb = new StringBuilder();
 
-//         var sb = new StringBuilder();
+        var i = 0;
+        while (i < text.Length)
+        {
+            if (text[i] == '$')
+            {
+                i++;
+                var mode = text[i + 1];
+                i += 2;
+                var pin = text.Substring(i + 1, text.IndexOf('}', i) - i - 1);
 
-//         var i = 0;
-//         while (i < text.Length)
-//         {
-//             if (text[i] == '$')
-//             {
-//                 i++;
-//                 var mode = text[i + 1];
-//                 i += 2;
-//                 var pin = text.Substring(i + 1, text.IndexOf('}', i) - i - 1);
+                var values = this.Pins[pin].GetValues();
 
-//                 var values = this.Pins[pin].CurrentValues;
+                var formatted = mode switch
+                {
+                    'x' => "0x" + values.Reverse().GetAsHexString(),
+                    'b' => "0b" + values.Select(v => v == LogicValue.Z ? "Z" : (v == LogicValue.HIGH ? "1" : "0")).Aggregate((a, b) => a + b),
+                    'd' => values.Reverse().GetAsUInt().ToString(),
+                    _ => throw new Exception("Invalid format mode"),
+                };
 
-//                 var formatted = mode switch
-//                 {
-//                     'x' => "0x" + values.Reverse().GetAsHexString(),
-//                     'b' => "0b" + values.Select(v => v == LogicValue.UNDEFINED ? "X" : (v == LogicValue.HIGH ? "1" : "0")).Aggregate((a, b) => a + b),
-//                     'd' => values.Reverse().GetAsUInt().ToString(),
-//                     _ => throw new Exception("Invalid format mode"),
-//                 };
+                sb.Append(formatted);
+                i = text.IndexOf('}', i) + 1;
+            }
+            else
+            {
+                sb.Append(text[i]);
+                i++;
+            }
+        }
 
-//                 sb.Append(formatted);
-//                 i = text.IndexOf('}', i) + 1;
-//             }
-//             else
-//             {
-//                 sb.Append(text[i]);
-//                 i++;
-//             }
-//         }
+        Console.WriteLine(sb.ToString());
+        return base.VisitPrint(context);
+    }
 
-//         Console.WriteLine(sb.ToString());
-//         return base.VisitPrint(context);
-//     }
+    public override object VisitConnectKeyboard([NotNull] ActionSequenceParser.ConnectKeyboardContext context)
+    {
+        // var pin = context.PIN_ID().GetText();
+        // var keyboard = this.Simulation.GetComponentsOfType<Keyboard>().Where(k => ((KeyboardData)k.GetDescriptionData()).Label == pin).First();
 
-//     public override object VisitConnectKeyboard([NotNull] ActionSequenceParser.ConnectKeyboardContext context)
-//     {
-//         var pin = context.PIN_ID().GetText();
-//         var keyboard = this.Simulation.GetComponentsOfType<Keyboard>().Where(k => ((KeyboardData)k.GetDescriptionData()).Label == pin).First();
+        // this.CurrentKeyboard = keyboard;
+        // Console.WriteLine("Connected to keyboard " + pin);
+        throw new NotImplementedException("Keyboard not implemented yet");
+        //return base.VisitConnectKeyboard(context);
+    }
 
-//         this.CurrentKeyboard = keyboard;
-//         Console.WriteLine("Connected to keyboard " + pin);
-//         return base.VisitConnectKeyboard(context);
-//     }
+    public override object VisitConnectTTY([NotNull] ActionSequenceParser.ConnectTTYContext context)
+    {
+        // var pin = context.PIN_ID().GetText();
+        // var tty = this.Simulation.GetComponentsOfType<TTY>().Where(k => ((TTYData)k.GetDescriptionData()).Label == pin).First();
 
-//     public override object VisitConnectTTY([NotNull] ActionSequenceParser.ConnectTTYContext context)
-//     {
-//         var pin = context.PIN_ID().GetText();
-//         var tty = this.Simulation.GetComponentsOfType<TTY>().Where(k => ((TTYData)k.GetDescriptionData()).Label == pin).First();
+        // this.CurrentTTY = tty;
 
-//         this.CurrentTTY = tty;
+        // this.CurrentTTY.OnCharReceived += (sender, c) =>
+        // {
+        //     if (c == '\f')
+        //     {
+        //         Console.Clear();
+        //     }
+        //     else if (c == '\b')
+        //     {
+        //         Console.SetCursorPosition(Math.Max(0, Console.CursorLeft - 1), Console.CursorTop);
+        //         Console.Write(' ');
+        //         Console.SetCursorPosition(Math.Max(0, Console.CursorLeft - 1), Console.CursorTop);
+        //     }
+        //     else
+        //     {
+        //         Console.Write(c);
+        //     }
+        // };
 
-//         this.CurrentTTY.OnCharReceived += (sender, c) =>
-//         {
-//             if (c == '\f')
-//             {
-//                 Console.Clear();
-//             }
-//             else if (c == '\b')
-//             {
-//                 Console.SetCursorPosition(Math.Max(0, Console.CursorLeft - 1), Console.CursorTop);
-//                 Console.Write(' ');
-//                 Console.SetCursorPosition(Math.Max(0, Console.CursorLeft - 1), Console.CursorTop);
-//             }
-//             else
-//             {
-//                 Console.Write(c);
-//             }
-//         };
+        // Console.WriteLine("Connected to TTY " + pin);
+        throw new NotImplementedException("TTY not implemented yet");
+        //return base.VisitConnectTTY(context);
+    }
 
-//         Console.WriteLine("Connected to TTY " + pin);
-//         return base.VisitConnectTTY(context);
-//     }
+    public override object VisitMountDisk([NotNull] ActionSequenceParser.MountDiskContext context)
+    {
+        // var pin = context.PIN_ID().GetText();
+        // var disk = this.Simulation.GetComponentsOfType<Disk>().Where(k => ((DiskData)k.GetDescriptionData()).Label == pin).First();
+        // var filePath = context.STRING_LITERAL().GetText().Substring(1, context.STRING_LITERAL().GetText().Length - 2);
 
-//     public override object VisitMountDisk([NotNull] ActionSequenceParser.MountDiskContext context)
-//     {
-//         var pin = context.PIN_ID().GetText();
-//         var disk = this.Simulation.GetComponentsOfType<Disk>().Where(k => ((DiskData)k.GetDescriptionData()).Label == pin).First();
-//         var filePath = context.STRING_LITERAL().GetText().Substring(1, context.STRING_LITERAL().GetText().Length - 2);
+        // var path = Path.Combine(this.PathToActionSequenceFile, filePath);
 
-//         var path = Path.Combine(this.PathToActionSequenceFile, filePath);
+        // if (!disk.TryMountFile(path))
+        // {
+        //     throw new Exception("Could not mount disk");
+        // }
+        throw new NotImplementedException("Disk not implemented yet");
+        //return base.VisitMountDisk(context);
+    }
 
-//         if (!disk.TryMountFile(path))
-//         {
-//             throw new Exception("Could not mount disk");
-//         }
-//         return base.VisitMountDisk(context);
-//     }
+    public override object VisitConnectLEDMatrix([NotNull] ActionSequenceParser.ConnectLEDMatrixContext context)
+    {
+        // var pin = context.PIN_ID().GetText();
+        // var ledMatrix = this.Simulation.GetComponentsOfType<LEDMatrix>().Where(k => ((LEDMatrixData)k.GetDescriptionData()).Label == pin).First();
 
-//     public override object VisitConnectLEDMatrix([NotNull] ActionSequenceParser.ConnectLEDMatrixContext context)
-//     {
-//         var pin = context.PIN_ID().GetText();
-//         var ledMatrix = this.Simulation.GetComponentsOfType<LEDMatrix>().Where(k => ((LEDMatrixData)k.GetDescriptionData()).Label == pin).First();
+        // this.CurrentLEDMatrix = ledMatrix;
+        // this.LedMatrixScale = int.Parse(context.DECIMAL_LITERAL().GetText());
 
-//         this.CurrentLEDMatrix = ledMatrix;
-//         this.LedMatrixScale = int.Parse(context.DECIMAL_LITERAL().GetText());
-
-//         Console.WriteLine("Connected to LED matrix " + pin);
-//         return base.VisitConnectLEDMatrix(context);
-//     }
-// }
+        // Console.WriteLine("Connected to LED matrix " + pin);
+        throw new NotImplementedException("LED matrix not implemented yet");
+        //return base.VisitConnectLEDMatrix(context);
+    }
+}

@@ -9,7 +9,7 @@ public class StateMovingSelection : State<Editor, int>
 {
     private Vector2 startWorldPos;
     private List<(Node, PinCollection)> nodes;
-    private List<(Vector2i, Vector2i)> segments;
+    //private List<(Vector2i, Vector2i)> segments;
     private Circuit stateBefore;
 
     public override void OnEnter(Editor updateArg, int arg)

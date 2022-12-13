@@ -89,19 +89,27 @@ public class Pin : Node<PinData>
 
     public override IEnumerable<(ObservableValue, LogicValue[], int)> Evaluate(PinCollection pins)
     {
-        var q = pins.Get("Q");
-        var vals = q.Read();
-
-        if (vals.Length != this._data.Bits)
+        if (this._data.Behaviour == PinBehaviour.OUTPUT)
         {
-            q.Error = ObservableValueError.PIN_WIDTHS_MISMATCH;
+            var q = pins.Get("Q");
+            var vals = q.Read();
+
+            if (vals.Length != this._data.Bits)
+            {
+                q.Error = ObservableValueError.PIN_WIDTHS_MISMATCH;
+            }
+            else
+            {
+                this._data.Values = vals;
+            }
+
+            yield break;
         }
         else
         {
-            this._data.Values = vals;
+            var q = pins.Get("Q");
+            yield return (q, this._data.Values, 1);
         }
-
-        return Enumerable.Empty<(ObservableValue, LogicValue[], int)>();
     }
 
     protected override bool Interact(Scheduler scheduler, PinCollection pins, Camera2D camera)
@@ -209,5 +217,20 @@ public class Pin : Node<PinData>
     public override Vector2i GetSizeRotated()
     {
         return this.GetSize();
+    }
+
+    public LogicValue[] GetValues()
+    {
+        return this._data.Values;
+    }
+
+    public void SetValues(LogicValue[] values)
+    {
+        this._data.Values = values;
+
+        if (this._data.Behaviour == PinBehaviour.INPUT)
+        {
+            this.TriggerEvaluationNextTick();
+        }
     }
 }

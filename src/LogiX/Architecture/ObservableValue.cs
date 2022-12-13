@@ -19,10 +19,14 @@ public class ObservableValue : Observable<IEnumerable<(ValueEvent, int)>>
         this._bits = bits;
     }
 
+    private LogicValue[] _values = null;
     public LogicValue[] Read()
     {
-        this.Error = this.GetValuesAgree(this._setValues.Values.ToList(), out var values);
-        return values;
+        if (this._values is null)
+        {
+            this.Error = this.GetValuesAgree(this._setValues.Values.ToList(), out this._values);
+        }
+        return _values;
     }
 
     private ObservableValueError GetValuesAgree(List<LogicValue[]> values, out LogicValue[] result)
@@ -89,9 +93,15 @@ public class ObservableValue : Observable<IEnumerable<(ValueEvent, int)>>
         if (!this._setValues.ContainsKey(originator))
         {
             this._setValues.Add(originator, values);
+            this._values = null;
         }
         else
         {
+            if (!this._setValues[originator].SequenceEqual(values))
+            {
+                this._values = null;
+            }
+
             this._setValues[originator] = values;
         }
 
