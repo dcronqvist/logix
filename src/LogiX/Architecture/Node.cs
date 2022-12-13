@@ -10,7 +10,7 @@ using LogiX.Rendering;
 
 namespace LogiX.Architecture;
 
-public abstract class Node : Observer
+public abstract class Node : Observer<IEnumerable<(ValueEvent, int)>>
 {
     protected Scheduler _scheduler;
 
@@ -33,6 +33,11 @@ public abstract class Node : Observer
     public abstract void RenderSelected(Camera2D camera);
     public abstract Vector2i GetSize();
     public virtual Vector2i GetSizeRotated() => this.GetSize().ApplyRotation(this.Rotation);
+
+    public void TriggerEvaluationNextTick()
+    {
+        this._scheduler.ForceEvaluationNextStep(this);
+    }
 
     public Vector2 GetMiddleOffset() { return this.GetSizeRotated().ToVector2(Constants.GRIDSIZE) / 2f; }
     /// <summary>
@@ -93,17 +98,17 @@ public abstract class Node : Observer
         this._scheduler = scheduler;
     }
 
-    public override void Update()
+    public override IEnumerable<(ValueEvent, int)> Update()
     {
         var pins = this._scheduler.GetPinCollectionForNode(this);
 
         if (pins is null)
-            return;
+            yield break;
 
         var ports = this.Evaluate(pins);
         foreach (var (p, v, d) in ports)
         {
-            this._scheduler.Schedule(this, p, v, d);
+            yield return (new ValueEvent(this, p, v), d);
         }
     }
 

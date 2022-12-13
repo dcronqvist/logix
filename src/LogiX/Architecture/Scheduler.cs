@@ -1,3 +1,5 @@
+using System.Collections.Concurrent;
+
 namespace LogiX.Architecture;
 
 public class ValueEvent
@@ -16,6 +18,7 @@ public class ValueEvent
 
 public class Scheduler
 {
+    public Queue<Node> ForcedEvaluationQueue { get; set; } = new();
     public Queue<LinkedList<ValueEvent>> EventQueue { get; set; } = new();
     public List<Node> Nodes { get; set; } = new();
     public List<(Node, string, Node, string)> NodePinConnections { get; set; } = new();
@@ -191,6 +194,11 @@ public class Scheduler
         this.EventQueue.ElementAt(time - 1).AddLast(valueEvent);
     }
 
+    public void ForceEvaluationNextStep(Node node)
+    {
+        this.ForcedEvaluationQueue.Enqueue(node);
+    }
+
     public (int, int) Step()
     {
         // Return the number of values changed and the total number of obversable values
@@ -201,7 +209,22 @@ public class Scheduler
         {
             foreach (var e in events)
             {
-                valuesChanged += e.AffectedValue.Set(e.Originator, e.NewValues);
+                var newEvs = e.AffectedValue.Set(e.Originator, e.NewValues);
+                foreach (var (ev, time) in newEvs)
+                {
+                    this.Schedule(ev.Originator, ev.AffectedValue, ev.NewValues, time);
+                }
+                valuesChanged += 1;
+            }
+        }
+
+        while (this.ForcedEvaluationQueue.TryDequeue(out var node))
+        {
+            var pins = this.GetPinCollectionForNode(node);
+            var newEvs = node.Evaluate(pins);
+            foreach (var (a, b, t) in newEvs)
+            {
+                this.Schedule(node, a, b, t);
             }
         }
 

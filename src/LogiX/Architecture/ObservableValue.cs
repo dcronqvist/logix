@@ -7,7 +7,7 @@ public enum ObservableValueError
     VALUES_MISMATCH,
 }
 
-public class ObservableValue : Observable
+public class ObservableValue : Observable<IEnumerable<(ValueEvent, int)>>
 {
     private int _bits = 0;
 
@@ -76,11 +76,11 @@ public class ObservableValue : Observable
 
     }
 
-    public int Set(Node originator, LogicValue[] values)
+    public IEnumerable<(ValueEvent, int)> Set(Node originator, LogicValue[] values)
     {
         if (values.Length != this._bits)
         {
-            return 0;
+            yield break;
         }
 
         var oldVal = this.Read();
@@ -100,10 +100,11 @@ public class ObservableValue : Observable
 
         if (!newVal.SequenceEqual(oldVal) || oldError != newError)
         {
-            this.NotifyObservers();
-            return 1;
+            var b = this.NotifyObservers().SelectMany(x => x.ToArray());
+            foreach (var (valueEvent, time) in b)
+            {
+                yield return (valueEvent, time);
+            }
         }
-
-        return 0;
     }
 }

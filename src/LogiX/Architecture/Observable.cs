@@ -1,15 +1,15 @@
 namespace LogiX.Architecture;
 
-public abstract class Observable
+public abstract class Observable<T>
 {
-    protected List<Observer> Observers { get; set; } = new();
+    protected List<Observer<T>> Observers { get; set; } = new();
 
-    public void AddObserver(Observer observer)
+    public void AddObserver(Observer<T> observer)
     {
         this.Observers.Add(observer);
     }
 
-    public void RemoveObserver(Observer observer)
+    public void RemoveObserver(Observer<T> observer)
     {
         this.Observers.Remove(observer);
     }
@@ -19,18 +19,18 @@ public abstract class Observable
         this.Observers.Clear();
     }
 
-    public void NotifyObservers()
+    public IEnumerable<T> NotifyObservers()
     {
-        this.Observers.ForEach(o => o.Update());
+        return this.Observers.Select(o => o.Update());
     }
 
-    public void NotifyObservers(params Observer[] skip)
+    public IEnumerable<T> NotifyObservers(params Observer<T>[] skip)
     {
-        this.NotifyObservers((IEnumerable<Observer>)skip);
+        return this.NotifyObservers((IEnumerable<Observer<T>>)skip);
     }
 
-    public void NotifyObservers(IEnumerable<Observer> skip)
+    public IEnumerable<T> NotifyObservers(IEnumerable<Observer<T>> skip)
     {
-        this.Observers.Except(skip).ToList().ForEach(o => o.Update());
+        return this.Observers.Except(skip).ToList().Select(o => o.Update());
     }
 }
