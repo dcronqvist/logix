@@ -92,16 +92,8 @@ public class Pin : Node<PinData>
         if (this._data.Behaviour == PinBehaviour.OUTPUT)
         {
             var q = pins.Get("Q");
-            var vals = q.Read();
-
-            if (vals.Length != this._data.Bits)
-            {
-                q.Error = ObservableValueError.PIN_WIDTHS_MISMATCH;
-            }
-            else
-            {
-                this._data.Values = vals;
-            }
+            var vals = q.Read(this._data.Bits);
+            this._data.Values = vals;
 
             yield break;
         }

@@ -18,18 +18,18 @@ public enum SplitterDirection
 
 public class SplitterData : INodeDescriptionData
 {
-    [NodeDescriptionProperty("Bits", HelpTooltip = "The number of bits to split or combine depending on the direction.", IntMinValue = 1, IntMaxValue = 256)]
-    public int BitsToSplit { get; set; }
+    [NodeDescriptionProperty("Input Widths", IntMinValue = 1, IntMaxValue = 256, ArrayMinLength = 1, ArrayMaxLength = 256)]
+    public int[] InputWidths { get; set; }
 
-    [NodeDescriptionProperty("Direction")]
-    public SplitterDirection Direction { get; set; }
+    [NodeDescriptionProperty("Output Widths", IntMinValue = 1, IntMaxValue = 256, ArrayMinLength = 1, ArrayMaxLength = 256)]
+    public int[] OutputWidths { get; set; }
 
     public INodeDescriptionData GetDefault()
     {
         return new SplitterData
         {
-            BitsToSplit = 4,
-            Direction = SplitterDirection.Split
+            InputWidths = Utilities.Arrayify(4),
+            OutputWidths = Utilities.Arrayify(1, 1, 1, 1)
         };
     }
 }
@@ -37,32 +37,43 @@ public class SplitterData : INodeDescriptionData
 [ScriptType("SPLITTER"), NodeInfo("Splitter", "Common", "core.markdown.splitter")]
 public class Splitter : BoxNode<SplitterData>
 {
-    public override string Text => this._data.Direction == SplitterDirection.Split ? "SPLT" : "COMB";
+    public override string Text => "SPLT";
     public override float TextScale => 1f;
 
     private SplitterData _data;
 
     public override IEnumerable<(ObservableValue, LogicValue[], int)> Evaluate(PinCollection pins)
     {
-        if (this._data.Direction == SplitterDirection.Split)
-        {
-            var read = pins.Get("multi").Read();
+        var inputValues = new LogicValue[this._data.InputWidths.Sum()];
 
-            for (int i = 0; i < this._data.BitsToSplit; i++)
+        int cw = 0;
+        for (int i = 0; i < this._data.InputWidths.Length; i++)
+        {
+            var w = this._data.InputWidths[i];
+            var name = w == 1 ? $"in{cw}" : $"in{cw}-{cw + w - 1}";
+
+            var ov = pins.Get(name);
+            var vs = ov.Read(w);
+            for (int j = 0; j < w; j++)
             {
-                yield return (pins.Get($"single_{i}"), read[this._data.BitsToSplit - i - 1].Multiple(1), 1);
+                inputValues[cw + j] = vs[j];
             }
+            cw += w;
         }
-        else
+
+        cw = 0;
+        for (int i = 0; i < this._data.OutputWidths.Length; i++)
         {
-            var read = new LogicValue[this._data.BitsToSplit];
-
-            for (int i = 0; i < this._data.BitsToSplit; i++)
+            var w = this._data.OutputWidths[i];
+            var name = w == 1 ? $"out{cw}" : $"out{cw}-{cw + w - 1}";
+            var ov = pins.Get(name);
+            var vs = new LogicValue[w];
+            for (int j = 0; j < w; j++)
             {
-                read[this._data.BitsToSplit - i - 1] = pins.Get($"single_{i}").Read()[0];
+                vs[j] = cw + j < inputValues.Length ? inputValues[cw + j] : LogicValue.Z;
             }
-
-            yield return (pins.Get("multi"), read, 1);
+            yield return (ov, vs, 1);
+            cw += w;
         }
     }
 
@@ -73,27 +84,32 @@ public class Splitter : BoxNode<SplitterData>
 
     public override IEnumerable<PinConfig> GetPinConfiguration()
     {
-        if (this._data.Direction == SplitterDirection.Split)
+        int cw = 0;
+        for (int i = 0; i < this._data.InputWidths.Length; i++)
         {
-            yield return new PinConfig("multi", this._data.BitsToSplit, true, new Vector2i(0, 1));
-            for (int i = 0; i < this._data.BitsToSplit; i++)
-            {
-                yield return new PinConfig($"single_{i}", 1, false, new Vector2i(3, i + 1));
-            }
+            var w = this._data.InputWidths[i];
+            var name = w == 1 ? $"in{cw}" : $"in{cw}-{cw + w - 1}";
+
+            yield return new PinConfig(name, w, true, new Vector2i(0, i + 1));
+            cw += w;
         }
-        else
+
+        cw = 0;
+        for (int i = 0; i < this._data.OutputWidths.Length; i++)
         {
-            yield return new PinConfig("multi", this._data.BitsToSplit, false, new Vector2i(3, 1));
-            for (int i = 0; i < this._data.BitsToSplit; i++)
-            {
-                yield return new PinConfig($"single_{i}", 1, true, new Vector2i(0, i + 1));
-            }
+            var w = this._data.OutputWidths[i];
+            var name = w == 1 ? $"out{cw}" : $"out{cw}-{cw + w - 1}";
+
+            yield return new PinConfig(name, w, false, new Vector2i(3, i + 1));
+            cw += w;
         }
     }
 
     public override Vector2i GetSize()
     {
-        return new Vector2i(3, this._data.BitsToSplit + 1);
+        var inPins = this._data.InputWidths.Length;
+        var outPins = this._data.OutputWidths.Length;
+        return new Vector2i(3, Math.Max(inPins, outPins) + 1);
     }
 
     public override void Initialize(SplitterData data)

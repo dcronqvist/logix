@@ -31,10 +31,10 @@ public class Register : BoxNode<RegisterData>
     private uint _currV = 0;
     public override IEnumerable<(ObservableValue, LogicValue[], int)> Evaluate(PinCollection pins)
     {
-        var D = pins.Get("D").Read();
-        var WE = pins.Get("WE").Read().First();
-        var CLK = pins.Get("CLK").Read().First();
-        var R = pins.Get("R").Read().First();
+        var D = pins.Get("D").Read(this._data.DataBits);
+        var WE = pins.Get("WE").Read(1).First();
+        var CLK = pins.Get("CLK").Read(1).First();
+        var R = pins.Get("R").Read(1).First();
 
         var Q = pins.Get("Q");
 

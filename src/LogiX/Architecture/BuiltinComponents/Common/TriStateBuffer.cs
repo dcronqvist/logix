@@ -33,9 +33,9 @@ public class TriStateBuffer : BoxNode<NoData>
         var pOut = pins.Get("out");
         var pEnabled = pins.Get("enabled");
 
-        if (pEnabled.Read().First() == LogicValue.HIGH)
+        if (pEnabled.Read(1).First() == LogicValue.HIGH)
         {
-            yield return (pOut, pIn.Read(), 1);
+            yield return (pOut, pIn.Read(this._data.DataBits), 1);
         }
         else
         {

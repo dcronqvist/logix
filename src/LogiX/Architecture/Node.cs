@@ -1,5 +1,6 @@
 using System.Drawing;
 using System.Numerics;
+using System.Reflection;
 using System.Text.RegularExpressions;
 using ImGuiNET;
 using LogiX.Architecture.Commands;
@@ -57,7 +58,7 @@ public abstract class Node : Observer<IEnumerable<(ValueEvent, int)>>
             foreach (var (ident, (config, value)) in pins)
             {
                 var p = this.GetPinPosition(pins, ident);
-                var color = value is null ? ColorF.Black : value.Read().GetValueColor();
+                var color = value is null ? ColorF.Black : value.Read(config.Bits).GetValueColor();
                 PrimitiveRenderer.RenderCircle(p.ToVector2(Constants.GRIDSIZE), Constants.PIN_RADIUS, 0f, color, 1f);
             }
         }
@@ -156,147 +157,194 @@ public abstract class Node : Observer<IEnumerable<(ValueEvent, int)>>
         ImGui.End();
     }
 
-    public virtual unsafe void SubmitUISelected(Editor editor, int componentIndex)
+    protected unsafe void SubmitPropValue(Editor editor, string displayName, NodeDescriptionPropertyAttribute attrib, object value, out object newValue)
     {
         var id = this.ID.ToString();
+        newValue = value;
 
+        ImGui.PushItemWidth(200);
+        if (value is int i)
+        {
+            if (ImGui.InputInt(displayName, ref i))
+            {
+                i = Math.Clamp(i, attrib.IntMinValue, attrib.IntMaxValue);
+                newValue = i;
+            }
+        }
+        else if (value is string str)
+        {
+            var hint = attrib.StringHint;
+            var checkRegex = (string s) =>
+            {
+                if (attrib.StringRegexFilter is null)
+                {
+                    return true;
+                }
+
+                return Regex.IsMatch(s, attrib.StringRegexFilter);
+            };
+
+            ImGuiInputTextCallback callback = (data) =>
+            {
+                var addedChar = (char)data->EventChar;
+                if (!checkRegex(str + addedChar))
+                {
+                    // Remove the added character
+                    return 1;
+                }
+
+                return 0;
+            };
+
+            if (hint is null)
+            {
+                // No hint
+                if (attrib.StringMultiline)
+                {
+                    if (ImGui.InputTextMultiline(displayName, ref str, attrib.StringMaxLength, new Vector2(300, 150), attrib.StringFlags, callback))
+                    {
+                        newValue = str;
+                    }
+                }
+                else
+                {
+                    if (ImGui.InputText(displayName, ref str, attrib.StringMaxLength, attrib.StringFlags, callback))
+                    {
+                        newValue = str;
+                    }
+                }
+            }
+            else
+            {
+                if (ImGui.InputTextWithHint(displayName, attrib.StringHint, ref str, attrib.StringMaxLength, attrib.StringFlags, callback))
+                {
+                    newValue = str;
+                }
+            }
+        }
+        else if (value is bool b)
+        {
+            if (ImGui.Checkbox(displayName, ref b))
+            {
+                newValue = b;
+            }
+        }
+        else if (value is ColorF color)
+        {
+            var colorV3 = new Vector3(color.R, color.G, color.B);
+            var startCol = colorV3;
+            if (ImGui.ColorEdit3(displayName, ref colorV3))
+            {
+                newValue = new ColorF(colorV3.X, colorV3.Y, colorV3.Z, color.A);
+            }
+        }
+        else if (value is Keys k)
+        {
+            Keys val = k;
+            if (ImGui.Button($"Change hotkey##{id}"))
+            {
+                editor.OpenPopup($"Change hotkey", (e) =>
+                {
+                    ImGui.Text("Waiting for key press...");
+                    if (Input.TryGetNextKeyPressed(out var key))
+                    {
+                        val = key;
+                        ImGui.CloseCurrentPopup();
+                    }
+                });
+            }
+            ImGui.SameLine();
+
+            if (val == 0 || val == Keys.Unknown)
+            {
+                ImGui.Text("None");
+            }
+            else
+            {
+                ImGui.Text($"{attrib.DisplayName}: {val.PrettifyKey()}");
+            }
+
+            if (val != k)
+            {
+                newValue = val;
+            }
+        }
+        else if (value is Enum e)
+        {
+            var val = (int)value;
+            if (ImGui.Combo(displayName, ref val, e.GetType().GetEnumNames(), e.GetType().GetEnumNames().Length))
+            {
+                newValue = Enum.ToObject(e.GetType(), val);
+            }
+        }
+        else if (value is Array a)
+        {
+            a = a.Clone() as Array;
+            if (ImGui.CollapsingHeader(displayName, ImGuiTreeNodeFlags.DefaultOpen))
+            {
+                ImGui.TreePush("TRE" + displayName);
+
+                for (int j = 0; j < a.Length; j++)
+                {
+                    var startEleVal = a.GetValue(j);
+                    this.SubmitPropValue(editor, $"{j}", attrib, startEleVal, out var newEleVal);
+                    if (newEleVal != startEleVal)
+                    {
+                        a.SetValue(newEleVal, j);
+                        newValue = a;
+                    }
+                }
+
+                ImGui.BeginDisabled(a.Length == attrib.ArrayMaxLength);
+                if (ImGui.SmallButton("Add"))
+                {
+                    var newA = Array.CreateInstance(a.GetType().GetElementType(), a.Length + 1);
+                    Array.Copy(a, newA, a.Length);
+                    newA.SetValue(newA.GetValue(newA.Length - 2), newA.Length - 1);
+                    newValue = newA;
+                }
+                ImGui.EndDisabled();
+                ImGui.SameLine();
+                ImGui.BeginDisabled(a.Length == attrib.ArrayMinLength);
+                if (ImGui.SmallButton("Remove"))
+                {
+                    var newA = Array.CreateInstance(a.GetType().GetElementType(), a.Length - 1);
+                    Array.Copy(a, newA, newA.Length);
+                    newValue = newA;
+                }
+                ImGui.EndDisabled();
+
+                ImGui.TreePop();
+            }
+        }
+
+        if (attrib.HelpTooltip is not null)
+        {
+            ImGui.SameLine();
+            Utilities.ImGuiHelp(attrib.HelpTooltip);
+        }
+    }
+
+    public virtual unsafe void SubmitUISelected(Editor editor, int componentIndex)
+    {
         var data = Utilities.GetCopyOfInstance(this.GetNodeData()) as INodeDescriptionData;
         var props = data.GetType().GetProperties();
 
         foreach (var prop in props)
         {
-            var propType = prop.PropertyType;
-            var propValue = prop.GetValue(data);
-
-            var attrib = prop.GetCustomAttributes(typeof(NodeDescriptionPropertyAttribute), false).FirstOrDefault() as NodeDescriptionPropertyAttribute;
+            var attrib = prop.GetCustomAttribute<NodeDescriptionPropertyAttribute>();
 
             if (attrib is null)
+                continue;
+
+            var startValue = prop.GetValue(data);
+            var displayName = $"{attrib.DisplayName}##{this.ID}";
+            this.SubmitPropValue(editor, displayName, attrib, startValue, out var newValue);
+            //this.SubmitProp(editor, data, prop);
+
+            if (newValue != startValue)
             {
-                continue; // Skip properties without the attribute
-            }
-
-            var displayName = $"{attrib.DisplayName}##{id}";
-
-            ImGui.PushItemWidth(200);
-            if (propType == typeof(int))
-            {
-                var val = (int)propValue;
-                if (ImGui.InputInt(displayName, ref val))
-                {
-                    val = Math.Clamp(val, attrib.IntMinValue, attrib.IntMaxValue);
-                    editor.Execute(new CModifyComponentDataProp(this.ID, prop, val), editor);
-                }
-            }
-            else if (propType == typeof(string))
-            {
-                string val = (string)propValue;
-                var hint = attrib.StringHint;
-
-                var checkRegex = (string s) =>
-                {
-                    if (attrib.StringRegexFilter is null)
-                    {
-                        return true;
-                    }
-
-                    return Regex.IsMatch(s, attrib.StringRegexFilter);
-                };
-
-                ImGuiInputTextCallback callback = (data) =>
-                {
-                    var addedChar = (char)data->EventChar;
-                    if (!checkRegex(val + addedChar))
-                    {
-                        // Remove the added character
-                        return 1;
-                    }
-
-                    return 0;
-                };
-
-                if (hint is null)
-                {
-                    // No hint
-                    if (attrib.StringMultiline)
-                    {
-                        if (ImGui.InputTextMultiline(displayName, ref val, attrib.StringMaxLength, new Vector2(300, 150), attrib.StringFlags, callback))
-                        {
-                            editor.Execute(new CModifyComponentDataProp(this.ID, prop, val), editor);
-                        }
-                    }
-                    else
-                    {
-                        if (ImGui.InputText(displayName, ref val, attrib.StringMaxLength, attrib.StringFlags, callback))
-                        {
-                            editor.Execute(new CModifyComponentDataProp(this.ID, prop, val), editor);
-                        }
-                    }
-                }
-                else
-                {
-                    if (ImGui.InputTextWithHint(displayName, attrib.StringHint, ref val, attrib.StringMaxLength, attrib.StringFlags, callback))
-                    {
-                        editor.Execute(new CModifyComponentDataProp(this.ID, prop, val), editor);
-                    }
-                }
-            }
-            else if (propType == typeof(bool))
-            {
-                bool val = (bool)propValue;
-                if (ImGui.Checkbox(displayName, ref val))
-                {
-                    editor.Execute(new CModifyComponentDataProp(this.ID, prop, val), editor);
-                }
-            }
-            else if (propType == typeof(ColorF))
-            {
-                ColorF val = (ColorF)propValue;
-                var colorV3 = new Vector3(val.R, val.G, val.B);
-                if (ImGui.ColorEdit3(displayName, ref colorV3))
-                {
-                    val = new ColorF(colorV3.X, colorV3.Y, colorV3.Z, val.A);
-                    editor.Execute(new CModifyComponentDataProp(this.ID, prop, val), editor);
-                }
-            }
-            else if (propType == typeof(Keys))
-            {
-                Keys val = (Keys)propValue;
-                if (ImGui.Button($"Change hotkey##{id}"))
-                {
-                    editor.OpenPopup($"Change hotkey", (e) =>
-                    {
-                        ImGui.Text("Waiting for key press...");
-                        if (Input.TryGetNextKeyPressed(out var key))
-                        {
-                            editor.Execute(new CModifyComponentDataProp(this.ID, prop, key), editor);
-                            ImGui.CloseCurrentPopup();
-                        }
-                    });
-                }
-                ImGui.SameLine();
-
-                if (val == 0 || val == Keys.Unknown)
-                {
-                    ImGui.Text("None");
-                }
-                else
-                {
-                    ImGui.Text($"{attrib.DisplayName}: {val.PrettifyKey()}");
-                }
-            }
-            else if (propType.IsEnum)
-            {
-                var val = (int)propValue;
-                if (ImGui.Combo(displayName, ref val, propType.GetEnumNames(), propType.GetEnumNames().Length))
-                {
-                    editor.Execute(new CModifyComponentDataProp(this.ID, prop, val), editor);
-                }
-            }
-
-            if (attrib.HelpTooltip is not null)
-            {
-                ImGui.SameLine();
-                Utilities.ImGuiHelp(attrib.HelpTooltip);
+                editor.Execute(new CModifyComponentDataProp(this.ID, prop, newValue), editor);
             }
         }
     }

@@ -36,7 +36,7 @@ public class HexDisplay : BoxNode<HexDisplayData>
 
     public override IEnumerable<(ObservableValue, LogicValue[], int)> Evaluate(PinCollection pins)
     {
-        var values = pins.Get("in").Read();
+        var values = pins.Get("in").Read(this._data.DataBits);
         this._values = values.ToArray();
 
         return Enumerable.Empty<(ObservableValue, LogicValue[], int)>();

@@ -46,7 +46,7 @@ public class Multiplexer : BoxNode<MultiplexerData>
         if (this._data.SelectBitsMode == PinModeMulti.Combined)
         {
             var selectPin = pins.Get("S");
-            var selectionBits = selectPin.Read();
+            var selectionBits = selectPin.Read(this._data.SelectBits);
             selection = selectionBits.Reverse().GetAsInt();
         }
         else
@@ -54,7 +54,7 @@ public class Multiplexer : BoxNode<MultiplexerData>
             var selectionBits = new LogicValue[this._data.SelectBits];
             for (int i = 0; i < this._data.SelectBits; i++)
             {
-                selectionBits[i] = pins.Get($"S{i}").Read().First();
+                selectionBits[i] = pins.Get($"S{i}").Read(1).First();
             }
             selection = selectionBits.Reverse().GetAsInt();
         }
@@ -64,7 +64,7 @@ public class Multiplexer : BoxNode<MultiplexerData>
             var inputPin = pins.Get($"I{selection}");
             var outputPin = pins.Get("O");
 
-            yield return (outputPin, inputPin.Read(), 1);
+            yield return (outputPin, inputPin.Read(this._data.DataBits), 1);
         }
         else
         {
@@ -73,7 +73,7 @@ public class Multiplexer : BoxNode<MultiplexerData>
                 var inputPin = pins.Get($"I{selection}_{i}");
                 var outputPin = pins.Get($"O{i}");
 
-                yield return (outputPin, inputPin.Read(), 1);
+                yield return (outputPin, inputPin.Read(1), 1);
             }
         }
     }

@@ -144,7 +144,7 @@ public class PushButton : Node<PushButtonData>
 
         if (pins.TryGetValue("OUT", out var pin))
         {
-            var color = pin.Item2 is null ? ColorF.Black : (pin.Item2.Read().First() == LogicValue.HIGH ? Constants.COLOR_HIGH : Constants.COLOR_LOW);
+            var color = pin.Item2 is null ? ColorF.Black : (pin.Item2.Read(1).First() == LogicValue.HIGH ? Constants.COLOR_HIGH : Constants.COLOR_LOW);
             PrimitiveRenderer.RenderCircle(pos, radius, 0f, ColorF.Black, 1f, 20);
             PrimitiveRenderer.RenderCircle(pos, radius - 1, 0f, ColorF.White, 1f, 20);
             PrimitiveRenderer.RenderCircle(pos, radius - 3, 0f, color, 1f, 20);

@@ -29,9 +29,9 @@ public class Multiplier : BoxNode<MultiplierData>
 
     public override IEnumerable<(ObservableValue, LogicValue[], int)> Evaluate(PinCollection pins)
     {
-        var A = pins.Get("A").Read();
-        var B = pins.Get("B").Read();
-        var CIN = pins.Get("CIN").Read();
+        var A = pins.Get("A").Read(this._data.DataBits);
+        var B = pins.Get("B").Read(this._data.DataBits);
+        var CIN = pins.Get("CIN").Read(1);
 
         var P = pins.Get("P");
         var COUT = pins.Get("COUT");

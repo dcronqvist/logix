@@ -51,7 +51,7 @@ public class Buffer : BoxNode<BufferData>
 
     public override IEnumerable<(ObservableValue, LogicValue[], int)> Evaluate(PinCollection pins)
     {
-        var input = pins.Get("in").Read();
+        var input = pins.Get("in").Read(pins["in"].Item1.Bits);
         var output = pins.Get("out");
 
         yield return (output, input, this._data.BufferSize);

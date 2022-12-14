@@ -51,7 +51,7 @@ public class Decoder : BoxNode<DecoderData>
             for (int i = 0; i < this._data.SelectBits; i++)
             {
                 var pin = pins.Get($"S{i}");
-                selectBits[i] = pin.Read().First();
+                selectBits[i] = pin.Read(1).First();
             }
 
             selection = (int)selectBits.Reverse().GetAsUInt();
@@ -59,7 +59,7 @@ public class Decoder : BoxNode<DecoderData>
         else
         {
             var pin = pins.Get("S");
-            selection = (int)pin.Read().Reverse().GetAsUInt();
+            selection = (int)pin.Read(this._data.SelectBits).Reverse().GetAsUInt();
         }
 
         if (this._data.OutputBitsMode == PinModeMulti.Separate)

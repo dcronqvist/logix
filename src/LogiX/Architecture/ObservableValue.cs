@@ -1,10 +1,11 @@
 namespace LogiX.Architecture;
 
+[Flags]
 public enum ObservableValueError
 {
-    NONE,
-    PIN_WIDTHS_MISMATCH,
-    VALUES_MISMATCH,
+    NONE = 0,
+    PIN_WIDTHS_MISMATCH = 1 << 0,
+    VALUES_MISMATCH = 1 << 1,
 }
 
 public class ObservableValue : Observable<IEnumerable<(ValueEvent, int)>>
@@ -22,12 +23,19 @@ public class ObservableValue : Observable<IEnumerable<(ValueEvent, int)>>
     }
 
     private LogicValue[] _values = null;
-    public LogicValue[] Read()
+    public LogicValue[] Read(int expectedBitWidth)
     {
         if (this._values is null)
         {
             this.Error = this.GetValuesAgree(this._setValues.Values.ToList(), out this._values);
         }
+
+        if (this._values.Length != expectedBitWidth)
+        {
+            this.Error |= ObservableValueError.PIN_WIDTHS_MISMATCH;
+            return LogicValue.Z.Multiple(expectedBitWidth);
+        }
+
         return _values;
     }
 
@@ -86,11 +94,11 @@ public class ObservableValue : Observable<IEnumerable<(ValueEvent, int)>>
     {
         if (values.Length != this._bits)
         {
-            this.Error = ObservableValueError.PIN_WIDTHS_MISMATCH;
+            this.Error |= ObservableValueError.PIN_WIDTHS_MISMATCH;
             yield break;
         }
 
-        var oldVal = this.Read();
+        var oldVal = this.Read(this._bits);
         var oldError = this.Error;
 
         if (!this._setValues.ContainsKey(originator))
@@ -108,7 +116,7 @@ public class ObservableValue : Observable<IEnumerable<(ValueEvent, int)>>
             this._setValues[originator] = values;
         }
 
-        var newVal = this.Read();
+        var newVal = this.Read(this._bits);
         var newError = this.Error;
 
         if (!newVal.SequenceEqual(oldVal) || oldError != newError)

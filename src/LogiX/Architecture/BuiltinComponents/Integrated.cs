@@ -268,7 +268,7 @@ public class Integrated : Node<IntegratedData>
                     var iScale = 0.65f;
                     var iMeasure = iFont.MeasureString(ident, iScale);
                     var pinPos = this.GetPinPosition(pins, ident);
-                    var color = value is null ? ColorF.Black : value.Read().GetValueColor();
+                    var color = value is null ? ColorF.Black : value.Read(config.Bits).GetValueColor();
                     PrimitiveRenderer.RenderCircle(pinPos.ToVector2(Constants.GRIDSIZE), Constants.PIN_RADIUS, 0f, color, 1f);
 
                     var onside = side.ApplyRotation(this.Rotation);

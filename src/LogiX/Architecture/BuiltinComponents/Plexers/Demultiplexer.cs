@@ -46,7 +46,7 @@ public class Demultiplexer : BoxNode<DemultiplexerData>
         if (this._data.SelectBitsMode == PinModeMulti.Combined)
         {
             var selectPin = pins.Get("S");
-            var selectionBits = selectPin.Read();
+            var selectionBits = selectPin.Read(this._data.SelectBits);
             selection = selectionBits.Reverse().GetAsInt();
         }
         else
@@ -54,7 +54,7 @@ public class Demultiplexer : BoxNode<DemultiplexerData>
             var selectionBits = new LogicValue[this._data.SelectBits];
             for (int i = 0; i < this._data.SelectBits; i++)
             {
-                selectionBits[i] = pins.Get($"S{i}").Read().First();
+                selectionBits[i] = pins.Get($"S{i}").Read(1).First();
             }
             selection = selectionBits.Reverse().GetAsInt();
         }
@@ -67,7 +67,7 @@ public class Demultiplexer : BoxNode<DemultiplexerData>
                 var outputPin = pins.Get($"O{i}");
 
                 if (i == selection)
-                    yield return (outputPin, inputPin.Read(), 1);
+                    yield return (outputPin, inputPin.Read(this._data.DataBits), 1);
                 else
                     yield return (outputPin, LogicValue.LOW.Multiple(this._data.DataBits), 1);
             }
@@ -86,7 +86,7 @@ public class Demultiplexer : BoxNode<DemultiplexerData>
 
                     if (i == selection)
                     {
-                        yield return (outputPin, inputPin.Read(), 1);
+                        yield return (outputPin, inputPin.Read(1), 1);
                     }
                     else
                     {

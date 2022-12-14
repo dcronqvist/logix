@@ -14,7 +14,7 @@ public class DebugNode : BoxNode<NoData>
 
     public override IEnumerable<(ObservableValue, LogicValue[], int)> Evaluate(PinCollection pins)
     {
-        var r = pins.Get("X").Read();
+        var r = pins.Get("X").Read(this._data.DataBits);
         Console.WriteLine($"DEBUGNODE: {r.GetAsHexString()}");
         yield break;
     }

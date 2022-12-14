@@ -39,8 +39,8 @@ public class ROM : BoxNode<RomData>
 
     public override IEnumerable<(ObservableValue, LogicValue[], int)> Evaluate(PinCollection pins)
     {
-        var address = pins.Get("ADDRESS").Read().Reverse();
-        var enable = pins.Get("ENABLE").Read().First();
+        var address = pins.Get("ADDRESS").Read(this._data.AddressBits).Reverse();
+        var enable = pins.Get("ENABLE").Read(1).First();
 
         if (address.AnyUndefined() || enable.IsUndefined())
         {

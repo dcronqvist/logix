@@ -55,7 +55,8 @@ public class Simulation : UndirectedGraph<Vector2i, Edge<Vector2i>>
 
         foreach (var node in this.Nodes)
         {
-            var pins = this.Scheduler.GetPinCollectionForNode(node);
+            var configs = node.GetPinConfiguration();
+            var pins = new PinCollection(configs);
             foreach (var (id, (conf, obser)) in pins)
             {
                 var pos = node.GetPinPosition(pins, id);
@@ -137,7 +138,7 @@ public class Simulation : UndirectedGraph<Vector2i, Edge<Vector2i>>
         this.Scheduler.Prepare();
     }
 
-    public void Render(Camera2D camera)
+    public void Render(Camera2D camera, bool renderWires = true)
     {
         foreach (var node in this.SelectedNodes)
         {
@@ -149,35 +150,38 @@ public class Simulation : UndirectedGraph<Vector2i, Edge<Vector2i>>
             node.Render(this.Scheduler.GetPinCollectionForNode(node), camera);
         }
 
-        foreach (var edge in this.SelectedEdges)
+        if (renderWires)
         {
-            Wire.RenderSegmentAsSelected(edge);
-        }
-
-        var connections = this.GetPinConnections();
-        var comps = this.GetConnectedComponents();
-
-        foreach (var (comp, nodes) in connections)
-        {
-            if (nodes.Length == 0)
+            foreach (var edge in this.SelectedEdges)
             {
-                Wire.Render(this.GetEdgesForComponent(comps, comp), Constants.COLOR_UNDEFINED, camera);
+                Wire.RenderSegmentAsSelected(edge);
             }
-            else
-            {
-                var (n, i) = nodes.First();
-                var pins = this.Scheduler.GetPinCollectionForNode(n);
-                var (conf, obser) = pins[i];
-                var edges = this.GetEdgesForComponent(comps, comp);
 
-                if (obser.Error != ObservableValueError.NONE)
+            var connections = this.GetPinConnections();
+            var comps = this.GetConnectedComponents();
+
+            foreach (var (comp, nodes) in connections)
+            {
+                if (nodes.Length == 0)
                 {
-                    Wire.Render(edges, Constants.COLOR_ERROR, camera);
+                    Wire.Render(this.GetEdgesForComponent(comps, comp), Constants.COLOR_UNDEFINED, camera);
                 }
                 else
                 {
-                    var values = obser.Read();
-                    Wire.Render(edges, Utilities.GetValueColor(values), camera);
+                    var (n, i) = nodes.First();
+                    var pins = this.Scheduler.GetPinCollectionForNode(n);
+                    var (conf, obser) = pins[i];
+                    var edges = this.GetEdgesForComponent(comps, comp);
+
+                    if (obser.Error != ObservableValueError.NONE)
+                    {
+                        Wire.Render(edges, Constants.COLOR_ERROR, camera);
+                    }
+                    else
+                    {
+                        var values = obser.Read(conf.Bits);
+                        Wire.Render(edges, Utilities.GetValueColor(values), camera);
+                    }
                 }
             }
         }

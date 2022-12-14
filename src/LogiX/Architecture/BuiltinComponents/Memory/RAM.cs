@@ -16,7 +16,7 @@ public class RamData : INodeDescriptionData
     [NodeDescriptionProperty("Size", IntMinValue = 1, IntMaxValue = 256, HelpTooltip = "The number of address bits.")]
     public int AddressBits { get; set; }
 
-    [NodeDescriptionProperty("Word Size", IntMinValue = 1, IntMaxValue = 16, HelpTooltip = "The number of bytes per word in the RAM.")]
+    [NodeDescriptionProperty("Word Size", IntMinValue = 1, IntMaxValue = 16, HelpTooltip = "The number of bytes accessible at the DATA pin")]
     public int WordSize { get; set; }
 
     // Handled internally
@@ -45,9 +45,9 @@ public class RAM : BoxNode<RamData>
     private LogicValue _prevCLK = LogicValue.LOW;
     public override IEnumerable<(ObservableValue, LogicValue[], int)> Evaluate(PinCollection pins)
     {
-        var address = pins.Get("ADDRESS").Read().Reverse();
-        var clk = pins.Get("CLK").Read().First();
-        var we = pins.Get("WE").Read().First();
+        var address = pins.Get("ADDRESS").Read(this._data.AddressBits).Reverse();
+        var clk = pins.Get("CLK").Read(1).First();
+        var we = pins.Get("WE").Read(1).First();
 
         if (!address.AnyUndefined())
         {
@@ -72,7 +72,7 @@ public class RAM : BoxNode<RamData>
         {
             if (we == LogicValue.HIGH)
             {
-                var data = pins.Get("DATA").Read().Reverse();
+                var data = pins.Get("DATA").Read(this._data.WordSize * 8).Reverse();
                 this._data.Memory.SetBytes(addressValue, data.GetAsByteArray());
             }
         }
@@ -146,13 +146,13 @@ public class RAM : BoxNode<RamData>
     public override void CompleteSubmitUISelected(Editor editor, int componentIndex)
     {
         var id = this.ID.ToString();
-        this.memoryEditor.DrawWindow($"Read Only Memory Editor##{id}", this._data.Memory, this._data.WordSize, this.currentlySelectedAddress, this.hasSelectedAddress, () =>
+        this.memoryEditor.DrawWindow($"Random Access Memory Editor##{id}", this._data.Memory, this._data.WordSize, this.currentlySelectedAddress, this.hasSelectedAddress, () =>
         {
             this.SubmitUISelected(editor, componentIndex);
 
             if (ImGui.Button($"Load From File##{id}"))
             {
-                var fileDialog = new FileDialog(FileDialog.LastDirectory, "Load ROM from file", FileDialogType.SelectFile, (path) =>
+                var fileDialog = new FileDialog(FileDialog.LastDirectory, "Load RAM from file", FileDialogType.SelectFile, (path) =>
                 {
                     using (BinaryReader sr = new BinaryReader(File.Open(path, FileMode.Open)))
                     {
@@ -161,7 +161,7 @@ public class RAM : BoxNode<RamData>
 
                         var setAddressBits = new CModifyComponentDataProp(this.ID, this._data.GetType().GetProperty(nameof(this._data.AddressBits)), addressBits);
                         var setMemory = new CModifyComponentDataProp(this.ID, this._data.GetType().GetProperty(nameof(this._data.Memory)), new WordAddressableMemory(data));
-                        var multi = new CMulti("Load ROM from file", setAddressBits, setMemory);
+                        var multi = new CMulti("Load RAM from file", setAddressBits, setMemory);
 
                         editor.Execute(multi, editor);
                         this._pathLoadedFrom = path;
@@ -173,7 +173,7 @@ public class RAM : BoxNode<RamData>
             ImGui.SameLine();
             if (ImGui.Button($"Dump To File##{id}"))
             {
-                var fileDialog = new FileDialog(FileDialog.LastDirectory, "Dump ROM contents to file", FileDialogType.SaveFile, (path) =>
+                var fileDialog = new FileDialog(FileDialog.LastDirectory, "Dump RAM contents to file", FileDialogType.SaveFile, (path) =>
                 {
                     using (BinaryWriter bw = new BinaryWriter(File.Open(path, FileMode.Open)))
                     {
@@ -196,7 +196,7 @@ public class RAM : BoxNode<RamData>
 
                     var setAddressBits = new CModifyComponentDataProp(this.ID, this._data.GetType().GetProperty(nameof(this._data.AddressBits)), addressBits);
                     var setMemory = new CModifyComponentDataProp(this.ID, this._data.GetType().GetProperty(nameof(this._data.Memory)), new WordAddressableMemory(data));
-                    var multi = new CMulti("Reload ROM from file", setAddressBits, setMemory);
+                    var multi = new CMulti("Reload RAM from file", setAddressBits, setMemory);
 
                     editor.Execute(multi, editor);
                 }

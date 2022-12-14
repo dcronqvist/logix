@@ -29,8 +29,8 @@ public class Comparator : BoxNode<ComparatorData>
 
     public override IEnumerable<(ObservableValue, LogicValue[], int)> Evaluate(PinCollection pins)
     {
-        var A = pins.Get("A").Read();
-        var B = pins.Get("B").Read();
+        var A = pins.Get("A").Read(this._data.DataBits);
+        var B = pins.Get("B").Read(this._data.DataBits);
 
         var eq = pins.Get("A=B");
         var lt = pins.Get("A<B");

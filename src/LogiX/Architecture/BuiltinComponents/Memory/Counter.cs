@@ -30,15 +30,15 @@ public class Counter : BoxNode<CounterData>
     private LogicValue _prevCLK = LogicValue.LOW;
     public override IEnumerable<(ObservableValue, LogicValue[], int)> Evaluate(PinCollection pins)
     {
-        var D = pins.Get("D").Read();
-        var CLK = pins.Get("CLK").Read().First();
+        var D = pins.Get("D").Read(this._data.DataBits);
+        var CLK = pins.Get("CLK").Read(1).First();
 
-        var EN = pins.Get("EN").Read().First();
-        var CNT = pins.Get("CNT").Read().First();
-        var LOAD = pins.Get("LOAD").Read().First();
+        var EN = pins.Get("EN").Read(1).First();
+        var CNT = pins.Get("CNT").Read(1).First();
+        var LOAD = pins.Get("LOAD").Read(1).First();
 
         var Q = pins.Get("Q");
-        var R = pins.Get("R").Read().First();
+        var R = pins.Get("R").Read(1).First();
 
         if (R == LogicValue.HIGH)
         {
@@ -53,13 +53,13 @@ public class Counter : BoxNode<CounterData>
             }
             else if (CNT == LogicValue.HIGH)
             {
-                var qVal = Q.Read().Reverse().GetAsUInt();
+                var qVal = Q.Read(this._data.DataBits).Reverse().GetAsUInt();
                 qVal++;
                 yield return (Q, qVal.GetAsLogicValues(this._data.DataBits), 1);
             }
             else if (CNT == LogicValue.LOW)
             {
-                var qVal = Q.Read().Reverse().GetAsUInt();
+                var qVal = Q.Read(this._data.DataBits).Reverse().GetAsUInt();
                 qVal--;
                 yield return (Q, qVal.GetAsLogicValues(this._data.DataBits), 1);
             }

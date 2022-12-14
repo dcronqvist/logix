@@ -35,17 +35,17 @@ public abstract class ArithmeticNode<TData> : BoxNode<TData> where TData : Arith
     {
         LogicValue[] a;
         LogicValue[] b;
-        LogicValue carryIn = pins.Get("CarryIn").Read().First();
+        LogicValue carryIn = pins.Get("CarryIn").Read(1).First();
 
         if (this.Data.PinMode == PinModeMulti.Separate)
         {
-            a = Enumerable.Range(0, this.Data.DataBits).Select(x => pins.Get($"A{x}").Read().First()).ToArray();
-            b = Enumerable.Range(0, this.Data.DataBits).Select(x => pins.Get($"B{x}").Read().First()).ToArray();
+            a = Enumerable.Range(0, this.Data.DataBits).Select(x => pins.Get($"A{x}").Read(1).First()).ToArray();
+            b = Enumerable.Range(0, this.Data.DataBits).Select(x => pins.Get($"B{x}").Read(1).First()).ToArray();
         }
         else
         {
-            a = pins.Get("A").Read();
-            b = pins.Get("B").Read();
+            a = pins.Get("A").Read(this.Data.DataBits);
+            b = pins.Get("B").Read(this.Data.DataBits);
         }
 
         if (a.Any(x => x == LogicValue.Z) || b.Any(x => x == LogicValue.Z) || carryIn == LogicValue.Z)

@@ -21,8 +21,8 @@ public class DFlipFlop : BoxNode<DFlipFlopData>
 
     public override IEnumerable<(ObservableValue, LogicValue[], int)> Evaluate(PinCollection pins)
     {
-        var D = pins.Get("D").Read().First();
-        var CLK = pins.Get("CLK").Read().First();
+        var D = pins.Get("D").Read(1).First();
+        var CLK = pins.Get("CLK").Read(1).First();
 
         var Q = pins.Get("Q");
         var Qn = pins.Get("Q'");

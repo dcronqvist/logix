@@ -29,7 +29,7 @@ public class Inverter : BoxNode<InverterData>
 
     public override IEnumerable<(ObservableValue, LogicValue[], int)> Evaluate(PinCollection pins)
     {
-        var i = pins.Get("in").Read();
+        var i = pins.Get("in").Read(this._data.DataBits);
 
         if (i.Any(x => x == LogicValue.Z))
         {

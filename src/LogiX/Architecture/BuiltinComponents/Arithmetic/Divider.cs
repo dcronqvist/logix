@@ -29,8 +29,8 @@ public class Divider : BoxNode<DividerData>
 
     public override IEnumerable<(ObservableValue, LogicValue[], int)> Evaluate(PinCollection pins)
     {
-        var dividend = pins.Get("DIVIDEND").Read().Reverse();
-        var divisor = pins.Get("DIVISOR").Read().Reverse();
+        var dividend = pins.Get("DIVIDEND").Read(this._data.DataBits).Reverse();
+        var divisor = pins.Get("DIVISOR").Read(this._data.DataBits).Reverse();
 
         var quotient = pins.Get("QUOTIENT");
         var remainder = pins.Get("REMAINDER");

@@ -21,9 +21,9 @@ public class SRFlipFlop : BoxNode<SRFlipFlopData>
 
     public override IEnumerable<(ObservableValue, LogicValue[], int)> Evaluate(PinCollection pins)
     {
-        var S = pins.Get("S").Read().First();
-        var R = pins.Get("R").Read().First();
-        var CLK = pins.Get("CLK").Read().First();
+        var S = pins.Get("S").Read(1).First();
+        var R = pins.Get("R").Read(1).First();
+        var CLK = pins.Get("CLK").Read(1).First();
 
         var Q = pins.Get("Q");
         var Qn = pins.Get("Q'");

@@ -39,8 +39,8 @@ public class Shifter : BoxNode<ShifterData>
 
     public override IEnumerable<(ObservableValue, LogicValue[], int)> Evaluate(PinCollection pins)
     {
-        var X = pins.Get("X").Read().Reverse();
-        var IN = pins.Get("IN").Read().First();
+        var X = pins.Get("X").Read(this._data.DataBits).Reverse();
+        var IN = pins.Get("IN").Read(1).First();
         var Y = pins.Get("Y");
 
         if (X.AnyUndefined() || IN.IsUndefined())

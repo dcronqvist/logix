@@ -845,7 +845,7 @@ Under *projects*, you can see your circuits, and right clicking them in the side
 
                 this.FSM.PreSimRender(this);
 
-                this.Sim.LockedAction(s => s.Render(this.Camera), (e) => { });
+                this.Sim.LockedAction(s => s.Render(this.Camera, this.RenderWires), (e) => { });
 
                 if (!this.FSM.CurrentState.RenderAboveGUI())
                 {

@@ -52,7 +52,7 @@ public class Clock : BoxNode<ClockData>
     {
         var q = pins.Get("Q");
 
-        if (q.Read().First() == LogicValue.LOW)
+        if (q.Read(1).First() == LogicValue.LOW)
         {
             yield return (q, LogicValue.HIGH.Multiple(1), this._data.LowDuration);
         }

@@ -20,6 +20,9 @@ public class NodeDescriptionPropertyAttribute : Attribute
     public ImGuiInputTextFlags StringFlags { get; set; } = ImGuiInputTextFlags.CallbackCharFilter;
     public string StringRegexFilter { get; set; } = null;
 
+    public int ArrayMinLength { get; set; } = 0;
+    public int ArrayMaxLength { get; set; } = int.MaxValue;
+
     public NodeDescriptionPropertyAttribute(string displayName)
     {
         this.DisplayName = displayName;

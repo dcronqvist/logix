@@ -54,11 +54,11 @@ public abstract class LogicGate<TData> : BoxNode<TData> where TData : GateData
     {
         var pin1 = pins.Get("X0");
         var y = pins.Get("Y");
-        LogicValue currVal = pin1.Read().First();
+        LogicValue currVal = pin1.Read(1).First();
         for (int i = 1; i < this._data.DataBits; i++)
         {
             var p = pins.Get($"X{i}");
-            currVal = this.Logic.GetValueToPush(currVal, p.Read().First());
+            currVal = this.Logic.GetValueToPush(currVal, p.Read(1).First());
         }
 
         yield return (y, currVal.Multiple(1), 1);
