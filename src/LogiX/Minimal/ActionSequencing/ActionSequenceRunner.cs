@@ -156,12 +156,12 @@ public class ActionSequenceRunner : ActionSequenceBaseVisitor<object>
         if (ram.HEX_LITERAL() != null)
         {
             var (address, width) = GetValueStringAsUInt(ram.HEX_LITERAL().GetText());
-            return ((RamData)r.GetNodeData()).Memory[address].GetAsLogicValues(8);
+            return ((RamData)r.GetNodeData()).Memory.GetBytes(address, 1).GetAsLogicValues(8);
         }
         else
         {
             var (address, width) = GetValueStringAsUInt(ram.BINARY_LITERAL().GetText());
-            return ((RamData)r.GetNodeData()).Memory[address].GetAsLogicValues(8);
+            return ((RamData)r.GetNodeData()).Memory.GetBytes(address, 1).GetAsLogicValues(8);
         }
     }
 
@@ -193,7 +193,7 @@ public class ActionSequenceRunner : ActionSequenceBaseVisitor<object>
                 var (address, width) = GetValueStringAsUInt(context.ramexp().HEX_LITERAL().GetText());
                 var value = EvaluateExp(context.exp());
 
-                ((RamData)r.GetNodeData()).Memory[address] = value.Reverse().GetAsByte();
+                ((RamData)r.GetNodeData()).Memory.SetBytes(address, Utilities.Arrayify(value.Reverse().GetAsByte()));
                 r.TriggerEvaluationNextTick();
             }
             else
@@ -202,7 +202,7 @@ public class ActionSequenceRunner : ActionSequenceBaseVisitor<object>
                 var (address, width) = GetValueStringAsUInt(context.ramexp().BINARY_LITERAL().GetText());
                 var value = EvaluateExp(context.exp());
 
-                ((RamData)r.GetNodeData()).Memory[address] = value.Reverse().GetAsByte();
+                ((RamData)r.GetNodeData()).Memory.SetBytes(address, Utilities.Arrayify(value.Reverse().GetAsByte()));
                 r.TriggerEvaluationNextTick();
             }
 

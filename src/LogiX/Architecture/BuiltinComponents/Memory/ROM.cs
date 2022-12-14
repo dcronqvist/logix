@@ -12,15 +12,19 @@ public class RomData : INodeDescriptionData
     [NodeDescriptionProperty("Address Bits", IntMinValue = 1, IntMaxValue = 32)]
     public int AddressBits { get; set; }
 
+    [NodeDescriptionProperty("Word Size", IntMinValue = 1, IntMaxValue = 16, HelpTooltip = "The number of bytes per word in the ROM.")]
+    public int WordSize { get; set; }
+
     // Handled internally.
-    public ByteAddressableMemory Memory { get; set; }
+    public WordAddressableMemory Memory { get; set; }
 
     public INodeDescriptionData GetDefault()
     {
         return new RomData()
         {
             AddressBits = 8,
-            Memory = new ByteAddressableMemory(256, false),
+            WordSize = 1,
+            Memory = new WordAddressableMemory(256, false),
         };
     }
 }
@@ -41,7 +45,7 @@ public class ROM : BoxNode<RomData>
         if (address.AnyUndefined() || enable.IsUndefined())
         {
             this.hasSelectedAddress = false;
-            yield return (pins.Get("DATA"), LogicValue.Z.Multiple(8), 1);
+            yield return (pins.Get("DATA"), LogicValue.Z.Multiple(this._data.WordSize * 8), 1);
             yield break;
         }
 
@@ -52,12 +56,12 @@ public class ROM : BoxNode<RomData>
 
         if (enabled)
         {
-            var data = this._data.Memory[addressValue];
-            yield return (pins.Get("DATA"), data.GetAsLogicValues(8), 1);
+            var data = this._data.Memory.GetBytes(addressValue, this._data.WordSize);
+            yield return (pins.Get("DATA"), data.GetAsLogicValues(this._data.WordSize * 8, false), 1);
         }
         else
         {
-            yield return (pins.Get("DATA"), LogicValue.Z.Multiple(8), 1);
+            yield return (pins.Get("DATA"), LogicValue.Z.Multiple(this._data.WordSize * 8), 1);
         }
 
         yield break;
@@ -72,7 +76,7 @@ public class ROM : BoxNode<RomData>
     {
         yield return new PinConfig("ADDRESS", this._data.AddressBits, true, new Vector2i(0, 1));
         yield return new PinConfig("ENABLE", 1, true, new Vector2i(1, 0));
-        yield return new PinConfig("DATA", 8, false, new Vector2i(this.GetSize().X, 1));
+        yield return new PinConfig("DATA", this._data.WordSize * 8, false, new Vector2i(this.GetSize().X, 1));
     }
 
     public override Vector2i GetSize()
@@ -108,7 +112,7 @@ public class ROM : BoxNode<RomData>
     public override void CompleteSubmitUISelected(Editor editor, int componentIndex)
     {
         var id = this.ID.ToString();
-        this.memoryEditor.DrawWindow($"Read Only Memory Editor##{id}", this._data.Memory, 1, this.currentlySelectedAddress, this.hasSelectedAddress, () =>
+        this.memoryEditor.DrawWindow($"Read Only Memory Editor##{id}", this._data.Memory, this._data.WordSize, this.currentlySelectedAddress, this.hasSelectedAddress, () =>
         {
             this.SubmitUISelected(editor, componentIndex);
 
@@ -122,7 +126,7 @@ public class ROM : BoxNode<RomData>
                         var addressBits = (int)Math.Ceiling(Math.Log(data.Length, 2));
 
                         var setAddressBits = new CModifyComponentDataProp(this.ID, this._data.GetType().GetProperty(nameof(this._data.AddressBits)), addressBits);
-                        var setMemory = new CModifyComponentDataProp(this.ID, this._data.GetType().GetProperty(nameof(this._data.Memory)), new ByteAddressableMemory(data));
+                        var setMemory = new CModifyComponentDataProp(this.ID, this._data.GetType().GetProperty(nameof(this._data.Memory)), new WordAddressableMemory(data));
                         var multi = new CMulti("Load ROM from file", setAddressBits, setMemory);
 
                         editor.Execute(multi, editor);
@@ -157,7 +161,7 @@ public class ROM : BoxNode<RomData>
                     var addressBits = (int)Math.Ceiling(Math.Log(data.Length, 2));
 
                     var setAddressBits = new CModifyComponentDataProp(this.ID, this._data.GetType().GetProperty(nameof(this._data.AddressBits)), addressBits);
-                    var setMemory = new CModifyComponentDataProp(this.ID, this._data.GetType().GetProperty(nameof(this._data.Memory)), new ByteAddressableMemory(data));
+                    var setMemory = new CModifyComponentDataProp(this.ID, this._data.GetType().GetProperty(nameof(this._data.Memory)), new WordAddressableMemory(data));
                     var multi = new CMulti("Reload ROM from file", setAddressBits, setMemory);
 
                     editor.Execute(multi, editor);

@@ -199,6 +199,7 @@ public class Scheduler
         this.ForcedEvaluationQueue.Enqueue(node);
     }
 
+    private readonly object _lock = new();
     public (int, int) Step()
     {
         // Return the number of values changed and the total number of obversable values

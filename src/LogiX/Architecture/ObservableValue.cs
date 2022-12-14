@@ -13,10 +13,12 @@ public class ObservableValue : Observable<IEnumerable<(ValueEvent, int)>>
 
     public Dictionary<Node, LogicValue[]> _setValues = new();
     public ObservableValueError Error { get; set; } = ObservableValueError.NONE;
+    public Guid ID { get; }
 
     public ObservableValue(int bits)
     {
         this._bits = bits;
+        this.ID = Guid.NewGuid();
     }
 
     private LogicValue[] _values = null;
@@ -84,6 +86,7 @@ public class ObservableValue : Observable<IEnumerable<(ValueEvent, int)>>
     {
         if (values.Length != this._bits)
         {
+            this.Error = ObservableValueError.PIN_WIDTHS_MISMATCH;
             yield break;
         }
 

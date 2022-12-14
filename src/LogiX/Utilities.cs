@@ -809,6 +809,21 @@ public static class Utilities
         return result;
     }
 
+    public static byte[] GetAsByteArray(this IEnumerable<LogicValue> values, bool littleEndian = true)
+    {
+        var result = new byte[values.Count() / 8];
+        for (int i = 0; i < result.Length; i++)
+        {
+            var byteValues = values.Skip(i * 8).Take(8);
+            result[i] = byteValues.GetAsByte();
+        }
+        if (!littleEndian)
+        {
+            Array.Reverse(result);
+        }
+        return result;
+    }
+
     public static bool GetAsBool(this LogicValue value)
     {
         return value == LogicValue.HIGH;
@@ -846,6 +861,18 @@ public static class Utilities
             result[i] = (value & (1 << i)) != 0 ? LogicValue.HIGH : LogicValue.LOW;
         }
         return result.ToList().Reverse<LogicValue>().ToArray();
+    }
+
+    public static LogicValue[] GetAsLogicValues(this byte[] value, int bitCount, bool littleEndian = true)
+    {
+        var result = new LogicValue[bitCount];
+        for (int i = 0; i < bitCount; i++)
+        {
+            var byteIndex = littleEndian ? i / 8 : (bitCount - i - 1) / 8;
+            var bitIndex = littleEndian ? i % 8 : 7 - (i % 8);
+            result[i] = (value[byteIndex] & (1 << bitIndex)) != 0 ? LogicValue.HIGH : LogicValue.LOW;
+        }
+        return result;
     }
 
     public static string GetAsHexString(this IEnumerable<LogicValue> values)

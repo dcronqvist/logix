@@ -24,6 +24,46 @@ public class NodeDescriptionPropertyAttribute : Attribute
     {
         this.DisplayName = displayName;
     }
+
+    public static void Validate(INodeDescriptionData data)
+    {
+        // Loop over all properties
+        foreach (var p in data.GetType().GetProperties())
+        {
+            // Check if property has NodeDescriptionPropertyAttribute
+            if (p.GetCustomAttribute<NodeDescriptionPropertyAttribute>() is not null)
+            {
+                // Check if property is valid
+                if (!IsPropertyValid(data, p.GetCustomAttribute<NodeDescriptionPropertyAttribute>(), p))
+                {
+                    // Fix the property by setting it to its default value
+                    var defaultValue = data.GetDefault();
+                    p.SetValue(data, p.GetValue(defaultValue));
+                }
+            }
+        }
+    }
+
+    public static bool IsPropertyValid(INodeDescriptionData data, NodeDescriptionPropertyAttribute attrib, PropertyInfo prop)
+    {
+        // Get property value
+        var value = prop.GetValue(data);
+
+        // Check if property is valid
+        if (value is string str)
+        {
+            var lengthTest = str.Length <= attrib.StringMaxLength;
+            var regexTest = attrib.StringRegexFilter is null || System.Text.RegularExpressions.Regex.IsMatch(str, attrib.StringRegexFilter);
+
+            return lengthTest && regexTest;
+        }
+        else if (value is int i)
+        {
+            return i >= attrib.IntMinValue && i <= attrib.IntMaxValue;
+        }
+
+        return true;
+    }
 }
 
 public interface INodeDescriptionData

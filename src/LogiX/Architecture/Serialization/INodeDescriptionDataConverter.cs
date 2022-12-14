@@ -33,6 +33,7 @@ public class INodeDescriptionDataConverter : JsonConverter<NodeDescription>
         if (document.RootElement.TryGetProperty(NODE_DATA, out JsonElement data))
         {
             dataInstance = (INodeDescriptionData)data.Deserialize(dataType, options);
+            NodeDescriptionPropertyAttribute.Validate(dataInstance);
         }
         else
         {

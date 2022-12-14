@@ -6,17 +6,17 @@ using LogiX.GLFW;
 
 namespace LogiX.Graphics.UI;
 
-public class ByteAddressableMemory
+public class WordAddressableMemory
 {
     public byte[] Data { get; set; }
 
     [JsonConstructor]
-    public ByteAddressableMemory(byte[] data)
+    public WordAddressableMemory(byte[] data)
     {
         this.Data = data;
     }
 
-    public ByteAddressableMemory(int size, bool randomize = true)
+    public WordAddressableMemory(int size, bool randomize = true)
     {
         this.Data = new byte[size];
         if (randomize)
@@ -25,10 +25,22 @@ public class ByteAddressableMemory
         }
     }
 
-    public byte this[uint index]
+    public byte[] GetBytes(uint address, int wordSize)
     {
-        get => this.Data[index];
-        set => this.Data[index] = value;
+        byte[] data = new byte[wordSize];
+        for (int i = 0; i < wordSize; i++)
+        {
+            data[i] = this.Data[address + i];
+        }
+        return data;
+    }
+
+    public void SetBytes(uint address, byte[] data)
+    {
+        for (int i = 0; i < data.Length; i++)
+        {
+            this.Data[address + i] = data[i];
+        }
     }
 
     public void Reset()
@@ -37,16 +49,6 @@ public class ByteAddressableMemory
         {
             this.Data[i] = 0;
         }
-    }
-
-    public List<LogicValue> GetLogicValuesAtAddress(int address, int databits)
-    {
-        List<LogicValue> values = new List<LogicValue>(databits);
-        for (int i = 0; i < databits / 8; i++)
-        {
-            values.AddRange(this.Data[address + i].GetAsLogicValues(8));
-        }
-        return values;
     }
 
     public void Randomize()
@@ -90,7 +92,7 @@ public class MemoryEditor
         public float WindowWidth;
     }
 
-    private unsafe Sizes CalcSizes(ByteAddressableMemory memory)
+    private unsafe Sizes CalcSizes(WordAddressableMemory memory)
     {
         ImGuiStylePtr style = ImGui.GetStyle();
         Sizes size = new Sizes();
@@ -111,7 +113,7 @@ public class MemoryEditor
         return size;
     }
 
-    public void DrawWindow(string title, ByteAddressableMemory memory, int bytesPerAddress, uint currentlySelectedAddress = 0, bool displayCurrentlySelected = true, Action beforeContent = null, Action afterContent = null)
+    public void DrawWindow(string title, WordAddressableMemory memory, int wordSize, uint currentlySelectedAddress = 0, bool displayCurrentlySelected = true, Action beforeContent = null, Action afterContent = null)
     {
         var s = CalcSizes(memory);
         ImGui.SetNextWindowSize(new Vector2(s.WindowWidth, s.WindowWidth * 0.60f), ImGuiCond.FirstUseEver);
@@ -123,7 +125,7 @@ public class MemoryEditor
             {
                 beforeContent();
             }
-            DrawContents(memory, bytesPerAddress, currentlySelectedAddress, displayCurrentlySelected);
+            DrawContents(memory, wordSize, currentlySelectedAddress, displayCurrentlySelected);
             if (afterContent is not null)
             {
                 afterContent();
@@ -132,7 +134,7 @@ public class MemoryEditor
         ImGui.End();
     }
 
-    public unsafe void DrawContents(ByteAddressableMemory memory, int bytesPerAddress, uint currentlySelectedAddress, bool displayCurrentlySelected)
+    public unsafe void DrawContents(WordAddressableMemory memory, int wordSize, uint currentlySelectedAddress, bool displayCurrentlySelected)
     {
         var s = CalcSizes(memory);
         var style = ImGui.GetStyle();
@@ -163,7 +165,7 @@ public class MemoryEditor
             {
                 var addr = line * Cols;
 
-                ImGui.Text($"{(addr / bytesPerAddress).ToString("X" + s.AddressDigitsCount)}");
+                ImGui.Text($"{(addr).ToString("X" + s.AddressDigitsCount)}");
 
                 for (int n = 0; n < Cols && addr < memory.Data.Length; n++, addr++)
                 {
@@ -171,7 +173,7 @@ public class MemoryEditor
                     bytePosX += (float)(n / 8) * s.SpacingBetweenMidCols;
                     ImGui.SameLine(bytePosX);
 
-                    if (addr >= currentlySelectedAddress && addr < currentlySelectedAddress + bytesPerAddress && displayCurrentlySelected)
+                    if (addr >= currentlySelectedAddress && addr < currentlySelectedAddress + wordSize && displayCurrentlySelected)
                     {
                         var currentPos = ImGui.GetCursorScreenPos();
                         drawList.AddRectFilled(currentPos - new Vector2(s.SpacingBetweenMidCols / 2f, 0), currentPos + new Vector2(s.GlyphWidth * 2 + 1, s.LineHeight), ImGui.GetColorU32(Constants.COLOR_SELECTED.ToVector4()));
