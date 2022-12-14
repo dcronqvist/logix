@@ -1,6 +1,0 @@
-push RESET, 200;
-set EN_SC=0b1;
-
-connect_ledmatrix MATX_MAIN, 10;
-
-continue;
