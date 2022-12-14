@@ -19,6 +19,8 @@ public class Simulation : UndirectedGraph<Vector2i, Edge<Vector2i>>
     public List<Node> SelectedNodes { get; set; }
     public List<Edge<Vector2i>> SelectedEdges { get; set; }
 
+    public int TicksSinceStart { get; set; } = 0;
+
     public Simulation()
     {
         this.Scheduler = new Scheduler();
@@ -29,6 +31,7 @@ public class Simulation : UndirectedGraph<Vector2i, Edge<Vector2i>>
 
     public (int, int) Step()
     {
+        this.TicksSinceStart++;
         return this.Scheduler.Step();
     }
 
@@ -100,6 +103,7 @@ public class Simulation : UndirectedGraph<Vector2i, Edge<Vector2i>>
 
     public void RecalculateConnectionsInScheduler()
     {
+        this.TicksSinceStart = 0;
         this.Scheduler.ClearConnections();
 
         var l = this.Vertices.ToList();

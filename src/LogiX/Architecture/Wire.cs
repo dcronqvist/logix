@@ -35,41 +35,11 @@ public class Wire
 
     public static void Render(IEnumerable<Edge<Vector2i>> edges, ColorF color, Camera2D cam)
     {
-        var pShader = LogiX.ContentManager.GetContentItem<ShaderProgram>("core.shader_program.primitive");
-
-        var pointDegrees = new Dictionary<Vector2i, int>();
         foreach (var edge in edges)
         {
-            var start = edge.Source;
-            var end = edge.Target;
-
-            if (!pointDegrees.ContainsKey(start))
-            {
-                pointDegrees.Add(start, 0);
-            }
-            if (!pointDegrees.ContainsKey(end))
-            {
-                pointDegrees.Add(end, 0);
-            }
-
-            pointDegrees[start]++;
-            pointDegrees[end]++;
-
             RenderSegment(edge, color);
-        }
-
-        foreach (var (point, degree) in pointDegrees)
-        {
-            var worldPos = point.ToVector2(Constants.GRIDSIZE);
-
-            // if (degree > 2)
-            // {
-            PrimitiveRenderer.RenderCircle(worldPos, Constants.WIRE_POINT_RADIUS, 0f, color);
-            // }
-            // else
-            // {
-            //     PrimitiveRenderer.RenderRectangle(new RectangleF(worldPos.X, worldPos.Y, 0, 0).Inflate(Constants.WIRE_WIDTH / 2f), Vector2.Zero, 0, color);
-            // }
+            PrimitiveRenderer.RenderCircle(edge.Source.ToVector2(Constants.GRIDSIZE), Constants.WIRE_POINT_RADIUS, 0f, color);
+            PrimitiveRenderer.RenderCircle(edge.Target.ToVector2(Constants.GRIDSIZE), Constants.WIRE_POINT_RADIUS, 0f, color);
         }
     }
 

@@ -94,7 +94,10 @@ public class ActionSequenceRunner : ActionSequenceBaseVisitor<object>
         }
         // }
 
+        Console.WriteLine($"------------- Execution finished -------------");
         Console.WriteLine($"Execution time: {stopwatch.ElapsedMilliseconds} ms");
+        Console.WriteLine($"Total ticks: {this.Simulation.TicksSinceStart}");
+        Console.WriteLine($"Avg. ticks / second: {((int)(this.Simulation.TicksSinceStart / stopwatch.Elapsed.TotalSeconds)).GetAsHertzString()}");
     }
 
     private void PrintCurrentPins()

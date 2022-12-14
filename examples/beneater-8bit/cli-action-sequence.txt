@@ -3,8 +3,8 @@ push RESET, 50;
 set CLK_MODE=0b1;
 print "Circuit has been reset and clock is enabled!";
 
-print "Waiting for output to equal 0x44...";
-wait 0x44==OUTPUT;
+print "Waiting for output to equal 0xFF...";
+wait 0xFF==OUTPUT;
 print "Done! OUTPUT=${d:OUTPUT}";
 print "Executed ${d:INSTRS} instructions!";
 end;
