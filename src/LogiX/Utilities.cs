@@ -900,6 +900,19 @@ public static class Utilities
         return result;
     }
 
+    public static string GetLegibleString(this char c)
+    {
+        // Only apply to ASCII characters
+        if (c < 32 || c > 126)
+        {
+            return ".";
+        }
+        else
+        {
+            return c.ToString();
+        }
+    }
+
     public static string GetAsHexString(this IEnumerable<LogicValue> values)
     {
         var symbols = (int)Math.Ceiling(values.Count() / 4f);

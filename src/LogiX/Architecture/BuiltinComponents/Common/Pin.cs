@@ -55,7 +55,9 @@ public class Pin : Node<PinData>
     private PinData _data;
     public override INodeDescriptionData GetNodeData()
     {
-        return this._data;
+        PinData copy = (PinData)Utilities.GetCopyOfInstance(this._data);
+        copy.Values = this._data.Values.ToArray();
+        return copy;
     }
 
     public override void Initialize(PinData data)

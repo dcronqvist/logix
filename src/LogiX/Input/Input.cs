@@ -30,6 +30,8 @@ public static class Input
     public static event EventHandler OnEnterPressed;
     public static event EventHandler<Tuple<Keys, ModifierKeys>> OnKeyPressOrRepeat;
     public static event EventHandler<Tuple<Keys, ModifierKeys>> OnKeyRelease;
+    public static event EventHandler<int> OnKeyPressOrRepeatScanCode;
+    public static event EventHandler<int> OnKeyReleaseScanCode;
 
     public static void Init()
     {
@@ -49,6 +51,15 @@ public static class Input
 
         Glfw.SetKeyCallback(DisplayManager.WindowHandle, (Window, key, scanCode, state, mods) =>
         {
+            if ((state.HasFlag(InputState.Press) || state.HasFlag(InputState.Repeat)))
+            {
+                OnKeyPressOrRepeatScanCode?.Invoke(null, scanCode);
+            }
+            else if (state.HasFlag(InputState.Release))
+            {
+                OnKeyReleaseScanCode?.Invoke(null, scanCode);
+            }
+
             if (key == Keys.Backspace)
             {
                 if (state != InputState.Release)

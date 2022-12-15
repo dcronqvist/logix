@@ -157,7 +157,7 @@ public abstract class Node : Observer<IEnumerable<(ValueEvent, int)>>
         ImGui.End();
     }
 
-    protected unsafe void SubmitPropValue(Editor editor, string displayName, NodeDescriptionPropertyAttribute attrib, object value, out object newValue)
+    protected unsafe void SubmitPropValue(Editor editor, string displayName, NodeDescriptionPropertyAttribute attrib, PropertyInfo prop, object value, out object newValue)
     {
         var id = this.ID.ToString();
         newValue = value;
@@ -248,7 +248,7 @@ public abstract class Node : Observer<IEnumerable<(ValueEvent, int)>>
                     ImGui.Text("Waiting for key press...");
                     if (Input.TryGetNextKeyPressed(out var key))
                     {
-                        val = key;
+                        editor.Execute(new CModifyComponentDataProp(this.ID, prop, key), editor);
                         ImGui.CloseCurrentPopup();
                     }
                 });
@@ -262,11 +262,6 @@ public abstract class Node : Observer<IEnumerable<(ValueEvent, int)>>
             else
             {
                 ImGui.Text($"{attrib.DisplayName}: {val.PrettifyKey()}");
-            }
-
-            if (val != k)
-            {
-                newValue = val;
             }
         }
         else if (value is Enum e)
@@ -287,7 +282,7 @@ public abstract class Node : Observer<IEnumerable<(ValueEvent, int)>>
                 for (int j = 0; j < a.Length; j++)
                 {
                     var startEleVal = a.GetValue(j);
-                    this.SubmitPropValue(editor, $"{j}", attrib, startEleVal, out var newEleVal);
+                    this.SubmitPropValue(editor, $"{j}", attrib, prop, startEleVal, out var newEleVal);
                     if (newEleVal != startEleVal)
                     {
                         a.SetValue(newEleVal, j);
@@ -339,7 +334,7 @@ public abstract class Node : Observer<IEnumerable<(ValueEvent, int)>>
 
             var startValue = prop.GetValue(data);
             var displayName = $"{attrib.DisplayName}##{this.ID}";
-            this.SubmitPropValue(editor, displayName, attrib, startValue, out var newValue);
+            this.SubmitPropValue(editor, displayName, attrib, prop, startValue, out var newValue);
             //this.SubmitProp(editor, data, prop);
 
             if (newValue != startValue)

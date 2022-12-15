@@ -33,13 +33,17 @@ public class Wire
         this.Segments = edges.Select(e => (e.Source, e.Target)).ToList();
     }
 
-    public static void Render(IEnumerable<Edge<Vector2i>> edges, ColorF color, Camera2D cam)
+    public static void Render(UndirectedGraph<Vector2i, Edge<Vector2i>> graph, IEnumerable<Edge<Vector2i>> edges, ColorF color, Camera2D cam)
     {
         foreach (var edge in edges)
         {
             RenderSegment(edge, color);
-            PrimitiveRenderer.RenderCircle(edge.Source.ToVector2(Constants.GRIDSIZE), Constants.WIRE_POINT_RADIUS, 0f, color);
-            PrimitiveRenderer.RenderCircle(edge.Target.ToVector2(Constants.GRIDSIZE), Constants.WIRE_POINT_RADIUS, 0f, color);
+
+            if (cam.Zoom > 1f)
+            {
+                PrimitiveRenderer.RenderCircle(edge.Source.ToVector2(Constants.GRIDSIZE), Constants.WIRE_POINT_RADIUS, 0f, color);
+                PrimitiveRenderer.RenderCircle(edge.Target.ToVector2(Constants.GRIDSIZE), Constants.WIRE_POINT_RADIUS, 0f, color);
+            }
         }
     }
 

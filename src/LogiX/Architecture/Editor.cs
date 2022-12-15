@@ -478,7 +478,10 @@ public class Editor : Invoker<Circuit, Editor>
                     ImGui.CloseCurrentPopup();
                 }
             });
-        }, 0, Keys.Unknown)) }).ToArray()));
+        }, 0, Keys.Unknown)) }).Concat(new (string, EditorAction)[] { ("Uncapped", new EditorAction((e) => true, (e) => this.CustomTickRate == -1 && this.CurrentlySelectedTickRate == -1, (e) => {
+            this.CurrentlySelectedTickRate = -1;
+            this.CustomTickRate = -1;
+        }))}).ToArray()));
 
         this.AddMainMenuItem("Simulation", "Tick Once", new EditorAction((e) => this.CurrentlyOpenCircuit is not null, (e) => false, (e) =>
         {

@@ -182,7 +182,7 @@ public class Simulation : UndirectedGraph<Vector2i, Edge<Vector2i>>
             {
                 if (nodes.Length == 0)
                 {
-                    Wire.Render(this.GetEdgesForComponent(comps, comp), Constants.COLOR_UNDEFINED, camera);
+                    Wire.Render(this, this.GetEdgesForComponent(comps, comp), Constants.COLOR_UNDEFINED, camera);
                 }
                 else
                 {
@@ -193,12 +193,12 @@ public class Simulation : UndirectedGraph<Vector2i, Edge<Vector2i>>
 
                     if (obser.Error != ObservableValueError.NONE)
                     {
-                        Wire.Render(edges, Constants.COLOR_ERROR, camera);
+                        Wire.Render(this, edges, Constants.COLOR_ERROR, camera);
                     }
                     else
                     {
                         var values = obser.Read(conf.Bits);
-                        Wire.Render(edges, Utilities.GetValueColor(values), camera);
+                        Wire.Render(this, edges, Utilities.GetValueColor(values), camera);
                     }
                 }
             }

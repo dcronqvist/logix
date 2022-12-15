@@ -17,9 +17,9 @@ public class ActionSequenceRunner : ActionSequenceBaseVisitor<object>
     public Dictionary<string, Pin> Pins { get; private set; }
     public Dictionary<string, PushButton> PushButtons { get; private set; }
 
-    // private Keyboard CurrentKeyboard { get; set; }
+    private Keyboard CurrentKeyboard { get; set; }
     // private TTY CurrentTTY { get; set; }
-    // private LEDMatrix CurrentLEDMatrix { get; set; }
+    private LEDMatrix CurrentLEDMatrix { get; set; }
     private int LedMatrixScale { get; set; }
 
     private bool Terminate { get; set; } = false;
@@ -48,52 +48,52 @@ public class ActionSequenceRunner : ActionSequenceBaseVisitor<object>
 
         stopwatch.Start();
         this.Visit(tree);
-        stopwatch.Stop();
 
         if (!this.Terminate)
         {
-            // if (this.CurrentLEDMatrix is not null)
-            // {
-            //     var ledMatrixData = this.CurrentLEDMatrix.GetDescriptionData() as LEDMatrixData;
-            //     var width = ledMatrixData.Columns;
-            //     var height = ledMatrixData.Rows;
-            //     var scale = this.LedMatrixScale;
-            //     var ledmatrixWindow = new LEDMatrixWindow(this.LedMatrixScale, width * scale, height * scale, this.Simulation, this.CurrentLEDMatrix, this.CurrentKeyboard);
-
-            //     ledmatrixWindow.Run(width * scale, height * scale, $"LogiX - {ledMatrixData.Label}", new string[] { }, width * scale, height * scale);
-            // }
-            // else
-            // {
-            // if (this.CurrentKeyboard is not null)
-            // {
-            //     _ = Task.Run(() =>
-            //     {
-            //         while (true)
-            //         {
-            //             var key = Console.ReadKey(true);
-            //             if (this.CurrentKeyboard is not null)
-            //             {
-            //                 if (key.KeyChar == 0x0D)
-            //                 {
-            //                     // Instead of carriage return, send line feed
-            //                     this.CurrentKeyboard.RegisterChar((char)0x0A);
-            //                 }
-            //                 else
-            //                 {
-            //                     this.CurrentKeyboard.RegisterChar(key.KeyChar);
-            //                 }
-            //             }
-            //         }
-            //     });
-            // }
-
-            while (true)
+            if (this.CurrentLEDMatrix is not null)
             {
-                this.Simulation.Step();
+                var data = this.CurrentLEDMatrix.GetNodeData() as LEDMatrixData;
+                var scale = this.LedMatrixScale;
+                var width = data.Columns * scale;
+                var height = data.Rows * scale;
+                var ledmatrixWindow = new LEDMatrixWindow(this.LedMatrixScale, this.Simulation, this.CurrentLEDMatrix, this.CurrentKeyboard);
+
+                ledmatrixWindow.Run($"LogiX - {data.Label}", new string[] { }, width, height);
+            }
+            else
+            {
+                if (this.CurrentKeyboard is not null)
+                {
+                    _ = Task.Run(() =>
+                    {
+                        while (true)
+                        {
+                            var key = Console.ReadKey(true);
+                            if (this.CurrentKeyboard is not null)
+                            {
+                                if (key.KeyChar == 0x0D)
+                                {
+                                    // Instead of carriage return, send line feed
+                                    this.CurrentKeyboard.RegisterChar((char)0x0A);
+                                }
+                                else
+                                {
+                                    this.CurrentKeyboard.RegisterChar(key.KeyChar);
+                                }
+                            }
+                        }
+                    });
+                }
+
+                while (true)
+                {
+                    this.Simulation.Step();
+                }
             }
         }
-        // }
 
+        stopwatch.Stop();
         Console.WriteLine($"------------- Execution finished -------------");
         Console.WriteLine($"Execution time: {stopwatch.ElapsedMilliseconds} ms");
         Console.WriteLine($"Total ticks: {this.Simulation.TicksSinceStart}");
@@ -353,13 +353,12 @@ public class ActionSequenceRunner : ActionSequenceBaseVisitor<object>
 
     public override object VisitConnectKeyboard([NotNull] ActionSequenceParser.ConnectKeyboardContext context)
     {
-        // var pin = context.PIN_ID().GetText();
-        // var keyboard = this.Simulation.GetComponentsOfType<Keyboard>().Where(k => ((KeyboardData)k.GetDescriptionData()).Label == pin).First();
+        var pin = context.PIN_ID().GetText();
+        var keyboard = this.Simulation.GetNodesOfType<Keyboard>().Where(k => ((KeyboardData)k.GetNodeData()).Label == pin).First();
 
-        // this.CurrentKeyboard = keyboard;
-        // Console.WriteLine("Connected to keyboard " + pin);
-        throw new NotImplementedException("Keyboard not implemented yet");
-        //return base.VisitConnectKeyboard(context);
+        this.CurrentKeyboard = keyboard;
+        Console.WriteLine("Connected to keyboard " + pin);
+        return base.VisitConnectKeyboard(context);
     }
 
     public override object VisitConnectTTY([NotNull] ActionSequenceParser.ConnectTTYContext context)
@@ -410,14 +409,13 @@ public class ActionSequenceRunner : ActionSequenceBaseVisitor<object>
 
     public override object VisitConnectLEDMatrix([NotNull] ActionSequenceParser.ConnectLEDMatrixContext context)
     {
-        // var pin = context.PIN_ID().GetText();
-        // var ledMatrix = this.Simulation.GetComponentsOfType<LEDMatrix>().Where(k => ((LEDMatrixData)k.GetDescriptionData()).Label == pin).First();
+        var pin = context.PIN_ID().GetText();
+        var ledMatrix = this.Simulation.GetNodesOfType<LEDMatrix>().Where(k => ((LEDMatrixData)k.GetNodeData()).Label == pin).First();
 
-        // this.CurrentLEDMatrix = ledMatrix;
-        // this.LedMatrixScale = int.Parse(context.DECIMAL_LITERAL().GetText());
+        this.CurrentLEDMatrix = ledMatrix;
+        this.LedMatrixScale = int.Parse(context.DECIMAL_LITERAL().GetText());
 
-        // Console.WriteLine("Connected to LED matrix " + pin);
-        throw new NotImplementedException("LED matrix not implemented yet");
-        //return base.VisitConnectLEDMatrix(context);
+        Console.WriteLine("Connected to LED matrix " + pin);
+        return base.VisitConnectLEDMatrix(context);
     }
 }
