@@ -25,7 +25,7 @@ public class GateData : INodeDescriptionData
 public interface IGateLogic
 {
     public string Name { get; }
-    public LogicValue GetValueToPush(LogicValue a, LogicValue b);
+    public LogicValue GetValueToPush(LogicValue[] inputs);
 }
 
 public abstract class LogicGate<TData> : BoxNode<TData> where TData : GateData
@@ -39,10 +39,10 @@ public abstract class LogicGate<TData> : BoxNode<TData> where TData : GateData
     {
         for (int i = 0; i < this._data.DataBits; i++)
         {
-            yield return new PinConfig($"X{i}", 1, true, new Vector2i(0, i * 2));
+            yield return new PinConfig($"X{i}", 1, true, new Vector2i(0, i + 1));
         }
 
-        yield return new PinConfig("Y", 1, false, new Vector2i(3, this._data.DataBits - 1));
+        yield return new PinConfig("Y", 1, false, new Vector2i(3, this.GetSize().Y / 2));
     }
 
     protected override IEnumerable<(ObservableValue, LogicValue[])> Prepare(PinCollection pins)
@@ -52,16 +52,10 @@ public abstract class LogicGate<TData> : BoxNode<TData> where TData : GateData
 
     public override IEnumerable<(ObservableValue, LogicValue[], int)> Evaluate(PinCollection pins)
     {
-        var pin1 = pins.Get("X0");
         var y = pins.Get("Y");
-        LogicValue currVal = pin1.Read(1).First();
-        for (int i = 1; i < this._data.DataBits; i++)
-        {
-            var p = pins.Get($"X{i}");
-            currVal = this.Logic.GetValueToPush(currVal, p.Read(1).First());
-        }
+        var values = Enumerable.Range(0, this._data.DataBits).Select(i => pins.Get($"X{i}").Read(1).First()).ToArray();
 
-        yield return (y, currVal.Multiple(1), 1);
+        yield return (y, this.Logic.GetValueToPush(values).Multiple(1), 1);
     }
 
     public override INodeDescriptionData GetNodeData()
@@ -72,7 +66,7 @@ public abstract class LogicGate<TData> : BoxNode<TData> where TData : GateData
     public override Vector2i GetSize()
     {
         var width = 3;
-        var height = this._data.DataBits * 2 - 2;
+        var height = this._data.DataBits + 1;
         return new Vector2i(width, height);
     }
 
@@ -95,13 +89,13 @@ public class ANDGateLogic : IGateLogic
 {
     public string Name => "AND";
 
-    public LogicValue GetValueToPush(LogicValue a, LogicValue b)
+    public LogicValue GetValueToPush(LogicValue[] inputs)
     {
-        if (a == LogicValue.Z || b == LogicValue.Z)
+        if (inputs.Any(x => x == LogicValue.Z))
         {
             return LogicValue.Z;
         }
-        else if (a == LogicValue.HIGH && b == LogicValue.HIGH)
+        else if (inputs.All(x => x == LogicValue.HIGH))
         {
             return LogicValue.HIGH;
         }
@@ -125,13 +119,13 @@ public class ORGateLogic : IGateLogic
 {
     public string Name => "OR";
 
-    public LogicValue GetValueToPush(LogicValue a, LogicValue b)
+    public LogicValue GetValueToPush(LogicValue[] inputs)
     {
-        if (a == LogicValue.HIGH || b == LogicValue.HIGH)
+        if (inputs.Any(x => x == LogicValue.HIGH))
         {
             return LogicValue.HIGH;
         }
-        else if (a == LogicValue.Z || b == LogicValue.Z)
+        else if (inputs.Any(x => x == LogicValue.Z))
         {
             return LogicValue.Z;
         }
@@ -155,19 +149,15 @@ public class XORGateLogic : IGateLogic
 {
     public string Name => "XOR";
 
-    public LogicValue GetValueToPush(LogicValue a, LogicValue b)
+    public LogicValue GetValueToPush(LogicValue[] inputs)
     {
-        if (a == LogicValue.Z || b == LogicValue.Z)
+        if (inputs.Count(x => x == LogicValue.HIGH) % 2 == 1)
+        {
+            return LogicValue.HIGH;
+        }
+        else if (inputs.Any(x => x == LogicValue.Z))
         {
             return LogicValue.Z;
-        }
-        else if (a == LogicValue.HIGH && b == LogicValue.LOW)
-        {
-            return LogicValue.HIGH;
-        }
-        else if (a == LogicValue.LOW && b == LogicValue.HIGH)
-        {
-            return LogicValue.HIGH;
         }
         else
         {
@@ -189,13 +179,13 @@ public class NORGateLogic : IGateLogic
 {
     public string Name => "NOR";
 
-    public LogicValue GetValueToPush(LogicValue a, LogicValue b)
+    public LogicValue GetValueToPush(LogicValue[] inputs)
     {
-        if (a == LogicValue.HIGH || b == LogicValue.HIGH)
+        if (inputs.Any(x => x == LogicValue.HIGH))
         {
             return LogicValue.LOW;
         }
-        else if (a == LogicValue.Z || b == LogicValue.Z)
+        else if (inputs.Any(x => x == LogicValue.Z))
         {
             return LogicValue.Z;
         }
@@ -219,13 +209,13 @@ public class NANDGateLogic : IGateLogic
 {
     public string Name => "NAND";
 
-    public LogicValue GetValueToPush(LogicValue a, LogicValue b)
+    public LogicValue GetValueToPush(LogicValue[] inputs)
     {
-        if (a == LogicValue.Z || b == LogicValue.Z)
+        if (inputs.Any(x => x == LogicValue.Z))
         {
             return LogicValue.Z;
         }
-        else if (a == LogicValue.HIGH && b == LogicValue.HIGH)
+        else if (inputs.All(x => x == LogicValue.HIGH))
         {
             return LogicValue.LOW;
         }
@@ -249,19 +239,15 @@ public class XNORGateLogic : IGateLogic
 {
     public string Name => "XNOR";
 
-    public LogicValue GetValueToPush(LogicValue a, LogicValue b)
+    public LogicValue GetValueToPush(LogicValue[] inputs)
     {
-        if (a == LogicValue.Z || b == LogicValue.Z)
+        if (inputs.Count(x => x == LogicValue.HIGH) % 2 == 1)
+        {
+            return LogicValue.LOW;
+        }
+        else if (inputs.Any(x => x == LogicValue.Z))
         {
             return LogicValue.Z;
-        }
-        else if (a == LogicValue.HIGH && b == LogicValue.LOW)
-        {
-            return LogicValue.LOW;
-        }
-        else if (a == LogicValue.LOW && b == LogicValue.HIGH)
-        {
-            return LogicValue.LOW;
         }
         else
         {
