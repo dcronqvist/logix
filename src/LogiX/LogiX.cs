@@ -24,9 +24,17 @@ public class LogiX : Game
     public Editor Editor { get; private set; }
     private string _loadingUnderstring = "";
 
-    public override void Initialize(string[] args)
+    public override Vector2i Initialize(string[] args)
     {
         Settings.LoadSettings();
+        var settingsWindowSize = Settings.GetSetting<Vector2i>(Settings.WINDOW_SIZE);
+
+        DisplayManager.OnFramebufferResize += (sender, e) =>
+        {
+            Settings.SetSetting(Settings.WINDOW_SIZE, new Vector2i((int)e.X, (int)e.Y));
+        };
+
+        return settingsWindowSize;
     }
 
     public override void LoadContent(string[] args)

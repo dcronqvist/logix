@@ -2,24 +2,25 @@ using System.Threading;
 using System;
 using LogiX.Graphics;
 using LogiX.GLFW;
+using LogiX.Architecture;
 
 namespace LogiX;
 
 public abstract class Game
 {
-    public abstract void Initialize(string[] args);
+    public abstract Vector2i Initialize(string[] args);
     public abstract void LoadContent(string[] args);
     public abstract void Update();
     public abstract void Render();
     public abstract void Unload();
 
-    public void Run(int winWidth, int winHeight, string winTitle, string[] args, int minWidth = 1280, int minHeight = 720)
+    public void Run(string winTitle, string[] args, int minWidth = 1280, int minHeight = 720)
     {
         bool macMove = false;
 
-        Initialize(args);
+        var initialWindowSize = Initialize(args);
 
-        DisplayManager.InitWindow(winWidth, winHeight, winTitle, minWidth, minHeight);
+        DisplayManager.InitWindow(initialWindowSize.X, initialWindowSize.Y, winTitle, minWidth, minHeight);
 
         LoadContent(args);
 
@@ -41,8 +42,8 @@ public abstract class Game
 
             if (!macMove)
             {
-                Glfw.SetWindowSize(DisplayManager.WindowHandle, winWidth + 1, winHeight + 1);
-                Glfw.SetWindowSize(DisplayManager.WindowHandle, winWidth, winHeight);
+                Glfw.SetWindowSize(DisplayManager.WindowHandle, initialWindowSize.X + 1, initialWindowSize.Y + 1);
+                Glfw.SetWindowSize(DisplayManager.WindowHandle, initialWindowSize.X, initialWindowSize.Y);
                 macMove = true;
             }
 

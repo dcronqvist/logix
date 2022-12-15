@@ -174,6 +174,21 @@ public class Editor : Invoker<Circuit, Editor>
         }
         Settings.SetSetting(Settings.RECENT_OPEN_PROJECTS, keepHistory);
 
+        var uiScales = new (string, int)[] {
+            ("Small", 16),
+            ("Medium", 20),
+            ("Large", 24)
+        };
+        var settingsUiScale = Settings.GetSetting<string>(Settings.UI_SCALE);
+
+        if (settingsUiScale is null || !uiScales.Any(x => x.Item1 == settingsUiScale))
+        {
+            settingsUiScale = "Medium";
+            Settings.SetSetting(Settings.UI_SCALE, settingsUiScale);
+        }
+
+        this._guiFontSize = uiScales.First(x => x.Item1 == settingsUiScale).Item2;
+
         #endregion
 
         #region CREATE SIMULATION THREAD
@@ -512,14 +527,9 @@ Under *projects*, you can see your circuits, and right clicking them in the side
             this.ShowMousePosition = !this.ShowMousePosition;
         }, 0, Keys.Unknown));
 
-        var uiScales = new (string, int)[] {
-            ("Small", 16),
-            ("Medium", 20),
-            ("Large", 24)
-        };
-
         this.AddMainMenuItem("View", "UI Scale", new NestedEditorAction((e) => true, uiScales.Select(s => (s.Item1, new EditorAction((e) => true, (e) => this._guiFontSize == s.Item2, (e) =>
         {
+            _ = Settings.SetSettingAsync(Settings.UI_SCALE, s.Item1);
             this._guiFontSize = s.Item2;
         }, 0, Keys.Unknown))).ToArray()));
 

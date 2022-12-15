@@ -1,8 +1,10 @@
 using System.Collections.Generic;
 using System.IO;
+using System.Numerics;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Threading.Tasks;
+using LogiX.Architecture;
 
 namespace LogiX;
 
@@ -23,6 +25,8 @@ public static class Settings
     // SETTING CONSTANTS
     public const string LAST_OPEN_PROJECT = "lastOpenProject";
     public const string RECENT_OPEN_PROJECTS = "recentOpenProjects";
+    public const string UI_SCALE = "uiScale";
+    public const string WINDOW_SIZE = "windowSize";
 
     private static string _settingsFileLocation = "./";
     private static string _settingsFile = "settings.json";
@@ -39,7 +43,9 @@ public static class Settings
     {
         return new List<Setting>() {
             new Setting() { Name = LAST_OPEN_PROJECT, Value = "" },
-            new Setting() { Name = RECENT_OPEN_PROJECTS, Value = new List<string>() }
+            new Setting() { Name = RECENT_OPEN_PROJECTS, Value = new List<string>() },
+            new Setting() { Name = UI_SCALE, Value = "Medium" },
+            new Setting() { Name = WINDOW_SIZE, Value = new Vector2i(1280, 720) }
         };
     }
 
