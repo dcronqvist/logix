@@ -2,7 +2,7 @@
 
 Simulator for logic gates and circuits.
 
-Below is an example gif of the [8-bit computer designed and built by Ben Eater](https://www.youtube.com/watch?v=HyznrdDSSGM&list=PLowKtXNTBypGqImE405J2565dvjafglHU), implemented in LogiX (exists as an [example project](/examples/beneater-8bit/)). In the gif, a very simple program is loaded into memory that is incrementing a counter and displaying the result by putting it in the `OUTPUT` register.
+Below is an example gif of the [8-bit computer designed and built by Ben Eater](https://www.youtube.com/watch?v=HyznrdDSSGM&list=PLowKtXNTBypGqImE405J2565dvjafglHU), implemented in LogiX (exists as an [example project](/examples/beneater-8bit/)). In the gif, a very simple program is loaded into memory that is incrementing a counter, until it reaches the value `0xFF`, and then it stops, as well as displaying the result by putting it in the `OUTPUT` register.
 
 ![Showcasing an example implementation of the Ben Eater 8-bit computer](media/ben_eater_showcase.gif)
 
