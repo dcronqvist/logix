@@ -49,6 +49,8 @@ public abstract class Node : Observer<IEnumerable<(ValueEvent, int)>>
 
     public virtual void Register(Scheduler scheduler) { }
 
+    public virtual void Unregister(Scheduler scheduler) { }
+
     public virtual void Render(PinCollection pins, Camera2D camera)
     {
         var pos = this.Position;

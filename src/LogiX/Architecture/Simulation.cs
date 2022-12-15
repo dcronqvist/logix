@@ -105,6 +105,7 @@ public class Simulation : UndirectedGraph<Vector2i, Edge<Vector2i>>
 
     public void RemoveNode(Node node)
     {
+        node.Unregister(this.Scheduler);
         this.Nodes.Remove(node);
         if (this.SelectedNodes.Contains(node))
         {
@@ -112,7 +113,6 @@ public class Simulation : UndirectedGraph<Vector2i, Edge<Vector2i>>
         }
         this.Scheduler.RemoveNode(node);
         RecalculateConnectionsInScheduler();
-
     }
 
     public IEnumerable<T> GetNodesOfType<T>() where T : Node

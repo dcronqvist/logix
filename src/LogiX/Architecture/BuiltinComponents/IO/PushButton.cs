@@ -66,6 +66,12 @@ public class PushButton : Node<PushButtonData>
         Input.OnKeyRelease += SetKeyUp;
     }
 
+    public override void Unregister(Scheduler scheduler)
+    {
+        Input.OnKeyPressOrRepeat -= SetKeyDown;
+        Input.OnKeyRelease -= SetKeyUp;
+    }
+
     public override IEnumerable<(ObservableValue, LogicValue[], int)> Evaluate(PinCollection pins)
     {
         var o = pins.Get("OUT");

@@ -18,7 +18,7 @@ public class ActionSequenceRunner : ActionSequenceBaseVisitor<object>
     public Dictionary<string, PushButton> PushButtons { get; private set; }
 
     private Keyboard CurrentKeyboard { get; set; }
-    // private TTY CurrentTTY { get; set; }
+    private TTY CurrentTTY { get; set; }
     private LEDMatrix CurrentLEDMatrix { get; set; }
     private int LedMatrixScale { get; set; }
 
@@ -363,32 +363,31 @@ public class ActionSequenceRunner : ActionSequenceBaseVisitor<object>
 
     public override object VisitConnectTTY([NotNull] ActionSequenceParser.ConnectTTYContext context)
     {
-        // var pin = context.PIN_ID().GetText();
-        // var tty = this.Simulation.GetComponentsOfType<TTY>().Where(k => ((TTYData)k.GetDescriptionData()).Label == pin).First();
+        var pin = context.PIN_ID().GetText();
+        var tty = this.Simulation.GetNodesOfType<TTY>().Where(k => ((TTYData)k.GetNodeData()).Label == pin).First();
 
-        // this.CurrentTTY = tty;
+        this.CurrentTTY = tty;
 
-        // this.CurrentTTY.OnCharReceived += (sender, c) =>
-        // {
-        //     if (c == '\f')
-        //     {
-        //         Console.Clear();
-        //     }
-        //     else if (c == '\b')
-        //     {
-        //         Console.SetCursorPosition(Math.Max(0, Console.CursorLeft - 1), Console.CursorTop);
-        //         Console.Write(' ');
-        //         Console.SetCursorPosition(Math.Max(0, Console.CursorLeft - 1), Console.CursorTop);
-        //     }
-        //     else
-        //     {
-        //         Console.Write(c);
-        //     }
-        // };
+        this.CurrentTTY.OnCharReceived += (sender, c) =>
+        {
+            if (c == '\f')
+            {
+                Console.Clear();
+            }
+            else if (c == '\b')
+            {
+                Console.SetCursorPosition(Math.Max(0, Console.CursorLeft - 1), Console.CursorTop);
+                Console.Write(' ');
+                Console.SetCursorPosition(Math.Max(0, Console.CursorLeft - 1), Console.CursorTop);
+            }
+            else
+            {
+                Console.Write(c);
+            }
+        };
 
-        // Console.WriteLine("Connected to TTY " + pin);
-        throw new NotImplementedException("TTY not implemented yet");
-        //return base.VisitConnectTTY(context);
+        Console.WriteLine("Connected to TTY " + pin);
+        return base.VisitConnectTTY(context);
     }
 
     public override object VisitMountDisk([NotNull] ActionSequenceParser.MountDiskContext context)

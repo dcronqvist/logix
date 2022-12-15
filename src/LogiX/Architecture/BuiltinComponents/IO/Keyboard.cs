@@ -23,7 +23,7 @@ public enum KeyboardBehaviour : int
 
 public class KeyboardData : INodeDescriptionData
 {
-    [NodeDescriptionProperty("Label", StringHint = "e.g. MAIN_KBD", StringMaxLength = 16, StringRegexFilter = "^[a-zA-Z0-9_]*$")]
+    [NodeDescriptionProperty("Label", StringHint = "e.g. KBD_MAIN", StringMaxLength = 16, StringRegexFilter = "^[a-zA-Z0-9_]*$")]
     public string Label { get; set; }
 
     [NodeDescriptionProperty("Max Buffer Size", IntMinValue = 1, IntMaxValue = 256, HelpTooltip = "The maximum number of keys that can be stored in the buffer at once.")]
