@@ -875,6 +875,31 @@ public static class Utilities
         return result;
     }
 
+    public static IEnumerable<T> Slice<T>(this IEnumerable<T> source, int index, int count)
+    {
+        return source.Skip(index).Take(count);
+    }
+
+    public static IEnumerable<LogicValue> PadLSB(this IEnumerable<LogicValue> source, int count)
+    {
+        var result = source.ToList();
+        while (result.Count < count)
+        {
+            result.Add(LogicValue.Z);
+        }
+        return result;
+    }
+
+    public static IEnumerable<LogicValue> PadMSB(this IEnumerable<LogicValue> source, int count)
+    {
+        var result = source.ToList();
+        while (result.Count < count)
+        {
+            result.Insert(0, LogicValue.Z);
+        }
+        return result;
+    }
+
     public static string GetAsHexString(this IEnumerable<LogicValue> values)
     {
         var symbols = (int)Math.Ceiling(values.Count() / 4f);

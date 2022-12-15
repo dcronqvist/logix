@@ -52,6 +52,11 @@ public class NodeDescriptionPropertyAttribute : Attribute
         // Get property value
         var value = prop.GetValue(data);
 
+        if (value is null)
+        {
+            return false;
+        }
+
         // Check if property is valid
         if (value is string str)
         {
@@ -63,6 +68,10 @@ public class NodeDescriptionPropertyAttribute : Attribute
         else if (value is int i)
         {
             return i >= attrib.IntMinValue && i <= attrib.IntMaxValue;
+        }
+        else if (value is Array a)
+        {
+            return a.Length >= attrib.ArrayMinLength && a.Length <= attrib.ArrayMaxLength;
         }
 
         return true;

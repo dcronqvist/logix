@@ -48,12 +48,12 @@ public class StateHoveringWireSegment : State<Editor, int>
                             arg.Execute(disconnect, arg);
                             ImGui.CloseCurrentPopup();
                         }
-                        // if (ImGui.MenuItem("Delete Wire"))
-                        // {
-                        //     var deleteSegments = wire.Segments.Select(w => new CDeleteWireSegment(w));
-                        //     arg.Execute(new CMulti("Deleted wire", deleteSegments.ToArray()), arg);
-                        //     ImGui.CloseCurrentPopup();
-                        // }
+                        if (ImGui.MenuItem("Delete Wire"))
+                        {
+                            var deleteSegments = s.GetWireSegmentsForComponent(s.GetWireComponentForWireSegment(edge)).Select(w => new CDeleteWireSegment((w.Source, w.Target)));
+                            arg.Execute(new CMulti("Deleted wire", deleteSegments.ToArray()), arg);
+                            ImGui.CloseCurrentPopup();
+                        }
                     });
                 }
             }

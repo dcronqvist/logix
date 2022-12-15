@@ -78,6 +78,24 @@ public class Simulation : UndirectedGraph<Vector2i, Edge<Vector2i>>
         return comps[pos];
     }
 
+    public int GetWireComponentForWireSegment(Edge<Vector2i> edge)
+    {
+        var comps = this.GetConnectedComponents();
+        return comps[edge.Source];
+    }
+
+    public int GetWireComponentForWireSegment((Vector2i, Vector2i) edge)
+    {
+        var comps = this.GetConnectedComponents();
+        return comps[edge.Item1];
+    }
+
+    public List<Edge<Vector2i>> GetWireSegmentsForComponent(int comp)
+    {
+        var comps = this.GetConnectedComponents();
+        return this.Edges.Where(x => comps[x.Source] == comp).ToList();
+    }
+
     public void AddNode(Node node)
     {
         this.Nodes.Add(node);

@@ -50,7 +50,13 @@ public class Constant : BoxNode<ConstantData>
 
     public override Vector2i GetSize()
     {
-        return new Vector2i(2 * (int)Math.Ceiling(this._data.DataBits / 4f), 2);
+        var font = Utilities.GetFont("core.font.default", 8);
+        var text = this.Text;
+        var scale = this.TextScale;
+
+        var textWidth = (font.MeasureString(text, scale).X);
+
+        return new Vector2i(Math.Max((int)(textWidth.CeilToMultipleOf(Constants.GRIDSIZE) / Constants.GRIDSIZE), 2), 2);
     }
 
     public override void Initialize(ConstantData data)

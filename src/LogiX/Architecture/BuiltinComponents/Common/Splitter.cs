@@ -53,7 +53,7 @@ public class Splitter : BoxNode<SplitterData>
             var name = w == 1 ? $"in{cw}" : $"in{cw}-{cw + w - 1}";
 
             var ov = pins.Get(name);
-            var vs = ov.Read(w);
+            var vs = ov.Read(w).Reverse().ToArray();
             for (int j = 0; j < w; j++)
             {
                 inputValues[cw + j] = vs[j];
@@ -61,17 +61,15 @@ public class Splitter : BoxNode<SplitterData>
             cw += w;
         }
 
+        inputValues = inputValues.Reverse().ToArray();
+
         cw = 0;
         for (int i = 0; i < this._data.OutputWidths.Length; i++)
         {
             var w = this._data.OutputWidths[i];
             var name = w == 1 ? $"out{cw}" : $"out{cw}-{cw + w - 1}";
             var ov = pins.Get(name);
-            var vs = new LogicValue[w];
-            for (int j = 0; j < w; j++)
-            {
-                vs[j] = cw + j < inputValues.Length ? inputValues[cw + j] : LogicValue.Z;
-            }
+            var vs = inputValues.Slice(inputValues.Length - cw - w, w).PadMSB(w).ToArray();
             yield return (ov, vs, 1);
             cw += w;
         }
