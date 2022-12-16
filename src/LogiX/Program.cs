@@ -24,7 +24,7 @@ public class Program
         }
         else
         {
-            var minimal = new MinimalLogiX(args);
+            var minimal = new MinimalLogiX(Console.Out, args);
             minimal.Run();
         }
     }

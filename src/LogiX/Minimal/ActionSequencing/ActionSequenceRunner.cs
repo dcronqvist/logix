@@ -31,8 +31,10 @@ public class ActionSequenceRunner : ActionSequenceBaseVisitor<object>
         this.PathToActionSequenceFile = pathToActionSequenceFile;
     }
 
-    public void Run()
+    private TextWriter _output;
+    public void Run(TextWriter output)
     {
+        this._output = output;
         var stopwatch = new Stopwatch();
 
         this.Simulation = Simulation.FromCircuit(this.Circuit);
@@ -94,17 +96,17 @@ public class ActionSequenceRunner : ActionSequenceBaseVisitor<object>
         }
 
         stopwatch.Stop();
-        Console.WriteLine($"------------- Execution finished -------------");
-        Console.WriteLine($"Execution time: {stopwatch.ElapsedMilliseconds} ms");
-        Console.WriteLine($"Total ticks: {this.Simulation.TicksSinceStart}");
-        Console.WriteLine($"Avg. ticks / second: {((int)(this.Simulation.TicksSinceStart / stopwatch.Elapsed.TotalSeconds)).GetAsHertzString()}");
+        _output.WriteLine($"------------- Execution finished -------------");
+        _output.WriteLine($"Execution time: {stopwatch.ElapsedMilliseconds} ms");
+        _output.WriteLine($"Total ticks: {this.Simulation.TicksSinceStart}");
+        _output.WriteLine($"Avg. ticks / second: {((int)(this.Simulation.TicksSinceStart / stopwatch.Elapsed.TotalSeconds)).GetAsHertzString()}");
     }
 
     private void PrintCurrentPins()
     {
         foreach (var pin in this.Pins)
         {
-            Console.WriteLine($"{pin.Key}: 0b{(pin.Value.GetNodeData() as PinData).Values.Select(v => v == LogicValue.Z ? "Z" : (v == LogicValue.HIGH ? "1" : "0")).Aggregate((a, b) => a + b)}");
+            this._output.WriteLine($"{pin.Key}: 0b{(pin.Value.GetNodeData() as PinData).Values.Select(v => v == LogicValue.Z ? "Z" : (v == LogicValue.HIGH ? "1" : "0")).Aggregate((a, b) => a + b)}");
         }
     }
 
@@ -347,7 +349,7 @@ public class ActionSequenceRunner : ActionSequenceBaseVisitor<object>
             }
         }
 
-        Console.WriteLine(sb.ToString());
+        this._output.WriteLine(sb.ToString());
         return base.VisitPrint(context);
     }
 
@@ -357,7 +359,7 @@ public class ActionSequenceRunner : ActionSequenceBaseVisitor<object>
         var keyboard = this.Simulation.GetNodesOfType<Keyboard>().Where(k => ((KeyboardData)k.GetNodeData()).Label == pin).First();
 
         this.CurrentKeyboard = keyboard;
-        Console.WriteLine("Connected to keyboard " + pin);
+        this._output.WriteLine("Connected to keyboard " + pin);
         return base.VisitConnectKeyboard(context);
     }
 
@@ -386,7 +388,7 @@ public class ActionSequenceRunner : ActionSequenceBaseVisitor<object>
             }
         };
 
-        Console.WriteLine("Connected to TTY " + pin);
+        this._output.WriteLine("Connected to TTY " + pin);
         return base.VisitConnectTTY(context);
     }
 
@@ -414,7 +416,7 @@ public class ActionSequenceRunner : ActionSequenceBaseVisitor<object>
         this.CurrentLEDMatrix = ledMatrix;
         this.LedMatrixScale = int.Parse(context.DECIMAL_LITERAL().GetText());
 
-        Console.WriteLine("Connected to LED matrix " + pin);
+        this._output.WriteLine("Connected to LED matrix " + pin);
         return base.VisitConnectLEDMatrix(context);
     }
 }

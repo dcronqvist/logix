@@ -13,9 +13,12 @@ public class TestCases
     public void EmptyProjectPrintTest()
     {
         var basePath = Path.GetFullPath(@"../../../Minimal/test-projects");
-        var minimal = new MinimalLogiX(Utilities.Arrayify("simulate", $"{basePath}/empty.lxprojj", "main", "-a", $"{basePath}/empty.txt"));
+        var writer = new StringWriter();
+        var minimal = new MinimalLogiX(writer, Utilities.Arrayify("simulate", $"{basePath}/empty.lxprojj", "main", "-a", $"{basePath}/empty.txt"));
 
-        var output = minimal.RunAndGetOutput();
+        minimal.Run(false);
+
+        var output = writer.ToString();
         Assert.Contains("This is a test message!", output);
     }
 
@@ -23,9 +26,12 @@ public class TestCases
     public void TestBenEaterExample()
     {
         var basePath = Path.GetFullPath(@"../../../../../examples/beneater-8bit");
-        var minimal = new MinimalLogiX(Utilities.Arrayify("simulate", $"{basePath}/beneater.lxprojj", "main", "-a", $"{basePath}/run.txt"));
+        var writer = new StringWriter();
+        var minimal = new MinimalLogiX(writer, Utilities.Arrayify("simulate", $"{basePath}/beneater.lxprojj", "main", "-a", $"{basePath}/run.txt"));
 
-        var output = minimal.RunAndGetOutput();
+        minimal.Run(false);
+
+        var output = writer.ToString();
         Assert.Contains(@"Circuit has been reset and clock is enabled!
 Waiting for processor to HALT
 Done! OUTPUT=0xFF

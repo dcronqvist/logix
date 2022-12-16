@@ -15,18 +15,12 @@ public class MinimalLogiX
 {
     public ContentManager<ContentMeta> ContentManager { get; private set; }
     public string[] Args { get; private set; }
+    public TextWriter ConsoleOut { get; private set; }
 
-    public MinimalLogiX(string[] args)
+    public MinimalLogiX(TextWriter output, string[] args)
     {
         this.Args = args;
-    }
-
-    public string RunAndGetOutput()
-    {
-        var output = new StringWriter();
-        Console.SetOut(output);
-        this.Run(false);
-        return output.ToString();
+        this.ConsoleOut = output;
     }
 
     public void Run(bool initContent = true)
@@ -101,14 +95,14 @@ public class MinimalLogiX
                 if (validator.TryValidatePins(out var errors))
                 {
                     var actionRunner = new ActionSequenceRunner(circuit, text, Path.GetDirectoryName(actionSequencePath));
-                    actionRunner.Run();
+                    actionRunner.Run(this.ConsoleOut);
                 }
                 else
                 {
                     // Some errors.
                     foreach (var error in errors)
                     {
-                        Console.WriteLine(error);
+                        this.ConsoleOut.WriteLine(error);
                     }
                 }
             }
