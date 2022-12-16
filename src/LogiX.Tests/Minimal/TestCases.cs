@@ -12,7 +12,7 @@ public class TestCases
     [Fact]
     public void EmptyProjectPrintTest()
     {
-        var basePath = Path.GetFullPath(@"../../../Minimal/test-projects");
+        var basePath = Path.GetFullPath($"{Utilities.GetRootDir()}/src/LogiX.Tests/Minimal/test-projects");
         var writer = new StringWriter();
         var minimal = new MinimalLogiX(writer, Utilities.Arrayify("simulate", $"{basePath}/empty.lxprojj", "main", "-a", $"{basePath}/empty.txt"));
 
@@ -25,7 +25,7 @@ public class TestCases
     [Fact]
     public void TestBenEaterExample()
     {
-        var basePath = Path.GetFullPath(@"../../../../../examples/beneater-8bit");
+        var basePath = Path.GetFullPath($"{Utilities.GetRootDir()}/examples/beneater-8bit");
         var writer = new StringWriter();
         var minimal = new MinimalLogiX(writer, Utilities.Arrayify("simulate", $"{basePath}/beneater.lxprojj", "main", "-a", $"{basePath}/run.txt"));
 

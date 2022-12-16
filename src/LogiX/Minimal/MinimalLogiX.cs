@@ -122,7 +122,7 @@ public class MinimalLogiX
 
         var coreSource = new DirectoryContentSource(Path.GetFullPath($"{basePath}/core"));
         var validator = new ContentValidator();
-        var collection = IContentCollectionProvider.FromListOfSources(coreSource); //new DirectoryCollectionProvider(@"C:\Users\RichieZ\repos\logix\assets\core", factory);
+        var collection = IContentCollectionProvider.FromListOfSources(coreSource);
         var loader = new MinimalContentLoader();
 
         var config = new ContentManagerConfiguration<ContentMeta>(validator, collection, loader);

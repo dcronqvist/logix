@@ -101,6 +101,17 @@ public static class Utilities
 
         return data.Values;
     }
+
+    public static string GetRootDir()
+    {
+        var s = Environment.GetEnvironmentVariable("LOGIX_ROOT_DIR");
+        if (s is null)
+        {
+            throw new Exception("LOGIX_ROOT_DIR environment variable not set.");
+        }
+
+        return s;
+    }
 }
 
 public class TestsFixture : IDisposable
@@ -110,12 +121,12 @@ public class TestsFixture : IDisposable
     public TestsFixture()
     {
         // Do "global" initialization here; Only called once.
-        var basePath = @"../../../../../assets";
+        var basePath = $"{Utilities.GetRootDir()}/assets";
         var corePath = Path.GetFullPath($"{basePath}/core");
 
         var coreSource = new DirectoryContentSource(corePath);
         var validator = new ContentValidator();
-        var collection = IContentCollectionProvider.FromListOfSources(coreSource); //new DirectoryCollectionProvider(@"C:\Users\RichieZ\repos\logix\assets\core", factory);
+        var collection = IContentCollectionProvider.FromListOfSources(coreSource);
         var loader = new MinimalContentLoader();
 
         var config = new ContentManagerConfiguration<ContentMeta>(validator, collection, loader);
