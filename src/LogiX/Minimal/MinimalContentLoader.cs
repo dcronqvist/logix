@@ -21,3 +21,19 @@ public class MinimalContentLoader : IContentLoader<ContentMeta>
         yield return new NormalLoadingStage(_loaders, false, ".dll", ".font", ".md");
     }
 }
+
+public class MinimalTestsContentLoader : IContentLoader<ContentMeta>
+{
+    private Dictionary<string, IContentItemLoader> _loaders = new Dictionary<string, IContentItemLoader>();
+
+    public MinimalTestsContentLoader()
+    {
+        _loaders.Add(".font", new FontLoader());
+    }
+
+    public IEnumerable<IContentLoadingStage> GetLoadingStages()
+    {
+        yield return new CoreLoadingStage(_loaders, false, ".font");
+        yield return new NormalLoadingStage(_loaders, false, ".font");
+    }
+}

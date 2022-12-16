@@ -127,7 +127,7 @@ public class TestsFixture : IDisposable
         var coreSource = new DirectoryContentSource(corePath);
         var validator = new ContentValidator();
         var collection = IContentCollectionProvider.FromListOfSources(coreSource);
-        var loader = new MinimalContentLoader();
+        var loader = new MinimalTestsContentLoader();
 
         var config = new ContentManagerConfiguration<ContentMeta>(validator, collection, loader);
         ContentManager = new ContentManager<ContentMeta>(config);
