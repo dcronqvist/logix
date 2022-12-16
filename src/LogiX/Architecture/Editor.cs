@@ -1152,8 +1152,11 @@ Under *projects*, you can see your circuits, and right clicking them in the side
     public void SubmitComponentsWindow(Vector2 mainMenuBarSize, Vector2 underMenuBarSize)
     {
         ImGui.SetNextWindowPos(new Vector2(0, mainMenuBarSize.Y));
-        ImGui.SetNextWindowSize(new Vector2(12 * _guiFontSize, DisplayManager.GetWindowSizeInPixels().Y - mainMenuBarSize.Y - underMenuBarSize.Y));
-        if (ImGui.Begin("Components", ImGuiWindowFlags.NoCollapse | ImGuiWindowFlags.NoTitleBar | ImGuiWindowFlags.NoResize | ImGuiWindowFlags.NoMove | ImGuiWindowFlags.AlwaysVerticalScrollbar))
+        //ImGui.SetNextWindowSize(new Vector2(12 * _guiFontSize, DisplayManager.GetWindowSizeInPixels().Y - mainMenuBarSize.Y - underMenuBarSize.Y), ImGuiCond.Appearing);
+        var minSize = new Vector2(12 * _guiFontSize, DisplayManager.GetWindowSizeInPixels().Y - mainMenuBarSize.Y - underMenuBarSize.Y);
+        var maxDragRight = 300f;
+        ImGui.SetNextWindowSizeConstraints(minSize, minSize + new Vector2(maxDragRight, 0));
+        if (ImGui.Begin("Components", ImGuiWindowFlags.NoCollapse | ImGuiWindowFlags.NoTitleBar | ImGuiWindowFlags.NoMove | ImGuiWindowFlags.AlwaysVerticalScrollbar))
         {
             if (_projectsOpen)
             {
