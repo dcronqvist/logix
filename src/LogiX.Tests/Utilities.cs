@@ -46,12 +46,12 @@ public static class Utilities
         return circuit;
     }
 
-    public static Circuit Connect(this Circuit circuit, NodeDescription node1, string pin1, NodeDescription node2, string pin2)
+    public static Circuit Connect(this Circuit circuit, Guid node1, string pin1, Guid node2, string pin2)
     {
         var sim = Simulation.FromCircuit(circuit);
 
-        var pin1Node = sim.GetNodeFromID(node1.ID);
-        var pin2Node = sim.GetNodeFromID(node2.ID);
+        var pin1Node = sim.GetNodeFromID(node1);
+        var pin2Node = sim.GetNodeFromID(node2);
 
         var pin1Collection = sim.Scheduler.GetPinCollectionForNode(pin1Node);
         var pin2Collection = sim.Scheduler.GetPinCollectionForNode(pin2Node);
@@ -59,12 +59,23 @@ public static class Utilities
         var pin1Pos = pin1Node.GetPinPosition(pin1Collection, pin1);
         var pin2Pos = pin2Node.GetPinPosition(pin2Collection, pin2);
 
-        sim.ConnectPointsWithWire(pin1Pos, pin2Pos);
+        var cornerRequired = pin1Pos.X != pin2Pos.X && pin1Pos.Y != pin2Pos.Y;
+
+        if (cornerRequired)
+        {
+            var cornerPos = new Vector2i(pin1Pos.X, pin2Pos.Y);
+            sim.ConnectPointsWithWire(pin1Pos, cornerPos);
+            sim.ConnectPointsWithWire(cornerPos, pin2Pos);
+        }
+        else
+        {
+            sim.ConnectPointsWithWire(pin1Pos, pin2Pos);
+        }
 
         return sim.GetCircuitInSimulation("");
     }
 
-    public static Circuit AddPin(this Circuit circuit, Vector2i position, int rotation, int bits, out Guid pinID, params LogicValue[] values)
+    public static Circuit AddPin(this Circuit circuit, Vector2i position, int rotation, int bits, out Guid pinID, bool isInput = true, params LogicValue[] values)
     {
         var pin = NodeDescription.CreateDefaultNodeDescription("logix_builtin.script_type.PIN");
         var pinData = (NodeDescription.CreateDefaultNodeDescriptionData("logix_builtin.script_type.PIN") as PinData)!;
@@ -76,6 +87,7 @@ public static class Utilities
 
         pinData.Bits = bits;
         pinData.Values = values;
+        pinData.Behaviour = isInput ? PinBehaviour.INPUT : PinBehaviour.OUTPUT;
 
         circuit = circuit.AddNode(pin, pinData, position, rotation);
         pinID = pin.ID;
@@ -85,9 +97,9 @@ public static class Utilities
     public static LogicValue[] ReadPin(this Simulation sim, Guid pinID, int bits)
     {
         var pinNode = sim.GetNodeFromID(pinID);
-        var pins = sim.Scheduler.GetPinCollectionForNode(pinNode);
+        var data = (pinNode.GetNodeData() as PinData)!;
 
-        return pins.Get("Q").Read(bits);
+        return data.Values;
     }
 }
 
@@ -119,4 +131,9 @@ public class TestsFixture : IDisposable
     {
         // Do "global" teardown here; Only called once.
     }
+}
+
+[CollectionDefinition("Tests Collection")]
+public class TestsCollection : ICollectionFixture<TestsFixture>
+{
 }

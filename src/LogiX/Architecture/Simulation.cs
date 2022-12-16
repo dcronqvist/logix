@@ -120,17 +120,20 @@ public class Simulation : UndirectedGraph<Vector2i, Edge<Vector2i>>
         return this.Nodes.Where(x => x is T).Cast<T>();
     }
 
-    public void RecalculateConnectionsInScheduler()
+    public void RecalculateConnectionsInScheduler(bool removeAlone = true)
     {
         this.TicksSinceStart = 0;
         this.Scheduler.ClearConnections();
 
-        var l = this.Vertices.ToList();
-        foreach (var v in l)
+        if (removeAlone)
         {
-            if (this.AdjacentDegree(v) == 0)
+            var l = this.Vertices.ToList();
+            foreach (var v in l)
             {
-                this.RemoveVertex(v);
+                if (this.AdjacentDegree(v) == 0)
+                {
+                    this.RemoveVertex(v);
+                }
             }
         }
 
@@ -493,7 +496,7 @@ public class Simulation : UndirectedGraph<Vector2i, Edge<Vector2i>>
             this.AddEdge(new Edge<Vector2i>(segment.Item2, point));
         }
 
-        this.RecalculateConnectionsInScheduler();
+        this.RecalculateConnectionsInScheduler(false);
     }
 
     public void MergeAtPoint(Vector2i point)

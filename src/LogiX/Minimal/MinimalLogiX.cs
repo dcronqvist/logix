@@ -21,10 +21,21 @@ public class MinimalLogiX
         this.Args = args;
     }
 
-    public void Run()
+    public string RunAndGetOutput()
     {
-        this.InitContent();
-        Utilities.ContentManager = this.ContentManager;
+        var output = new StringWriter();
+        Console.SetOut(output);
+        this.Run(false);
+        return output.ToString();
+    }
+
+    public void Run(bool initContent = true)
+    {
+        if (initContent)
+        {
+            this.InitContent();
+            Utilities.ContentManager = this.ContentManager;
+        }
 
         var rootCommand = new RootCommand("LogiX - CLI");
 
