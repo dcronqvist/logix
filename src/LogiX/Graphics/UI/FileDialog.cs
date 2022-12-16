@@ -78,17 +78,6 @@ public class FileDialog : Modal
         return fileExists && validExtension;
     }
 
-#pragma warning disable CA1416 // Validate platform compatibility
-    private string GetDownloadFolderPath()
-    {
-#if _WINDOWS
-        return Registry.GetValue(@"HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Explorer\Shell Folders", "{374DE290-123F-4565-9164-39C4925E467B}", String.Empty).ToString();
-#elif _OSX
-        return Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
-#endif
-    }
-#pragma warning restore CA1416 // Validate platform compatibility
-
     public void SubmitFolderNavigation(Editor editor, bool includeFiles, Action<string> onFileClicked)
     {
         string[] parents = GetMax5Parents(this.CurrentFolder);
