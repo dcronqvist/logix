@@ -104,13 +104,7 @@ public static class Utilities
 
     public static string GetRootDir()
     {
-        var s = Environment.GetEnvironmentVariable("LOGIX_ROOT_DIR");
-        if (s is null)
-        {
-            throw new Exception("LOGIX_ROOT_DIR environment variable not set.");
-        }
-
-        return s;
+        return @"../../../../..";
     }
 }
 
