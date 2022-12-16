@@ -10,6 +10,16 @@ namespace LogiX.Tests.Minimal;
 public class TestCases
 {
     [Fact]
+    public void EmptyProjectPrintTest()
+    {
+        var basePath = @"../../../Minimal/test-projects";
+        var minimal = new MinimalLogiX(Utilities.Arrayify("simulate", $"{basePath}/empty.lxprojj", "main", "-a", $"{basePath}/empty.txt"));
+
+        var output = minimal.RunAndGetOutput();
+        Assert.Contains("This is a test message!", output);
+    }
+
+    [Fact]
     public void TestBenEaterExample()
     {
         var basePath = @"../../../../../examples/beneater-8bit";
