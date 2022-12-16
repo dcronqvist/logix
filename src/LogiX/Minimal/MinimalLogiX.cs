@@ -42,7 +42,7 @@ public class MinimalLogiX
         // Add stuff here
         var projectArg = new Argument<FileInfo>("project", "The project to load");
         var circuitArg = new Argument<string>("circuit", "The circuit to load");
-        var actionSequenceOpt = new Option<string>(new string[] { "--action-sequence", "-a" }, () => "", "The action sequence file to load");
+        var actionSequenceOpt = new Option<FileInfo>(new string[] { "--action-sequence", "-a" }, "The action sequence file to load");
 
         // SIMULATE
         var simulateCommand = new Command("simulate", "Simulate a circuit");
@@ -58,7 +58,13 @@ public class MinimalLogiX
                 return;
             }
 
-            this.Simulate(projectPath.FullName, circuitName, actionSequence);
+            if (!actionSequence.Exists)
+            {
+                Console.WriteLine($"Action sequence file {actionSequence.FullName} does not exist");
+                return;
+            }
+
+            this.Simulate(projectPath.FullName, circuitName, actionSequence.FullName);
         }, projectArg, circuitArg, actionSequenceOpt);
 
         // ADD SIMULATE AND PARSE + INVOKE
