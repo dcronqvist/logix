@@ -56,7 +56,7 @@ public class TTY : Node<TTYData>
 
         if (clr)
         {
-            this._buffer.Clear();
+            this.RegisterChar('\f');
         }
         else if (clk && add)
         {

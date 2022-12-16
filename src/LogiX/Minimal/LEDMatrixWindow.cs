@@ -123,6 +123,8 @@ public class LEDMatrixWindow : Game
         Framebuffer.BindDefaultFramebuffer();
         Framebuffer.Clear(matrixData.BackgroundColor);
 
+        var mode = matrixData.Mode;
+
         for (int x = 0; x < matrixData.Columns; x++)
         {
             for (int y = 0; y < matrixData.Rows; y++)
@@ -130,7 +132,16 @@ public class LEDMatrixWindow : Game
                 var value = data[x, y];
                 var color = value == LogicValue.HIGH ? matrixData.OnColor : matrixData.OffColor;
                 var pos = new Vector2(x * Scale, y * Scale) + new Vector2(Scale / 2f);
-                PrimitiveRenderer.RenderCircle(pos, this.Scale / 2f, 0f, color, sides: 20);
+
+                if (mode == LEDMatrixMode.Circular)
+                {
+                    PrimitiveRenderer.RenderCircle(pos, this.Scale / 2f, 0f, color, sides: 20);
+                }
+                else
+                {
+                    var rect = new RectangleF(pos.X - Scale / 2f, pos.Y - Scale / 2f, Scale, Scale);
+                    PrimitiveRenderer.RenderRectangle(rect, new Vector2(Scale, Scale), 0f, color);
+                }
             }
         }
 

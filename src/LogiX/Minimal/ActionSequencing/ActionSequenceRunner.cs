@@ -65,6 +65,8 @@ public class ActionSequenceRunner : ActionSequenceBaseVisitor<object>
             }
             else
             {
+                List<PushButton> _depush = new();
+
                 if (this.CurrentKeyboard is not null)
                 {
                     _ = Task.Run(() =>
@@ -84,6 +86,19 @@ public class ActionSequenceRunner : ActionSequenceBaseVisitor<object>
                                     this.CurrentKeyboard.RegisterChar(key.KeyChar);
                                 }
                             }
+
+                            var pushButtons = this.Simulation.GetNodesOfType<PushButton>();
+
+                            foreach (var pb in pushButtons)
+                            {
+                                var pbData = pb.GetNodeData() as PushButtonData;
+                                if (pbData.Hotkey == key.Key.GetAsKey())
+                                {
+                                    pb._hotkeyDown = true;
+                                    pb.TriggerEvaluationNextTick();
+                                    _depush.Add(pb);
+                                }
+                            }
                         }
                     });
                 }
@@ -91,6 +106,14 @@ public class ActionSequenceRunner : ActionSequenceBaseVisitor<object>
                 while (true)
                 {
                     this.Simulation.Step();
+
+                    while (_depush.Count > 0)
+                    {
+                        var pb = _depush[0];
+                        _depush.RemoveAt(0);
+                        pb._hotkeyDown = false;
+                        pb.TriggerEvaluationNextTick();
+                    }
                 }
             }
         }
@@ -254,6 +277,7 @@ public class ActionSequenceRunner : ActionSequenceBaseVisitor<object>
         var pin = context.PIN_ID().GetText();
         var pushButton = this.PushButtons[pin];
         pushButton._hotkeyDown = true;
+        pushButton.TriggerEvaluationNextTick();
 
         if (context.DECIMAL_LITERAL() != null)
         {
@@ -273,6 +297,7 @@ public class ActionSequenceRunner : ActionSequenceBaseVisitor<object>
             }
         }
         pushButton._hotkeyDown = false;
+        pushButton.TriggerEvaluationNextTick();
         return base.VisitPush(context);
     }
 

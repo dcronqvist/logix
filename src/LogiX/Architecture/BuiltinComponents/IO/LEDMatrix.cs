@@ -9,6 +9,12 @@ using LogiX.Rendering;
 
 namespace LogiX.Architecture.BuiltinComponents;
 
+public enum LEDMatrixMode
+{
+    Circular,
+    Squares
+}
+
 public class LEDMatrixData : INodeDescriptionData
 {
     [NodeDescriptionProperty("Label", StringHint = "e.g. MATX_MAIN", StringMaxLength = 16, StringRegexFilter = "^[a-zA-Z0-9_]*$")]
@@ -29,6 +35,9 @@ public class LEDMatrixData : INodeDescriptionData
     [NodeDescriptionProperty("Background Color")]
     public ColorF BackgroundColor { get; set; }
 
+    [NodeDescriptionProperty("Mode", HelpTooltip = "Setting to square will make the LED matrix look like a grid of squares. Setting to circular will make the LED matrix look like a grid of circles.")]
+    public LEDMatrixMode Mode { get; set; }
+
     public INodeDescriptionData GetDefault()
     {
         return new LEDMatrixData()
@@ -38,7 +47,8 @@ public class LEDMatrixData : INodeDescriptionData
             OnColor = ColorF.Red,
             BackgroundColor = ColorF.White,
             Columns = 12,
-            Rows = 8
+            Rows = 8,
+            Mode = LEDMatrixMode.Circular
         };
     }
 }
@@ -111,6 +121,7 @@ public class LEDMatrix : Node<LEDMatrixData>
         PrimitiveRenderer.RenderRectangleWithBorder(rect, Vector2.Zero, 0f, 1, this._data.BackgroundColor, ColorF.Black);
 
         var ledSize = Constants.GRIDSIZE;
+        var mode = this._data.Mode;
 
         for (int i = 0; i < this._data.Columns; i++)
         {
@@ -119,7 +130,14 @@ public class LEDMatrix : Node<LEDMatrixData>
                 var x = pos.X + (i * 2 + 1) * Constants.GRIDSIZE + ledSize;
                 var y = pos.Y + (j * 2 + 1) * Constants.GRIDSIZE + ledSize;
 
-                PrimitiveRenderer.RenderCircle(new Vector2(x, y), ledSize, 0f, this._matrix[i, j] == LogicValue.HIGH ? this._data.OnColor : this._data.OffColor, 1f, sides: 20);
+                if (mode == LEDMatrixMode.Circular)
+                {
+                    PrimitiveRenderer.RenderCircle(new Vector2(x, y), ledSize, 0f, this._matrix[i, j] == LogicValue.HIGH ? this._data.OnColor : this._data.OffColor, 1f, sides: 20);
+                }
+                else
+                {
+                    PrimitiveRenderer.RenderRectangle(new RectangleF(x - ledSize, y - ledSize, ledSize * 2, ledSize * 2), Vector2.Zero, 0f, this._matrix[i, j] == LogicValue.HIGH ? this._data.OnColor : this._data.OffColor);
+                }
                 //PrimitiveRenderer.RenderRectangle(ledRect, Vector2.Zero, 0f, this._matrix[i, j] == LogicValue.HIGH ? this._data.ForegroundColor : this._data.BackgroundColor);
             }
         }
