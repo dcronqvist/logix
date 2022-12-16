@@ -110,9 +110,10 @@ public class TestsFixture : IDisposable
     public TestsFixture()
     {
         // Do "global" initialization here; Only called once.
-        var basePath = @"..\..\..\..\..\assets";
+        var basePath = @"../../../../../assets";
+        var corePath = Path.GetFullPath($"{basePath}/core");
 
-        var coreSource = new DirectoryContentSource(Path.GetFullPath($"{basePath}/core"));
+        var coreSource = new DirectoryContentSource(corePath);
         var validator = new ContentValidator();
         var collection = IContentCollectionProvider.FromListOfSources(coreSource); //new DirectoryCollectionProvider(@"C:\Users\RichieZ\repos\logix\assets\core", factory);
         var loader = new MinimalContentLoader();

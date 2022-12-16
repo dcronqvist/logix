@@ -32,9 +32,9 @@ public class TestCases
         minimal.Run(false);
 
         var output = writer.ToString();
-        Assert.Contains(@"Circuit has been reset and clock is enabled!
-Waiting for processor to HALT
-Done! OUTPUT=0xFF
-Executed 1023 instructions!", output);
+        Assert.Contains(@"Circuit has been reset and clock is enabled!", output);
+        Assert.Contains(@"Waiting for processor to HALT", output);
+        Assert.Contains(@"Done! OUTPUT=0xFF", output);
+        Assert.Contains(@"Executed 1023 instructions!", output);
     }
 }
