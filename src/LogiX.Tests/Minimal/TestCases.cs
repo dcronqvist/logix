@@ -12,7 +12,7 @@ public class TestCases
     [Fact]
     public void TestBenEaterExample()
     {
-        var basePath = @"..\..\..\..\../examples/beneater-8bit";
+        var basePath = @"../../../../../examples/beneater-8bit";
         var minimal = new MinimalLogiX(Utilities.Arrayify("simulate", $"{basePath}/beneater.lxprojj", "main", "-a", $"{basePath}/run.txt"));
 
         var output = minimal.RunAndGetOutput();
