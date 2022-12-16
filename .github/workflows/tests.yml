@@ -19,6 +19,8 @@ jobs:
         uses: actions/setup-dotnet@v3
         with:
           dotnet-version: 7.x.x
+      - name: Go to source directory
+        run: cd src
       - name: Restore dependencies
         run: dotnet restore
       - name: Build
