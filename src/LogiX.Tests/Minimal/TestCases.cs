@@ -16,7 +16,6 @@ public class TestCases
         var minimal = new MinimalLogiX(Utilities.Arrayify("simulate", $"{basePath}/beneater.lxprojj", "main", "-a", $"{basePath}/run.txt"));
 
         var output = minimal.RunAndGetOutput();
-
         Assert.Contains(@"Circuit has been reset and clock is enabled!
 Waiting for processor to HALT
 Done! OUTPUT=0xFF
