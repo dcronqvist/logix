@@ -69,7 +69,7 @@ public class StateHoveringWireSegment : State<Editor, int>
     {
         var mouseWorld = Input.GetMousePosition(arg.Camera);
         var mouseGrid = Input.GetMousePosition(arg.Camera).ToVector2i(Constants.GRIDSIZE);
-        var pShader = LogiX.ContentManager.GetContentItem<ShaderProgram>("core.shader_program.primitive");
+        var pShader = LogiXWindow.ContentManager.GetContentItem<ShaderProgram>("core.shader_program.primitive");
         arg.Sim.LockedAction(s =>
         {
             if (s.TryGetWireSegmentAtPos(mouseWorld, out var edge))

@@ -173,13 +173,13 @@ public class LinkRenderer : MarkdownObjectRenderer<ImGuiMarkdownRenderer, LinkIn
 
     public void DoImage(ImGuiMarkdownRenderer renderer, LinkInline obj)
     {
-        if (LogiX.ContentManager.GetContentItem(obj.Url) is null)
+        if (LogiXWindow.ContentManager.GetContentItem(obj.Url) is null)
         {
             ImGui.Text("Image not found");
         }
         else
         {
-            var tex = LogiX.ContentManager.GetContentItem<Texture2D>(obj.Url);
+            var tex = LogiXWindow.ContentManager.GetContentItem<Texture2D>(obj.Url);
             ImGui.Image(new IntPtr(tex.GLID), new Vector2(tex.Width, tex.Height));
             ImGui.SameLine(0, 2);
         }

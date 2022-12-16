@@ -19,7 +19,7 @@ public class Program
 
         if (args.Length == 0)
         {
-            var game = new LogiX();
+            var game = new LogiXWindow();
             game.Run("LogiX", args);
         }
         else

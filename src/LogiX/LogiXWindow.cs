@@ -16,7 +16,7 @@ using static LogiX.OpenGL.GL;
 
 namespace LogiX;
 
-public class LogiX : Game
+public class LogiXWindow : Game
 {
     public static ContentManager<ContentMeta> ContentManager { get; private set; }
     bool allContentLoaded = false;

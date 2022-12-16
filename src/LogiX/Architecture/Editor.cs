@@ -100,7 +100,7 @@ public class Editor : Invoker<Circuit, Editor>
         {
             // Create the ImGui controller
             // Loads with a custom font "opensans"
-            this.ImGuiController = new((int)DisplayManager.GetWindowSizeInPixels().X, (int)DisplayManager.GetWindowSizeInPixels().Y, LogiX.ContentManager.GetContentItems().Where(x => x is Font).Cast<Font>().ToArray());
+            this.ImGuiController = new((int)DisplayManager.GetWindowSizeInPixels().X, (int)DisplayManager.GetWindowSizeInPixels().Y, LogiXWindow.ContentManager.GetContentItems().Where(x => x is Font).Cast<Font>().ToArray());
         });
 
         // This event is called every time the mouse wheel is scrolled
@@ -805,7 +805,7 @@ Under *projects*, you can see your circuits, and right clicking them in the side
 
         int pixelsInBetweenLines = Constants.GRIDSIZE;
 
-        var pShader = LogiX.ContentManager.GetContentItem<ShaderProgram>("core.shader_program.primitive");
+        var pShader = LogiXWindow.ContentManager.GetContentItem<ShaderProgram>("core.shader_program.primitive");
         var color = ColorF.Darken(ColorF.LightGray, 0.63f);
 
         // Draw vertical lines
@@ -835,9 +835,9 @@ Under *projects*, you can see your circuits, and right clicking them in the side
     public void Render()
     {
         this.ImGuiController.Update(GameTime.DeltaTime);
-        var fShader = LogiX.ContentManager.GetContentItem<ShaderProgram>("core.shader_program.fb_default");
-        var pShader = LogiX.ContentManager.GetContentItem<ShaderProgram>("core.shader_program.primitive");
-        var tShader = LogiX.ContentManager.GetContentItem<ShaderProgram>("core.shader_program.text");
+        var fShader = LogiXWindow.ContentManager.GetContentItem<ShaderProgram>("core.shader_program.fb_default");
+        var pShader = LogiXWindow.ContentManager.GetContentItem<ShaderProgram>("core.shader_program.primitive");
+        var tShader = LogiXWindow.ContentManager.GetContentItem<ShaderProgram>("core.shader_program.text");
         var font = Utilities.GetFont("core.font.default", 8);
         this._submittedInstances = 0;
 
@@ -999,7 +999,7 @@ Under *projects*, you can see your circuits, and right clicking them in the side
         var open = true;
         if (ImGui.Begin("About LogiX", ref open))
         {
-            var about = LogiX.ContentManager.GetContentItem<MarkdownFile>("core.markdown.about");
+            var about = LogiXWindow.ContentManager.GetContentItem<MarkdownFile>("core.markdown.about");
             Utilities.RenderMarkdown(about.Text, (url) =>
             {
                 Utilities.OpenURL(url);
@@ -1376,7 +1376,7 @@ Under *projects*, you can see your circuits, and right clicking them in the side
             var open = true;
             if (ImGui.Begin("Component Documentation", ref open, ImGuiWindowFlags.None))
             {
-                var docAsset = LogiX.ContentManager.GetContentItem<MarkdownFile>(this.CurrentlyOpenCircuitInfoDocumentation.DocumentationAsset);
+                var docAsset = LogiXWindow.ContentManager.GetContentItem<MarkdownFile>(this.CurrentlyOpenCircuitInfoDocumentation.DocumentationAsset);
                 Utilities.RenderMarkdown(docAsset.Text, (url) =>
                 {
                     if (url.StartsWith("http"))
