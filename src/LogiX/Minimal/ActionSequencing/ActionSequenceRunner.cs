@@ -32,6 +32,7 @@ public class ActionSequenceRunner : ActionSequenceBaseVisitor<object>
     }
 
     private TextWriter _output;
+    private List<PushButton> _depush = new();
     public void Run(TextWriter output)
     {
         this._output = output;
@@ -47,6 +48,39 @@ public class ActionSequenceRunner : ActionSequenceBaseVisitor<object>
         var parser = new ActionSequencing.ActionSequenceParser(tokenStream);
 
         var tree = parser.program();
+
+        _ = Task.Run(() =>
+        {
+            while (true)
+            {
+                var key = Console.ReadKey(true);
+                if (this.CurrentKeyboard is not null)
+                {
+                    if (key.KeyChar == 0x0D)
+                    {
+                        // Instead of carriage return, send line feed
+                        this.CurrentKeyboard.RegisterChar((char)0x0A);
+                    }
+                    else
+                    {
+                        this.CurrentKeyboard.RegisterChar(key.KeyChar);
+                    }
+                }
+
+                var pushButtons = this.Simulation.GetNodesOfType<PushButton>();
+
+                foreach (var pb in pushButtons)
+                {
+                    var pbData = pb.GetNodeData() as PushButtonData;
+                    if (pbData.Hotkey == key.Key.GetAsKey())
+                    {
+                        pb._hotkeyDown = true;
+                        pb.TriggerEvaluationNextTick();
+                        _depush.Add(pb);
+                    }
+                }
+            }
+        });
 
         stopwatch.Start();
         this.Visit(tree);
@@ -65,44 +99,6 @@ public class ActionSequenceRunner : ActionSequenceBaseVisitor<object>
             }
             else
             {
-                List<PushButton> _depush = new();
-
-                if (this.CurrentKeyboard is not null)
-                {
-                    _ = Task.Run(() =>
-                    {
-                        while (true)
-                        {
-                            var key = Console.ReadKey(true);
-                            if (this.CurrentKeyboard is not null)
-                            {
-                                if (key.KeyChar == 0x0D)
-                                {
-                                    // Instead of carriage return, send line feed
-                                    this.CurrentKeyboard.RegisterChar((char)0x0A);
-                                }
-                                else
-                                {
-                                    this.CurrentKeyboard.RegisterChar(key.KeyChar);
-                                }
-                            }
-
-                            var pushButtons = this.Simulation.GetNodesOfType<PushButton>();
-
-                            foreach (var pb in pushButtons)
-                            {
-                                var pbData = pb.GetNodeData() as PushButtonData;
-                                if (pbData.Hotkey == key.Key.GetAsKey())
-                                {
-                                    pb._hotkeyDown = true;
-                                    pb.TriggerEvaluationNextTick();
-                                    _depush.Add(pb);
-                                }
-                            }
-                        }
-                    });
-                }
-
                 while (true)
                 {
                     this.Simulation.Step();
@@ -123,6 +119,11 @@ public class ActionSequenceRunner : ActionSequenceBaseVisitor<object>
         _output.WriteLine($"Execution time: {stopwatch.ElapsedMilliseconds} ms");
         _output.WriteLine($"Total ticks: {this.Simulation.TicksSinceStart}");
         _output.WriteLine($"Avg. ticks / second: {((int)(this.Simulation.TicksSinceStart / stopwatch.Elapsed.TotalSeconds)).GetAsHertzString()}");
+    }
+
+    private void Step()
+    {
+
     }
 
     private void PrintCurrentPins()
@@ -385,6 +386,7 @@ public class ActionSequenceRunner : ActionSequenceBaseVisitor<object>
 
         this.CurrentKeyboard = keyboard;
         this._output.WriteLine("Connected to keyboard " + pin);
+
         return base.VisitConnectKeyboard(context);
     }
 
