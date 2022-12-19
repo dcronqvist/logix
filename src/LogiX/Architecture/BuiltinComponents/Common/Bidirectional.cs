@@ -47,6 +47,8 @@ public class Bidirectional : BoxNode<BidirectionalData>
 
             if (dir == LogicValue.Z)
             {
+                yield return (pins.Get("B"), LogicValue.Z.Multiple(this._data.Bits), 1);
+                yield return (pins.Get("A"), LogicValue.Z.Multiple(this._data.Bits), 1);
                 yield break;
             }
 
@@ -54,11 +56,13 @@ public class Bidirectional : BoxNode<BidirectionalData>
             {
                 // B -> A
                 yield return (pins.Get("A"), b, 1);
+                yield return (pins.Get("B"), LogicValue.Z.Multiple(this._data.Bits), 1);
             }
             else
             {
                 // A -> B
                 yield return (pins.Get("B"), a, 1);
+                yield return (pins.Get("A"), LogicValue.Z.Multiple(this._data.Bits), 1);
             }
         }
         else
@@ -69,6 +73,12 @@ public class Bidirectional : BoxNode<BidirectionalData>
             if (aToB && bToA)
             {
                 // Not allowed
+                yield break;
+            }
+            else if (!aToB && !bToA)
+            {
+                yield return (pins.Get("A"), LogicValue.Z.Multiple(this._data.Bits), 1);
+                yield return (pins.Get("B"), LogicValue.Z.Multiple(this._data.Bits), 1);
                 yield break;
             }
 
