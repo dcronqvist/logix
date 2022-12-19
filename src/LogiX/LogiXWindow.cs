@@ -157,9 +157,12 @@ public class LogiXWindow : Game
         TextureRenderer.InitGL();
         PrimitiveRenderer.InitGL(64);
         TextRenderer.InitGL();
+        BezierRenderer.InitGL();
 
-        DisplayManager.ReleaseGLContext();
-        _ = ContentManager.LoadAsync();
+        //DisplayManager.ReleaseGLContext();
+        //_ = ContentManager.LoadAsync();
+
+        ContentManager.Load();
     }
 
     public override void Update()

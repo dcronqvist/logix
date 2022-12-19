@@ -22,7 +22,7 @@ namespace LogiX.GLFW
         /// </summary>
 #if _WINDOWS
         public const string LIBRARY = "glfw3";
-#elif OSX
+#elif _OSX
         public const string LIBRARY = "libglfw.3"; // mac
 #else
         public const string LIBRARY = "libglfw.3";

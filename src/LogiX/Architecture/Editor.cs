@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Diagnostics;
+using System.Drawing;
 using System.Numerics;
 using System.Threading;
 using ImGuiNET;
@@ -236,9 +237,9 @@ public class Editor : Invoker<Circuit, Editor>
                 });
 
                 // Get target tick rate
-                long targetTps = this.CurrentEffectiveTickRate == -1 ? Stopwatch.Frequency : this.CurrentEffectiveTickRate;
+                long targetTps = this.CurrentEffectiveTickRate == -1 ? TimeSpan.TicksPerSecond : this.CurrentEffectiveTickRate;
                 // Get how much time that the target tick rate should take
-                long targetDiff = Stopwatch.Frequency / targetTps;
+                long targetDiff = TimeSpan.TicksPerSecond / targetTps;
 
                 // While the time that has passed is less than the target time, sleep for some time.
                 while (sw.Elapsed.Ticks < start + targetDiff)
@@ -247,7 +248,7 @@ public class Editor : Invoker<Circuit, Editor>
                 }
                 // Once we are done, set the current ticks per second to the target ticks per second
                 long diff = sw.Elapsed.Ticks - start;
-                double seconds = diff / (double)Stopwatch.Frequency;
+                double seconds = diff / (double)TimeSpan.TicksPerSecond;
                 this.CurrentTicksPerSecond = this.CurrentTicksPerSecond + (1f / (float)seconds - this.CurrentTicksPerSecond) * (0.8f / MathF.Sqrt(targetTps));
             }
         });

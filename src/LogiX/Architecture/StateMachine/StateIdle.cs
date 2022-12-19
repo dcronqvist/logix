@@ -20,6 +20,11 @@ public class StateIdle : State<Editor, int>
             arg.Camera.FocusPosition -= Input.GetMouseWindowDelta() / arg.Camera.Zoom;
         }
 
+        if (Input.IsKeyDown(Keys.Space))
+        {
+            arg.Camera.FocusPosition -= Input.GetMouseWindowDelta() / arg.Camera.Zoom;
+        }
+
         var mouseWorldPosition = Input.GetMousePosition(arg.Camera);
 
         if (!ImGui.GetIO().WantCaptureMouse)

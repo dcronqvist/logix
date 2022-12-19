@@ -273,12 +273,13 @@ public class Integrated : Node<IntegratedData>
 
                     var onside = side.ApplyRotation(this.Rotation);
 
+                    var x = 2;
                     var offset = (onside) switch
                     {
-                        ComponentSide.LEFT => new Vector2(2, -iMeasure.Y / 2f),
-                        ComponentSide.RIGHT => new Vector2(-iMeasure.X - 2, -iMeasure.Y / 2f),
-                        ComponentSide.TOP => new Vector2(iMeasure.Y / 2f, 2),
-                        ComponentSide.BOTTOM => new Vector2(iMeasure.Y / 2f, -iMeasure.X - 2),
+                        ComponentSide.LEFT => new Vector2(x, -iMeasure.Y / 2f),
+                        ComponentSide.RIGHT => new Vector2(-iMeasure.X - x, -iMeasure.Y / 2f),
+                        ComponentSide.TOP => new Vector2(iMeasure.Y / 2f, x),
+                        ComponentSide.BOTTOM => new Vector2(iMeasure.Y / 2f, -iMeasure.X - x),
                         _ => new Vector2(0, 0)
                     };
 
