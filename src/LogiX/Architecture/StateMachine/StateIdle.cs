@@ -1,6 +1,7 @@
 using System.Numerics;
 using ImGuiNET;
 using LogiX.Architecture.Commands;
+using LogiX.Architecture.Serialization;
 using LogiX.GLFW;
 using LogiX.Graphics;
 using LogiX.Graphics.UI;
@@ -49,6 +50,21 @@ public class StateIdle : State<Editor, int>
                 {
                     arg.OpenContextMenu(() =>
                     {
+                        var extensions = NodeDescription.GetContextExtensionsForNodeType(node.GetNodeTypeID());
+
+                        if (extensions.Count > 0)
+                        {
+                            foreach (var ext in extensions)
+                            {
+                                if (ImGui.MenuItem(ext.MenuItemName))
+                                {
+                                    ext.Execute(arg, node);
+                                }
+                            }
+
+                            ImGui.Separator();
+                        }
+
                         if (ImGui.MenuItem("Delete Node"))
                         {
                             var deleteNode = new CDeleteNode(node.ID);

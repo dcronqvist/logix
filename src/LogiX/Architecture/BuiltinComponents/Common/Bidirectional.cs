@@ -86,12 +86,14 @@ public class Bidirectional : BoxNode<BidirectionalData>
             {
                 // A -> B
                 yield return (pins.Get("B"), a, 1);
+                yield return (pins.Get("A"), LogicValue.Z.Multiple(this._data.Bits), 1);
             }
 
             if (bToA)
             {
                 // B -> A
                 yield return (pins.Get("A"), b, 1);
+                yield return (pins.Get("B"), LogicValue.Z.Multiple(this._data.Bits), 1);
             }
         }
     }

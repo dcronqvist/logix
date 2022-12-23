@@ -1,9 +1,12 @@
+using System.CommandLine;
 using System.Diagnostics;
 using System.Text;
 using Antlr4.Runtime;
 using Antlr4.Runtime.Misc;
 using LogiX.Architecture.BuiltinComponents;
+using LogiX.Architecture.Plugins;
 using LogiX.Architecture.Serialization;
+using LogiX.Content.Scripting;
 
 namespace LogiX.Minimal.ActionSequencing;
 
@@ -31,6 +34,18 @@ public class ActionSequenceRunner : ActionSequenceBaseVisitor<object>
         this.PathToActionSequenceFile = pathToActionSequenceFile;
     }
 
+    private Dictionary<string, RootCommand> _extensions = new();
+    private void InitExtensions()
+    {
+        var extensions = ScriptManager.GetScriptTypes().Where(x => x.Type.IsAssignableTo(typeof(IActionSequenceExtension))).Select(x => (x.Identifier, (IActionSequenceExtension)Activator.CreateInstance(x.Type))).ToList();
+
+        foreach (var (id, ins) in extensions)
+        {
+            var command = ins.GetCommand(this.Simulation);
+            this._extensions.Add(id, command);
+        }
+    }
+
     private TextWriter _output;
     private List<PushButton> _depush = new();
     public void Run(TextWriter output)
@@ -41,6 +56,8 @@ public class ActionSequenceRunner : ActionSequenceBaseVisitor<object>
         this.Simulation = Simulation.FromCircuit(this.Circuit);
         this.Pins = this.Simulation.GetNodesOfType<Pin>().Where(p => ((PinData)p.GetNodeData()).Label != "").ToDictionary(p => ((PinData)p.GetNodeData()).Label, p => p);
         this.PushButtons = this.Simulation.GetNodesOfType<PushButton>().Where(p => ((PushButtonData)p.GetNodeData()).Label != "").ToDictionary(p => ((PushButtonData)p.GetNodeData()).Label, p => p);
+
+        this.InitExtensions();
 
         var inputStream = new AntlrInputStream(this.Text);
         var lexer = new ActionSequencing.ActionSequenceLexer(inputStream);
@@ -196,6 +213,14 @@ public class ActionSequenceRunner : ActionSequenceBaseVisitor<object>
         var pinID = pin.PIN_ID().GetText();
         var p = this.Pins[pinID];
         return p.GetValues();
+    }
+
+    private void ExecuteExtension(string extString)
+    {
+        var extName = extString.Split(' ').First();
+        var ext = this._extensions[extName];
+
+        ext.Invoke(extString.Substring(extName.Length + 1));
     }
 
     public override object VisitAssignment([NotNull] ActionSequenceParser.AssignmentContext context)
@@ -445,5 +470,15 @@ public class ActionSequenceRunner : ActionSequenceBaseVisitor<object>
 
         this._output.WriteLine("Connected to LED matrix " + pin);
         return base.VisitConnectLEDMatrix(context);
+    }
+
+    public override object VisitExt([NotNull] ActionSequenceParser.ExtContext context)
+    {
+        var extString = context.STRING_LITERAL().GetText();
+        extString = extString.Substring(1, extString.Length - 2);
+
+        this.ExecuteExtension(extString);
+
+        return base.VisitExt(context);
     }
 }

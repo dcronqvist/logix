@@ -8,7 +8,7 @@
 // </auto-generated>
 //------------------------------------------------------------------------------
 
-// Generated from c:\Users\RichieZ\repos\logix\src\LogiX\Minimal\ActionSequencing\ANTLR\ActionSequence.g4 by ANTLR 4.9.2
+// Generated from /Users/dcronqvist/repos/logix/src/LogiX/Minimal/ActionSequencing/ANTLR/ActionSequence.g4 by ANTLR 4.9.2
 
 // Unreachable code detected
 #pragma warning disable 0162
@@ -51,6 +51,12 @@ public interface IActionSequenceVisitor<Result> : IParseTreeVisitor<Result> {
 	/// <param name="context">The parse tree.</param>
 	/// <return>The visitor result.</return>
 	Result VisitAction([NotNull] ActionSequenceParser.ActionContext context);
+	/// <summary>
+	/// Visit a parse tree produced by <see cref="ActionSequenceParser.ext"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitExt([NotNull] ActionSequenceParser.ExtContext context);
 	/// <summary>
 	/// Visit a parse tree produced by <see cref="ActionSequenceParser.wait"/>.
 	/// </summary>

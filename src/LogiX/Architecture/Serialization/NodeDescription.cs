@@ -2,6 +2,7 @@ using System.Reflection;
 using LogiX.Content.Scripting;
 using System.Text.Json;
 using ImGuiNET;
+using LogiX.Architecture.Plugins;
 
 namespace LogiX.Architecture.Serialization;
 
@@ -206,6 +207,15 @@ public class NodeDescription
     public static ScriptType GetNodeScriptTypeFromIdentifier(string identifier)
     {
         return _nodeTypes[identifier];
+    }
+
+    public static List<INodeContextExtension> GetContextExtensionsForNodeType(string nodeType)
+    {
+        var types = ScriptManager.GetScriptTypes().Where(x => x.Type.IsAssignableTo(typeof(INodeContextExtension)));
+
+        var instances = types.Select(x => x.CreateInstance<INodeContextExtension>()).ToList();
+
+        return instances.Where(x => x.NodeType == nodeType).ToList();
     }
 
     public void SaveToFile(string path)

@@ -138,7 +138,7 @@ public class Multiplexer : BoxNode<MultiplexerData>
             height = Math.Max(height, ((int)Math.Pow(2, this._data.SelectBits) * this._data.DataBits) + 1);
         }
 
-        return new Vector2i(width, height).ApplyRotation(this.Rotation);
+        return new Vector2i(width, height);
     }
 
     public override void Initialize(MultiplexerData data)

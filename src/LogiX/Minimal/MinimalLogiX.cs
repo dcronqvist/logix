@@ -118,11 +118,26 @@ public class MinimalLogiX
 
     public void InitContent()
     {
-        var basePath = AppDomain.CurrentDomain.BaseDirectory + "/assets"; ;
+        var basePath = AppDomain.CurrentDomain.BaseDirectory + "/assets";
+
+        Func<string, IContentSource> factory = (path) =>
+        {
+            if (Path.GetExtension(path) == ".zip")
+            {
+                return new ZipFileContentSource(path);
+            }
+            else if (Directory.Exists(path))
+            {
+                return new DirectoryContentSource(path);
+            }
+
+            return null;
+        };
 
         var coreSource = new DirectoryContentSource(Path.GetFullPath($"{basePath}/core"));
+        var pluginSources = new Symphony.Common.DirectoryCollectionProvider(Path.GetFullPath($"{basePath}/plugins/"), factory);
         var validator = new ContentValidator();
-        var collection = IContentCollectionProvider.FromListOfSources(coreSource);
+        var collection = IContentCollectionProvider.FromListOfSources(pluginSources.GetModSources().Prepend(coreSource));
         var loader = new MinimalContentLoader();
 
         var config = new ContentManagerConfiguration<ContentMeta>(validator, collection, loader);

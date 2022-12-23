@@ -8,7 +8,7 @@
 // </auto-generated>
 //------------------------------------------------------------------------------
 
-// Generated from c:\Users\RichieZ\repos\logix\src\LogiX\Minimal\ActionSequencing\ANTLR\ActionSequence.g4 by ANTLR 4.9.2
+// Generated from /Users/dcronqvist/repos/logix/src/LogiX/Minimal/ActionSequencing/ANTLR/ActionSequence.g4 by ANTLR 4.9.2
 
 // Unreachable code detected
 #pragma warning disable 0162
@@ -66,6 +66,16 @@ public partial class ActionSequenceBaseVisitor<Result> : AbstractParseTreeVisito
 	/// <param name="context">The parse tree.</param>
 	/// <return>The visitor result.</return>
 	public virtual Result VisitAction([NotNull] ActionSequenceParser.ActionContext context) { return VisitChildren(context); }
+	/// <summary>
+	/// Visit a parse tree produced by <see cref="ActionSequenceParser.ext"/>.
+	/// <para>
+	/// The default implementation returns the result of calling <see cref="AbstractParseTreeVisitor{Result}.VisitChildren(IRuleNode)"/>
+	/// on <paramref name="context"/>.
+	/// </para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	public virtual Result VisitExt([NotNull] ActionSequenceParser.ExtContext context) { return VisitChildren(context); }
 	/// <summary>
 	/// Visit a parse tree produced by <see cref="ActionSequenceParser.wait"/>.
 	/// <para>

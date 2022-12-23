@@ -901,7 +901,7 @@ Under *projects*, you can see your circuits, and right clicking them in the side
                     {
                         this.OpenErrorPopup("Error", true, () =>
                         {
-                            ImGui.Text(e.Message);
+                            ImGui.Text(e.ToString());
                             if (ImGui.Button("OK"))
                             {
                                 ImGui.CloseCurrentPopup();

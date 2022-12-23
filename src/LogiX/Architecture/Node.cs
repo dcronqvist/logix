@@ -140,7 +140,7 @@ public abstract class Node : Observer<IEnumerable<(ValueEvent, int)>>
         this.Position += delta;
     }
 
-    protected string GetNodeTypeID()
+    internal string GetNodeTypeID()
     {
         return NodeDescription.GetNodeTypeID(this.GetType());
     }
