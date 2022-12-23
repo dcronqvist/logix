@@ -1,0 +1,14 @@
+push RST, 100;
+print "FLISP Reset!";
+
+ext "flisp-plugin.script_type.flispc_compile RAM1 ../../examples/flisp/test.flispc";
+print "RAM loaded with compiled code!";
+
+set AUTO_CLK=0b1;
+print "Clock enabled!";
+
+wait A_VAL==0xFF;
+
+print "A_VAL = ${x:A_VAL}";
+
+end;
