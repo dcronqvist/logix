@@ -156,3 +156,49 @@ public class ASCompileExtension : IActionSequenceExtension
         return command;
     }
 }
+
+[ScriptType("flisp_assemble")]
+public class ASAssembleExtension : IActionSequenceExtension
+{
+    public RootCommand GetCommand(Simulation simulation)
+    {
+        var command = new RootCommand("Assemble FLISP assembly");
+
+        var ram = new Argument<string>("ram", "The name of the RAM node to compile to");
+        var file = new Argument<FileInfo>("file", "The assembly file to assemble");
+
+        command.AddArgument(ram);
+        command.AddArgument(file);
+
+        command.SetHandler((r, f) =>
+        {
+            if (!f.Exists)
+            {
+                throw new FileNotFoundException("File not found", f.FullName);
+            }
+
+            var ramNode = simulation.GetNodesOfType<RAM>().FirstOrDefault(x => (x.GetNodeData() as RamData).Label == r);
+
+            if (ramNode == null)
+            {
+                throw new Exception("RAM node not found");
+            }
+
+            var data = ramNode.GetNodeData() as RamData;
+
+            using (StreamReader sr = new(f.FullName))
+            {
+                var s = sr.ReadToEnd();
+                var a = new Assembler();
+                var d = a.Assemble(s);
+
+                data.Memory = new WordAddressableMemory(d);
+
+                ramNode.Initialize(data);
+            }
+
+        }, ram, file);
+
+        return command;
+    }
+}
