@@ -113,7 +113,7 @@ public class MemoryEditor
         return size;
     }
 
-    public void DrawWindow(string title, WordAddressableMemory memory, int wordSize, uint currentlySelectedAddress = 0, bool displayCurrentlySelected = true, Action beforeContent = null, Action afterContent = null)
+    public void DrawWindow(string title, WordAddressableMemory memory, int wordSize, (uint, ColorF)[] addressesToHighlight, Action beforeContent = null, Action afterContent = null)
     {
         var s = CalcSizes(memory);
         ImGui.SetNextWindowSize(new Vector2(s.WindowWidth, s.WindowWidth * 0.60f), ImGuiCond.FirstUseEver);
@@ -125,7 +125,7 @@ public class MemoryEditor
             {
                 beforeContent();
             }
-            DrawContents(memory, wordSize, currentlySelectedAddress, displayCurrentlySelected);
+            DrawContents(memory, wordSize, addressesToHighlight);
             if (afterContent is not null)
             {
                 afterContent();
@@ -134,7 +134,7 @@ public class MemoryEditor
         ImGui.End();
     }
 
-    public unsafe void DrawContents(WordAddressableMemory memory, int wordSize, uint currentlySelectedAddress, bool displayCurrentlySelected)
+    public unsafe void DrawContents(WordAddressableMemory memory, int wordSize, (uint, ColorF)[] addressesToHighlight)
     {
         var s = CalcSizes(memory);
         var style = ImGui.GetStyle();
@@ -173,11 +173,15 @@ public class MemoryEditor
                     bytePosX += (float)(n / 8) * s.SpacingBetweenMidCols;
                     ImGui.SameLine(bytePosX);
 
-                    if (addr >= currentlySelectedAddress && addr < currentlySelectedAddress + wordSize && displayCurrentlySelected)
+                    foreach (var (a, c) in addressesToHighlight)
                     {
-                        var currentPos = ImGui.GetCursorScreenPos();
-                        drawList.AddRectFilled(currentPos - new Vector2(s.SpacingBetweenMidCols / 2f, 0), currentPos + new Vector2(s.GlyphWidth * 2 + 1, s.LineHeight), ImGui.GetColorU32(Constants.COLOR_SELECTED.ToVector4()));
+                        if (addr >= a && addr < a + wordSize)
+                        {
+                            var currentPos = ImGui.GetCursorScreenPos();
+                            drawList.AddRectFilled(currentPos - new Vector2(s.SpacingBetweenMidCols / 2f, 0), currentPos + new Vector2(s.GlyphWidth * 2 + 1, s.LineHeight), ImGui.GetColorU32(c.ToVector4()));
+                        }
                     }
+
 
                     if (this.Editing && this.EditingAddress == addr)
                     {

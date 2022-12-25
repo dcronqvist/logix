@@ -2,6 +2,7 @@ using ImGuiNET;
 using LogiX.Architecture.Commands;
 using LogiX.Architecture.Serialization;
 using LogiX.Content.Scripting;
+using LogiX.Graphics;
 using LogiX.Graphics.UI;
 using LogiX.Rendering;
 
@@ -112,7 +113,15 @@ public class ROM : BoxNode<RomData>
     public override void CompleteSubmitUISelected(Editor editor, int componentIndex)
     {
         var id = this.ID.ToString();
-        this.memoryEditor.DrawWindow($"Read Only Memory Editor##{id}", this._data.Memory, this._data.WordSize, this.currentlySelectedAddress, this.hasSelectedAddress, () =>
+
+        var addressesToHighlight = new List<(uint, ColorF)>();
+
+        if (this.hasSelectedAddress)
+        {
+            addressesToHighlight.Add((this.currentlySelectedAddress, Constants.COLOR_SELECTED));
+        }
+
+        this.memoryEditor.DrawWindow($"Read Only Memory Editor##{id}", this._data.Memory, this._data.WordSize, addressesToHighlight.ToArray(), () =>
         {
             this.SubmitUISelected(editor, componentIndex);
 

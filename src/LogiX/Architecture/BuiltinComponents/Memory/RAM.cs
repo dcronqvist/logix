@@ -3,6 +3,7 @@ using ImGuiNET;
 using LogiX.Architecture.Commands;
 using LogiX.Architecture.Serialization;
 using LogiX.Content.Scripting;
+using LogiX.Graphics;
 using LogiX.Graphics.UI;
 using LogiX.Rendering;
 
@@ -19,6 +20,9 @@ public class RamData : INodeDescriptionData
     [NodeDescriptionProperty("Word Size", IntMinValue = 1, IntMaxValue = 16, HelpTooltip = "The number of bytes accessible at the DATA pin")]
     public int WordSize { get; set; }
 
+    [NodeDescriptionProperty("Additional Pins", HelpTooltip = "Additional pins to add to the RAM node. Their address values will only be visual in the RAM editor.")]
+    public ColorF[] AdditionalPins { get; set; }
+
     // Handled internally
     public WordAddressableMemory Memory { get; set; }
 
@@ -29,7 +33,8 @@ public class RamData : INodeDescriptionData
             AddressBits = 8,
             WordSize = 1,
             Memory = new WordAddressableMemory(256, false),
-            Label = ""
+            Label = "",
+            AdditionalPins = new ColorF[0]
         };
     }
 }
@@ -43,8 +48,20 @@ public class RAM : BoxNode<RamData>
     private RamData _data;
 
     private LogicValue _prevCLK = LogicValue.LOW;
+    private List<(uint, ColorF)> _additionalHighlights = new();
     public override IEnumerable<(ObservableValue, LogicValue[], int)> Evaluate(PinCollection pins)
     {
+        this._additionalHighlights.Clear();
+        for (int i = 0; i < this._data.AdditionalPins.Length; i++)
+        {
+            var ap = pins.Get($"ADDITIONAL_{i}").Read(this._data.AddressBits);
+            if (ap.AnyUndefined()) continue;
+
+            var apd = ap.Reverse().GetAsUInt();
+            this._additionalHighlights.Add((apd, this._data.AdditionalPins[i]));
+        }
+
+
         var address = pins.Get("ADDRESS").Read(this._data.AddressBits).Reverse();
         var clk = pins.Get("CLK").Read(1).First();
         var we = pins.Get("WE").Read(1).First();
@@ -103,11 +120,18 @@ public class RAM : BoxNode<RamData>
         yield return new PinConfig("DATA", this._data.WordSize * 8, false, new Vector2i(this.GetSize().X, 1));
         yield return new PinConfig("CLK", 1, true, new Vector2i(1, this.GetSize().Y));
         yield return new PinConfig("WE", 1, true, new Vector2i(1, 0));
+
+        for (int i = 0; i < this._data.AdditionalPins.Length; i++)
+        {
+            yield return new PinConfig($"ADDITIONAL_{i}", this._data.AddressBits, true, new Vector2i(i + 2, 0));
+        }
     }
 
     public override Vector2i GetSize()
     {
-        return new Vector2i(3, 2);
+        var additionals = this._data.AdditionalPins.Length;
+
+        return new Vector2i(Math.Max(additionals + 2, 3), 2);
     }
 
     public override void Initialize(RamData data)
@@ -146,7 +170,17 @@ public class RAM : BoxNode<RamData>
     public override void CompleteSubmitUISelected(Editor editor, int componentIndex)
     {
         var id = this.ID.ToString();
-        this.memoryEditor.DrawWindow($"Random Access Memory Editor##{id}", this._data.Memory, this._data.WordSize, this.currentlySelectedAddress, this.hasSelectedAddress, () =>
+
+        var addressesToHighlight = new List<(uint, ColorF)>();
+
+        if (this.hasSelectedAddress)
+        {
+            addressesToHighlight.Add((this.currentlySelectedAddress, Constants.COLOR_SELECTED));
+        }
+
+        addressesToHighlight.AddRange(this._additionalHighlights);
+
+        this.memoryEditor.DrawWindow($"Random Access Memory Editor##{id}", this._data.Memory, this._data.WordSize, addressesToHighlight.ToArray(), () =>
         {
             this.SubmitUISelected(editor, componentIndex);
 

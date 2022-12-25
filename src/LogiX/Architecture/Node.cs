@@ -297,7 +297,15 @@ public abstract class Node : Observer<IEnumerable<(ValueEvent, int)>>
                 {
                     var newA = Array.CreateInstance(a.GetType().GetElementType(), a.Length + 1);
                     Array.Copy(a, newA, a.Length);
-                    newA.SetValue(newA.GetValue(newA.Length - 2), newA.Length - 1);
+
+                    if (a.Length != 0)
+                    {
+                        newA.SetValue(newA.GetValue(newA.Length - 2), newA.Length - 1);
+                    }
+                    else
+                    {
+                        newA.SetValue(Activator.CreateInstance(newA.GetType().GetElementType()), newA.Length - 1);
+                    }
                     newValue = newA;
                 }
                 ImGui.EndDisabled();
