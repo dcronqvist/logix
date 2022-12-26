@@ -1,0 +1,9 @@
+            ORG $30
+            LDSP #$2f
+start:      LDA #$25
+            LDB #$15
+            PUSH %A
+            ADD %A
+            STA $50
+            POP %B
+            JMP start
