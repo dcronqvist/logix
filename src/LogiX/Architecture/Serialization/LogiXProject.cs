@@ -1,5 +1,6 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using LogiX.Architecture.BuiltinComponents;
 using LogiX.Architecture.Serialization;
 
 namespace LogiX.Architecture.Serialization;
@@ -126,5 +127,10 @@ public class LogiXProject
     public Circuit GetCircuitWithName(string name)
     {
         return this.Circuits.FirstOrDefault(c => c.Name == name);
+    }
+
+    public IList<Circuit> GetCircuitsContainingCircuit(Guid circuitID)
+    {
+        return this.Circuits.Where(c => c.Nodes.Any(n => n.NodeTypeID == "logix_builtin.script_type.INTEGRATED" && (n.Data as IntegratedData).CircuitID == circuitID)).ToList();
     }
 }

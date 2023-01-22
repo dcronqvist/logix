@@ -1239,6 +1239,23 @@ Under *projects*, you can see your circuits, and right clicking them in the side
                                 }
                             });
                         }
+                        ImGui.Separator();
+
+                        var usedInCircuits = this.Project.GetCircuitsContainingCircuit(circuit.ID);
+
+                        if (ImGui.BeginMenu("Info"))
+                        {
+                            if (ImGui.BeginMenu("In Circuits..."))
+                            {
+                                foreach (var usedCircuit in usedInCircuits)
+                                {
+                                    ImGui.MenuItem(usedCircuit.Name, "", false, false);
+                                }
+                                ImGui.EndMenu();
+                            }
+
+                            ImGui.EndMenu();
+                        }
 
                         ImGui.EndPopup();
                     }

@@ -159,10 +159,10 @@ public class LogiXWindow : Game
         TextRenderer.InitGL();
         BezierRenderer.InitGL();
 
-        //DisplayManager.ReleaseGLContext();
-        //_ = ContentManager.LoadAsync();
+        DisplayManager.ReleaseGLContext();
+        _ = ContentManager.LoadAsync();
 
-        ContentManager.Load();
+        // ContentManager.Load();
     }
 
     public override void Update()

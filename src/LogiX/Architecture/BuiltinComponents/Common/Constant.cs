@@ -8,7 +8,7 @@ namespace LogiX.Architecture.BuiltinComponents;
 
 public class ConstantData : INodeDescriptionData
 {
-    [NodeDescriptionProperty("Bits", IntMinValue = 1, IntMaxValue = 32)]
+    [NodeDescriptionProperty("Bits", IntMinValue = 1, IntMaxValue = 256)]
     public int DataBits { get; set; }
 
     // Will be rendered by this component.
