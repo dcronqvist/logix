@@ -5,16 +5,10 @@ using LogiX.Rendering;
 
 namespace LogiX.Architecture.BuiltinComponents;
 
-public enum PinModeMulti
+public class PrioEncoderData : INodeDescriptionData
 {
-    Combined,
-    Separate
-}
-
-public class DecoderData : INodeDescriptionData
-{
-    [NodeDescriptionProperty("Select Bits", IntMinValue = 1, IntMaxValue = 8)]
-    public int SelectBits { get; set; }
+    [NodeDescriptionProperty("Output Bits", IntMinValue = 1, IntMaxValue = 8)]
+    public int OutputBits { get; set; }
 
     [NodeDescriptionProperty("Select Pins Mode", HelpTooltip = "When set to 'Combined', the pin will be a single pin\nwith the select bits combined into a single value.\n\nWhen set to 'Separate', the pin will be a set of pins\nwith each pin representing a single select bit.")]
     public PinModeMulti SelectBitsMode { get; set; }
@@ -24,22 +18,22 @@ public class DecoderData : INodeDescriptionData
 
     public INodeDescriptionData GetDefault()
     {
-        return new DecoderData()
+        return new PrioEncoderData()
         {
-            SelectBits = 4,
+            OutputBits = 4,
             SelectBitsMode = PinModeMulti.Separate,
             OutputBitsMode = PinModeMulti.Separate,
         };
     }
 }
 
-[ScriptType("DECODER"), NodeInfo("Decoder", "Plexers", "core.markdown.decoder")]
-public class Decoder : BoxNode<DecoderData>
+[ScriptType("PRIOENCODER"), NodeInfo("Priority Encoder", "Plexers", "core.markdown.decoder")]
+public class PrioEncoder : BoxNode<PrioEncoderData>
 {
-    public override string Text => "DEC";
+    public override string Text => "PENC";
     public override float TextScale => 1f;
 
-    private DecoderData _data;
+    private PrioEncoderData _data;
 
     public override IEnumerable<(ObservableValue, LogicValue[], int)> Evaluate(PinCollection pins)
     {
@@ -47,35 +41,41 @@ public class Decoder : BoxNode<DecoderData>
 
         if (this._data.SelectBitsMode == PinModeMulti.Separate)
         {
-            var selectBits = new LogicValue[this._data.SelectBits];
-            for (int i = 0; i < this._data.SelectBits; i++)
+            var selectBits = new LogicValue[(int)Math.Pow(2, this._data.OutputBits)];
+            for (int i = 0; i < (int)Math.Pow(2, this._data.OutputBits); i++)
             {
                 var pin = pins.Get($"S{i}");
                 selectBits[i] = pin.Read(1).First();
             }
 
-            selection = (int)selectBits.Reverse().GetAsUInt();
+            selectBits = selectBits.Reverse().ToArray();
+            var greatestIndex = selectBits.GetGreatestIndex(LogicValue.HIGH);
+            selection = greatestIndex;
         }
         else
         {
             var pin = pins.Get("S");
-            selection = (int)pin.Read(this._data.SelectBits).Reverse().GetAsUInt();
+            var bits = pin.Read((int)Math.Pow(2, this._data.OutputBits)).Reverse();
+            var greatestIndex = bits.GetGreatestIndex(LogicValue.HIGH);
+            selection = greatestIndex;
         }
+
+        selection = Math.Max(0, selection);
 
         if (this._data.OutputBitsMode == PinModeMulti.Separate)
         {
-            var outputs = Math.Pow(2, this._data.SelectBits);
+            var outputs = this._data.OutputBits;
+            var outputValues = Utilities.GetAsLogicValues((uint)selection, this._data.OutputBits);
             for (int i = 0; i < outputs; i++)
             {
                 var pin = pins.Get($"O{i}");
-                yield return (pin, new LogicValue[] { i == selection ? LogicValue.HIGH : LogicValue.LOW }, 1);
+                yield return (pin, outputValues[i].Multiple(1), 1);
             }
         }
         else
         {
             var pin = pins.Get("O");
-            var outputs = LogicValue.LOW.Multiple((int)Math.Pow(2, this._data.SelectBits));
-            outputs[selection] = LogicValue.HIGH;
+            var outputs = Utilities.GetAsLogicValues((uint)selection, this._data.OutputBits);
             yield return (pin, outputs, 1);
         }
     }
@@ -89,27 +89,26 @@ public class Decoder : BoxNode<DecoderData>
     {
         if (this._data.OutputBitsMode == PinModeMulti.Separate)
         {
-            var outputs = Math.Pow(2, this._data.SelectBits);
-            for (int i = 0; i < outputs; i++)
+            for (int i = 0; i < this._data.OutputBits; i++)
             {
                 yield return new PinConfig($"O{i}", 1, false, new Vector2i(3, i + 1));
             }
         }
         else
         {
-            yield return new PinConfig("O", (int)Math.Pow(2, this._data.SelectBits), false, new Vector2i(3, 1));
+            yield return new PinConfig("O", this._data.OutputBits, false, new Vector2i(3, 1));
         }
 
         if (this._data.SelectBitsMode == PinModeMulti.Separate)
         {
-            for (int i = 0; i < this._data.SelectBits; i++)
+            for (int i = 0; i < (int)Math.Pow(2, this._data.OutputBits); i++)
             {
                 yield return new PinConfig($"S{i}", 1, true, new Vector2i(0, i + 1));
             }
         }
         else
         {
-            yield return new PinConfig("S", this._data.SelectBits, true, new Vector2i(0, 1));
+            yield return new PinConfig("S", (int)Math.Pow(2, this._data.OutputBits), true, new Vector2i(0, 1));
         }
     }
 
@@ -120,17 +119,17 @@ public class Decoder : BoxNode<DecoderData>
 
         if (this._data.SelectBitsMode == PinModeMulti.Separate)
         {
-            height = Math.Max(height, this._data.SelectBits + 1);
+            height = Math.Max(height, (int)Math.Pow(2, this._data.OutputBits) + 1);
         }
         if (this._data.OutputBitsMode == PinModeMulti.Separate)
         {
-            height = Math.Max(height, (int)Math.Pow(2, this._data.SelectBits) + 1);
+            height = Math.Max(height, this._data.OutputBits + 1);
         }
 
         return new Vector2i(width, height);
     }
 
-    public override void Initialize(DecoderData data)
+    public override void Initialize(PrioEncoderData data)
     {
         this._data = data;
     }
@@ -144,48 +143,4 @@ public class Decoder : BoxNode<DecoderData>
     {
         yield break;
     }
-
-    // public override IComponentDescriptionData GetDescriptionData()
-    // {
-    //     return _data;
-    // }
-
-    // public override void Initialize(DecoderData data)
-    // {
-    //     this.ClearIOs();
-    //     this._data = data;
-
-    //     var outputs = Math.Pow(2, data.SelectBits);
-
-    //     for (int i = 0; i < outputs; i++)
-    //     {
-    //         this.RegisterIO($"O{i}", 1, ComponentSide.RIGHT, "output");
-    //     }
-
-    //     for (int i = 0; i < this._data.SelectBits; i++)
-    //     {
-    //         this.RegisterIO($"S{i}", 1, ComponentSide.TOP, "select");
-    //     }
-
-    //     this.TriggerSizeRecalculation();
-    // }
-
-    // public override void PerformLogic()
-    // {
-    //     var selects = this.GetIOsWithTag("select");
-
-    //     if (selects.Select(v => v.GetValues().First()).Any(v => v == LogicValue.UNDEFINED))
-    //     {
-    //         return;
-    //     }
-
-    //     var select = selects.Select(v => v.GetValues().First()).GetAsInt();
-
-    //     var outputs = this.GetIOsWithTag("output");
-    //     for (int i = 0; i < outputs.Length; i++)
-    //     {
-    //         var val = i == select ? LogicValue.HIGH : LogicValue.LOW;
-    //         outputs[i].Push(val);
-    //     }
-    // }
 }

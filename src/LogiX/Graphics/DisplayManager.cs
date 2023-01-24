@@ -13,6 +13,7 @@ public static class DisplayManager
 {
     public static Window WindowHandle { get; set; }
     public static event EventHandler<Vector2> OnFramebufferResize;
+    public static event EventHandler<bool> OnToggleFullscreen;
     private static bool manuallySetClose;
     public static int TargetFPS { get; set; }
     public static float FrameTime
@@ -23,7 +24,7 @@ public static class DisplayManager
         }
     }
 
-    private static void PrepareContext()
+    private static void PrepareContext(bool maximized)
     {
         // Set some common hints for the OpenGL profile creation
         Glfw.WindowHint(Hint.ClientApi, ClientApi.OpenGL);
@@ -38,6 +39,7 @@ public static class DisplayManager
         Glfw.WindowHint(Hint.OpenglProfile, Profile.Core);
         Glfw.WindowHint(Hint.Doublebuffer, true);
         Glfw.WindowHint(Hint.Decorated, true);
+        Glfw.WindowHint(Hint.Maximized, maximized);
 
         manuallySetClose = false;
     }
@@ -107,9 +109,9 @@ public static class DisplayManager
         return Glfw.CurrentContext == WindowHandle;
     }
 
-    public unsafe static void InitWindow(int width, int height, string title, int minWidth = 1280, int minHeight = 720)
+    public unsafe static void InitWindow(int width, int height, string title, bool maximized, int minWidth = 1280, int minHeight = 720)
     {
-        PrepareContext();
+        PrepareContext(maximized);
         WindowHandle = CreateWindow(width, height, title, minWidth, minHeight);
         Input.Init();
 
@@ -118,6 +120,7 @@ public static class DisplayManager
             Vector2 windowSize = GetWindowSizeInPixels();
             OnFramebufferResize?.Invoke(null, windowSize);
             //Logging.Log(LogLevel.Info, $"Window size changed to {windowSize.X}x{windowSize.Y} because of {(maximized ? "maximization" : "minimization")}");
+            OnToggleFullscreen?.Invoke(null, maximized);
         });
 
         Glfw.SetFramebufferSizeCallback(WindowHandle, (Window, w, h) =>

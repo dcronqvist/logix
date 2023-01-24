@@ -8,7 +8,7 @@ namespace LogiX;
 
 public abstract class Game
 {
-    public abstract Vector2i Initialize(string[] args);
+    public abstract (Vector2i, bool) Initialize(string[] args);
     public abstract void LoadContent(string[] args);
     public abstract void Update();
     public abstract void Render();
@@ -18,9 +18,9 @@ public abstract class Game
     {
         bool macMove = false;
 
-        var initialWindowSize = Initialize(args);
+        (var initialWindowSize, var maximized) = Initialize(args);
 
-        DisplayManager.InitWindow(initialWindowSize.X, initialWindowSize.Y, winTitle, minWidth, minHeight);
+        DisplayManager.InitWindow(initialWindowSize.X, initialWindowSize.Y, winTitle, maximized, minWidth, minHeight);
 
         LoadContent(args);
 

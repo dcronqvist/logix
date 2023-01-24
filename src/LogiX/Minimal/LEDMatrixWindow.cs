@@ -31,12 +31,12 @@ public class LEDMatrixWindow : Game
         this.Keyboard = keyboard;
     }
 
-    public override Vector2i Initialize(string[] args)
+    public override (Vector2i, bool) Initialize(string[] args)
     {
         var data = (LEDMatrixData)this.Matrix.GetNodeData();
         var x = new Vector2i(data.Columns * this.Scale, data.Rows * this.Scale);
         this.WindowSize = new Vector2(x.X, x.Y);
-        return x;
+        return (x, false);
     }
 
     public override void LoadContent(string[] args)

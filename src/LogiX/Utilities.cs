@@ -779,6 +779,18 @@ public static class Utilities
         return new Vector2(rec.Width, rec.Height);
     }
 
+    public static int GetGreatestIndex(this IEnumerable<LogicValue> values, LogicValue value)
+    {
+        for (int i = values.Count() - 1; i >= 0; i--)
+        {
+            if (values.ElementAt(i) == value)
+            {
+                return i;
+            }
+        }
+        return -1;
+    }
+
     public static int GetAsInt(this IEnumerable<LogicValue> values)
     {
         int result = 0;

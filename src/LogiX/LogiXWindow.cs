@@ -24,17 +24,23 @@ public class LogiXWindow : Game
     public Editor Editor { get; private set; }
     private string _loadingUnderstring = "";
 
-    public override Vector2i Initialize(string[] args)
+    public override (Vector2i, bool) Initialize(string[] args)
     {
         Settings.LoadSettings();
         var settingsWindowSize = Settings.GetSetting<Vector2i>(Settings.WINDOW_SIZE);
+        var settingsFullscreen = Settings.GetSetting<bool>(Settings.WINDOW_FULLSCREEN);
 
         DisplayManager.OnFramebufferResize += (sender, e) =>
         {
             Settings.SetSetting(Settings.WINDOW_SIZE, new Vector2i((int)e.X, (int)e.Y));
         };
 
-        return settingsWindowSize;
+        DisplayManager.OnToggleFullscreen += (sender, e) =>
+        {
+            _ = Settings.SetSettingAsync(Settings.WINDOW_FULLSCREEN, e);
+        };
+
+        return (settingsWindowSize, settingsFullscreen);
     }
 
     public override void LoadContent(string[] args)
