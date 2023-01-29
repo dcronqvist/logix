@@ -87,6 +87,11 @@ public class ROM : BoxNode<RomData>
 
     public override void Initialize(RomData data)
     {
+        if (this._data is not null && data.AddressBits != this._data.AddressBits && data.Memory == this._data.Memory)
+        {
+            data.Memory = new WordAddressableMemory((int)Math.Pow(2, data.AddressBits), false);
+        }
+
         this._data = data;
         this._data.Memory = data.Memory;
     }

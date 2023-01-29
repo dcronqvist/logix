@@ -23,9 +23,16 @@ public class DFlipFlop : BoxNode<DFlipFlopData>
     {
         var D = pins.Get("D").Read(1).First();
         var CLK = pins.Get("CLK").Read(1).First();
+        var AR = pins.Get("AR").Read(1).First();
 
         var Q = pins.Get("Q");
         var Qn = pins.Get("Q'");
+
+        if (AR == LogicValue.HIGH)
+        {
+            yield return (Q, LogicValue.LOW.Multiple(1), 1);
+            yield return (Qn, LogicValue.HIGH.Multiple(1), 1);
+        }
 
         if (CLK == LogicValue.HIGH)
         {
@@ -54,6 +61,9 @@ public class DFlipFlop : BoxNode<DFlipFlopData>
 
         yield return new PinConfig("Q", 1, false, new Vector2i(3, 1));
         yield return new PinConfig("Q'", 1, false, new Vector2i(3, 2));
+
+        // Asynchronous reset
+        yield return new PinConfig("AR", 1, true, new Vector2i(1, 3));
     }
 
     public override Vector2i GetSize()

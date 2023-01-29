@@ -24,9 +24,16 @@ public class SRFlipFlop : BoxNode<SRFlipFlopData>
         var S = pins.Get("S").Read(1).First();
         var R = pins.Get("R").Read(1).First();
         var CLK = pins.Get("CLK").Read(1).First();
+        var AR = pins.Get("AR").Read(1).First();
 
         var Q = pins.Get("Q");
         var Qn = pins.Get("Q'");
+
+        if (AR == LogicValue.HIGH)
+        {
+            yield return (Q, LogicValue.LOW.Multiple(1), 1);
+            yield return (Qn, LogicValue.HIGH.Multiple(1), 1);
+        }
 
         if (CLK == LogicValue.HIGH)
         {
@@ -56,6 +63,8 @@ public class SRFlipFlop : BoxNode<SRFlipFlopData>
 
         yield return new PinConfig("Q", 1, false, new Vector2i(4, 1));
         yield return new PinConfig("Q'", 1, false, new Vector2i(4, 3));
+
+        yield return new PinConfig("AR", 1, true, new Vector2i(1, 4));
     }
 
     public override Vector2i GetSize()
