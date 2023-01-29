@@ -1,0 +1,6 @@
+{
+    "name": "D2 Plugin",
+    "version": "X.X",
+    "author": "dcronqvist",
+    "description": "This is a template plugin for the plugin system. Use this as a starting point for your own plugins."
+}

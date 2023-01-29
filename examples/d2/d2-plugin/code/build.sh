@@ -1,4 +1,4 @@
-pluginName="d1-plugin"
+pluginName="d2-plugin"
 
 dotnet build -c Release
 
@@ -8,5 +8,5 @@ cp bin/Release/net7.0/$pluginName.dll ./$pluginName.dll
 rm -rf bin
 rm -rf obj
 
-rm -rf ../../../../assets/plugins/d1-plugin
-cp -r ../../d1-plugin ../../../../assets/plugins/d1-plugin
+rm -rf ../../../../assets/plugins/d2-plugin
+cp -r ../../d2-plugin ../../../../assets/plugins/d2-plugin
