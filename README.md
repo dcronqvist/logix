@@ -4,9 +4,9 @@
 
 Simulator for logic gates and circuits.
 
-Below is an example gif of the [8-bit computer designed and built by Ben Eater](https://www.youtube.com/watch?v=HyznrdDSSGM&list=PLowKtXNTBypGqImE405J2565dvjafglHU), implemented in LogiX (exists as an [example project](/examples/beneater-8bit/)). In the gif, a very simple program is loaded into memory that is incrementing a counter, until it reaches the value `0xFF`, and then it stops, as well as displaying the result by putting it in the `OUTPUT` register.
+Below is an example gif of a microprocessor, designed by me, that implements a simple instruction set (similar to a 6502), that is running a simple program that prints `Hello World!` over and over to its connected display. The sample program is written in an assembly-style language (for easy programming of the D2), and the program can be seen [here](/examples/d2/test.s). There is also a [LogiX plugin](/examples/d2/d2-plugin/) for the D2 that allows you to directly assemble a file into the D2's RAM for easy programming and running.
 
-![Showcasing an example implementation of the Ben Eater 8-bit computer](media/ben_eater_showcase.gif)
+![Showcasing the D2 processor](media/d2_showcase.gif)
 
 There are a few example projects in the [`examples`](/examples/) directory, which can be opened up in the editor, or simulated on the command line.
 
