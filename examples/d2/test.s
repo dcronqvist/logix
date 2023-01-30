@@ -4,7 +4,7 @@
 DDRA = $0001        ; Port A data direction register
 PORTA = $0000       ; Port A data register
 DDRB = $0003        ; Port B data direction register
-PORTB = $002       ; Port B data register
+PORTB = $0002       ; Port B data register
 
 reset:
     sei             ; Enable interrupts
