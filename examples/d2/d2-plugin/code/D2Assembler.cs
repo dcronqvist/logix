@@ -521,6 +521,15 @@ public class D2Assembler : D2AssemblyBaseVisitor<object>
 
             this.Emit(bytes);
         }
+        else if (dir.asciizdir() is not null)
+        {
+            var s = dir.asciizdir().STRINGLITERAL().GetText().Substring(1, dir.asciizdir().STRINGLITERAL().GetText().Length - 2);
+            foreach (var c in s)
+            {
+                this.Emit((byte)c);
+            }
+            this.Emit(0);
+        }
 
         return base.VisitDirectiveline(context);
     }

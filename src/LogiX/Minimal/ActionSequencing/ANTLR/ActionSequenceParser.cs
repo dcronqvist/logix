@@ -8,7 +8,7 @@
 // </auto-generated>
 //------------------------------------------------------------------------------
 
-// Generated from /Users/dcronqvist/repos/logix/src/LogiX/Minimal/ActionSequencing/ANTLR/ActionSequence.g4 by ANTLR 4.9.2
+// Generated from c:\Users\RichieZ\repos\logix\src\LogiX\Minimal\ActionSequencing\ANTLR\ActionSequence.g4 by ANTLR 4.9.2
 
 // Unreachable code detected
 #pragma warning disable 0162

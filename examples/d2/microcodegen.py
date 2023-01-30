@@ -262,7 +262,7 @@ def ldabs_reg(reg):
     instr(states)
 
 def ldidx_reg(reg, idx):
-    states = [Q0, Q1, Q2, Q3, Q4, FETCH, MAM_PC | MR | LD_MARL | PC_INC, MAM_PC | MR | LD_MARH | PC_INC, MAM_MAR | idx | MR | reg, NF, NF, NF, NF, NF, NF, NF, NF]
+    states = [Q0, Q1, Q2, Q3, Q4, FETCH, MAM_PC | MR | LD_MARL | PC_INC, MAM_PC | MR | LD_MARH | PC_INC, MAM_MAR_PLUS_IDX | idx | MR | reg, NF, NF, NF, NF, NF, NF, NF, NF]
     instr(states)
 
 def stabs_reg(reg):
@@ -270,7 +270,7 @@ def stabs_reg(reg):
     instr(states)
 
 def staidx_reg(reg, idx):
-    states = [Q0, Q1, Q2, Q3, Q4, FETCH, MAM_PC | MR | LD_MARL | PC_INC, MAM_PC | MR | LD_MARH | PC_INC, MAM_MAR | idx | reg | MW, NF, NF, NF, NF, NF, NF, NF, NF]
+    states = [Q0, Q1, Q2, Q3, Q4, FETCH, MAM_PC | MR | LD_MARL | PC_INC, MAM_PC | MR | LD_MARH | PC_INC, MAM_MAR_PLUS_IDX | idx | reg | MW, NF, NF, NF, NF, NF, NF, NF, NF]
     instr(states)
 
 def trf_reg(reg1, reg2):
