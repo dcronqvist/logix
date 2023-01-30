@@ -121,10 +121,12 @@ public class ObservableValue : Observable<IEnumerable<(ValueEvent, int)>>
 
         if (!newVal.SequenceEqual(oldVal) || oldError != newError)
         {
-            var b = this.NotifyObservers().SelectMany(x => x.ToArray());
-            foreach (var (valueEvent, time) in b)
+            foreach (var evs in this.NotifyObservers())
             {
-                yield return (valueEvent, time);
+                foreach (var ev in evs)
+                {
+                    yield return ev;
+                }
             }
         }
     }

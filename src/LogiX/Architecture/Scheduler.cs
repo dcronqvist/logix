@@ -103,12 +103,14 @@ public class Scheduler
         return connectedPorts;
     }
 
+    private int totalObservableValues = 0;
     public void Prepare()
     {
         var currPins = this.NodePins.ToDictionary(x => x.Key, x => x.Value);
         this.NodePins.Clear();
         this.Nodes.ForEach(n => n.SetScheduler(this));
         this.EventQueue.Clear();
+        this.totalObservableValues = this.NodePins.Values.SelectMany(x => x.GetObservableValues()).Count();
 
         foreach (var connections in this.GetConnectedPins(this.NodePinConnections))
         {
@@ -202,15 +204,12 @@ public class Scheduler
     private readonly object _lock = new();
     public (int, int) Step()
     {
-        // Return the number of values changed and the total number of obversable values
-        var totalObservableValues = this.NodePins.Values.SelectMany(x => x.GetObservableValues()).Count();
-
         int valuesChanged = 0;
         if (this.EventQueue.TryDequeue(out var events))
         {
             foreach (var e in events)
             {
-                var newEvs = e.AffectedValue.Set(e.Originator, e.NewValues);
+                var newEvs = e.AffectedValue.Set(e.Originator, e.NewValues).ToList();
                 foreach (var (ev, time) in newEvs)
                 {
                     this.Schedule(ev.Originator, ev.AffectedValue, ev.NewValues, time);
@@ -229,7 +228,7 @@ public class Scheduler
             }
         }
 
-        return (valuesChanged, totalObservableValues);
+        return (valuesChanged, this.totalObservableValues);
     }
 
     public PinCollection GetPinCollectionForNode(Node node)
