@@ -40,6 +40,7 @@ public static class DisplayManager
         Glfw.WindowHint(Hint.Doublebuffer, true);
         Glfw.WindowHint(Hint.Decorated, true);
         Glfw.WindowHint(Hint.Maximized, maximized);
+        Glfw.WindowHint(Hint.Samples, 4);
 
         manuallySetClose = false;
     }

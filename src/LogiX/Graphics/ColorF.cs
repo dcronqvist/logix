@@ -34,6 +34,14 @@ public struct ColorF
         this.A = a / 255f;
     }
 
+    public ColorF(int r, int g, int b, int a)
+    {
+        this.R = (byte)r / 255f;
+        this.G = (byte)g / 255f;
+        this.B = (byte)b / 255f;
+        this.A = (byte)a / 255f;
+    }
+
     public ColorF(int hex)
     {
         this.R = ((hex & 0xFF0000) >> 16) / 255f;

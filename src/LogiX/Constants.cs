@@ -15,4 +15,9 @@ public static class Constants
     public static ColorF COLOR_LOW => ColorF.Darken(COLOR_HIGH, 0.3f);
     public static ColorF COLOR_UNDEFINED => ColorF.BlueGray;
     public static ColorF COLOR_ERROR => ColorF.Red;
+
+    public static string NODE_FONT = "core.font.opensans";
+    public static int NODE_FONT_SIZE = 64;
+
+    public static Font NODE_FONT_REAL => Utilities.GetFont(NODE_FONT, NODE_FONT_SIZE);
 }

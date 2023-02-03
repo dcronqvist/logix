@@ -2,11 +2,15 @@
 out vec4 FragColor;
 in vec2 TexCoords;
 in vec4 Color;
+in float Edge;
+in float Width;
 
 uniform sampler2D text;
 
 void main()
 {
-	vec4 sampled = vec4(1.0, 1.0, 1.0, texture(text, TexCoords).r);
-    FragColor = Color * sampled;
+    float dist = texture(text, TexCoords).r;
+    float alpha = smoothstep(Edge, Edge + Width, dist);
+
+    FragColor = vec4(Color.rgb, alpha * Color.a);
 } 

@@ -111,6 +111,8 @@ public class Framebuffer
         glVertexAttribPointer(1, 2, GL_FLOAT, false, 4 * sizeof(float), (void*)(2 * sizeof(float)));
     }
 
+    private uint textureColorBufferMultiSampled;
+    private uint intermediateFBO;
     public unsafe void InitGL(int width, int height)
     {
         InitQuad();
@@ -118,23 +120,64 @@ public class Framebuffer
         this._framebuffer = glGenFramebuffer();
         glBindFramebuffer(GL_FRAMEBUFFER, this._framebuffer);
 
+        this.textureColorBufferMultiSampled = glGenTexture();
+        glBindTexture(GL_TEXTURE_2D_MULTISAMPLE, this.textureColorBufferMultiSampled);
+        glTexImage2DMultisample(GL_TEXTURE_2D_MULTISAMPLE, 4, GL_RGBA, width, height, true);
+        glBindTexture(GL_TEXTURE_2D_MULTISAMPLE, 0);
+        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D_MULTISAMPLE, this.textureColorBufferMultiSampled, 0);
+
+        uint rbo = glGenRenderbuffer();
+        glBindRenderbuffer(rbo);
+        glRenderbufferStorageMultisample(GL_RENDERBUFFER, 4, GL_DEPTH24_STENCIL8, width, height);
+        glBindRenderbuffer(0);
+        glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, rbo);
+
+        if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
+        {
+            throw new Exception("Framebuffer is not complete!");
+        }
+
+        glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+        // configure second post-processing framebuffer
+        this.intermediateFBO = glGenFramebuffer();
+        glBindFramebuffer(GL_FRAMEBUFFER, this.intermediateFBO);
+
         this.renderedTexture = glGenTexture();
         glBindTexture(GL_TEXTURE_2D, this.renderedTexture);
-
         glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
 
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
         glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, this.renderedTexture, 0);
+
+        if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
+        {
+            throw new Exception("Framebuffer is not complete!");
+        }
+
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+
+        //------------------ OLD
+        // this.renderedTexture = glGenTexture();
+        // glBindTexture(GL_TEXTURE_2D, this.renderedTexture);
+
+        // glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
+
+        // glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+        // glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+
+        // glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, this.renderedTexture, 0);
+        // glBindFramebuffer(GL_FRAMEBUFFER, 0);
     }
 
     private unsafe void Resize(int width, int height)
     {
-        glBindTexture(GL_TEXTURE_2D, this.renderedTexture);
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
-        glBindTexture(GL_TEXTURE_2D, 0);
+        // glBindTexture(GL_TEXTURE_2D, this.renderedTexture);
+        // glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
+        // glBindTexture(GL_TEXTURE_2D, 0);
 
         _defaultCam = new Camera2D(new Vector2(width / 2f, height / 2f), 1f);
     }
@@ -160,6 +203,8 @@ public class Framebuffer
     public static void BindDefaultFramebuffer()
     {
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
+        glBindFramebuffer(GL_READ_FRAMEBUFFER, 0);
+        glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
     }
 
     public static uint GetCurrentBoundBuffer()
@@ -191,10 +236,14 @@ public class Framebuffer
 
         var oldBuffer = GetCurrentBoundBuffer();
 
-        BindDefaultFramebuffer();
-
         shader.Use(() =>
         {
+            glBindFramebuffer(GL_READ_FRAMEBUFFER, framebuffer._framebuffer);
+            glBindFramebuffer(GL_DRAW_FRAMEBUFFER, framebuffer.intermediateFBO);
+            glBlitFramebuffer(0, 0, framebuffer.width, framebuffer.height, 0, 0, framebuffer.width, framebuffer.height, GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT, GL_NEAREST);
+
+            BindDefaultFramebuffer();
+
             glActiveTexture(GL_TEXTURE0);
             glBindTexture(GL_TEXTURE_2D, framebuffer.renderedTexture);
             shader.SetInt("screenTexture", 0);

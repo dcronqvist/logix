@@ -47,6 +47,8 @@ printchar:
     rts
 
 irq:                ; Interrupt routine
+    lda #$0C        ; Load value representing clear screen
+    jsr printchar   ; Call printchar subroutine
     rti             ; Return from interrupt
 
 message:

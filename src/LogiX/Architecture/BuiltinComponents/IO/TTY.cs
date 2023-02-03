@@ -98,12 +98,14 @@ public class TTY : Node<TTYData>
             this._buffer.Append(c);
         }
         this.OnCharReceived?.Invoke(this, c);
+        this._caretTimer = 0;
     }
 
     public override Vector2i GetSize()
     {
-        var font = Utilities.GetFont("core.font.default", 8);
-        var measure = font.MeasureString("M", 1f);
+        var font = Utilities.GetFont("core.font.inconsolata", 64);
+        float scale = 0.30f;
+        var measure = font.MeasureString("M", scale);
         var width = (this._data.Width * measure.X);
         var widthAligned = width.CeilToMultipleOf(Constants.GRIDSIZE);
         var widthI = (int)widthAligned / Constants.GRIDSIZE;
@@ -112,7 +114,7 @@ public class TTY : Node<TTYData>
         var heightAligned = height.CeilToMultipleOf(Constants.GRIDSIZE);
         var heightI = (int)heightAligned / Constants.GRIDSIZE;
 
-        return new Vector2i(widthI + 2, heightI + 2);
+        return new Vector2i(widthI + 2, heightI + 3);
     }
 
     public override void Initialize(TTYData data)
@@ -143,23 +145,24 @@ public class TTY : Node<TTYData>
         var pos = this.Position.ToVector2(Constants.GRIDSIZE);
         var size = this.GetSizeRotated().ToVector2(Constants.GRIDSIZE);
         var rect = pos.CreateRect(size);
-        var font = Utilities.GetFont("core.font.default", 8);
+        var font = Utilities.GetFont("core.font.inconsolata", 64);
 
         PrimitiveRenderer.RenderRectangleWithBorder(rect, Vector2.Zero, 0f, 1, this._data.BackgroundColor, ColorF.Black);
 
         var lines = GetLines(this._buffer);
+        float scale = 0.30f;
 
         for (int i = 0; i < lines.Length; i++)
         {
             var line = lines[i];
-            var linePos = new Vector2(pos.X + Constants.GRIDSIZE, pos.Y + ((i + 1) * Constants.GRIDSIZE));
+            var linePos = new Vector2(pos.X + Constants.GRIDSIZE, pos.Y + ((i * 2 + 2) * Constants.GRIDSIZE));
 
-            TextRenderer.RenderText(font, line, linePos, 1f, 0f, this._data.TextColor, fixedAdvance: 8);
             if (this._caretVisible && i == lines.Length - 1)
             {
-                var caretPos = new Vector2(linePos.X + line.Length * 8, linePos.Y);
-                TextRenderer.RenderText(font, "_", caretPos, 1f, 0f, this._data.TextColor);
+                line = line + "_";
             }
+
+            TextRenderer.RenderText(font, line, linePos, scale, 0f, this._data.TextColor, true, 0.4f, 0.1f, -1f, Constants.GRIDSIZE);
         }
 
 

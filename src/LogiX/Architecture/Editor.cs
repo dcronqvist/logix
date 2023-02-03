@@ -123,7 +123,7 @@ public class Editor : Invoker<Circuit, Editor>
                 Camera.Zoom /= 1.1f;
 
             // Clamp the zoom to a minimum of 0.3f and a maximum of 10f, so we don't zoom in too far or out too far
-            Camera.Zoom = Math.Clamp(Camera.Zoom, 0.5f, 10f);
+            Camera.Zoom = Math.Clamp(Camera.Zoom, 1f, 10f);
         };
 
         // This event is called every time a key that represents a character is pressed.
@@ -537,6 +537,11 @@ Under *projects*, you can see your circuits, and right clicking them in the side
             this._guiFontSize = s.Item2;
         }, 0, Keys.Unknown))).ToArray()));
 
+        this.AddMainMenuItem("View", "Style Editor", new EditorAction((e) => true, (e) => this.styleEditorOpen, (e) =>
+        {
+            this.styleEditorOpen = !this.styleEditorOpen;
+        }, 0, Keys.Unknown));
+
         var plugins = PluginManager.GetPlugins();
 
         foreach (var plugin in plugins)
@@ -828,6 +833,8 @@ Under *projects*, you can see your circuits, and right clicking them in the side
 
             PrimitiveRenderer.RenderLine(new Vector2(lineXstart, lineY - 0.5f), new Vector2(lineXend, lineY - 0.5f), 1, color);
         }
+
+        //BezierRenderer.RenderBezier(true, new Vector2(0, 0), new Vector2(0, 100), Input.GetMousePosition(this.Camera), this.Camera);
     }
 
     private int _guiFontSize = 20;
@@ -839,7 +846,6 @@ Under *projects*, you can see your circuits, and right clicking them in the side
         var fShader = LogiXWindow.ContentManager.GetContentItem<ShaderProgram>("core.shader_program.fb_default");
         var pShader = LogiXWindow.ContentManager.GetContentItem<ShaderProgram>("core.shader_program.primitive");
         var tShader = LogiXWindow.ContentManager.GetContentItem<ShaderProgram>("core.shader_program.text");
-        var font = Utilities.GetFont("core.font.default", 8);
         this._submittedInstances = 0;
 
         if (this.CurrentlyOpenCircuit is not null)
@@ -1099,18 +1105,6 @@ Under *projects*, you can see your circuits, and right clicking them in the side
         {
             if (ImGui.BeginMenu("Set Zoom to..."))
             {
-                if (ImGui.MenuItem("25%"))
-                {
-                    this.Camera.Zoom = 0.25f;
-                }
-                if (ImGui.MenuItem("50%"))
-                {
-                    this.Camera.Zoom = 0.5f;
-                }
-                if (ImGui.MenuItem("75%"))
-                {
-                    this.Camera.Zoom = 0.75f;
-                }
                 if (ImGui.MenuItem("100%"))
                 {
                     this.Camera.Zoom = 1f;
@@ -1172,11 +1166,26 @@ Under *projects*, you can see your circuits, and right clicking them in the side
 
                 foreach (var circuit in circuits)
                 {
+                    var canAdd = circuit.AllPinsHaveLabels();
                     ImGui.Selectable(circuit.Name, this.CurrentlyOpenCircuit is not null ? circuit.ID == CurrentlyOpenCircuit.ID : false);
                     if (ImGui.IsItemClicked() && circuit.ID != CurrentlyOpenCircuit.ID)
                     {
                         // Cannot put a circuit inside itself
-                        this.AddNewComponent(Integrated.CreateDescriptionFromCircuit(circuit.Name, circuit));
+                        if (!canAdd)
+                        {
+                            this.OpenErrorPopup("Error adding circuit", false, () =>
+                            {
+                                ImGui.Text($"Cannot add {circuit.Name} since it contains pins without labels.");
+                                if (ImGui.Button("OK"))
+                                {
+                                    ImGui.CloseCurrentPopup();
+                                }
+                            });
+                        }
+                        else
+                        {
+                            this.AddNewComponent(Integrated.CreateDescriptionFromCircuit(circuit.Name, circuit));
+                        }
                     }
                     if (ImGui.BeginPopupContextItem())
                     {
@@ -1227,6 +1236,8 @@ Under *projects*, you can see your circuits, and right clicking them in the side
                                 {
                                     circuit.Name = circName;
                                     ImGui.CloseCurrentPopup();
+                                    // Reset simulation
+                                    this.OpenCircuit(this.CurrentlyOpenCircuit.ID, false);
                                 }
                                 if (this.NewCircuitName.Length == 0)
                                 {

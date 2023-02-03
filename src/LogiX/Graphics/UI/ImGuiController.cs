@@ -86,6 +86,79 @@ namespace LogiX.Graphics.UI
 
             ImGui.NewFrame();
             _frameBegun = true;
+
+            // Set ImGui style
+            // IMGUI STYLE
+            var style = ImGui.GetStyle();
+            var colors = style.Colors;
+
+            Vector4 bgColor = new ColorF(37, 37, 38, 220).ToVector4();
+            Vector4 lightBgColor = new ColorF(82, 82, 85, 255).ToVector4();
+            Vector4 veryLightBgColor = new ColorF(90, 90, 95, 255).ToVector4();
+
+            Vector4 panelColor = new ColorF(51, 51, 55, 255).ToVector4();
+            Vector4 panelHoverColor = new ColorF(29, 151, 236, 255).ToVector4();
+            Vector4 panelActiveColor = new ColorF(0, 119, 200, 255).ToVector4();
+
+            Vector4 textColor = new ColorF(255, 255, 255, 255).ToVector4();
+            Vector4 textDisabledColor = new ColorF(151, 151, 151, 255).ToVector4();
+            Vector4 borderColor = new ColorF(78, 78, 78, 255).ToVector4();
+
+            colors[(int)ImGuiCol.Text] = textColor;
+            colors[(int)ImGuiCol.TextDisabled] = textDisabledColor;
+            colors[(int)ImGuiCol.TextSelectedBg] = panelActiveColor;
+            colors[(int)ImGuiCol.WindowBg] = bgColor;
+            colors[(int)ImGuiCol.ChildBg] = bgColor;
+            colors[(int)ImGuiCol.PopupBg] = bgColor;
+            colors[(int)ImGuiCol.Border] = borderColor;
+            colors[(int)ImGuiCol.BorderShadow] = borderColor;
+            colors[(int)ImGuiCol.FrameBg] = panelColor;
+            colors[(int)ImGuiCol.FrameBgHovered] = panelHoverColor;
+            colors[(int)ImGuiCol.FrameBgActive] = panelActiveColor;
+            colors[(int)ImGuiCol.TitleBg] = bgColor;
+            colors[(int)ImGuiCol.TitleBgActive] = bgColor;
+            colors[(int)ImGuiCol.TitleBgCollapsed] = bgColor;
+            colors[(int)ImGuiCol.MenuBarBg] = panelColor;
+            colors[(int)ImGuiCol.ScrollbarBg] = panelColor;
+            colors[(int)ImGuiCol.ScrollbarGrab] = lightBgColor;
+            colors[(int)ImGuiCol.ScrollbarGrabHovered] = veryLightBgColor;
+            colors[(int)ImGuiCol.ScrollbarGrabActive] = veryLightBgColor;
+            colors[(int)ImGuiCol.CheckMark] = panelActiveColor;
+            colors[(int)ImGuiCol.SliderGrab] = panelHoverColor;
+            colors[(int)ImGuiCol.SliderGrabActive] = panelActiveColor;
+            colors[(int)ImGuiCol.Button] = panelColor;
+            colors[(int)ImGuiCol.ButtonHovered] = panelHoverColor;
+            colors[(int)ImGuiCol.ButtonActive] = panelHoverColor;
+            colors[(int)ImGuiCol.Header] = panelColor;
+            colors[(int)ImGuiCol.HeaderHovered] = panelHoverColor;
+            colors[(int)ImGuiCol.HeaderActive] = panelActiveColor;
+            colors[(int)ImGuiCol.Separator] = borderColor;
+            colors[(int)ImGuiCol.SeparatorHovered] = borderColor;
+            colors[(int)ImGuiCol.SeparatorActive] = borderColor;
+            colors[(int)ImGuiCol.ResizeGrip] = bgColor;
+            colors[(int)ImGuiCol.ResizeGripHovered] = panelColor;
+            colors[(int)ImGuiCol.ResizeGripActive] = lightBgColor;
+            colors[(int)ImGuiCol.PlotLines] = panelActiveColor;
+            colors[(int)ImGuiCol.PlotLinesHovered] = panelHoverColor;
+            colors[(int)ImGuiCol.PlotHistogram] = panelActiveColor;
+            colors[(int)ImGuiCol.PlotHistogramHovered] = panelHoverColor;
+            colors[(int)ImGuiCol.ModalWindowDimBg] = (bgColor.ToColorF() * 0.5f).ToVector4();
+            colors[(int)ImGuiCol.DragDropTarget] = bgColor;
+            colors[(int)ImGuiCol.NavHighlight] = bgColor;
+            colors[(int)ImGuiCol.DockingPreview] = panelActiveColor;
+            colors[(int)ImGuiCol.Tab] = bgColor;
+            colors[(int)ImGuiCol.TabActive] = panelActiveColor;
+            colors[(int)ImGuiCol.TabUnfocused] = bgColor;
+            colors[(int)ImGuiCol.TabUnfocusedActive] = panelActiveColor;
+            colors[(int)ImGuiCol.TabHovered] = panelHoverColor;
+
+            style.WindowRounding = 0.0f;
+            style.ChildRounding = 0.0f;
+            style.FrameRounding = 0.0f;
+            style.GrabRounding = 0.0f;
+            style.PopupRounding = 0.0f;
+            style.ScrollbarRounding = 0.0f;
+            style.TabRounding = 0.0f;
         }
 
         public void WindowResized(int width, int height)

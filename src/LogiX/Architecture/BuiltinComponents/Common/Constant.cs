@@ -50,9 +50,9 @@ public class Constant : BoxNode<ConstantData>
 
     public override Vector2i GetSize()
     {
-        var font = Utilities.GetFont("core.font.default", 8);
+        var font = Constants.NODE_FONT_REAL;
         var text = this.Text;
-        var scale = this.TextScale;
+        var scale = 0.17f;
 
         var textWidth = (font.MeasureString(text, scale).X);
 

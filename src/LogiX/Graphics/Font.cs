@@ -97,6 +97,8 @@ public class Font : GLContentItem<FontData>
                 continue;
             }
 
+            FT_Render_Glyph((nint)ftff.GlyphSlot, FT_Render_Mode.FT_RENDER_MODE_SDF);
+
             width += ftff.GlyphBitmap.width;
             height = Math.Max(height, ftff.GlyphBitmap.rows);
         }
@@ -119,6 +121,8 @@ public class Font : GLContentItem<FontData>
                 //Debug.WriteLine("FREETYPE ERROR: FAILED TO LOAD GLYPH FOR INDEX: " + i);
                 continue;
             }
+
+            FT_Render_Glyph((nint)ftff.GlyphSlot, FT_Render_Mode.FT_RENDER_MODE_SDF);
 
             FontCharacter character = new FontCharacter()
             {
@@ -201,6 +205,8 @@ public class Font : GLContentItem<FontData>
                 continue;
             }
 
+            FT_Render_Glyph((nint)ftff.GlyphSlot, FT_Render_Mode.FT_RENDER_MODE_SDF);
+
             width += ftff.GlyphBitmap.width;
             height = Math.Max(height, ftff.GlyphBitmap.rows);
         }
@@ -217,6 +223,8 @@ public class Font : GLContentItem<FontData>
                     //Debug.WriteLine("FREETYPE ERROR: FAILED TO LOAD GLYPH FOR INDEX: " + i);
                     continue;
                 }
+
+                FT_Render_Glyph((nint)ftff.GlyphSlot, FT_Render_Mode.FT_RENDER_MODE_SDF);
 
                 width += ftff.GlyphBitmap.width;
                 height = Math.Max(height, ftff.GlyphBitmap.rows);
@@ -238,6 +246,8 @@ public class Font : GLContentItem<FontData>
         uint x = 0;
         this.MaxY = height;
 
+        var slot = ftff.GlyphSlot;
+
         for (uint i = 0; i < 256; i++)
         {
             // Check if the character exists for this font.
@@ -249,6 +259,7 @@ public class Font : GLContentItem<FontData>
                 continue;
             }
 
+            FT_Render_Glyph((nint)ftff.GlyphSlot, FT_Render_Mode.FT_RENDER_MODE_SDF);
             glTexSubImage2D(GL_TEXTURE_2D, 0, (int)x, 0, (int)ftff.GlyphBitmap.width, (int)ftff.GlyphBitmap.rows, GL_RED, GL_UNSIGNED_BYTE, ftff.GlyphBitmap.buffer);
 
             FontCharacter character = new FontCharacter()
@@ -317,14 +328,15 @@ public class Font : GLContentItem<FontData>
     public Vector2 MeasureString(string text, float scale)
     {
         float sizeX = 0;
+        float sizeY = 0;
 
         foreach (char c in text)
         {
             FontCharacter ch = Characters[c];
-
             sizeX += ch.Advance * scale;
+            sizeY = Math.Max(sizeY, ch.Size.Y * scale);
         }
 
-        return new Vector2(sizeX, this.MaxY * scale);
+        return new Vector2(sizeX, sizeY);
     }
 }

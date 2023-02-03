@@ -13,6 +13,10 @@ public class CharacterInstance
     public char Character { get; set; }
     public ColorF Color { get; set; }
     public Matrix4x4 ModelMatrix { get; set; }
+    public float Edge { get; set; }
+    public float Width { get; set; }
+
+    public float Height { get; set; }
 
     public float[] GetData()
     {
@@ -22,7 +26,7 @@ public class CharacterInstance
         FontCharacter ch = Font.Characters[this.Character];
 
         float xPos = x + ch.Bearing.X;
-        float yPos = y + (Font.MaxY - ch.Bearing.Y);
+        float yPos = y + (this.Height - ch.Bearing.Y);
 
         float w = ch.Size.X;
         float h = ch.Size.Y;
@@ -32,7 +36,7 @@ public class CharacterInstance
         float uvYTop = ch.Rectangle.Y / Font.AtlasHeight;
         float uvYBottom = (ch.Rectangle.Y + ch.Rectangle.Height) / Font.AtlasHeight;
 
-        var data = new float[64]; // 2 tris
+        var data = new float[34 * 2]; // 2 tris
 
         float[] firstTri = new float[]
         {
@@ -58,6 +62,9 @@ public class CharacterInstance
             data[j + 16] = modelMatrixData[j];
         }
 
+        data[32] = this.Edge;
+        data[33] = this.Width;
+
         float[] secondTri = new float[]
         {
             xPos + w, yPos + h, uvXRight, uvYBottom,
@@ -68,13 +75,16 @@ public class CharacterInstance
 
         for (int j = 0; j < 4 * 4; j++)
         {
-            data[j + 32] = secondTri[j];
+            data[j + 34] = secondTri[j];
         }
 
         for (int j = 0; j < 16; j++)
         {
-            data[j + 48] = modelMatrixData[j];
+            data[j + 50] = modelMatrixData[j];
         }
+
+        data[66] = this.Edge;
+        data[67] = this.Width;
 
         return data;
     }
@@ -94,7 +104,8 @@ public static class TextRenderer
         // x2, y2, u2, v2
         // x3, y3, u3, v3
         // r,  g,  b,  a
-        // model matrix, 16 floats = 26 floats per character instance
+        // model matrix, 16 floats 
+        // smoothness (float) = 33 floats per character instance
 
         // Create VAO
         vao = glGenVertexArray();
@@ -108,39 +119,51 @@ public static class TextRenderer
         glBindBuffer(GL_ARRAY_BUFFER, vbo);
         glBufferData(GL_ARRAY_BUFFER, 0, (void*)0, GL_STREAM_DRAW); // Fill VBO with 0 bytes to initialize memory
 
+        int stride = 34;
+
         // Enable vertex attributes
         glEnableVertexAttribArray(0); // x1, y1, u1, v1
-        glVertexAttribPointer(0, 4, GL_FLOAT, false, 32 * sizeof(float), (void*)0);
+        glVertexAttribPointer(0, 4, GL_FLOAT, false, stride * sizeof(float), (void*)0);
         glVertexAttribDivisor(0, 1);
 
         glEnableVertexAttribArray(1); // x2, y2, u2, v2
-        glVertexAttribPointer(1, 4, GL_FLOAT, false, 32 * sizeof(float), (void*)(4 * sizeof(float)));
+        glVertexAttribPointer(1, 4, GL_FLOAT, false, stride * sizeof(float), (void*)(4 * sizeof(float)));
         glVertexAttribDivisor(1, 1);
 
         glEnableVertexAttribArray(2); // x3, y3, u3, v3
-        glVertexAttribPointer(2, 4, GL_FLOAT, false, 32 * sizeof(float), (void*)(8 * sizeof(float)));
+        glVertexAttribPointer(2, 4, GL_FLOAT, false, stride * sizeof(float), (void*)(8 * sizeof(float)));
         glVertexAttribDivisor(2, 1);
 
         glEnableVertexAttribArray(3); // r, g, b, a
-        glVertexAttribPointer(3, 4, GL_FLOAT, false, 32 * sizeof(float), (void*)(12 * sizeof(float)));
+        glVertexAttribPointer(3, 4, GL_FLOAT, false, stride * sizeof(float), (void*)(12 * sizeof(float)));
         glVertexAttribDivisor(3, 1);
 
         // 16 floats of model matrix
         glEnableVertexAttribArray(4); // model matrix
-        glVertexAttribPointer(4, 4, GL_FLOAT, false, 32 * sizeof(float), (void*)(16 * sizeof(float)));
+        glVertexAttribPointer(4, 4, GL_FLOAT, false, stride * sizeof(float), (void*)(16 * sizeof(float)));
         glVertexAttribDivisor(4, 1);
 
         glEnableVertexAttribArray(5); // model matrix
-        glVertexAttribPointer(5, 4, GL_FLOAT, false, 32 * sizeof(float), (void*)(20 * sizeof(float)));
+        glVertexAttribPointer(5, 4, GL_FLOAT, false, stride * sizeof(float), (void*)(20 * sizeof(float)));
         glVertexAttribDivisor(5, 1);
 
         glEnableVertexAttribArray(6); // model matrix
-        glVertexAttribPointer(6, 4, GL_FLOAT, false, 32 * sizeof(float), (void*)(24 * sizeof(float)));
+        glVertexAttribPointer(6, 4, GL_FLOAT, false, stride * sizeof(float), (void*)(24 * sizeof(float)));
         glVertexAttribDivisor(6, 1);
 
         glEnableVertexAttribArray(7); // model matrix
-        glVertexAttribPointer(7, 4, GL_FLOAT, false, 32 * sizeof(float), (void*)(28 * sizeof(float)));
+        glVertexAttribPointer(7, 4, GL_FLOAT, false, stride * sizeof(float), (void*)(28 * sizeof(float)));
         glVertexAttribDivisor(7, 1);
+
+        // 1 float of edge
+        glEnableVertexAttribArray(8); // edge
+        glVertexAttribPointer(8, 1, GL_FLOAT, false, stride * sizeof(float), (void*)(32 * sizeof(float)));
+        glVertexAttribDivisor(8, 1);
+
+        // 1 float of width
+        glEnableVertexAttribArray(9); // width
+        glVertexAttribPointer(9, 1, GL_FLOAT, false, stride * sizeof(float), (void*)(33 * sizeof(float)));
+        glVertexAttribDivisor(9, 1);
 
         // Unbind VBO
         glBindBuffer(GL_ARRAY_BUFFER, 0);
@@ -149,9 +172,12 @@ public static class TextRenderer
     }
 
     // Write a method that takes a string as input and outputs a list of character instances
-    public static void AddCharacterInstances(string text, Font font, Vector2 position, float scale, float rotation, ColorF color, float fixedAdvance = -1f)
+    public static void AddCharacterInstances(string text, Font font, Vector2 position, float scale, float rotation, ColorF color, float edge, float width, float fixedAdvance, float fixedHeight)
     {
         List<CharacterInstance> characterInstances = new();
+
+        var measure = font.MeasureString(text, 1f);
+        var height = fixedHeight == -1f ? measure.Y : fixedHeight;
 
         var pos = position;
 
@@ -174,7 +200,10 @@ public static class TextRenderer
                 UVRectangle = glyph.Rectangle,
                 Character = character,
                 Color = color,
-                ModelMatrix = Utilities.CreateModelMatrixFromPosition(pos.PixelAlign(), rotation, new Vector2(0, 0), new Vector2(scale, scale))
+                ModelMatrix = Utilities.CreateModelMatrixFromPosition(pos.PixelAlign(), rotation, new Vector2(0, 0), new Vector2(scale, scale)),
+                Edge = edge,
+                Width = width,
+                Height = height
             };
 
             // Add the character instance to the list
@@ -232,9 +261,9 @@ public static class TextRenderer
         _instances.Clear();
     }
 
-    public static unsafe void RenderText(Font f, string s, Vector2 position, float scale, float rotation, ColorF color, bool pixelAlign = true, float fixedAdvance = -1f)
+    public static unsafe void RenderText(Font f, string s, Vector2 position, float scale, float rotation, ColorF color, bool pixelAlign, float edge, float width, float fixedAdvance, float fixedHeight)
     {
-        AddCharacterInstances(s, f, pixelAlign ? position.PixelAlign() : position, scale, rotation, color, fixedAdvance);
+        AddCharacterInstances(s, f, pixelAlign ? position.PixelAlign() : position, scale, rotation, color, edge, width, fixedAdvance, fixedHeight);
     }
 
     // private static unsafe void RenderTextInternal(ShaderProgram shader, Font f, string s, Vector2 position, float scale, float rotation, ColorF color, Camera2D cam, bool pixelAlign = true)

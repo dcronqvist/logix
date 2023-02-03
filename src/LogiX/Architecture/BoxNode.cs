@@ -43,8 +43,8 @@ public abstract class BoxNode<TData> : Node<TData> where TData : INodeDescriptio
 
         var root = pos.ToVector2(Constants.GRIDSIZE);
         var sizeReal = size.ToVector2(Constants.GRIDSIZE);
-        var font = Utilities.GetFont("core.font.default", 8);
-        var scale = this.TextScale;
+        var font = Constants.NODE_FONT_REAL;
+        var scale = 0.17f;
         var measure = font.MeasureString(this.Text, scale);
 
         var rot = this.Rotation switch
@@ -54,14 +54,16 @@ public abstract class BoxNode<TData> : Node<TData> where TData : INodeDescriptio
             _ => 0
         };
 
+        var x = 0;
+        var y = -1;
         var offset = this.Rotation switch
         {
-            1 => new Vector2(measure.Y / 2f, -measure.X / 2f),
-            3 => new Vector2(measure.Y / 2f, -measure.X / 2f),
-            _ => -measure / 2f
+            1 => new Vector2(measure.Y / 2f + y, -measure.X / 2f + x),
+            3 => new Vector2(measure.Y / 2f + y, -measure.X / 2f + x),
+            _ => -measure / 2f + new Vector2(x, y)
         };
 
-        TextRenderer.RenderText(Utilities.GetFont("core.font.default", 8), this.Text, root + sizeReal / 2f + offset, scale, rot, ColorF.Black);
+        TextRenderer.RenderText(Constants.NODE_FONT_REAL, this.Text, root + sizeReal / 2f + offset, scale, rot, ColorF.Black, true, 0.38f, 0.12f, -1f, -1f);
 
         base.Render(pins, camera);
     }

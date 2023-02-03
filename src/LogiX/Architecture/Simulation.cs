@@ -96,11 +96,15 @@ public class Simulation : UndirectedGraph<Vector2i, Edge<Vector2i>>
         return this.Edges.Where(x => comps[x.Source] == comp).ToList();
     }
 
-    public void AddNode(Node node)
+    public void AddNode(Node node, bool recalculate = true)
     {
         this.Nodes.Add(node);
-        this.Scheduler.AddNode(node, true);
-        RecalculateConnectionsInScheduler();
+        this.Scheduler.AddNode(node, recalculate);
+
+        if (recalculate)
+        {
+            RecalculateConnectionsInScheduler();
+        }
     }
 
     public void RemoveNode(Node node)
@@ -255,15 +259,6 @@ public class Simulation : UndirectedGraph<Vector2i, Edge<Vector2i>>
 
         this.Scheduler = new Scheduler();
 
-        foreach (var node in circuit.Nodes)
-        {
-            if (excludeNodes.Contains(node.NodeTypeID))
-                continue;
-
-            var c = node.CreateNode();
-            this.AddNode(c);
-        }
-
         foreach (var wire in circuit.Wires)
         {
             var w = wire.CreateWire();
@@ -276,6 +271,15 @@ public class Simulation : UndirectedGraph<Vector2i, Edge<Vector2i>>
 
                 this.AddEdge(new Edge<Vector2i>(s.Item1, s.Item2));
             }
+        }
+
+        foreach (var node in circuit.Nodes)
+        {
+            if (excludeNodes.Contains(node.NodeTypeID))
+                continue;
+
+            var c = node.CreateNode();
+            this.AddNode(c, false);
         }
 
         this.RecalculateConnectionsInScheduler();

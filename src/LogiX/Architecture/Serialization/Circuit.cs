@@ -147,4 +147,17 @@ public class Circuit
     {
         //this.Nodes.RemoveAll(c => c.NodeTypeID == "logix_builtin.script_type.INTEGRATED" && (c.Data as IntegratedData).CircuitID == id);
     }
+
+    public bool AllPinsHaveLabels()
+    {
+        foreach (var pin in this.GetAllPins())
+        {
+            if (string.IsNullOrEmpty((pin.Data as PinData).Label))
+            {
+                return false;
+            }
+        }
+
+        return true;
+    }
 }

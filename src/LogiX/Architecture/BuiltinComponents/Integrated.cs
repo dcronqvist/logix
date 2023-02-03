@@ -131,17 +131,26 @@ public class Integrated : Node<IntegratedData>
 
         var leftPinsMaxLabel = leftPins.Count > 0 ? leftPins.Select(x => x.Label.Length).Max() : 0;
         var rightPinsMaxLabel = rightPins.Count > 0 ? rightPins.Select(x => x.Label.Length).Max() : 0;
+        var topPinsMaxLabel = topPins.Count > 0 ? topPins.Select(x => x.Label.Length).Max() : 0;
+        var bottomPinsMaxLabel = bottomPins.Count > 0 ? bottomPins.Select(x => x.Label.Length).Max() : 0;
 
-        var font = Utilities.GetFont("core.font.default", 8);
-        var scale = 1f;
+        var font = Constants.NODE_FONT_REAL;
+        var scale = 0.25f;
         var measure = font.MeasureString("_", scale).X;
+        var measureHeight = font.MeasureString("K", scale).Y;
+
         var leftMax = (int)((leftPinsMaxLabel * measure).CeilToMultipleOf(Constants.GRIDSIZE) / Constants.GRIDSIZE);
         var rightMax = (int)((rightPinsMaxLabel * measure).CeilToMultipleOf(Constants.GRIDSIZE) / Constants.GRIDSIZE);
+        var topMax = (int)((topPinsMaxLabel * measure).CeilToMultipleOf(Constants.GRIDSIZE) / Constants.GRIDSIZE);
+        var bottomMax = (int)((bottomPinsMaxLabel * measure).CeilToMultipleOf(Constants.GRIDSIZE) / Constants.GRIDSIZE);
 
         var widthMax = Math.Max(leftMax, rightMax);
+        var heightMax = Math.Max(topMax, bottomMax);
 
-        var width = Math.Max(widthMax * 2, 4);
-        var height = Math.Max(leftPins.Count, rightPins.Count) + 1;
+        var realHeightMax = (int)((heightMax * 2 + this._name.Length * measure).CeilToMultipleOf(Constants.GRIDSIZE) / Constants.GRIDSIZE);
+
+        var width = Math.Max(widthMax * 2 + (int)(measureHeight.CeilToMultipleOf(Constants.GRIDSIZE) / Constants.GRIDSIZE), 4);
+        var height = Math.Max(Math.Max(leftPins.Count, rightPins.Count), realHeightMax) + 1;
 
         return new Vector2i(width, height);
     }
@@ -264,8 +273,8 @@ public class Integrated : Node<IntegratedData>
                     var ident = p.Label;
                     var (config, value) = pins[ident];
 
-                    var iFont = Utilities.GetFont("core.font.default", 8);
-                    var iScale = 0.65f;
+                    var iFont = Constants.NODE_FONT_REAL;
+                    var iScale = 0.1f;
                     var iMeasure = iFont.MeasureString(ident, iScale);
                     var pinPos = this.GetPinPosition(pins, ident);
                     var color = value is null ? ColorF.Black : value.Read(config.Bits).GetValueColor();
@@ -273,13 +282,14 @@ public class Integrated : Node<IntegratedData>
 
                     var onside = side.ApplyRotation(this.Rotation);
 
-                    var x = 2;
+                    var x = 3;
+                    var y = -1;
                     var offset = (onside) switch
                     {
-                        ComponentSide.LEFT => new Vector2(x, -iMeasure.Y / 2f),
-                        ComponentSide.RIGHT => new Vector2(-iMeasure.X - x, -iMeasure.Y / 2f),
-                        ComponentSide.TOP => new Vector2(iMeasure.Y / 2f, x),
-                        ComponentSide.BOTTOM => new Vector2(iMeasure.Y / 2f, -iMeasure.X - x),
+                        ComponentSide.LEFT => new Vector2(x, -iMeasure.Y / 2f + y),
+                        ComponentSide.RIGHT => new Vector2(-iMeasure.X - x, -iMeasure.Y / 2f + y),
+                        ComponentSide.TOP => new Vector2(iMeasure.Y / 2f - y, x),
+                        ComponentSide.BOTTOM => new Vector2(iMeasure.Y / 2f - y, -iMeasure.X - x),
                         _ => new Vector2(0, 0)
                     };
 
@@ -292,15 +302,15 @@ public class Integrated : Node<IntegratedData>
                         _ => 0f
                     };
 
-                    TextRenderer.RenderText(iFont, ident, pinPos.ToVector2(Constants.GRIDSIZE) + offset, iScale, rot, ColorF.Black);
+                    TextRenderer.RenderText(iFont, ident, pinPos.ToVector2(Constants.GRIDSIZE) + offset, iScale, rot, ColorF.Black, true, 0.3f, 0.15f, -1f, -1f);
                 }
             }
         }
 
         var name = this._name;
-        var font = Utilities.GetFont("core.font.default", 8);
+        var font = Constants.NODE_FONT_REAL;
         var realPos = this.Position.ToVector2(Constants.GRIDSIZE) + this.GetMiddleOffset();
-        var scale = 1f;
+        var scale = 0.25f;
         var measure = font.MeasureString(name, scale);
         var textPos = this.Rotation switch
         {
@@ -312,6 +322,16 @@ public class Integrated : Node<IntegratedData>
         };
         var rotation = (MathF.PI / 2f) * ((this.Rotation + 1) % 2);
 
-        TextRenderer.RenderText(font, name, textPos, scale, rotation, ColorF.Black);
+        var ox = -2;
+        var oy = 2;
+        var off = this.Rotation switch
+        {
+            0 => new Vector2(oy, 0),
+            1 => new Vector2(0, ox),
+            2 => new Vector2(oy, 0),
+            3 => new Vector2(0, ox),
+        };
+
+        TextRenderer.RenderText(font, name, textPos + off, scale, rotation, ColorF.Black, true, 0.4f, 0.08f, -1f, -1f);
     }
 }

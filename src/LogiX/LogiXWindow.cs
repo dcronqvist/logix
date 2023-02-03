@@ -192,13 +192,15 @@ public class LogiXWindow : Game
                     Framebuffer.Clear(ColorF.Black);
 
                     var shader = ContentManager.GetContentItem<ShaderProgram>("core.shader_program.text");
-                    var font = Utilities.GetFont("core.font.default", 8);
+                    var font = Utilities.GetFont("core.font.inconsolata", 64);
 
-                    var measure = font.MeasureString("Loading...", 2f);
-                    var measureUnder = font.MeasureString(_loadingUnderstring, 2f);
+                    float scale = 0.3f;
 
-                    TextRenderer.RenderText(font, "Loading...", DisplayManager.GetWindowSizeInPixels() / 2f - measure / 2f, 2f, 0f, ColorF.White);
-                    TextRenderer.RenderText(font, _loadingUnderstring, DisplayManager.GetWindowSizeInPixels() / 2f - measureUnder / 2f + new Vector2(0, 20), 2f, 0f, ColorF.White);
+                    var measure = font.MeasureString("Loading...", scale);
+                    var measureUnder = font.MeasureString(_loadingUnderstring, scale);
+
+                    TextRenderer.RenderText(font, "Loading...", DisplayManager.GetWindowSizeInPixels() / 2f - measure / 2f, scale, 0f, ColorF.White, true, 0.4f, 0.1f, -1f, -1f);
+                    TextRenderer.RenderText(font, _loadingUnderstring, DisplayManager.GetWindowSizeInPixels() / 2f - measureUnder / 2f + new Vector2(0, 20), scale, 0f, ColorF.White, true, 0.4f, 0.1f, -1f, -1f);
 
                     TextRenderer.FinalizeRender(shader, Framebuffer.GetDefaultCamera());
                     DisplayManager.SwapBuffers(-1);

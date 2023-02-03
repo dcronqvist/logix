@@ -47,7 +47,7 @@ public class TextComp : BoxNode<TextCompData>
 
     public override Vector2i GetSize()
     {
-        var font = Utilities.GetFont("core.font.default", 8);
+        var font = Constants.NODE_FONT_REAL;
 
         var textScale = 1f;
         var gridSize = Constants.GRIDSIZE;
@@ -89,7 +89,7 @@ public class TextComp : BoxNode<TextCompData>
     {
         base.Render(pins, camera);
 
-        var font = Utilities.GetFont("core.font.default", 8);
+        var font = Constants.NODE_FONT_REAL;
 
         var textScale = 1f;
         var gridSize = Constants.GRIDSIZE;
@@ -117,7 +117,7 @@ public class TextComp : BoxNode<TextCompData>
         {
             var line = textLines[i];
             var linePos = new Vector2(middle.X - textSize.X / 2, middle.Y - textSize.Y / 2 + i * lineSize);
-            TextRenderer.RenderText(font, line, linePos, 1f, 0f, ColorF.Black);
+            //TextRenderer.RenderText(font, line, linePos, 1f, 0f, ColorF.Black);
         }
     }
 }
