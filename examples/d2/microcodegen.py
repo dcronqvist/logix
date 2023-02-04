@@ -265,12 +265,28 @@ def ldidx_reg(reg, idx):
     states = [Q0, Q1, Q2, Q3, Q4, FETCH, MAM_PC | MR | LD_MARL | PC_INC, MAM_PC | MR | LD_MARH | PC_INC, MAM_MAR_PLUS_IDX | idx | MR | reg, NF, NF, NF, NF, NF, NF, NF, NF]
     instr(states)
 
+def ldind_reg(reg):
+    states = [Q0, Q1, Q2, Q3, Q4, FETCH, MAM_PC | MR | LD_MARL | PC_INC, MAM_PC | MR | LD_MARH | PC_INC, MAM_MAR | MR | LD_T | MAR_INC, MAM_MAR | MR | LD_MARH, OE_T | LD_MARL, MAM_MAR | MR | reg, NF, NF, NF, NF, NF]
+    instr(states)
+
+def ldindidx_reg(reg, idx):
+    states = [Q0, Q1, Q2, Q3, Q4, FETCH, MAM_PC | MR | LD_MARL | PC_INC, MAM_PC | MR | LD_MARH | PC_INC, MAM_MAR | MR | LD_T | MAR_INC, MAM_MAR | MR | LD_MARH, OE_T | LD_MARL, MAM_MAR_PLUS_IDX | idx | MR | reg, NF, NF, NF, NF, NF]
+    instr(states)
+
 def stabs_reg(reg):
     states = [Q0, Q1, Q2, Q3, Q4, FETCH, MAM_PC | MR | LD_MARL | PC_INC, MAM_PC | MR | LD_MARH | PC_INC, MAM_MAR | reg | MW, NF, NF, NF, NF, NF, NF, NF, NF]
     instr(states)
 
 def staidx_reg(reg, idx):
     states = [Q0, Q1, Q2, Q3, Q4, FETCH, MAM_PC | MR | LD_MARL | PC_INC, MAM_PC | MR | LD_MARH | PC_INC, MAM_MAR_PLUS_IDX | idx | reg | MW, NF, NF, NF, NF, NF, NF, NF, NF]
+    instr(states)
+
+def stind_reg(reg):
+    states = [Q0, Q1, Q2, Q3, Q4, FETCH, MAM_PC | MR | LD_MARL | PC_INC, MAM_PC | MR | LD_MARH | PC_INC, MAM_MAR | MR | LD_T | MAR_INC, MAM_MAR | MR | LD_MARH, OE_T | LD_MARL, MAM_MAR | MW | reg, NF, NF, NF, NF, NF]
+    instr(states)
+
+def stindidx_reg(reg, idx):
+    states = [Q0, Q1, Q2, Q3, Q4, FETCH, MAM_PC | MR | LD_MARL | PC_INC, MAM_PC | MR | LD_MARH | PC_INC, MAM_MAR | MR | LD_T | MAR_INC, MAM_MAR | MR | LD_MARH, OE_T | LD_MARL, MAM_MAR_PLUS_IDX | idx | MW | reg, NF, NF, NF, NF, NF]
     instr(states)
 
 def trf_reg(reg1, reg2):
@@ -296,6 +312,22 @@ def alu_abs(alu_f, before, cin, store_in_a):
         instr(states_a)
     else:
         instr(states_abs)
+
+def alu_ind(alu_f, before, cin, store_in_a):
+    states_ind = [Q0, Q1, Q2, Q3, Q4, FETCH, MAM_PC | MR | LD_MARL | PC_INC, MAM_PC | MR | LD_MARH | PC_INC, MAM_MAR | MR | LD_T | MAR_INC, MAM_MAR | MR | LD_MARH, OE_T | LD_MARL, before, MAM_MAR | MR | cin | alu_f | LD_R | LD_F | FSL_Z_ALU | FSL_C_ALU | FSL_N_ALU | FSL_I_REG, OE_R | MW | MAM_MAR, NF, NF, NF, NF, NF]
+    states_a = [Q0, Q1, Q2, Q3, Q4, FETCH, MAM_PC | MR | LD_MARL | PC_INC, MAM_PC | MR | LD_MARH | PC_INC, MAM_MAR | MR | LD_T | MAR_INC, MAM_MAR | MR | LD_MARH, OE_T | LD_MARL, before, MAM_MAR | MR | cin | alu_f | LD_R | LD_F | FSL_Z_ALU | FSL_C_ALU | FSL_N_ALU | FSL_I_REG, MAM_PC | OE_R | LD_A, NF, NF, NF, NF, NF]
+    if store_in_a:
+        instr(states_a)
+    else:
+        instr(states_ind)
+
+def alu_indidx(alu_f, before, cin, store_in_a, idx):
+    states_ind = [Q0, Q1, Q2, Q3, Q4, FETCH, MAM_PC | MR | LD_MARL | PC_INC, MAM_PC | MR | LD_MARH | PC_INC, MAM_MAR | MR | LD_T | MAR_INC, MAM_MAR | MR | LD_MARH, OE_T | LD_MARL, before, MAM_MAR_PLUS_IDX | idx | MR | cin | alu_f | LD_R | LD_F | FSL_Z_ALU | FSL_C_ALU | FSL_N_ALU | FSL_I_REG, OE_R | MW | MAM_MAR_PLUS_IDX | idx, NF, NF, NF, NF, NF]
+    states_a = [Q0, Q1, Q2, Q3, Q4, FETCH, MAM_PC | MR | LD_MARL | PC_INC, MAM_PC | MR | LD_MARH | PC_INC, MAM_MAR | MR | LD_T | MAR_INC, MAM_MAR | MR | LD_MARH, OE_T | LD_MARL, before, MAM_MAR_PLUS_IDX | idx | MR | cin | alu_f | LD_R | LD_F | FSL_Z_ALU | FSL_C_ALU | FSL_N_ALU | FSL_I_REG, MAM_PC | OE_R | LD_A, NF, NF, NF, NF, NF]
+    if store_in_a:
+        instr(states_a)
+    else:
+        instr(states_ind)
 
 def alu_absidx(alu_f, idx, before, cin, store_in_a):
     states_absidx = [Q0, Q1, Q2, Q3, Q4, FETCH, MAM_PC | MR | LD_MARL | PC_INC, MAM_PC | MR | LD_MARH | PC_INC, before, MAM_MAR_PLUS_IDX | idx | MR | cin | alu_f | LD_R | LD_F | FSL_Z_ALU | FSL_C_ALU | FSL_N_ALU | FSL_I_REG, OE_R | MW | MAM_MAR_PLUS_IDX | idx, NF, NF, NF, NF, NF, NF, NF]
@@ -334,12 +366,24 @@ ldabs_reg(LD_A)
 ldidx_reg(LD_A, IDX_X)
 # lda abs,y (load accumulator with M[abs + Y])
 ldidx_reg(LD_A, IDX_Y)
+# lda (abs) (load accumulator with M[M[abs]] (indirect))
+ldind_reg(LD_A)
+# lda (abs),x (load accumulator with M[M[abs] + x] (indirect))
+ldindidx_reg(LD_A, IDX_X)
+# lda (abs),y (load accumulator with M[M[abs] + y] (indirect))
+ldindidx_reg(LD_A, IDX_Y)
 # sta abs (store accumulator to M[abs])
 stabs_reg(OE_A)
 # sta abs,x (store accumulator to M[abs + X])
 staidx_reg(OE_A, IDX_X)
 # sta abs,y (store accumulator to M[abs + Y])
 staidx_reg(OE_A, IDX_Y)
+# sta (abs) (store accumulator to M[M[abs]]) (indirect)
+stind_reg(OE_A)
+# sta (abs), x
+stindidx_reg(OE_A, IDX_X)
+# sta (abs), y
+stindidx_reg(OE_A, IDX_Y)
 
 # ldx #imm (load X with immediate)
 ldimm_reg(LD_X)
@@ -349,12 +393,24 @@ ldabs_reg(LD_X)
 ldidx_reg(LD_X, IDX_X)
 # ldx abs,y (load X with M[abs + Y])
 ldidx_reg(LD_X, IDX_Y)
+# ldx (abs) (load X with M[M[abs]] (indirect))
+ldind_reg(LD_X)
+# ldx (abs),x (load X with M[M[abs] + x] (indirect))
+ldindidx_reg(LD_X, IDX_X)
+# ldx (abs),y (load X with M[M[abs] + y] (indirect))
+ldindidx_reg(LD_X, IDX_Y)
 # stx abs (store X to M[abs])
 stabs_reg(OE_X)
 # stx abs,x (store X to M[abs + X])
 staidx_reg(OE_X, IDX_X)
 # stx abs,y (store X to M[abs + Y])
 staidx_reg(OE_X, IDX_Y)
+# stx (abs) (store X to M[M[abs]]) (indirect)
+stind_reg(OE_X)
+# stx (abs), x
+stindidx_reg(OE_X, IDX_X)
+# stx (abs), y
+stindidx_reg(OE_X, IDX_Y)
 
 # ldy #imm (load Y with immediate)
 ldimm_reg(LD_Y)
@@ -364,12 +420,24 @@ ldabs_reg(LD_Y)
 ldidx_reg(LD_Y, IDX_X)
 # ldy abs,y (load Y with M[abs + Y])
 ldidx_reg(LD_Y, IDX_Y)
+# ldy (abs) (load Y with M[M[abs]] (indirect))
+ldind_reg(LD_Y)
+# ldy (abs),x (load Y with M[M[abs] + x] (indirect))
+ldindidx_reg(LD_Y, IDX_X)
+# ldy (abs),y (load Y with M[M[abs] + y] (indirect))
+ldindidx_reg(LD_Y, IDX_Y)
 # sty abs (store Y to M[abs])
 stabs_reg(OE_Y)
 # sty abs,x (store Y to M[abs + X])
 staidx_reg(OE_Y, IDX_X)
 # sty abs,y (store Y to M[abs + Y])
 staidx_reg(OE_Y, IDX_Y)
+# sty (abs) (store Y to M[M[abs]]) (indirect)
+stind_reg(OE_Y)
+# sty (abs), x
+stindidx_reg(OE_Y, IDX_X)
+# sty (abs), y
+stindidx_reg(OE_Y, IDX_Y)
 
 # tax (transfer accumulator to X)
 trf_reg(OE_A, LD_X)
@@ -392,6 +460,12 @@ alu_abs(ALU_F_ADD, INC_T, ALU_CIN_0, False)
 alu_absidx(ALU_F_ADD, IDX_X, INC_T, ALU_CIN_0, False)
 # inc abs,y (increment M[abs + Y])
 alu_absidx(ALU_F_ADD, IDX_Y, INC_T, ALU_CIN_0, False)
+# inc (abs) (increment M[M[abs]]) (indirect)
+alu_ind(ALU_F_ADD, INC_T, ALU_CIN_0, False)
+# inc (abs),x (increment M[M[abs] + x]) (indirect)
+alu_indidx(ALU_F_ADD, INC_T, ALU_CIN_0, False, IDX_X)
+# inc (abs),y (increment M[M[abs] + y]) (indirect)
+alu_indidx(ALU_F_ADD, INC_T, ALU_CIN_0, False, IDX_Y)
 
 # dea (decrement accumulator)
 ireg(DEC_A)
@@ -405,6 +479,12 @@ alu_abs(ALU_F_SUB, INC_T, ALU_CIN_0, False)
 alu_absidx(ALU_F_SUB, IDX_X, INC_T, ALU_CIN_0, False)
 # dec abs,y (decrement M[abs + Y])
 alu_absidx(ALU_F_SUB, IDX_Y, INC_T, ALU_CIN_0, False)
+# dec (abs) (decrement M[M[abs]]) (indirect)
+alu_ind(ALU_F_SUB, INC_T, ALU_CIN_0, False)
+# dec (abs),x (decrement M[M[abs] + x]) (indirect)
+alu_indidx(ALU_F_SUB, INC_T, ALU_CIN_0, False, IDX_X)
+# dec (abs),y (decrement M[M[abs] + y]) (indirect)
+alu_indidx(ALU_F_SUB, INC_T, ALU_CIN_0, False, IDX_Y)
 
 # adc #imm (add with carry immediate)
 alu_imm(ALU_F_ADD, MAM_PC, ALU_CIN_C)
@@ -414,6 +494,12 @@ alu_abs(ALU_F_ADD, MAM_PC, ALU_CIN_C, True)
 alu_absidx(ALU_F_ADD, IDX_X, MAM_PC, ALU_CIN_C, True)
 # adc abs,y (add with carry M[abs + Y])
 alu_absidx(ALU_F_ADD, IDX_Y, MAM_PC, ALU_CIN_C, True)
+# adc (abs) (add with carry M[M[abs]]) (indirect)
+alu_ind(ALU_F_ADD, MAM_PC, ALU_CIN_C, True)
+# adc (abs),x (add with carry M[M[abs] + x]) (indirect)
+alu_indidx(ALU_F_ADD, MAM_PC, ALU_CIN_C, True, IDX_X)
+# adc (abs),y (add with carry M[M[abs] + y]) (indirect)
+alu_indidx(ALU_F_ADD, MAM_PC, ALU_CIN_C, True, IDX_Y)
 
 # sbc #imm (subtract with carry immediate)
 alu_imm(ALU_F_SUB, MAM_PC, ALU_CIN_C)
@@ -423,6 +509,12 @@ alu_abs(ALU_F_SUB, MAM_PC, ALU_CIN_C, True)
 alu_absidx(ALU_F_SUB, IDX_X, MAM_PC, ALU_CIN_C, True)
 # sbc abs,y (subtract with carry M[abs + Y])
 alu_absidx(ALU_F_SUB, IDX_Y, MAM_PC, ALU_CIN_C, True)
+# sbc (abs) (subtract with carry M[M[abs]]) (indirect)
+alu_ind(ALU_F_SUB, MAM_PC, ALU_CIN_C, True)
+# sbc (abs),x (subtract with carry M[M[abs] + x]) (indirect)
+alu_indidx(ALU_F_SUB, MAM_PC, ALU_CIN_C, True, IDX_X)
+# sbc (abs),y (subtract with carry M[M[abs] + y]) (indirect)
+alu_indidx(ALU_F_SUB, MAM_PC, ALU_CIN_C, True, IDX_Y)
 
 # and #imm (and immediate)
 alu_imm(ALU_F_AND, MAM_PC, ALU_CIN_0)
@@ -432,6 +524,12 @@ alu_abs(ALU_F_AND, MAM_PC, ALU_CIN_0, True)
 alu_absidx(ALU_F_AND, IDX_X, MAM_PC, ALU_CIN_0, True)
 # and abs,y (and M[abs + Y])
 alu_absidx(ALU_F_AND, IDX_Y, MAM_PC, ALU_CIN_0, True)
+# and (abs) (and M[M[abs]]) (indirect)
+alu_ind(ALU_F_AND, MAM_PC, ALU_CIN_0, True)
+# and (abs),x (and M[M[abs] + x]) (indirect)
+alu_indidx(ALU_F_AND, MAM_PC, ALU_CIN_0, True, IDX_X)
+# and (abs),y (and M[M[abs] + y]) (indirect)
+alu_indidx(ALU_F_AND, MAM_PC, ALU_CIN_0, True, IDX_Y)
 
 # ora #imm (or immediate)
 alu_imm(ALU_F_OR, MAM_PC, ALU_CIN_0)
@@ -441,6 +539,12 @@ alu_abs(ALU_F_OR, MAM_PC, ALU_CIN_0, True)
 alu_absidx(ALU_F_OR, IDX_X, MAM_PC, ALU_CIN_0, True)
 # ora abs,y (or M[abs + Y])
 alu_absidx(ALU_F_OR, IDX_Y, MAM_PC, ALU_CIN_0, True)
+# ora (abs) (or M[M[abs]]) (indirect)
+alu_ind(ALU_F_OR, MAM_PC, ALU_CIN_0, True)
+# ora (abs),x (or M[M[abs] + x]) (indirect)
+alu_indidx(ALU_F_OR, MAM_PC, ALU_CIN_0, True, IDX_X)
+# ora (abs),y (or M[M[abs] + y]) (indirect)
+alu_indidx(ALU_F_OR, MAM_PC, ALU_CIN_0, True, IDX_Y)
 
 # eor #imm (exclusive or immediate)
 alu_imm(ALU_F_XOR, MAM_PC, ALU_CIN_0)
@@ -450,6 +554,12 @@ alu_abs(ALU_F_XOR, MAM_PC, ALU_CIN_0, True)
 alu_absidx(ALU_F_XOR, IDX_X, MAM_PC, ALU_CIN_0, True)
 # eor abs,y (exclusive or M[abs + Y])
 alu_absidx(ALU_F_XOR, IDX_Y, MAM_PC, ALU_CIN_0, True)
+# eor (abs) (exclusive or M[M[abs]]) (indirect)
+alu_ind(ALU_F_XOR, MAM_PC, ALU_CIN_0, True)
+# eor (abs),x (exclusive or M[M[abs] + x]) (indirect)
+alu_indidx(ALU_F_XOR, MAM_PC, ALU_CIN_0, True, IDX_X)
+# eor (abs),y (exclusive or M[M[abs] + y]) (indirect)
+alu_indidx(ALU_F_XOR, MAM_PC, ALU_CIN_0, True, IDX_Y)
 
 # rol (rotate accumulator left)
 alu_inh(ALU_F_LSH, OE_A, MAM_PC, ALU_CIN_C, LD_A)
@@ -505,6 +615,12 @@ instr([Q0, Q1, Q2, Q3, Q4, FETCH, MAM_PC | MR | LD_MARL | INC_PC, MAM_PC | MR | 
 instr([Q0, Q1, Q2, Q3, Q4, FETCH, MAM_PC | MR | LD_MARL | INC_PC, MAM_PC | MR | LD_MARH | INC_PC, MAM_MAR_PLUS_IDX | IDX_X | MR | LD_T, MAM_PC | OE_A | ALU_F_SUB | ALU_CIN_0 | LD_F | FSL_Z_ALU | FSL_C_ALU | FSL_N_ALU | FSL_V_ALU | FSL_I_REG, NF, NF, NF, NF, NF, NF, NF, NF, NF])
 # cmp abs,y (compare M[abs + Y])
 instr([Q0, Q1, Q2, Q3, Q4, FETCH, MAM_PC | MR | LD_MARL | INC_PC, MAM_PC | MR | LD_MARH | INC_PC, MAM_MAR_PLUS_IDX | IDX_Y | MR | LD_T, MAM_PC | OE_A | ALU_F_SUB | ALU_CIN_0 | LD_F | FSL_Z_ALU | FSL_C_ALU | FSL_N_ALU | FSL_V_ALU | FSL_I_REG, NF, NF, NF, NF, NF, NF, NF, NF, NF])
+# cmp (abs)
+instr([Q0, Q1, Q2, Q3, Q4, FETCH, MAM_PC | MR | LD_MARL | PC_INC, MAM_PC | MR | LD_MARH | PC_INC, MAM_MAR | MR | LD_T | MAR_INC, MAM_MAR | MR | LD_MARH, OE_T | LD_MARL, MAM_MAR | MR | LD_T, OE_A | ALU_CIN_0 | ALU_F_SUB | LD_R | LD_F | FSL_Z_ALU | FSL_C_ALU | FSL_N_ALU | FSL_I_REG, NF, NF, NF])
+# cmp (abs),x
+instr([Q0, Q1, Q2, Q3, Q4, FETCH, MAM_PC | MR | LD_MARL | PC_INC, MAM_PC | MR | LD_MARH | PC_INC, MAM_MAR | MR | LD_T | MAR_INC, MAM_MAR | MR | LD_MARH, OE_T | LD_MARL, MAM_MAR_PLUS_IDX | IDX_X | MR | LD_T, OE_A | ALU_CIN_0 | ALU_F_SUB | LD_R | LD_F | FSL_Z_ALU | FSL_C_ALU | FSL_N_ALU | FSL_I_REG, NF, NF, NF])
+# cmp (abs),y
+instr([Q0, Q1, Q2, Q3, Q4, FETCH, MAM_PC | MR | LD_MARL | PC_INC, MAM_PC | MR | LD_MARH | PC_INC, MAM_MAR | MR | LD_T | MAR_INC, MAM_MAR | MR | LD_MARH, OE_T | LD_MARL, MAM_MAR_PLUS_IDX | IDX_Y | MR | LD_T, OE_A | ALU_CIN_0 | ALU_F_SUB | LD_R | LD_F | FSL_Z_ALU | FSL_C_ALU | FSL_N_ALU | FSL_I_REG, NF, NF, NF])
 
 # bit #imm (bit test immediate)
 instr([Q0, Q1, Q2, Q3, Q4, FETCH, MAM_PC | MR | LD_T | INC_PC, MAM_PC | OE_A | ALU_F_AND | ALU_CIN_0 | LD_F | FSL_Z_ALU | FSL_N_ALU | FSL_V_ALU | FSL_I_REG, NF, NF, NF, NF, NF, NF, NF, NF, NF])
@@ -514,6 +630,12 @@ instr([Q0, Q1, Q2, Q3, Q4, FETCH, MAM_PC | MR | LD_MARL | INC_PC, MAM_PC | MR | 
 instr([Q0, Q1, Q2, Q3, Q4, FETCH, MAM_PC | MR | LD_MARL | INC_PC, MAM_PC | MR | LD_MARH | INC_PC, MAM_MAR_PLUS_IDX | IDX_X | MR | LD_T, MAM_PC | OE_A | ALU_F_AND | ALU_CIN_0 | LD_F | FSL_Z_ALU | FSL_N_ALU | FSL_V_ALU | FSL_I_REG, NF, NF, NF, NF, NF, NF, NF, NF, NF])
 # bit abs,y (bit test M[abs + Y])
 instr([Q0, Q1, Q2, Q3, Q4, FETCH, MAM_PC | MR | LD_MARL | INC_PC, MAM_PC | MR | LD_MARH | INC_PC, MAM_MAR_PLUS_IDX | IDX_Y | MR | LD_T, MAM_PC | OE_A | ALU_F_AND | ALU_CIN_0 | LD_F | FSL_Z_ALU | FSL_N_ALU | FSL_V_ALU | FSL_I_REG, NF, NF, NF, NF, NF, NF, NF, NF, NF])
+# bit (abs) (bit test M[M[abs]])
+instr([Q0, Q1, Q2, Q3, Q4, FETCH, MAM_PC | MR | LD_MARL | INC_PC, MAM_PC | MR | LD_MARH | INC_PC, MAM_MAR | MR | LD_T | MAR_INC, MAM_MAR | MR | LD_MARH, OE_T | LD_MARL, MAM_MAR | MR | LD_T, MAM_PC | OE_A | ALU_F_AND | ALU_CIN_0 | LD_F | FSL_Z_ALU | FSL_N_ALU | FSL_V_ALU | FSL_I_REG, NF, NF, NF, NF, NF, NF, NF, NF, NF])
+# bit (abs),x
+instr([Q0, Q1, Q2, Q3, Q4, FETCH, MAM_PC | MR | LD_MARL | INC_PC, MAM_PC | MR | LD_MARH | INC_PC, MAM_MAR | MR | LD_T | MAR_INC, MAM_MAR | MR | LD_MARH, OE_T | LD_MARL, MAM_MAR_PLUS_IDX | IDX_X | MR | LD_T, MAM_PC | OE_A | ALU_F_AND | ALU_CIN_0 | LD_F | FSL_Z_ALU | FSL_N_ALU | FSL_V_ALU | FSL_I_REG, NF, NF, NF, NF, NF, NF, NF, NF, NF])
+# bit (abs),y
+instr([Q0, Q1, Q2, Q3, Q4, FETCH, MAM_PC | MR | LD_MARL | INC_PC, MAM_PC | MR | LD_MARH | INC_PC, MAM_MAR | MR | LD_T | MAR_INC, MAM_MAR | MR | LD_MARH, OE_T | LD_MARL, MAM_MAR_PLUS_IDX | IDX_Y | MR | LD_T, MAM_PC | OE_A | ALU_F_AND | ALU_CIN_0 | LD_F | FSL_Z_ALU | FSL_N_ALU | FSL_V_ALU | FSL_I_REG, NF, NF, NF, NF, NF, NF, NF, NF, NF])
 
 # clz (clear zero flag)
 flag_modify(FSL_Z_CLR | FSL_C_REG | FSL_N_REG | FSL_V_REG | FSL_I_REG)

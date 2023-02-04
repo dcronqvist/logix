@@ -8,6 +8,8 @@ PORTB = $0002       ; Port B data register
 
 message:
     .asciiz "Hello World!"
+message2:
+    .asciiz "I am Daniel"
 
 printchar:
     sta PORTB       ; Store value in PORTB to display on TTY
@@ -49,12 +51,18 @@ reset:
     lda #$ff        ; Load value representing all pins as output
     sta DDRB        ; Set all pins as output
 
+loop:
     lda #<message   ; load low byte of message into A
     sta psptr       ; Store value in psptr
     lda #>message   ; load high byte of message into A
     sta psptr+1     ; Store value in psptr+1
-
-loop:
+    jsr printstring ; Call printstring subroutine
+    lda #$0A        ; Load value representing new line
+    jsr printchar   ; Call printchar subroutine
+    lda #<message2  ; load low byte of message2 into A
+    sta psptr       ; Store value in psptr
+    lda #>message2  ; load high byte of message2 into A
+    sta psptr+1     ; Store value in psptr+1
     jsr printstring ; Call printstring subroutine
     lda #$0A        ; Load value representing new line
     jsr printchar   ; Call printchar subroutine

@@ -49,25 +49,43 @@ public class D2Assembler : D2AssemblyBaseVisitor<object>
         this.AddInstruction("lda", InstructionType.Absolute);
         this.AddInstruction("lda", InstructionType.AbsoluteX);
         this.AddInstruction("lda", InstructionType.AbsoluteY);
+        this.AddInstruction("lda", InstructionType.Indirect);
+        this.AddInstruction("lda", InstructionType.IndirectX);
+        this.AddInstruction("lda", InstructionType.IndirectY);
         this.AddInstruction("sta", InstructionType.Absolute);
         this.AddInstruction("sta", InstructionType.AbsoluteX);
         this.AddInstruction("sta", InstructionType.AbsoluteY);
+        this.AddInstruction("sta", InstructionType.Indirect);
+        this.AddInstruction("sta", InstructionType.IndirectX);
+        this.AddInstruction("sta", InstructionType.IndirectY);
 
         this.AddInstruction("ldx", InstructionType.Immediate);
         this.AddInstruction("ldx", InstructionType.Absolute);
         this.AddInstruction("ldx", InstructionType.AbsoluteX);
         this.AddInstruction("ldx", InstructionType.AbsoluteY);
+        this.AddInstruction("ldx", InstructionType.Indirect);
+        this.AddInstruction("ldx", InstructionType.IndirectX);
+        this.AddInstruction("ldx", InstructionType.IndirectY);
         this.AddInstruction("stx", InstructionType.Absolute);
         this.AddInstruction("stx", InstructionType.AbsoluteX);
         this.AddInstruction("stx", InstructionType.AbsoluteY);
+        this.AddInstruction("stx", InstructionType.Indirect);
+        this.AddInstruction("stx", InstructionType.IndirectX);
+        this.AddInstruction("stx", InstructionType.IndirectY);
 
         this.AddInstruction("ldy", InstructionType.Immediate);
         this.AddInstruction("ldy", InstructionType.Absolute);
         this.AddInstruction("ldy", InstructionType.AbsoluteX);
         this.AddInstruction("ldy", InstructionType.AbsoluteY);
+        this.AddInstruction("ldy", InstructionType.Indirect);
+        this.AddInstruction("ldy", InstructionType.IndirectX);
+        this.AddInstruction("ldy", InstructionType.IndirectY);
         this.AddInstruction("sty", InstructionType.Absolute);
         this.AddInstruction("sty", InstructionType.AbsoluteX);
         this.AddInstruction("sty", InstructionType.AbsoluteY);
+        this.AddInstruction("sty", InstructionType.Indirect);
+        this.AddInstruction("sty", InstructionType.IndirectX);
+        this.AddInstruction("sty", InstructionType.IndirectY);
 
         this.AddInstruction("tax", InstructionType.Implicit);
         this.AddInstruction("tay", InstructionType.Implicit);
@@ -80,6 +98,9 @@ public class D2Assembler : D2AssemblyBaseVisitor<object>
         this.AddInstruction("inc", InstructionType.Absolute);
         this.AddInstruction("inc", InstructionType.AbsoluteX);
         this.AddInstruction("inc", InstructionType.AbsoluteY);
+        this.AddInstruction("inc", InstructionType.Indirect);
+        this.AddInstruction("inc", InstructionType.IndirectX);
+        this.AddInstruction("inc", InstructionType.IndirectY);
 
         this.AddInstruction("dea", InstructionType.Implicit);
         this.AddInstruction("dex", InstructionType.Implicit);
@@ -87,31 +108,49 @@ public class D2Assembler : D2AssemblyBaseVisitor<object>
         this.AddInstruction("dec", InstructionType.Absolute);
         this.AddInstruction("dec", InstructionType.AbsoluteX);
         this.AddInstruction("dec", InstructionType.AbsoluteY);
+        this.AddInstruction("dec", InstructionType.Indirect);
+        this.AddInstruction("dec", InstructionType.IndirectX);
+        this.AddInstruction("dec", InstructionType.IndirectY);
 
         this.AddInstruction("adc", InstructionType.Immediate);
         this.AddInstruction("adc", InstructionType.Absolute);
         this.AddInstruction("adc", InstructionType.AbsoluteX);
         this.AddInstruction("adc", InstructionType.AbsoluteY);
+        this.AddInstruction("adc", InstructionType.Indirect);
+        this.AddInstruction("adc", InstructionType.IndirectX);
+        this.AddInstruction("adc", InstructionType.IndirectY);
 
         this.AddInstruction("sbc", InstructionType.Immediate);
         this.AddInstruction("sbc", InstructionType.Absolute);
         this.AddInstruction("sbc", InstructionType.AbsoluteX);
         this.AddInstruction("sbc", InstructionType.AbsoluteY);
+        this.AddInstruction("sbc", InstructionType.Indirect);
+        this.AddInstruction("sbc", InstructionType.IndirectX);
+        this.AddInstruction("sbc", InstructionType.IndirectY);
 
         this.AddInstruction("and", InstructionType.Immediate);
         this.AddInstruction("and", InstructionType.Absolute);
         this.AddInstruction("and", InstructionType.AbsoluteX);
         this.AddInstruction("and", InstructionType.AbsoluteY);
+        this.AddInstruction("and", InstructionType.Indirect);
+        this.AddInstruction("and", InstructionType.IndirectX);
+        this.AddInstruction("and", InstructionType.IndirectY);
 
         this.AddInstruction("ora", InstructionType.Immediate);
         this.AddInstruction("ora", InstructionType.Absolute);
         this.AddInstruction("ora", InstructionType.AbsoluteX);
         this.AddInstruction("ora", InstructionType.AbsoluteY);
+        this.AddInstruction("ora", InstructionType.Indirect);
+        this.AddInstruction("ora", InstructionType.IndirectX);
+        this.AddInstruction("ora", InstructionType.IndirectY);
 
         this.AddInstruction("eor", InstructionType.Immediate);
         this.AddInstruction("eor", InstructionType.Absolute);
         this.AddInstruction("eor", InstructionType.AbsoluteX);
         this.AddInstruction("eor", InstructionType.AbsoluteY);
+        this.AddInstruction("eor", InstructionType.Indirect);
+        this.AddInstruction("eor", InstructionType.IndirectX);
+        this.AddInstruction("eor", InstructionType.IndirectY);
 
         this.AddInstruction("rol", InstructionType.Implicit);
         this.AddInstruction("ror", InstructionType.Implicit);
@@ -142,11 +181,17 @@ public class D2Assembler : D2AssemblyBaseVisitor<object>
         this.AddInstruction("cmp", InstructionType.Absolute);
         this.AddInstruction("cmp", InstructionType.AbsoluteX);
         this.AddInstruction("cmp", InstructionType.AbsoluteY);
+        this.AddInstruction("cmp", InstructionType.Indirect);
+        this.AddInstruction("cmp", InstructionType.IndirectX);
+        this.AddInstruction("cmp", InstructionType.IndirectY);
 
         this.AddInstruction("bit", InstructionType.Immediate);
         this.AddInstruction("bit", InstructionType.Absolute);
         this.AddInstruction("bit", InstructionType.AbsoluteX);
         this.AddInstruction("bit", InstructionType.AbsoluteY);
+        this.AddInstruction("bit", InstructionType.Indirect);
+        this.AddInstruction("bit", InstructionType.IndirectX);
+        this.AddInstruction("bit", InstructionType.IndirectY);
 
         this.AddInstruction("clz", InstructionType.Implicit);
         this.AddInstruction("sez", InstructionType.Implicit);
@@ -242,6 +287,21 @@ public class D2Assembler : D2AssemblyBaseVisitor<object>
             else if (arg.y is not null)
             {
                 type = InstructionType.AbsoluteY;
+                return true;
+            }
+            else if (arg.indirect is not null)
+            {
+                type = InstructionType.Indirect;
+                return true;
+            }
+            else if (arg.indirectx is not null)
+            {
+                type = InstructionType.IndirectX;
+                return true;
+            }
+            else if (arg.indirecty is not null)
+            {
+                type = InstructionType.IndirectY;
                 return true;
             }
             else
@@ -520,16 +580,7 @@ public class D2Assembler : D2AssemblyBaseVisitor<object>
         {
             InstructionType.Implicit => () => { }
             ,
-            InstructionType.Immediate => () => this.Emit(this.EvaluateArgument(arg)),
-            InstructionType.Absolute => () =>
-            {
-                this.Emit(this.EvaluateArgument(arg));
-            }
-            ,
-            InstructionType.AbsoluteX => () => this.Emit(this.EvaluateArgument(arg)),
-            InstructionType.AbsoluteY => () => this.Emit(this.EvaluateArgument(arg))
-            ,
-            _ => () => { }
+            _ => () => this.Emit(this.EvaluateArgument(arg))
         };
 
         x.Invoke();
