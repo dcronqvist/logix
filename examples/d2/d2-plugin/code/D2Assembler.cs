@@ -13,6 +13,8 @@ public enum InstructionType
     Absolute,
     AbsoluteX,
     AbsoluteY,
+    IndirectX,
+    IndirectY,
 }
 
 public class Instruction
@@ -406,6 +408,98 @@ public class D2Assembler : D2AssemblyBaseVisitor<object>
             {
                 AddSymbolReference(label);
                 return (new List<byte>() { 0, 0 }, 0);
+            }
+        }
+        else if (num.lowbyte is not null)
+        {
+            var (l, n) = this.EvaluateNumber(num.number(0));
+            return (new List<byte>() { (byte)(n & 0xFF) }, (byte)(n & 0xFF));
+        }
+        else if (num.highbyte is not null)
+        {
+            var (l, n) = this.EvaluateNumber(num.number(0));
+            return (new List<byte>() { (byte)(n >> 8) }, (byte)(n >> 8));
+        }
+        else if (num.plus is not null)
+        {
+            var (lleft, nleft) = this.EvaluateNumber(num.number(0));
+            var (lright, nright) = this.EvaluateNumber(num.number(1));
+
+            var result = nleft + nright;
+            Console.WriteLine($"plus: {nleft} + {nright} = {result}");
+
+            if (lleft.Count == 1 && lright.Count == 1)
+            {
+                Console.WriteLine($"plus: {nleft} + {nright} = {result} (byte)");
+                return (new List<byte>() { (byte)result }, (byte)result);
+            }
+            else
+            {
+                return (new List<byte>() { (byte)(result & 0xFF), (byte)(result >> 8) }, (ushort)result);
+            }
+        }
+        else if (num.minus is not null)
+        {
+            var (lleft, nleft) = this.EvaluateNumber(num.number(0));
+            var (lright, nright) = this.EvaluateNumber(num.number(1));
+
+            var result = nleft - nright;
+
+            if (lleft.Count == 1 && lright.Count == 1)
+            {
+                return (new List<byte>() { (byte)result }, (byte)result);
+            }
+            else
+            {
+                return (new List<byte>() { (byte)(result & 0xFF), (byte)(result >> 8) }, (ushort)result);
+            }
+        }
+        else if (num.mult is not null)
+        {
+            var (lleft, nleft) = this.EvaluateNumber(num.number(0));
+            var (lright, nright) = this.EvaluateNumber(num.number(1));
+
+            var result = nleft * nright;
+
+            if (lleft.Count == 1 && lright.Count == 1)
+            {
+                return (new List<byte>() { (byte)result }, (byte)result);
+            }
+            else
+            {
+                return (new List<byte>() { (byte)(result & 0xFF), (byte)(result >> 8) }, (ushort)result);
+            }
+        }
+        else if (num.and is not null)
+        {
+            var (lleft, nleft) = this.EvaluateNumber(num.number(0));
+            var (lright, nright) = this.EvaluateNumber(num.number(1));
+
+            var result = nleft & nright;
+
+            if (lleft.Count == 1 && lright.Count == 1)
+            {
+                return (new List<byte>() { (byte)result }, (byte)result);
+            }
+            else
+            {
+                return (new List<byte>() { (byte)(result & 0xFF), (byte)(result >> 8) }, (ushort)result);
+            }
+        }
+        else if (num.or is not null)
+        {
+            var (lleft, nleft) = this.EvaluateNumber(num.number(0));
+            var (lright, nright) = this.EvaluateNumber(num.number(1));
+
+            var result = nleft | nright;
+
+            if (lleft.Count == 1 && lright.Count == 1)
+            {
+                return (new List<byte>() { (byte)result }, (byte)result);
+            }
+            else
+            {
+                return (new List<byte>() { (byte)(result & 0xFF), (byte)(result >> 8) }, (ushort)result);
             }
         }
 

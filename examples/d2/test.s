@@ -18,6 +18,8 @@ reset:
     lda #$ff        ; Load value representing all pins as output
     sta DDRB        ; Set all pins as output
 
+    lda #<message + 1   ; load low byte of message into A
+
 loop:
     jsr printstring ; Call printstring subroutine
     lda #$0A        ; Load value representing new line
@@ -40,9 +42,9 @@ exit:
 
 printchar:
     sta PORTB       ; Store value in PORTB to display on TTY
-    adc #%10000000  ; Add 128 to value to enable 7th bit
+    eor #%10000000  ; XOR 128 to value to enable 7th bit
     sta PORTB       ; Store value in PORTB to add char on TTY
-    sbc #%10000000  ; Subtract 128 to value to disable 7th bit
+    eor #%10000000  ; XOR 128 to value to disable 7th bit
     sta PORTB
     rts
 

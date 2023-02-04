@@ -22,6 +22,9 @@ symbol: LABEL ':';
 
 argument:
 	immediate
+	| indirect = '(' number ')'
+	| '(' number ')' ',' indirectx = 'x'
+	| '(' number ')' ',' indirecty = 'y'
 	| number ',' x = 'x'
 	| number ',' y = 'y'
 	| number;
@@ -32,11 +35,13 @@ number:
 	| hex = HEXADECIMAL
 	| dec = DECIMAL
 	| lab = LABEL
-	| '(' number plus = '+' number ')'
-	| '(' number minus = '-' number ')'
-	| '(' number mult = '*' number ')'
-	| '(' number and = '&' number ')'
-	| '(' number or = '|' number ')';
+	| lowbyte = '<' number
+	| highbyte = '>' number
+	| number plus = '+' number
+	| number minus = '-' number
+	| number mult = '*' number
+	| number and = '&' number
+	| number or = '|' number;
 
 INSTRUCTION:
 	'lda'

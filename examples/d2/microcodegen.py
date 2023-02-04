@@ -569,6 +569,9 @@ instr([
 # brk (software interrupt)
 instr([Q0, Q1, Q2, Q3, Q4, FETCH, BRK | NF, NF, NF, NF, NF, NF, NF, NF, NF, NF, NF, NF])
 
+# lda (x,y) (load accumulator with M[(x << 8) | y])
+instr([Q0, Q1, Q2, Q3, Q4, FETCH, MAM_PC | OE_X | LD_MARH, MAM_PC | OE_Y | LD_MARL, MAM_MAR | MR | LD_A, NF, NF, NF, NF, NF, NF, NF, NF, NF])
+
 all_bytes = [0x00] * 2**21
 
 for interrupt in range(2):
