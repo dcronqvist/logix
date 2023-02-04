@@ -13,6 +13,7 @@ public enum InstructionType
     Absolute,
     AbsoluteX,
     AbsoluteY,
+    Indirect,
     IndirectX,
     IndirectY,
 }
@@ -39,131 +40,134 @@ public class D2Assembler : D2AssemblyBaseVisitor<object>
     public List<byte> Bytes { get; set; } = new();
     public int CurrentAddress { get; set; } = 0;
 
+    public Dictionary<string, ushort> SymbolAddresses { get; set; } = new();
+
     public D2Assembler()
     {
-        this.AddInstruction("nop", 0x00, InstructionType.Implicit);
-        this.AddInstruction("lda", 0x01, InstructionType.Immediate);
-        this.AddInstruction("lda", 0x02, InstructionType.Absolute);
-        this.AddInstruction("lda", 0x03, InstructionType.AbsoluteX);
-        this.AddInstruction("lda", 0x04, InstructionType.AbsoluteY);
-        this.AddInstruction("sta", 0x05, InstructionType.Absolute);
-        this.AddInstruction("sta", 0x06, InstructionType.AbsoluteX);
-        this.AddInstruction("sta", 0x07, InstructionType.AbsoluteY);
+        this.AddInstruction("nop", InstructionType.Implicit);
+        this.AddInstruction("lda", InstructionType.Immediate);
+        this.AddInstruction("lda", InstructionType.Absolute);
+        this.AddInstruction("lda", InstructionType.AbsoluteX);
+        this.AddInstruction("lda", InstructionType.AbsoluteY);
+        this.AddInstruction("sta", InstructionType.Absolute);
+        this.AddInstruction("sta", InstructionType.AbsoluteX);
+        this.AddInstruction("sta", InstructionType.AbsoluteY);
 
-        this.AddInstruction("ldx", 0x08, InstructionType.Immediate);
-        this.AddInstruction("ldx", 0x09, InstructionType.Absolute);
-        this.AddInstruction("ldx", 0x0A, InstructionType.AbsoluteX);
-        this.AddInstruction("ldx", 0x0B, InstructionType.AbsoluteY);
-        this.AddInstruction("stx", 0x0C, InstructionType.Absolute);
-        this.AddInstruction("stx", 0x0D, InstructionType.AbsoluteX);
-        this.AddInstruction("stx", 0x0E, InstructionType.AbsoluteY);
+        this.AddInstruction("ldx", InstructionType.Immediate);
+        this.AddInstruction("ldx", InstructionType.Absolute);
+        this.AddInstruction("ldx", InstructionType.AbsoluteX);
+        this.AddInstruction("ldx", InstructionType.AbsoluteY);
+        this.AddInstruction("stx", InstructionType.Absolute);
+        this.AddInstruction("stx", InstructionType.AbsoluteX);
+        this.AddInstruction("stx", InstructionType.AbsoluteY);
 
-        this.AddInstruction("ldy", 0x0F, InstructionType.Immediate);
-        this.AddInstruction("ldy", 0x10, InstructionType.Absolute);
-        this.AddInstruction("ldy", 0x11, InstructionType.AbsoluteX);
-        this.AddInstruction("ldy", 0x12, InstructionType.AbsoluteY);
-        this.AddInstruction("sty", 0x13, InstructionType.Absolute);
-        this.AddInstruction("sty", 0x14, InstructionType.AbsoluteX);
-        this.AddInstruction("sty", 0x15, InstructionType.AbsoluteY);
+        this.AddInstruction("ldy", InstructionType.Immediate);
+        this.AddInstruction("ldy", InstructionType.Absolute);
+        this.AddInstruction("ldy", InstructionType.AbsoluteX);
+        this.AddInstruction("ldy", InstructionType.AbsoluteY);
+        this.AddInstruction("sty", InstructionType.Absolute);
+        this.AddInstruction("sty", InstructionType.AbsoluteX);
+        this.AddInstruction("sty", InstructionType.AbsoluteY);
 
-        this.AddInstruction("tax", 0x16, InstructionType.Implicit);
-        this.AddInstruction("tay", 0x17, InstructionType.Implicit);
-        this.AddInstruction("txa", 0x18, InstructionType.Implicit);
-        this.AddInstruction("tya", 0x19, InstructionType.Implicit);
+        this.AddInstruction("tax", InstructionType.Implicit);
+        this.AddInstruction("tay", InstructionType.Implicit);
+        this.AddInstruction("txa", InstructionType.Implicit);
+        this.AddInstruction("tya", InstructionType.Implicit);
 
-        this.AddInstruction("ina", 0x1A, InstructionType.Implicit);
-        this.AddInstruction("inx", 0x1B, InstructionType.Implicit);
-        this.AddInstruction("iny", 0x1C, InstructionType.Implicit);
-        this.AddInstruction("inc", 0x1D, InstructionType.Absolute);
-        this.AddInstruction("inc", 0x1E, InstructionType.AbsoluteX);
-        this.AddInstruction("inc", 0x1F, InstructionType.AbsoluteY);
+        this.AddInstruction("ina", InstructionType.Implicit);
+        this.AddInstruction("inx", InstructionType.Implicit);
+        this.AddInstruction("iny", InstructionType.Implicit);
+        this.AddInstruction("inc", InstructionType.Absolute);
+        this.AddInstruction("inc", InstructionType.AbsoluteX);
+        this.AddInstruction("inc", InstructionType.AbsoluteY);
 
-        this.AddInstruction("dea", 0x20, InstructionType.Implicit);
-        this.AddInstruction("dex", 0x21, InstructionType.Implicit);
-        this.AddInstruction("dey", 0x22, InstructionType.Implicit);
-        this.AddInstruction("dec", 0x23, InstructionType.Absolute);
-        this.AddInstruction("dec", 0x24, InstructionType.AbsoluteX);
-        this.AddInstruction("dec", 0x25, InstructionType.AbsoluteY);
+        this.AddInstruction("dea", InstructionType.Implicit);
+        this.AddInstruction("dex", InstructionType.Implicit);
+        this.AddInstruction("dey", InstructionType.Implicit);
+        this.AddInstruction("dec", InstructionType.Absolute);
+        this.AddInstruction("dec", InstructionType.AbsoluteX);
+        this.AddInstruction("dec", InstructionType.AbsoluteY);
 
-        this.AddInstruction("adc", 0x26, InstructionType.Immediate);
-        this.AddInstruction("adc", 0x27, InstructionType.Absolute);
-        this.AddInstruction("adc", 0x28, InstructionType.AbsoluteX);
-        this.AddInstruction("adc", 0x29, InstructionType.AbsoluteY);
+        this.AddInstruction("adc", InstructionType.Immediate);
+        this.AddInstruction("adc", InstructionType.Absolute);
+        this.AddInstruction("adc", InstructionType.AbsoluteX);
+        this.AddInstruction("adc", InstructionType.AbsoluteY);
 
-        this.AddInstruction("sbc", 0x2A, InstructionType.Immediate);
-        this.AddInstruction("sbc", 0x2B, InstructionType.Absolute);
-        this.AddInstruction("sbc", 0x2C, InstructionType.AbsoluteX);
-        this.AddInstruction("sbc", 0x2D, InstructionType.AbsoluteY);
+        this.AddInstruction("sbc", InstructionType.Immediate);
+        this.AddInstruction("sbc", InstructionType.Absolute);
+        this.AddInstruction("sbc", InstructionType.AbsoluteX);
+        this.AddInstruction("sbc", InstructionType.AbsoluteY);
 
-        this.AddInstruction("and", 0x2E, InstructionType.Immediate);
-        this.AddInstruction("and", 0x2F, InstructionType.Absolute);
-        this.AddInstruction("and", 0x30, InstructionType.AbsoluteX);
-        this.AddInstruction("and", 0x31, InstructionType.AbsoluteY);
+        this.AddInstruction("and", InstructionType.Immediate);
+        this.AddInstruction("and", InstructionType.Absolute);
+        this.AddInstruction("and", InstructionType.AbsoluteX);
+        this.AddInstruction("and", InstructionType.AbsoluteY);
 
-        this.AddInstruction("ora", 0x32, InstructionType.Immediate);
-        this.AddInstruction("ora", 0x33, InstructionType.Absolute);
-        this.AddInstruction("ora", 0x34, InstructionType.AbsoluteX);
-        this.AddInstruction("ora", 0x35, InstructionType.AbsoluteY);
+        this.AddInstruction("ora", InstructionType.Immediate);
+        this.AddInstruction("ora", InstructionType.Absolute);
+        this.AddInstruction("ora", InstructionType.AbsoluteX);
+        this.AddInstruction("ora", InstructionType.AbsoluteY);
 
-        this.AddInstruction("eor", 0x36, InstructionType.Immediate);
-        this.AddInstruction("eor", 0x37, InstructionType.Absolute);
-        this.AddInstruction("eor", 0x38, InstructionType.AbsoluteX);
-        this.AddInstruction("eor", 0x39, InstructionType.AbsoluteY);
+        this.AddInstruction("eor", InstructionType.Immediate);
+        this.AddInstruction("eor", InstructionType.Absolute);
+        this.AddInstruction("eor", InstructionType.AbsoluteX);
+        this.AddInstruction("eor", InstructionType.AbsoluteY);
 
-        this.AddInstruction("rol", 0x3A, InstructionType.Implicit);
-        this.AddInstruction("ror", 0x3B, InstructionType.Implicit);
+        this.AddInstruction("rol", InstructionType.Implicit);
+        this.AddInstruction("ror", InstructionType.Implicit);
 
-        this.AddInstruction("pha", 0x3C, InstructionType.Implicit);
-        this.AddInstruction("pla", 0x3D, InstructionType.Implicit);
-        this.AddInstruction("phx", 0x3E, InstructionType.Implicit);
-        this.AddInstruction("plx", 0x3F, InstructionType.Implicit);
-        this.AddInstruction("phy", 0x40, InstructionType.Implicit);
-        this.AddInstruction("ply", 0x41, InstructionType.Implicit);
-        this.AddInstruction("php", 0x42, InstructionType.Implicit);
-        this.AddInstruction("plp", 0x43, InstructionType.Implicit);
+        this.AddInstruction("pha", InstructionType.Implicit);
+        this.AddInstruction("pla", InstructionType.Implicit);
+        this.AddInstruction("phx", InstructionType.Implicit);
+        this.AddInstruction("plx", InstructionType.Implicit);
+        this.AddInstruction("phy", InstructionType.Implicit);
+        this.AddInstruction("ply", InstructionType.Implicit);
+        this.AddInstruction("php", InstructionType.Implicit);
+        this.AddInstruction("plp", InstructionType.Implicit);
 
-        this.AddInstruction("jmp", 0x44, InstructionType.Absolute);
-        this.AddInstruction("jsr", 0x45, InstructionType.Absolute);
-        this.AddInstruction("rts", 0x46, InstructionType.Implicit);
+        this.AddInstruction("jmp", InstructionType.Absolute);
+        this.AddInstruction("jsr", InstructionType.Absolute);
+        this.AddInstruction("rts", InstructionType.Implicit);
 
-        this.AddInstruction("jeq", 0x47, InstructionType.Absolute);
-        this.AddInstruction("jne", 0x48, InstructionType.Absolute);
-        this.AddInstruction("jcs", 0x49, InstructionType.Absolute);
-        this.AddInstruction("jcc", 0x4A, InstructionType.Absolute);
-        this.AddInstruction("jns", 0x4B, InstructionType.Absolute);
-        this.AddInstruction("jnc", 0x4C, InstructionType.Absolute);
-        this.AddInstruction("jvs", 0x4D, InstructionType.Absolute);
-        this.AddInstruction("jvc", 0x4E, InstructionType.Absolute);
+        this.AddInstruction("jeq", InstructionType.Absolute);
+        this.AddInstruction("jne", InstructionType.Absolute);
+        this.AddInstruction("jcs", InstructionType.Absolute);
+        this.AddInstruction("jcc", InstructionType.Absolute);
+        this.AddInstruction("jns", InstructionType.Absolute);
+        this.AddInstruction("jnc", InstructionType.Absolute);
+        this.AddInstruction("jvs", InstructionType.Absolute);
+        this.AddInstruction("jvc", InstructionType.Absolute);
 
-        this.AddInstruction("cmp", 0x4F, InstructionType.Immediate);
-        this.AddInstruction("cmp", 0x50, InstructionType.Absolute);
-        this.AddInstruction("cmp", 0x51, InstructionType.AbsoluteX);
-        this.AddInstruction("cmp", 0x52, InstructionType.AbsoluteY);
+        this.AddInstruction("cmp", InstructionType.Immediate);
+        this.AddInstruction("cmp", InstructionType.Absolute);
+        this.AddInstruction("cmp", InstructionType.AbsoluteX);
+        this.AddInstruction("cmp", InstructionType.AbsoluteY);
 
-        this.AddInstruction("bit", 0x53, InstructionType.Immediate);
-        this.AddInstruction("bit", 0x54, InstructionType.Absolute);
-        this.AddInstruction("bit", 0x55, InstructionType.AbsoluteX);
-        this.AddInstruction("bit", 0x56, InstructionType.AbsoluteY);
+        this.AddInstruction("bit", InstructionType.Immediate);
+        this.AddInstruction("bit", InstructionType.Absolute);
+        this.AddInstruction("bit", InstructionType.AbsoluteX);
+        this.AddInstruction("bit", InstructionType.AbsoluteY);
 
-        this.AddInstruction("clz", 0x57, InstructionType.Implicit);
-        this.AddInstruction("sez", 0x58, InstructionType.Implicit);
-        this.AddInstruction("clc", 0x59, InstructionType.Implicit);
-        this.AddInstruction("sec", 0x5A, InstructionType.Implicit);
-        this.AddInstruction("cln", 0x5B, InstructionType.Implicit);
-        this.AddInstruction("sen", 0x5C, InstructionType.Implicit);
-        this.AddInstruction("clv", 0x5D, InstructionType.Implicit);
-        this.AddInstruction("sev", 0x5E, InstructionType.Implicit);
-        this.AddInstruction("cli", 0x5F, InstructionType.Implicit);
-        this.AddInstruction("sei", 0x60, InstructionType.Implicit);
+        this.AddInstruction("clz", InstructionType.Implicit);
+        this.AddInstruction("sez", InstructionType.Implicit);
+        this.AddInstruction("clc", InstructionType.Implicit);
+        this.AddInstruction("sec", InstructionType.Implicit);
+        this.AddInstruction("cln", InstructionType.Implicit);
+        this.AddInstruction("sen", InstructionType.Implicit);
+        this.AddInstruction("clv", InstructionType.Implicit);
+        this.AddInstruction("sev", InstructionType.Implicit);
+        this.AddInstruction("cli", InstructionType.Implicit);
+        this.AddInstruction("sei", InstructionType.Implicit);
 
-        this.AddInstruction("rti", 0x61, InstructionType.Implicit);
-        this.AddInstruction("lsp", 0x62, InstructionType.Implicit); // will take x as high byte and y as low byte and put into stack pointer
-        this.AddInstruction("brk", 0x63, InstructionType.Implicit);
+        this.AddInstruction("rti", InstructionType.Implicit);
+        this.AddInstruction("lsp", InstructionType.Implicit); // will take x as high byte and y as low byte and put into stack pointer
+        this.AddInstruction("brk", InstructionType.Implicit);
     }
 
-    private void AddInstruction(string identifier, byte opcode, InstructionType type)
+    private byte _opcode = 0;
+    private void AddInstruction(string identifier, InstructionType type)
     {
-        Instructions.Add(new Instruction(identifier, opcode, type));
+        Instructions.Add(new Instruction(identifier, _opcode++, type));
     }
 
     private void Emit(byte b)
@@ -292,38 +296,11 @@ public class D2Assembler : D2AssemblyBaseVisitor<object>
         return false;
     }
 
-    private void ExecuteORG(D2AssemblyParser.ArgumentContext arg, InstructionType type)
-    {
-        if (type != InstructionType.Absolute)
-        {
-            throw new Exception($"org expects an address as argument");
-        }
-
-        var num = arg.number();
-        if (num.bin is null || num.hex is null || num.dec is null)
-        {
-            throw new Exception($"org expects a literal address as argument");
-        }
-
-        var (bytes, number) = this.EvaluateNumber(num);
-
-        if (number < CurrentAddress)
-        {
-            throw new Exception($"org expects an address greater than the current address");
-        }
-
-        while (number > CurrentAddress)
-        {
-            this.Emit(0);
-        }
-    }
-
     private (List<byte>, ushort) EvaluateNumber(D2AssemblyParser.NumberContext num)
     {
         if (num.bin is not null)
         {
             // Binary number
-
             if (this.TryGetNumberBits(num, out var bits))
             {
                 if (bits > 8)
