@@ -1034,7 +1034,7 @@ public static class Utilities
         MarkdownDocument md = Markdown.Parse(markdown, new MarkdownPipelineBuilder().UseAdvancedExtensions().Build());
         ImGuiMarkdownRenderer igmr = new ImGuiMarkdownRenderer(onLinkClicked);
 
-        WithImGuiFont(GetFont("core.font.opensans", 16, false, false), () =>
+        WithImGuiFont(GetFont("core.font.opensans", 20, false, false), () =>
         {
             igmr.Render(md);
         });

@@ -70,12 +70,12 @@ public class HeadingRenderer : MarkdownObjectRenderer<ImGuiMarkdownRenderer, Hea
         var size = obj.Level switch
         {
             1 => 32,
-            2 => 28,
+            2 => 32,
             3 => 24,
-            4 => 20,
-            5 => 16,
-            6 => 16,
-            _ => 16
+            4 => 24,
+            5 => 20,
+            6 => 20,
+            _ => 20
         };
 
         Utilities.PushFontSize(size);

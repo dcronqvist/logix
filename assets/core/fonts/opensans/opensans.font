@@ -3,7 +3,7 @@
 	"fileBold": "opensans-bold.ttf",
 	"fileItalic": "opensans-italic.ttf",
 	"fileBoldItalic": "opensans-bolditalic.ttf",
-    "sizes": [16, 20, 24, 64],
+    "sizes": [16, 20, 24, 32, 64],
     "magFilter": "linear",
     "minFilter": "linear",
     "applyIconRange": false

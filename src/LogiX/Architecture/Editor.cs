@@ -1256,7 +1256,7 @@ Under *projects*, you can see your circuits, and right clicking them in the side
 
                         if (ImGui.BeginMenu("Info"))
                         {
-                            if (ImGui.BeginMenu("In Circuits..."))
+                            if (ImGui.BeginMenu("In Circuits...", usedInCircuits.Count > 0))
                             {
                                 foreach (var usedCircuit in usedInCircuits)
                                 {
@@ -1264,7 +1264,6 @@ Under *projects*, you can see your circuits, and right clicking them in the side
                                 }
                                 ImGui.EndMenu();
                             }
-
                             ImGui.EndMenu();
                         }
 
@@ -1314,6 +1313,10 @@ Under *projects*, you can see your circuits, and right clicking them in the side
                             if (ImGui.MenuItem("Show Help"))
                             {
                                 if (cInfo.DocumentationAsset is null)
+                                {
+                                    this.OpenErrorPopup("Missing documentation", false, () => ImGui.Text("No documentation available for this component."));
+                                }
+                                else if (LogiXWindow.ContentManager.GetContentItem<MarkdownFile>(cInfo.DocumentationAsset) is null)
                                 {
                                     this.OpenErrorPopup("Missing documentation", false, () => ImGui.Text("No documentation available for this component."));
                                 }
