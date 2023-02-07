@@ -113,6 +113,7 @@ FSL_I_BUS = FSEL_SL1
 FSL_I_SET = FSEL_SL1 | FSEL_SL0 | FSEL_H
 FSL_I_CLR = FSEL_SL1 | FSEL_SL0
 FSL_ALL_BUS = FSL_Z_BUS | FSL_C_BUS | FSL_N_BUS | FSL_V_BUS | FSL_I_BUS
+FSL_ALL_ALU = FSL_Z_ALU | FSL_C_ALU | FSL_N_ALU | FSL_V_ALU | FSL_I_REG
 
 # INDEX
 IDX_0 = 0
@@ -258,19 +259,19 @@ def ldimm_reg(reg):
     instr(states)
 
 def ldabs_reg(reg):
-    states = [Q0, Q1, Q2, Q3, Q4, FETCH, MAM_PC | MR | LD_MARL | PC_INC, MAM_PC | MR | LD_MARH | PC_INC, MAM_MAR | MR | reg, NF, NF, NF, NF, NF, NF, NF, NF]
+    states = [Q0, Q1, Q2, Q3, Q4, FETCH, MAM_PC | MR | LD_MARL | PC_INC, MAM_PC | MR | LD_MARH | PC_INC, MAM_MAR | MR | reg | ALU_F_ADD | LD_F | FSL_ALL_ALU | ALU_CIN_0, NF, NF, NF, NF, NF, NF, NF, NF]
     instr(states)
 
 def ldidx_reg(reg, idx):
-    states = [Q0, Q1, Q2, Q3, Q4, FETCH, MAM_PC | MR | LD_MARL | PC_INC, MAM_PC | MR | LD_MARH | PC_INC, MAM_MAR_PLUS_IDX | idx | MR | reg, NF, NF, NF, NF, NF, NF, NF, NF]
+    states = [Q0, Q1, Q2, Q3, Q4, FETCH, MAM_PC | MR | LD_MARL | PC_INC, MAM_PC | MR | LD_MARH | PC_INC, MAM_MAR_PLUS_IDX | idx | MR | reg | ALU_F_ADD | LD_F | FSL_ALL_ALU | ALU_CIN_0, NF, NF, NF, NF, NF, NF, NF, NF]
     instr(states)
 
 def ldind_reg(reg):
-    states = [Q0, Q1, Q2, Q3, Q4, FETCH, MAM_PC | MR | LD_MARL | PC_INC, MAM_PC | MR | LD_MARH | PC_INC, MAM_MAR | MR | LD_T | MAR_INC, MAM_MAR | MR | LD_MARH, OE_T | LD_MARL, MAM_MAR | MR | reg, NF, NF, NF, NF, NF]
+    states = [Q0, Q1, Q2, Q3, Q4, FETCH, MAM_PC | MR | LD_MARL | PC_INC, MAM_PC | MR | LD_MARH | PC_INC, MAM_MAR | MR | LD_T | MAR_INC, MAM_MAR | MR | LD_MARH, OE_T | LD_MARL, MAM_MAR | MR | reg | ALU_F_ADD | LD_F | FSL_ALL_ALU | ALU_CIN_0, NF, NF, NF, NF, NF]
     instr(states)
 
 def ldindidx_reg(reg, idx):
-    states = [Q0, Q1, Q2, Q3, Q4, FETCH, MAM_PC | MR | LD_MARL | PC_INC, MAM_PC | MR | LD_MARH | PC_INC, MAM_MAR | MR | LD_T | MAR_INC, MAM_MAR | MR | LD_MARH, OE_T | LD_MARL, MAM_MAR_PLUS_IDX | idx | MR | reg, NF, NF, NF, NF, NF]
+    states = [Q0, Q1, Q2, Q3, Q4, FETCH, MAM_PC | MR | LD_MARL | PC_INC, MAM_PC | MR | LD_MARH | PC_INC, MAM_MAR | MR | LD_T | MAR_INC, MAM_MAR | MR | LD_MARH, OE_T | LD_MARL, MAM_MAR_PLUS_IDX | idx | MR | reg | ALU_F_ADD | LD_F | FSL_ALL_ALU | ALU_CIN_0, NF, NF, NF, NF, NF]
     instr(states)
 
 def stabs_reg(reg):

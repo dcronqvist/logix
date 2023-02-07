@@ -9,13 +9,12 @@ PORTB = $0002       ; Port B data register
 message:
     .asciiz "Hello World!"
 message2:
-    .asciiz "I am Daniel"
+    .asciiz "I am the D2 Processor!"
 
 printchar:
-    sta PORTB       ; Store value in PORTB to display on TTY
-    eor #%10000000  ; XOR 128 to value to enable 7th bit
+    ora #%10000000  ; XOR 128 to value to enable 7th bit
     sta PORTB       ; Store value in PORTB to add char on TTY
-    eor #%10000000  ; XOR 128 to value to disable 7th bit
+    lda #$00
     sta PORTB
     rts
 
