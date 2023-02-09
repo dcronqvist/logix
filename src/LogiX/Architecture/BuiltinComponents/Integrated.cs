@@ -303,7 +303,7 @@ public class Integrated : Node<IntegratedData>
                         _ => 0f
                     };
 
-                    TextRenderer.RenderText(iFont, ident, pinPos.ToVector2(Constants.GRIDSIZE) + offset, iScale, rot, ColorF.Black, true, 0.3f, 0.15f, -1f, -1f);
+                    TextRenderer.RenderText(iFont, ident, pinPos.ToVector2(Constants.GRIDSIZE) + offset, iScale, rot, 0.58f, 0.04f, ColorF.Black);
                 }
             }
         }
@@ -333,6 +333,6 @@ public class Integrated : Node<IntegratedData>
             3 => new Vector2(0, ox),
         };
 
-        TextRenderer.RenderText(font, name, textPos + off, scale, rotation, ColorF.Black, true, 0.4f, 0.08f, -1f, -1f);
+        TextRenderer.RenderText(font, name, textPos + off, scale, rotation, 0.55f, 0.03f, ColorF.Black);
     }
 }

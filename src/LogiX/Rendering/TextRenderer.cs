@@ -12,12 +12,15 @@ public class CharacterInstance
     public Vector2 Position { get; set; }
     public RectangleF UVRectangle { get; set; }
     public char Character { get; set; }
-    public ColorF Color { get; set; }
     public Matrix4x4 ModelMatrix { get; set; }
-    public float Edge { get; set; }
-    public float Width { get; set; }
-
     public float Height { get; set; }
+
+    public float Thickness { get; set; }
+    public float Softness { get; set; }
+    public ColorF Color { get; set; }
+    public ColorF OutlineColor { get; set; }
+    public float OutlineThickness { get; set; }
+    public float OutlineSoftness { get; set; }
 
     public float[] GetData()
     {
@@ -37,55 +40,72 @@ public class CharacterInstance
         float uvYTop = ch.Y / (float)Font.AtlasHeight;
         float uvYBottom = (ch.Y + ch.Height) / (float)Font.AtlasHeight;
 
-        var data = new float[34 * 2]; // 2 tris
+        var data = new float[40 * 2]; // 2 tris
 
         float[] firstTri = new float[]
         {
             xPos + w, yPos, uvXRight, uvYTop,
             xPos, yPos, uvXLeft, uvYTop,
             xPos, yPos + h, uvXLeft, uvYBottom,
-            this.Color.R, this.Color.G, this.Color.B, this.Color.A
 
             // xPos + w, yPos + h, uvXRight, uvYBottom, this.Color.R, this.Color.G, this.Color.B, this.Color.A, // bottom right
             // xPos + w, yPos, uvXRight, uvYTop, color.R, color.G, color.B, color.A, // top right
             // xPos, yPos + h, uvXLeft, uvYBottom, color.R, color.G, color.B, color.A, // bottom left
         };
 
-        for (int j = 0; j < 4 * 4; j++)
+        for (int j = 0; j < 12; j++) // 3 * 4, (x, y, u, v) * 3
         {
             data[j] = firstTri[j];
         }
 
         var modelMatrixData = Utilities.GetMatrix4x4Values(this.ModelMatrix);
-
         for (int j = 0; j < 16; j++)
         {
-            data[j + 16] = modelMatrixData[j];
+            data[j + 12] = modelMatrixData[j];
         }
 
-        data[32] = this.Edge;
-        data[33] = this.Width;
+        data[28] = this.Thickness;
+        data[29] = this.Softness;
+        data[30] = this.Color.R;
+        data[31] = this.Color.G;
+        data[32] = this.Color.B;
+        data[33] = this.Color.A;
+        data[34] = this.OutlineColor.R;
+        data[35] = this.OutlineColor.G;
+        data[36] = this.OutlineColor.B;
+        data[37] = this.OutlineColor.A;
+        data[38] = this.OutlineThickness;
+        data[39] = this.OutlineSoftness;
 
         float[] secondTri = new float[]
         {
             xPos + w, yPos + h, uvXRight, uvYBottom,
             xPos + w, yPos, uvXRight, uvYTop,
             xPos, yPos + h, uvXLeft, uvYBottom,
-            this.Color.R, this.Color.G, this.Color.B, this.Color.A
         };
 
-        for (int j = 0; j < 4 * 4; j++)
+        for (int j = 0; j < 4 * 3; j++)
         {
-            data[j + 34] = secondTri[j];
+            data[j + 40] = secondTri[j];
         }
 
         for (int j = 0; j < 16; j++)
         {
-            data[j + 50] = modelMatrixData[j];
+            data[j + 52] = modelMatrixData[j];
         }
 
-        data[66] = this.Edge;
-        data[67] = this.Width;
+        data[68] = this.Thickness;
+        data[69] = this.Softness;
+        data[70] = this.Color.R;
+        data[71] = this.Color.G;
+        data[72] = this.Color.B;
+        data[73] = this.Color.A;
+        data[74] = this.OutlineColor.R;
+        data[75] = this.OutlineColor.G;
+        data[76] = this.OutlineColor.B;
+        data[77] = this.OutlineColor.A;
+        data[78] = this.OutlineThickness;
+        data[79] = this.OutlineSoftness;
 
         return data;
     }
@@ -120,7 +140,7 @@ public static class TextRenderer
         glBindBuffer(GL_ARRAY_BUFFER, vbo);
         glBufferData(GL_ARRAY_BUFFER, 0, (void*)0, GL_STREAM_DRAW); // Fill VBO with 0 bytes to initialize memory
 
-        int stride = 34;
+        int stride = 40;
 
         // Enable vertex attributes
         glEnableVertexAttribArray(0); // x1, y1, u1, v1
@@ -135,11 +155,11 @@ public static class TextRenderer
         glVertexAttribPointer(2, 4, GL_FLOAT, false, stride * sizeof(float), (void*)(8 * sizeof(float)));
         glVertexAttribDivisor(2, 1);
 
-        glEnableVertexAttribArray(3); // r, g, b, a
+        // 16 floats of model matrix
+        glEnableVertexAttribArray(3); // model matrix
         glVertexAttribPointer(3, 4, GL_FLOAT, false, stride * sizeof(float), (void*)(12 * sizeof(float)));
         glVertexAttribDivisor(3, 1);
 
-        // 16 floats of model matrix
         glEnableVertexAttribArray(4); // model matrix
         glVertexAttribPointer(4, 4, GL_FLOAT, false, stride * sizeof(float), (void*)(16 * sizeof(float)));
         glVertexAttribDivisor(4, 1);
@@ -152,19 +172,35 @@ public static class TextRenderer
         glVertexAttribPointer(6, 4, GL_FLOAT, false, stride * sizeof(float), (void*)(24 * sizeof(float)));
         glVertexAttribDivisor(6, 1);
 
-        glEnableVertexAttribArray(7); // model matrix
-        glVertexAttribPointer(7, 4, GL_FLOAT, false, stride * sizeof(float), (void*)(28 * sizeof(float)));
+        // public float Thickness { get; set; }
+        glEnableVertexAttribArray(7);
+        glVertexAttribPointer(7, 1, GL_FLOAT, false, stride * sizeof(float), (void*)(28 * sizeof(float)));
         glVertexAttribDivisor(7, 1);
 
-        // 1 float of edge
-        glEnableVertexAttribArray(8); // edge
-        glVertexAttribPointer(8, 1, GL_FLOAT, false, stride * sizeof(float), (void*)(32 * sizeof(float)));
+        // public float Softness { get; set; }
+        glEnableVertexAttribArray(8);
+        glVertexAttribPointer(8, 1, GL_FLOAT, false, stride * sizeof(float), (void*)(29 * sizeof(float)));
         glVertexAttribDivisor(8, 1);
 
-        // 1 float of width
-        glEnableVertexAttribArray(9); // width
-        glVertexAttribPointer(9, 1, GL_FLOAT, false, stride * sizeof(float), (void*)(33 * sizeof(float)));
+        // public ColorF Color { get; set; }
+        glEnableVertexAttribArray(9);
+        glVertexAttribPointer(9, 4, GL_FLOAT, false, stride * sizeof(float), (void*)(30 * sizeof(float)));
         glVertexAttribDivisor(9, 1);
+
+        // public ColorF OutlineColor { get; set; }
+        glEnableVertexAttribArray(10);
+        glVertexAttribPointer(10, 4, GL_FLOAT, false, stride * sizeof(float), (void*)(34 * sizeof(float)));
+        glVertexAttribDivisor(10, 1);
+
+        // public float OutlineThickness { get; set; }
+        glEnableVertexAttribArray(11);
+        glVertexAttribPointer(11, 1, GL_FLOAT, false, stride * sizeof(float), (void*)(38 * sizeof(float)));
+        glVertexAttribDivisor(11, 1);
+
+        // public float OutlineSoftness { get; set; }
+        glEnableVertexAttribArray(12);
+        glVertexAttribPointer(12, 1, GL_FLOAT, false, stride * sizeof(float), (void*)(39 * sizeof(float)));
+        glVertexAttribDivisor(12, 1);
 
         // Unbind VBO
         glBindBuffer(GL_ARRAY_BUFFER, 0);
@@ -173,7 +209,7 @@ public static class TextRenderer
     }
 
     // Write a method that takes a string as input and outputs a list of character instances
-    public static void AddCharacterInstances(string text, Font font, Vector2 position, float scale, float rotation, ColorF color, float edge, float width, float fixedAdvance, float fixedHeight)
+    public static void AddCharacterInstances(string text, Font font, Vector2 position, float scale, float rotation, float thickness, float softness, ColorF color, float outlineThickness, float outlineSoftness, ColorF outlineColor, float fixedAdvance, float fixedHeight)
     {
         List<CharacterInstance> characterInstances = new();
 
@@ -192,6 +228,13 @@ public static class TextRenderer
 
             var advance = fixedAdvance == -1f ? glyph.XAdvance + glyph.XOffset : fixedAdvance;
 
+            // public float Thickness { get; set; } // 
+            // public float Softness { get; set; }
+            // public ColorF Color { get; set; }
+            // public ColorF OutlineColor { get; set; }
+            // public float OutlineThickness { get; set; }
+            // public float OutlineSoftness { get; set; }
+
             // Create a character instance
             CharacterInstance characterInstance = new()
             {
@@ -199,11 +242,15 @@ public static class TextRenderer
                 Position = Vector2.Zero,
                 UVRectangle = new RectangleF(glyph.X, glyph.Y, glyph.Width, glyph.Height),
                 Character = character,
-                Color = color,
                 ModelMatrix = Utilities.CreateModelMatrixFromPosition(pos.PixelAlign(), rotation, new Vector2(0, 0), new Vector2(scale, scale)),
-                Edge = edge,
-                Width = width,
-                Height = height
+                Height = height,
+
+                Color = color,
+                Thickness = thickness,
+                Softness = softness,
+                OutlineColor = outlineColor,
+                OutlineThickness = outlineThickness,
+                OutlineSoftness = outlineSoftness
             };
 
             // Add the character instance to the list
@@ -261,9 +308,14 @@ public static class TextRenderer
         _instances.Clear();
     }
 
-    public static unsafe void RenderText(Font f, string s, Vector2 position, float scale, float rotation, ColorF color, bool pixelAlign, float edge, float width, float fixedAdvance, float fixedHeight)
+    public static unsafe void RenderText(Font f, string s, Vector2 position, float scale, float rotation, bool pixelAlign, float thickness, float softness, ColorF color, float outlineThickness, float outlineSoftness, ColorF outlineColor, float fixedAdvance, float fixedHeight)
     {
-        AddCharacterInstances(s, f, pixelAlign ? position.PixelAlign() : position, scale, rotation, color, edge, width, fixedAdvance, fixedHeight);
+        AddCharacterInstances(s, f, pixelAlign ? position.PixelAlign() : position, scale, rotation, thickness, softness, color, outlineThickness, outlineSoftness, outlineColor, fixedAdvance, fixedHeight);
+    }
+
+    public static unsafe void RenderText(Font f, string s, Vector2 position, float scale, float rotation, float thickness, float softness, ColorF color)
+    {
+        RenderText(f, s, position, scale, rotation, true, thickness, softness, color, 0, 0, ColorF.Transparent, -1, -1);
     }
 
     // private static unsafe void RenderTextInternal(ShaderProgram shader, Font f, string s, Vector2 position, float scale, float rotation, ColorF color, Camera2D cam, bool pixelAlign = true)

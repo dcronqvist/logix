@@ -199,8 +199,8 @@ public class LogiXWindow : Game
                     var measure = font.MeasureString("Loading...", scale);
                     var measureUnder = font.MeasureString(_loadingUnderstring, scale);
 
-                    TextRenderer.RenderText(font, "Loading...", DisplayManager.GetWindowSizeInPixels() / 2f - measure / 2f, scale, 0f, ColorF.White, true, 0.38f, 0.12f, -1f, -1f);
-                    TextRenderer.RenderText(font, _loadingUnderstring, DisplayManager.GetWindowSizeInPixels() / 2f - measureUnder / 2f + new Vector2(0, 40), scale, 0f, ColorF.White, true, 0.38f, 0.12f, -1f, -1f);
+                    TextRenderer.RenderText(font, "Loading...", DisplayManager.GetWindowSizeInPixels() / 2f - measure / 2f, scale, 0f, true, 0.5f, 0.1f, ColorF.White, 0.6f, 0.02f, ColorF.Cyan, -1f, -1f);
+                    TextRenderer.RenderText(font, _loadingUnderstring, DisplayManager.GetWindowSizeInPixels() / 2f - measureUnder / 2f + new Vector2(0, 40), scale, 0f, true, 0.5f, 0.1f, ColorF.White, 0.6f, 0.02f, ColorF.Cyan, -1f, -1f);
 
                     TextRenderer.FinalizeRender(shader, Framebuffer.GetDefaultCamera());
                     DisplayManager.SwapBuffers(-1);

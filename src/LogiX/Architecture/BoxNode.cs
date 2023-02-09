@@ -63,7 +63,7 @@ public abstract class BoxNode<TData> : Node<TData> where TData : INodeDescriptio
             _ => -measure / 2f + new Vector2(x, y)
         };
 
-        TextRenderer.RenderText(Constants.NODE_FONT_REAL, this.Text, root + sizeReal / 2f + offset, scale, rot, ColorF.Black, true, 0.38f, 0.12f, -1f, -1f);
+        TextRenderer.RenderText(Constants.NODE_FONT_REAL, this.Text, root + sizeReal / 2f + offset, scale, rot, true, 0.52f, 0.04f, ColorF.Black, 0.53f, 0.02f, ColorF.DarkGray, -1f, -1f);
 
         base.Render(pins, camera);
     }

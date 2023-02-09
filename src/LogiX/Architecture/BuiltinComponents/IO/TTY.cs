@@ -164,7 +164,7 @@ public class TTY : Node<TTYData>
                 line = line + "_";
             }
 
-            TextRenderer.RenderText(font, line, linePos, scale, 0f, this._data.TextColor, true, 0.4f, 0.1f, -1f, Constants.GRIDSIZE);
+            TextRenderer.RenderText(font, line, linePos, scale, 0f, 0.5f, 0.1f, this._data.TextColor);
         }
 
 
