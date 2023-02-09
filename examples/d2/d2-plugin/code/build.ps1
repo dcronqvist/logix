@@ -7,5 +7,6 @@ Copy-Item -Path "./bin/Release/net7.0/$pluginName.dll" -Destination "./$pluginNa
 Remove-Item ./bin -Force -Recurse -ErrorAction SilentlyContinue
 Remove-Item ./obj -Force -Recurse -ErrorAction SilentlyContinue
 
-Remove-Item "../../../../assets/plugins/$pluginName" -Force -Recurse -ErrorAction SilentlyContinue
-Copy-Item -Recurse -Path "../../$pluginName" -Destination "../../../../assets/plugins/$pluginName"
+Remove-Item "../../../../assets/plugins/$pluginName.zip" -Force -Recurse -ErrorAction SilentlyContinue
+
+Compress-Archive -Path "../../$pluginName/*" -DestinationPath "../../../../assets/plugins/$pluginName.zip"
