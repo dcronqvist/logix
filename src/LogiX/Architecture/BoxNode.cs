@@ -55,7 +55,7 @@ public abstract class BoxNode<TData> : Node<TData> where TData : INodeDescriptio
         };
 
         var x = 0;
-        var y = -1;
+        var y = 0;
         var offset = this.Rotation switch
         {
             1 => new Vector2(measure.Y / 2f + y, -measure.X / 2f + x),

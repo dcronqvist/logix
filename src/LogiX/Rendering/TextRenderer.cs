@@ -2,6 +2,7 @@ using System.Numerics;
 using LogiX.Graphics;
 using System.Drawing;
 using static LogiX.OpenGL.GL;
+using Cyotek.Drawing.BitmapFont;
 
 namespace LogiX.Rendering;
 
@@ -23,18 +24,18 @@ public class CharacterInstance
         var x = this.Position.X;
         var y = this.Position.Y;
 
-        FontCharacter ch = Font.Characters[this.Character];
+        Character ch = Font.Content.BitmapFontInfo.Characters[this.Character];
 
-        float xPos = x + ch.Bearing.X;
-        float yPos = y + (this.Height - ch.Bearing.Y);
+        float xPos = x + ch.XOffset;
+        float yPos = y + ch.YOffset;
 
-        float w = ch.Size.X;
-        float h = ch.Size.Y;
+        float w = ch.Width;
+        float h = ch.Height;
 
-        float uvXLeft = ch.Rectangle.X / Font.AtlasWidth;
-        float uvXRight = (ch.Rectangle.X + ch.Rectangle.Width) / Font.AtlasWidth;
-        float uvYTop = ch.Rectangle.Y / Font.AtlasHeight;
-        float uvYBottom = (ch.Rectangle.Y + ch.Rectangle.Height) / Font.AtlasHeight;
+        float uvXLeft = ch.X / (float)Font.AtlasWidth;
+        float uvXRight = (ch.X + ch.Width) / (float)Font.AtlasWidth;
+        float uvYTop = ch.Y / (float)Font.AtlasHeight;
+        float uvYBottom = (ch.Y + ch.Height) / (float)Font.AtlasHeight;
 
         var data = new float[34 * 2]; // 2 tris
 
@@ -176,8 +177,7 @@ public static class TextRenderer
     {
         List<CharacterInstance> characterInstances = new();
 
-        var measure = font.MeasureString(text, 1f);
-        var height = fixedHeight == -1f ? measure.Y : fixedHeight;
+        var height = fixedHeight == -1f ? font.MaxY : fixedHeight;
 
         var pos = position;
 
@@ -188,16 +188,16 @@ public static class TextRenderer
             char character = text[i];
 
             // Get the character's glyph
-            FontCharacter glyph = font.Characters[character];
+            Character glyph = font.Content.BitmapFontInfo.Characters[character];
 
-            var advance = fixedAdvance == -1f ? glyph.Advance : fixedAdvance;
+            var advance = fixedAdvance == -1f ? glyph.XAdvance + glyph.XOffset : fixedAdvance;
 
             // Create a character instance
             CharacterInstance characterInstance = new()
             {
                 Font = font,
                 Position = Vector2.Zero,
-                UVRectangle = glyph.Rectangle,
+                UVRectangle = new RectangleF(glyph.X, glyph.Y, glyph.Width, glyph.Height),
                 Character = character,
                 Color = color,
                 ModelMatrix = Utilities.CreateModelMatrixFromPosition(pos.PixelAlign(), rotation, new Vector2(0, 0), new Vector2(scale, scale)),

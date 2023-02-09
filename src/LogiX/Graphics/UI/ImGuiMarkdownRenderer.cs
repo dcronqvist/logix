@@ -69,13 +69,13 @@ public class HeadingRenderer : MarkdownObjectRenderer<ImGuiMarkdownRenderer, Hea
     {
         var size = obj.Level switch
         {
-            1 => 32,
-            2 => 32,
-            3 => 24,
+            1 => 30,
+            2 => 28,
+            3 => 26,
             4 => 24,
-            5 => 20,
+            5 => 22,
             6 => 20,
-            _ => 20
+            _ => 16
         };
 
         Utilities.PushFontSize(size);
@@ -162,12 +162,12 @@ public class LinkRenderer : MarkdownObjectRenderer<ImGuiMarkdownRenderer, LinkIn
         var color = ColorF.LightSkyBlue;
         ImGui.PushStyleColor(ImGuiCol.Text, color.ToVector4());
         renderer.Render(obj.FirstChild);
+        Underline(color.ToVector4());
         if (ImGui.IsItemClicked())
         {
             renderer.OnLinkClicked?.Invoke(obj.Url);
         }
         ImGui.PopStyleColor();
-        Underline(color.ToVector4());
         ImGui.SameLine(0, 0);
     }
 

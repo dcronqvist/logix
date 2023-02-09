@@ -43,8 +43,8 @@ public class Texture2D : GLContentItem<ImageResult>
 
         var wrapS = GL_CLAMP_TO_EDGE;
         var wrapT = GL_CLAMP_TO_EDGE;
-        var minFilter = GL_NEAREST;
-        var magFilter = GL_NEAREST;
+        var minFilter = GL_LINEAR;
+        var magFilter = GL_LINEAR;
 
         // Set texture data
         fixed (byte* pix = &pixelData[0])

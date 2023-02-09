@@ -51,24 +51,25 @@ namespace LogiX.Graphics.UI
 
             foreach (var font in fonts)
             {
-                fixed (byte* pFontData = &font.Content.Data[0])
+                var fontDatas = new (byte[], FontStyle)[]
                 {
-                    if (font.ApplyIconRange)
-                    {
-                        var config = new ImFontConfig();
-                        config.MergeMode = 0;
+                    (font.Content.RegularFontData, FontStyle.Regular),
+                    (font.Content.BoldFontData, FontStyle.Bold),
+                    (font.Content.ItalicFontData, FontStyle.Italic),
+                    (font.Content.BoldItalicFontData, FontStyle.BoldItalic)
+                };
 
-                        fixed (ushort* pRanges = &ranges[0])
-                        {
-                            config.GlyphRanges = pRanges;
-                            var f = io.Fonts.AddFontFromMemoryTTF((IntPtr)pFontData, font.Content.Data.Length, font.Content.Size, &config, (IntPtr)pRanges);
-                            Utilities.AddImGuiFont(font, f);
-                        }
-                    }
-                    else
+                var sizes = new int[] { 16, 18, 20, 22, 24, 26, 28, 30 };
+
+                foreach (var (fontData, fontStyle) in fontDatas)
+                {
+                    foreach (var size in sizes)
                     {
-                        var f = io.Fonts.AddFontFromMemoryTTF((IntPtr)pFontData, font.Content.Data.Length, font.Content.Size);
-                        Utilities.AddImGuiFont(font, f);
+                        fixed (byte* pFontData = &fontData[0])
+                        {
+                            var f = io.Fonts.AddFontFromMemoryTTF((IntPtr)pFontData, fontData.Length, size);
+                            Utilities.AddImGuiFont(font, size, fontStyle, f);
+                        }
                     }
                 }
             }

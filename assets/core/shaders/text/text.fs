@@ -9,7 +9,7 @@ uniform sampler2D text;
 
 void main()
 {
-    float dist = texture(text, TexCoords).r;
+    float dist = texture(text, TexCoords).a;
     float alpha = smoothstep(Edge, Edge + Width, dist);
 
     FragColor = vec4(Color.rgb, alpha * Color.a);

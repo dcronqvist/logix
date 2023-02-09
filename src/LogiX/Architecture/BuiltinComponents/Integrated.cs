@@ -135,8 +135,9 @@ public class Integrated : Node<IntegratedData>
         var bottomPinsMaxLabel = bottomPins.Count > 0 ? bottomPins.Select(x => x.Label.Length).Max() : 0;
 
         var font = Constants.NODE_FONT_REAL;
-        var scale = 0.25f;
-        var measure = font.MeasureString("_", scale).X;
+        var pinScale = 0.1f;
+        var scale = 0.22f;
+        var measure = font.MeasureString("_", pinScale).X;
         var measureHeight = font.MeasureString("K", scale).Y;
 
         var leftMax = (int)((leftPinsMaxLabel * measure).CeilToMultipleOf(Constants.GRIDSIZE) / Constants.GRIDSIZE);
@@ -147,9 +148,9 @@ public class Integrated : Node<IntegratedData>
         var widthMax = Math.Max(leftMax, rightMax);
         var heightMax = Math.Max(topMax, bottomMax);
 
-        var realHeightMax = (int)((heightMax * 2 + this._name.Length * measure).CeilToMultipleOf(Constants.GRIDSIZE) / Constants.GRIDSIZE);
+        var realHeightMax = (int)((heightMax * 2 + this._name.Length * font.MeasureString("_", scale).X).CeilToMultipleOf(Constants.GRIDSIZE) / Constants.GRIDSIZE);
 
-        var width = Math.Max(widthMax * 2 + (int)(measureHeight.CeilToMultipleOf(Constants.GRIDSIZE) / Constants.GRIDSIZE), 4);
+        var width = Math.Max(widthMax * 2 + (int)(measureHeight.CeilToMultipleOf(Constants.GRIDSIZE) / Constants.GRIDSIZE) + 1, 4);
         var height = Math.Max(Math.Max(leftPins.Count, rightPins.Count), realHeightMax) + 1;
 
         return new Vector2i(width, height);
@@ -310,7 +311,7 @@ public class Integrated : Node<IntegratedData>
         var name = this._name;
         var font = Constants.NODE_FONT_REAL;
         var realPos = this.Position.ToVector2(Constants.GRIDSIZE) + this.GetMiddleOffset();
-        var scale = 0.25f;
+        var scale = 0.22f;
         var measure = font.MeasureString(name, scale);
         var textPos = this.Rotation switch
         {

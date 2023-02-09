@@ -39,6 +39,7 @@
 
   <ItemGroup>
     <PackageReference Include="ANTLR4.Runtime.Standard" Version="4.9.3" />
+    <PackageReference Include="Cyotek.Drawing.BitmapFont" Version="2.0.4" />
     <PackageReference Include="FreeTypeSharp" Version="2.0.0.12-ci" />
     <PackageReference Include="Markdig" Version="0.30.4" />
     <PackageReference Include="QuikGraph" Version="2.5.0" />

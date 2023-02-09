@@ -24,8 +24,8 @@ public interface IHashable
 public static class Utilities
 {
     static Random RNG = new();
-    static Dictionary<string, ImFontPtr> _imguiFonts = new();
-    static Font _currentImGuiFont = null;
+    static Dictionary<(string, int, FontStyle), ImFontPtr> _imguiFonts = new();
+    static (Font, int, FontStyle) _currentImGuiFont = (null, 0, FontStyle.Regular);
     public static ContentManager<ContentMeta> ContentManager { get; set; }
 
     public static void ClearImGuiFonts()
@@ -33,9 +33,9 @@ public static class Utilities
         _imguiFonts.Clear();
     }
 
-    public static void AddImGuiFont(Font font, ImFontPtr ptr)
+    public static void AddImGuiFont(Font font, int size, FontStyle style, ImFontPtr ptr)
     {
-        _imguiFonts.Add(font.Identifier, ptr);
+        _imguiFonts.Add((font.Identifier, size, style), ptr);
     }
 
     public static void CopyPropsAndFields<T1, T2>(T1 a, ref T2 b)
@@ -972,49 +972,37 @@ public static class Utilities
         return result.ToArray();
     }
 
-    public static void WithImGuiFont(Font font, Action action)
+    public static void WithImGuiFont(Font font, int size, FontStyle style, Action action)
     {
         ImFontPtr oldFont = ImGui.GetFont();
-        _currentImGuiFont = font;
-        ImGui.PushFont(_imguiFonts[font.Identifier]);
+        _currentImGuiFont = (font, size, style);
+        ImGui.PushFont(_imguiFonts[(font.Identifier, size, style)]);
         action();
         ImGui.PopFont();
     }
 
     public static void PushFontBold()
     {
-        var currBase = _currentImGuiFont.GetFontBaseName();
-        var currSize = _currentImGuiFont.Content.Size;
-        var currBold = _currentImGuiFont.IsBold;
-        var currItalic = _currentImGuiFont.IsItalic;
-
-        var newFont = GetFont(currBase, (int)currSize, true, currItalic);
-        _currentImGuiFont = newFont;
-        ImGui.PushFont(_imguiFonts[newFont.Identifier]);
+        var (cfont, csize, cstyle) = _currentImGuiFont;
+        var newFont = (cfont.Identifier, csize, cstyle == FontStyle.Italic ? FontStyle.BoldItalic : FontStyle.Bold);
+        _currentImGuiFont = (cfont, csize, cstyle == FontStyle.Italic ? FontStyle.BoldItalic : FontStyle.Bold);
+        ImGui.PushFont(_imguiFonts[newFont]);
     }
 
     public static void PushFontItalic()
     {
-        var currBase = _currentImGuiFont.GetFontBaseName();
-        var currSize = _currentImGuiFont.Content.Size;
-        var currBold = _currentImGuiFont.IsBold;
-        var currItalic = _currentImGuiFont.IsItalic;
-
-        var newFont = GetFont(currBase, (int)currSize, currBold, true);
-        _currentImGuiFont = newFont;
-        ImGui.PushFont(_imguiFonts[newFont.Identifier]);
+        var (cfont, csize, cstyle) = _currentImGuiFont;
+        var newFont = (cfont.Identifier, csize, cstyle == FontStyle.Bold ? FontStyle.BoldItalic : FontStyle.Italic);
+        _currentImGuiFont = (cfont, csize, cstyle == FontStyle.Bold ? FontStyle.BoldItalic : FontStyle.Italic);
+        ImGui.PushFont(_imguiFonts[newFont]);
     }
 
     public static void PushFontSize(int size)
     {
-        var currBase = _currentImGuiFont.GetFontBaseName();
-        var currSize = _currentImGuiFont.Content.Size;
-        var currBold = _currentImGuiFont.IsBold;
-        var currItalic = _currentImGuiFont.IsItalic;
-
-        var newFont = GetFont(currBase, size, currBold, currItalic);
-        _currentImGuiFont = newFont;
-        ImGui.PushFont(_imguiFonts[newFont.Identifier]);
+        var (cfont, csize, cstyle) = _currentImGuiFont;
+        var newFont = (cfont.Identifier, size, cstyle);
+        _currentImGuiFont = (cfont, size, cstyle);
+        ImGui.PushFont(_imguiFonts[newFont]);
     }
 
     public unsafe static void PopFontStyle(int n = 1)
@@ -1024,8 +1012,8 @@ public static class Utilities
             ImGui.PopFont();
             var font = ImGui.GetFont();
             var back = _imguiFonts.FirstOrDefault(f => f.Value.NativePtr == font.NativePtr).Key;
-            var realFont = ContentManager.GetContentItem<Font>(back);
-            _currentImGuiFont = realFont;
+            var realFont = GetFont(back.Item1);
+            _currentImGuiFont = (realFont, back.Item2, back.Item3);
         }
     }
 
@@ -1034,18 +1022,7 @@ public static class Utilities
         MarkdownDocument md = Markdown.Parse(markdown, new MarkdownPipelineBuilder().UseAdvancedExtensions().Build());
         ImGuiMarkdownRenderer igmr = new ImGuiMarkdownRenderer(onLinkClicked);
 
-        WithImGuiFont(GetFont("core.font.opensans", 20, false, false), () =>
-        {
-            igmr.Render(md);
-        });
-    }
-
-    public static void RenderMarkdown(string markdown, Font font, Action<string> onLinkClicked)
-    {
-        MarkdownDocument md = Markdown.Parse(markdown);
-        ImGuiMarkdownRenderer igmr = new ImGuiMarkdownRenderer(onLinkClicked);
-
-        WithImGuiFont(font, () =>
+        WithImGuiFont(Constants.UI_FONT_REAL, 20, FontStyle.Regular, () =>
         {
             igmr.Render(md);
         });
@@ -1080,10 +1057,9 @@ public static class Utilities
         }
     }
 
-    public static Font GetFont(string identifier, int size, bool bold = false, bool italic = false)
+    public static Font GetFont(string identifier)
     {
-        var final = bold && italic ? "bold-italic" : (bold ? "bold" : (italic ? "italic" : "regular"));
-        var font = ContentManager.GetContentItem<Font>($"{identifier}-{final}-{size}");
+        var font = ContentManager.GetContentItem<Font>(identifier);
         return font;
     }
 
@@ -1294,5 +1270,41 @@ public static class Utilities
     public static float DistanceTo(this Vector2 v, Vector2 other)
     {
         return (v - other).Length();
+    }
+
+    public static string GetTrailingWhitespace(this string s)
+    {
+        var whitespace = "";
+        for (var i = s.Length - 1; i >= 0; i--)
+        {
+            if (s[i] == ' ')
+            {
+                whitespace += " ";
+            }
+            else
+            {
+                break;
+            }
+        }
+
+        return whitespace;
+    }
+
+    public static string GetLeadingWhitespace(this string s)
+    {
+        var whitespace = "";
+        for (var i = 0; i < s.Length; i++)
+        {
+            if (s[i] == ' ')
+            {
+                whitespace += " ";
+            }
+            else
+            {
+                break;
+            }
+        }
+
+        return whitespace;
     }
 }

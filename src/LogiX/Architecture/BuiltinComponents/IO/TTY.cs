@@ -103,7 +103,7 @@ public class TTY : Node<TTYData>
 
     public override Vector2i GetSize()
     {
-        var font = Utilities.GetFont("core.font.inconsolata", 64);
+        var font = Utilities.GetFont("core.font.inconsolata");
         float scale = 0.30f;
         var measure = font.MeasureString("M", scale);
         var width = (this._data.Width * measure.X);
@@ -114,7 +114,7 @@ public class TTY : Node<TTYData>
         var heightAligned = height.CeilToMultipleOf(Constants.GRIDSIZE);
         var heightI = (int)heightAligned / Constants.GRIDSIZE;
 
-        return new Vector2i(widthI + 2, heightI + 3);
+        return new Vector2i(widthI + 3, heightI + 3);
     }
 
     public override void Initialize(TTYData data)
@@ -145,17 +145,19 @@ public class TTY : Node<TTYData>
         var pos = this.Position.ToVector2(Constants.GRIDSIZE);
         var size = this.GetSizeRotated().ToVector2(Constants.GRIDSIZE);
         var rect = pos.CreateRect(size);
-        var font = Utilities.GetFont("core.font.inconsolata", 64);
+        var font = Utilities.GetFont("core.font.inconsolata");
 
         PrimitiveRenderer.RenderRectangleWithBorder(rect, Vector2.Zero, 0f, 1, this._data.BackgroundColor, ColorF.Black);
 
         var lines = GetLines(this._buffer);
         float scale = 0.30f;
 
+        var lineHeight = size.Y / this._data.Height - 2;
+
         for (int i = 0; i < lines.Length; i++)
         {
             var line = lines[i];
-            var linePos = new Vector2(pos.X + Constants.GRIDSIZE, pos.Y + ((i * 2 + 2) * Constants.GRIDSIZE));
+            var linePos = new Vector2(pos.X + Constants.GRIDSIZE, pos.Y + (i * lineHeight) + Constants.GRIDSIZE);
 
             if (this._caretVisible && i == lines.Length - 1)
             {

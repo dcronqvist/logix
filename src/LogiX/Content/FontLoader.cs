@@ -1,28 +1,13 @@
 using System.Diagnostics.CodeAnalysis;
+using System.IO.Compression;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using Cyotek.Drawing.BitmapFont;
 using LogiX.Graphics;
 using StbImageSharp;
 using Symphony;
 
 namespace LogiX.Content;
-
-public class FontFileData
-{
-    // The 4 different types of font files that are needed to load a font
-    public string FileRegular { get; set; }
-    public string FileBold { get; set; }
-    public string FileItalic { get; set; }
-    public string FileBoldItalic { get; set; }
-    public bool ApplyIconRange { get; set; }
-
-    // Which sizes that should be available for this font
-    public int[] Sizes { get; set; }
-
-    // Mag and min filter
-    public FontData.FontFilter MagFilter { get; set; }
-    public FontData.FontFilter MinFilter { get; set; }
-}
 
 public class FontLoader : IContentItemLoader
 {
@@ -31,42 +16,99 @@ public class FontLoader : IContentItemLoader
         var fileName = Path.GetFileNameWithoutExtension(pathToItem);
         using (var stream = structure.GetEntryStream(pathToItem, out var entry))
         {
-            using (StreamReader sr = new StreamReader(stream))
+            var zip = new ZipArchive(stream, ZipArchiveMode.Read);
+
+            var bmfontinfo = zip.GetEntry("bmfontinfo.fnt");
+            if (bmfontinfo is null) throw new Exception("bmfontinfo.fnt not found");
+
+            BitmapFont bmfont = new();
+            using (var bmfontinfoStream = bmfontinfo.Open())
             {
-                var json = sr.ReadToEnd();
-                var options = new JsonSerializerOptions()
+                using (var ms = new MemoryStream())
                 {
-                    PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-                    Converters = { new JsonStringEnumConverter() }
-                };
-                var fontFileDesc = JsonSerializer.Deserialize<FontFileData>(json, options);
+                    bmfontinfoStream.CopyTo(ms);
+                    ms.Seek(0, SeekOrigin.Begin);
 
-                var directory = Path.GetDirectoryName(pathToItem);
-                var regularFile = Path.Combine(directory, fontFileDesc.FileRegular);
-                var boldFile = Path.Combine(directory, fontFileDesc.FileBold);
-                var italicFile = Path.Combine(directory, fontFileDesc.FileItalic);
-                var boldItalicFile = Path.Combine(directory, fontFileDesc.FileBoldItalic);
-
-                var files = new (string, string)[] { (regularFile, "regular"), (boldFile, "bold"), (italicFile, "italic"), (boldItalicFile, "bold-italic") };
-
-                foreach (var (file, id) in files)
-                {
-                    using (var fontFileStream = structure.GetEntryStream(file, out var fontFileEntry))
-                    {
-                        using (var br = new BinaryReader(fontFileStream))
-                        {
-                            byte[] data = br.ReadBytes((int)fontFileStream.Length);
-
-                            foreach (var size in fontFileDesc.Sizes)
-                            {
-                                var fd = new FontData(data, (uint)size, fontFileDesc.MagFilter, fontFileDesc.MinFilter);
-                                var font = new Font($"{source.GetIdentifier()}.font.{fileName}-{id}-{size}", source, fd, fontFileDesc.ApplyIconRange);
-                                yield return await LoadEntryResult.CreateSuccessAsync(font);
-                            }
-                        }
-                    }
+                    bmfont.Load(ms);
                 }
             }
+
+            var regularFile = zip.GetEntry("regular.ttf");
+            if (regularFile is null) throw new Exception("regular.ttf not found");
+            var boldFile = zip.GetEntry("bold.ttf");
+            if (boldFile is null) throw new Exception("bold.ttf not found");
+            var italicFile = zip.GetEntry("italic.ttf");
+            if (italicFile is null) throw new Exception("italic.ttf not found");
+            var boldItalicFile = zip.GetEntry("bold-italic.ttf");
+            if (boldItalicFile is null) throw new Exception("bold-italic.ttf not found");
+
+            var sdfFile = zip.GetEntry("sdf.png");
+            if (sdfFile is null) throw new Exception("sdf.png not found");
+
+            ImageResult sdfTextureData;
+
+            using (var sdfStream = sdfFile.Open())
+            {
+                using (var ms = new MemoryStream())
+                {
+                    sdfStream.CopyTo(ms);
+                    ms.Seek(0, SeekOrigin.Begin);
+
+                    sdfTextureData = ImageResult.FromStream(ms, ColorComponents.RedGreenBlueAlpha);
+                }
+            }
+
+            byte[] regularFontData;
+            using (var regularStream = regularFile.Open())
+            {
+                using (var ms = new MemoryStream())
+                {
+                    regularStream.CopyTo(ms);
+                    ms.Seek(0, SeekOrigin.Begin);
+
+                    regularFontData = ms.ToArray();
+                }
+            }
+
+            byte[] boldFontData;
+            using (var boldStream = boldFile.Open())
+            {
+                using (var ms = new MemoryStream())
+                {
+                    boldStream.CopyTo(ms);
+                    ms.Seek(0, SeekOrigin.Begin);
+
+                    boldFontData = ms.ToArray();
+                }
+            }
+
+            byte[] italicFontData;
+            using (var italicStream = italicFile.Open())
+            {
+                using (var ms = new MemoryStream())
+                {
+                    italicStream.CopyTo(ms);
+                    ms.Seek(0, SeekOrigin.Begin);
+
+                    italicFontData = ms.ToArray();
+                }
+            }
+
+            byte[] boldItalicFontData;
+            using (var boldItalicStream = boldItalicFile.Open())
+            {
+                using (var ms = new MemoryStream())
+                {
+                    boldItalicStream.CopyTo(ms);
+                    ms.Seek(0, SeekOrigin.Begin);
+
+                    boldItalicFontData = ms.ToArray();
+                }
+            }
+
+            var data = new FontData(bmfont, sdfTextureData, regularFontData, boldFontData, italicFontData, boldItalicFontData);
+            var font = new Font($"{source.GetIdentifier()}.font.{fileName}", source, data);
+            yield return await LoadEntryResult.CreateSuccessAsync(font);
         }
     }
 }

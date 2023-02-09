@@ -218,7 +218,7 @@ public class Editor : Invoker<Circuit, Editor>
                     try
                     {
                         (int changed, int total) = s.Step();
-                        float activity = (float)changed / total;
+                        float activity = total == 0 ? 0f : (float)changed / total;
 
                         this.CurrentActivity = MathF.Max(this.CurrentActivity + (activity - this.CurrentActivity) * (0.8f / MathF.Sqrt(MathF.Max(this.CurrentTicksPerSecond, 1))), 0);
                     }
@@ -896,8 +896,8 @@ Under *projects*, you can see your circuits, and right clicking them in the side
                 var current = Framebuffer.GetCurrentBoundBuffer();
 
                 Framebuffer.Clear(ColorF.Transparent);
-                var font = Utilities.GetFont("core.font.opensans", _guiFontSize);
-                Utilities.WithImGuiFont(font, () =>
+                var font = Constants.UI_FONT_REAL;
+                Utilities.WithImGuiFont(font, this._guiFontSize, FontStyle.Regular, () =>
                 {
                     try
                     {
@@ -934,8 +934,8 @@ Under *projects*, you can see your circuits, and right clicking them in the side
             this.GUIFramebuffer.Bind(() =>
             {
                 Framebuffer.Clear(ColorF.Transparent);
-                var font = Utilities.GetFont("core.font.opensans", 16);
-                Utilities.WithImGuiFont(font, () =>
+                var font = Constants.UI_FONT_REAL;
+                Utilities.WithImGuiFont(font, 20, FontStyle.Regular, () =>
                 {
                     try
                     {

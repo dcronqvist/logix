@@ -110,7 +110,6 @@ public class Scheduler
         this.NodePins.Clear();
         this.Nodes.ForEach(n => n.SetScheduler(this));
         this.EventQueue.Clear();
-        this.totalObservableValues = this.NodePins.Values.SelectMany(x => x.GetObservableValues()).Count();
 
         foreach (var connections in this.GetConnectedPins(this.NodePinConnections))
         {
@@ -176,6 +175,8 @@ public class Scheduler
 
             node.Prepare();
         }
+
+        this.totalObservableValues = this.NodePins.Values.SelectMany(x => x.GetObservableValues()).Count();
     }
 
     public void Schedule(Node originator, ObservableValue value, LogicValue[] newValues, int time)
