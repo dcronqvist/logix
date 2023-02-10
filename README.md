@@ -4,7 +4,7 @@
 
 Simulator for logic gates and circuits.
 
-Below is an example gif of a microprocessor, designed by me, that implements a simple instruction set (similar to a 6502), that is running a simple program that prints `Hello World!` over and over to its connected display. The sample program is written in an assembly-style language (for easy programming of the D2), and the program can be seen [here](/examples/d2/test.s). There is also a [LogiX plugin](/examples/d2/d2-plugin/) for the D2 that allows you to directly assemble a file into the D2's RAM for easy programming and running.
+Below is an example gif of a microprocessor, designed by me, that implements a simple instruction set (similar to a 6502), that is running a simple program that prints `Hello World!` to its connected display, and then allows for _infinite_ input by the user via their keyboard. The sample program is written in an assembly-style language (for easy programming of the D2), and the program can be seen [here](/examples/d2/hw-keyboard.s). There is also a [LogiX plugin](/examples/d2/d2-plugin/) for the D2 that allows you to directly assemble a file into the D2's RAM for easy programming and running.
 
 ![Showcasing the D2 processor](media/d2_showcase.gif)
 

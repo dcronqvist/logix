@@ -175,9 +175,9 @@ public class Framebuffer
 
     private unsafe void Resize(int width, int height)
     {
-        // glBindTexture(GL_TEXTURE_2D, this.renderedTexture);
-        // glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
-        // glBindTexture(GL_TEXTURE_2D, 0);
+        glBindTexture(GL_TEXTURE_2D, this.renderedTexture);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
+        glBindTexture(GL_TEXTURE_2D, 0);
 
         _defaultCam = new Camera2D(new Vector2(width / 2f, height / 2f), 1f);
     }
