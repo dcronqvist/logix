@@ -1,8 +1,0 @@
-connect_ledmatrix MATX_MAIN, 40;
-connect_keyboard KBD_MAIN;
-
-set CON=0b1;
-
-print "doing window stuff";
-
-continue;

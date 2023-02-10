@@ -1,6 +1,0 @@
-connect_keyboard KBD_MAIN;
-connect_tty TTY_MAIN;
-
-set CON=0b1;
-
-continue;

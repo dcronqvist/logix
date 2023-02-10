@@ -1,9 +1,0 @@
-byte main() {
-    byte x = 0xFE;
-
-    while (x - 0x01) {
-        x = x - 0x01;
-    }
-
-    return 0xFF;
-}
