@@ -198,7 +198,7 @@ public class Keyboard : Node<KeyboardData>
     public override Vector2i GetSize()
     {
         var font = Constants.NODE_FONT_REAL;
-        var width = 8f * this._data.MaxBufferSize;
+        var width = 9f * this._data.MaxBufferSize;
         return new Vector2i((int)Math.Max(2, (width.CeilToMultipleOf(Constants.GRIDSIZE) / Constants.GRIDSIZE) + 1), 2);
     }
 
@@ -234,9 +234,10 @@ public class Keyboard : Node<KeyboardData>
         {
             var s = b.Count > 0 ? b.Select(c => c.GetLegibleString()).Aggregate((a, b) => a + b) : "";
             var font = Constants.NODE_FONT_REAL;
-            var measure = font.MeasureString(s, 1f);
+            var scale = 0.22f;
+            var measure = font.MeasureString(s, scale);
             var p = pos + new Vector2(5, size.Y / 2f) - new Vector2(0, measure.Y / 2f);
-            //TextRenderer.RenderText(font, s, p, 1f, 0f, this._data.TextColor, fixedAdvance: 8f);
+            TextRenderer.RenderText(font, s, p, scale, 0f, 0.52f, 0.05f, this._data.TextColor);
         });
 
         base.Render(pins, camera);

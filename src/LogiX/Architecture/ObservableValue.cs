@@ -121,7 +121,7 @@ public class ObservableValue : Observable<IEnumerable<(ValueEvent, int)>>
 
         if (!newVal.SequenceEqual(oldVal) || oldError != newError)
         {
-            foreach (var evs in this.NotifyObservers())
+            foreach (var evs in this.NotifyObservers(originator))
             {
                 foreach (var ev in evs)
                 {

@@ -11,14 +11,14 @@ public class MinimalContentLoader : IContentLoader<ContentMeta>
     {
         _loaders.Add(".png", new TextureLoader());
         _loaders.Add(".dll", new AssemblyLoader());
-        _loaders.Add(".font", new FontLoader());
+        _loaders.Add(".fontzip", new FontLoader());
         _loaders.Add(".md", new MarkdownFileLoader());
     }
 
     public IEnumerable<IContentLoadingStage> GetLoadingStages()
     {
-        yield return new CoreLoadingStage(_loaders, false, ".font");
-        yield return new NormalLoadingStage(_loaders, false, ".dll", ".font", ".md");
+        yield return new CoreLoadingStage(_loaders, false, ".fontzip");
+        yield return new NormalLoadingStage(_loaders, false, ".dll", ".fontzip", ".md");
     }
 }
 
@@ -28,12 +28,12 @@ public class MinimalTestsContentLoader : IContentLoader<ContentMeta>
 
     public MinimalTestsContentLoader()
     {
-        _loaders.Add(".font", new FontLoader());
+        _loaders.Add(".fontzip", new FontLoader());
     }
 
     public IEnumerable<IContentLoadingStage> GetLoadingStages()
     {
-        yield return new CoreLoadingStage(_loaders, false, ".font");
-        yield return new NormalLoadingStage(_loaders, false, ".font");
+        yield return new CoreLoadingStage(_loaders, false, ".fontzip");
+        yield return new NormalLoadingStage(_loaders, false, ".fontzip");
     }
 }

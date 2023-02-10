@@ -19,18 +19,18 @@ public abstract class Observable<T>
         this.Observers.Clear();
     }
 
-    public IEnumerable<T> NotifyObservers()
+    public IEnumerable<T> NotifyObservers(Observer<T> origin)
     {
-        return this.Observers.Select(o => o.Update());
+        return this.Observers.Select(o => o.Update(origin));
     }
 
-    public IEnumerable<T> NotifyObservers(params Observer<T>[] skip)
+    public IEnumerable<T> NotifyObservers(Observer<T> origin, params Observer<T>[] skip)
     {
-        return this.NotifyObservers((IEnumerable<Observer<T>>)skip);
+        return this.NotifyObservers(origin, (IEnumerable<Observer<T>>)skip);
     }
 
-    public IEnumerable<T> NotifyObservers(IEnumerable<Observer<T>> skip)
+    public IEnumerable<T> NotifyObservers(Observer<T> origin, IEnumerable<Observer<T>> skip)
     {
-        return this.Observers.Except(skip).ToList().Select(o => o.Update());
+        return this.Observers.Except(skip).ToList().Select(o => o.Update(origin));
     }
 }

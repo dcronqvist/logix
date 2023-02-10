@@ -19,6 +19,8 @@ public abstract class Node : Observer<IEnumerable<(ValueEvent, int)>>
     public int Rotation { get; set; }
     public Guid ID { get; set; }
 
+    public virtual bool DisableSelfEvaluation { get; } = false;
+
     public Node()
     {
         this.ID = Guid.NewGuid();
@@ -101,8 +103,13 @@ public abstract class Node : Observer<IEnumerable<(ValueEvent, int)>>
         this._scheduler = scheduler;
     }
 
-    public override IEnumerable<(ValueEvent, int)> Update()
+    public override IEnumerable<(ValueEvent, int)> Update(Observer<IEnumerable<(ValueEvent, int)>> origin)
     {
+        if (this.DisableSelfEvaluation && origin == this)
+        {
+            yield break;
+        }
+
         var pins = this._scheduler.GetPinCollectionForNode(this);
 
         if (pins is null)

@@ -2,5 +2,5 @@ namespace LogiX.Architecture;
 
 public abstract class Observer<T>
 {
-    public abstract T Update();
+    public abstract T Update(Observer<T> origin);
 }
