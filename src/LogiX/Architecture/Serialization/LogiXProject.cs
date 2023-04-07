@@ -131,6 +131,6 @@ public class LogiXProject
 
     public IList<Circuit> GetCircuitsContainingCircuit(Guid circuitID)
     {
-        return this.Circuits.Where(c => c.Nodes.Any(n => n.NodeTypeID == "logix_builtin.script_type.INTEGRATED" && (n.Data as IntegratedData).CircuitID == circuitID)).ToList();
+        return this.Circuits.Where(c => c.Nodes.Any(n => n.NodeTypeID == "logix_core:script/INTEGRATED" && (n.Data as IntegratedData).CircuitID == circuitID)).ToList();
     }
 }

@@ -108,9 +108,9 @@ public class NodeDescription
         var types = ScriptManager.GetScriptTypes();
         foreach (var t in types)
         {
-            if (t.Type.IsAssignableTo(typeof(Node)))
+            if (t.Content.IsAssignableTo(typeof(Node)))
             {
-                if (t.Type.GetCustomAttribute<NodeInfoAttribute>() is not null)
+                if (t.Content.GetCustomAttribute<NodeInfoAttribute>() is not null)
                 {
                     _nodeTypes.Add(t.Identifier, t);
                 }
@@ -122,7 +122,7 @@ public class NodeDescription
     {
         if (_nodeTypes.TryGetValue(identifier, out var type))
         {
-            return type.Type.GetCustomAttribute<NodeInfoAttribute>();
+            return type.Content.GetCustomAttribute<NodeInfoAttribute>();
         }
         else
         {
@@ -134,7 +134,7 @@ public class NodeDescription
     {
         foreach (var t in _nodeTypes)
         {
-            if (t.Value.Type == type)
+            if (t.Value.Content == type)
             {
                 return t.Key;
             }
@@ -157,11 +157,11 @@ public class NodeDescription
     {
         var type = _nodeTypes[identifier];
 
-        if (Utilities.IsSubclassOfRawGeneric(typeof(Node<>), type.Type))
+        if (Utilities.IsSubclassOfRawGeneric(typeof(Node<>), type.Content))
         {
             // Has data parameter
-            var h = Utilities.RecursivelyCheckBaseclassUntilRawGeneric(typeof(Node<>), type.Type);
-            var x = type.Type.BaseType.GetGenericArguments();
+            var h = Utilities.RecursivelyCheckBaseclassUntilRawGeneric(typeof(Node<>), type.Content);
+            var x = type.Content.BaseType.GetGenericArguments();
             var instanceOfType = Activator.CreateInstance(x.First());
             var instance = x.First().GetMethod("GetDefault").Invoke(instanceOfType, null);
             var component = type.CreateInstance<Node>();
@@ -185,10 +185,10 @@ public class NodeDescription
     {
         var type = _nodeTypes[identifier];
 
-        if (Utilities.IsSubclassOfRawGeneric(typeof(Node<>), type.Type))
+        if (Utilities.IsSubclassOfRawGeneric(typeof(Node<>), type.Content))
         {
             // Has data parameter
-            var x = type.Type.BaseType.GetGenericArguments();
+            var x = type.Content.BaseType.GetGenericArguments();
             var instanceOfType = Activator.CreateInstance(x.First());
             var instance = x.First().GetMethod("GetDefault").Invoke(instanceOfType, null);
             return (INodeDescriptionData)instance;
@@ -211,7 +211,7 @@ public class NodeDescription
 
     public static List<INodeContextExtension> GetContextExtensionsForNodeType(string nodeType)
     {
-        var types = ScriptManager.GetScriptTypes().Where(x => x.Type.IsAssignableTo(typeof(INodeContextExtension)));
+        var types = ScriptManager.GetScriptTypes().Where(x => x.Content.IsAssignableTo(typeof(INodeContextExtension)));
 
         var instances = types.Select(x => x.CreateInstance<INodeContextExtension>()).ToList();
 
@@ -254,10 +254,10 @@ public class NodeDescription
     {
         var type = _nodeTypes[identifier];
 
-        if (Utilities.IsSubclassOfRawGeneric(typeof(Node<>), type.Type))
+        if (Utilities.IsSubclassOfRawGeneric(typeof(Node<>), type.Content))
         {
             // Has data parameter
-            var x = type.Type.BaseType.GetGenericArguments();
+            var x = type.Content.BaseType.GetGenericArguments();
             return x.First();
         }
         else
@@ -271,7 +271,7 @@ public class NodeDescription
         var categories = new Dictionary<string, List<string>>();
         foreach (var t in _nodeTypes)
         {
-            var info = t.Value.Type.GetCustomAttribute<NodeInfoAttribute>();
+            var info = t.Value.Content.GetCustomAttribute<NodeInfoAttribute>();
             if (info is not null)
             {
                 if (info.Hidden)

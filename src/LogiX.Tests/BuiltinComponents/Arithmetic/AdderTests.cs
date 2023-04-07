@@ -52,7 +52,7 @@ public class AdderTests
     [Fact]
     public void TestSimpleAdd()
     {
-        var (result, carryOut) = GetArithmeticResult("logix_builtin.script_type.ADDER", 4, 0b1010, 0b0101, false);
+        var (result, carryOut) = GetArithmeticResult("logix_core:script/ADDER", 4, 0b1010, 0b0101, false);
 
         Assert.Equal(0b1111u, result);
         Assert.False(carryOut);
@@ -61,7 +61,7 @@ public class AdderTests
     [Fact]
     public void TestSimpleAddWithCarry()
     {
-        var (result, carryOut) = GetArithmeticResult("logix_builtin.script_type.ADDER", 4, 0b1010, 0b0101, true);
+        var (result, carryOut) = GetArithmeticResult("logix_core:script/ADDER", 4, 0b1010, 0b0101, true);
 
         Assert.Equal(0b0000u, result);
         Assert.True(carryOut);

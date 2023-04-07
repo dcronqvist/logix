@@ -18,20 +18,4 @@ public class AssemblyContentItem : ContentItem<Assembly>
     {
 
     }
-
-    public ScriptType[] GetScriptTypes()
-    {
-        var types = Content.GetTypes();
-        var scriptTypes = new List<ScriptType>();
-        for (int i = 0; i < types.Length; i++)
-        {
-            var type = types[i];
-            var attr = type.GetCustomAttribute<ScriptTypeAttribute>();
-            if (attr is not null)
-            {
-                //scriptTypes.Add(new ScriptType(this.Source.GetIdentifier() + ".script_type." + attr.Identifier, type));
-            }
-        }
-        return scriptTypes.ToArray();
-    }
 }

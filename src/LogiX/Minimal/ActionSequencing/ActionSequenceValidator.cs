@@ -46,7 +46,7 @@ public class ActionSequenceValidator
             var foundPins = visitor.GetPins();
             var ers = new List<string>();
 
-            var pinsInCircuit = this.Circuit.GetAllComponentsOfType("logix_builtin.script_type.PIN").Select(cd => cd.Data as PinData).Select(pd => (pd.Label, pd.Bits));
+            var pinsInCircuit = this.Circuit.GetAllComponentsOfType("logix_core:script/PIN").Select(cd => cd.Data as PinData).Select(pd => (pd.Label, pd.Bits));
 
             foreach (var foundPin in foundPins)
             {
@@ -58,7 +58,7 @@ public class ActionSequenceValidator
 
             var foundPushButtons = visitor.GetPushButtons();
 
-            var pushButtonsInCircuit = this.Circuit.GetAllComponentsOfType("logix_builtin.script_type.PUSHBUTTON").Select(cd => cd.Data as PushButtonData).Select(pd => (pd.Label));
+            var pushButtonsInCircuit = this.Circuit.GetAllComponentsOfType("logix_core:script/PUSHBUTTON").Select(cd => cd.Data as PushButtonData).Select(pd => (pd.Label));
 
             foreach (var foundPushButton in foundPushButtons)
             {
@@ -69,7 +69,7 @@ public class ActionSequenceValidator
             }
 
             var foundRams = visitor.GetRams();
-            var ramsInCircuit = this.Circuit.GetAllComponentsOfType("logix_builtin.script_type.RAM").Select(cd => cd.Data as RamData).Select(pd => pd.Label);
+            var ramsInCircuit = this.Circuit.GetAllComponentsOfType("logix_core:script/RAM").Select(cd => cd.Data as RamData).Select(pd => pd.Label);
 
             foreach (var foundRam in foundRams)
             {
@@ -113,7 +113,7 @@ public class ActionSequenceValidator
             // }
 
             var foundLeds = visitor.GetLeds();
-            var ledsInCircuit = this.Circuit.GetAllComponentsOfType("logix_builtin.script_type.LEDMATRIX").Select(cd => cd.Data as LEDMatrixData).Select(pd => pd.Label);
+            var ledsInCircuit = this.Circuit.GetAllComponentsOfType("logix_core:script/LEDMATRIX").Select(cd => cd.Data as LEDMatrixData).Select(pd => pd.Label);
 
             foreach (var foundLed in foundLeds)
             {

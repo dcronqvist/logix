@@ -77,8 +77,8 @@ public static class Utilities
 
     public static Circuit AddPin(this Circuit circuit, Vector2i position, int rotation, int bits, out Guid pinID, bool isInput = true, params LogicValue[] values)
     {
-        var pin = NodeDescription.CreateDefaultNodeDescription("logix_builtin.script_type.PIN");
-        var pinData = (NodeDescription.CreateDefaultNodeDescriptionData("logix_builtin.script_type.PIN") as PinData)!;
+        var pin = NodeDescription.CreateDefaultNodeDescription("logix_core:script/PIN");
+        var pinData = (NodeDescription.CreateDefaultNodeDescriptionData("logix_core:script/PIN") as PinData)!;
 
         if (bits != values.Length)
         {

@@ -331,6 +331,7 @@ public class Integrated : Node<IntegratedData>
             1 => new Vector2(0, ox),
             2 => new Vector2(oy, 0),
             3 => new Vector2(0, ox),
+            _ => new Vector2(0, 0)
         };
 
         TextRenderer.RenderText(font, name, textPos + off, scale, rotation, 0.55f, 0.03f, ColorF.Black);

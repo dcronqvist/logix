@@ -11,20 +11,14 @@ public static class ScriptManager
     {
         _scriptTypes.Clear();
 
-        var assemblies = manager.GetContentItems().Where(x => x is AssemblyContentItem).Cast<AssemblyContentItem>().ToList();
-
-        foreach (var assembly in assemblies)
-        {
-            var types = assembly.GetScriptTypes();
-            _scriptTypes.AddRange(types);
-        }
-
-        _scriptTypes.AddRange(GetScriptTypesInAssembly(Assembly.GetExecutingAssembly()));
+        var scriptTypes = manager.GetContentItems().Where(x => x is ScriptType).Cast<ScriptType>().ToList();
+        _scriptTypes.AddRange(scriptTypes);
+        _scriptTypes.AddRange(GetCoreScriptTypes());
     }
 
-    private static ScriptType[] GetScriptTypesInAssembly(Assembly assembly)
+    private static ScriptType[] GetCoreScriptTypes()
     {
-        var types = assembly.GetTypes();
+        var types = Assembly.GetExecutingAssembly().GetTypes();
         var scriptTypes = new List<ScriptType>();
         for (int i = 0; i < types.Length; i++)
         {
@@ -32,7 +26,9 @@ public static class ScriptManager
             var attr = type.GetCustomAttribute<ScriptTypeAttribute>();
             if (attr is not null)
             {
-                scriptTypes.Add(new ScriptType("logix_builtin.script_type." + attr.Identifier, type));
+                var st = new ScriptType(null, type);
+                st.SetIdentifier($"logix_core:script/{attr.Identifier}");
+                scriptTypes.Add(st);
             }
         }
         return scriptTypes.ToArray();

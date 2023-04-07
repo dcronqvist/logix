@@ -41,6 +41,8 @@ public class ContentLoader : IContentLoader<ContentMeta>
 
         yield return new CoreLoadingStage(_loaders, true, ".png", ".fontzip");
         yield return new NormalLoadingStage(_loaders, true, ".png", ".dll", ".fontzip", ".md");
+
+        yield return new ScriptTypeStage(this);
     }
 
     public IEnumerable<IContentSource> GetSourceLoadOrder(IEnumerable<IContentSource> sources)

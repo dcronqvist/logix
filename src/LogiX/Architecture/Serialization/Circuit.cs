@@ -96,7 +96,7 @@ public class Circuit
 
     public NodeDescription[] GetAllPins()
     {
-        return this.Nodes.Where(c => c.NodeTypeID == "logix_builtin.script_type.PIN" && (c.Data as PinData).IsExternal).ToArray();
+        return this.Nodes.Where(c => c.NodeTypeID == "logix_core:script/PIN" && (c.Data as PinData).IsExternal).ToArray();
     }
 
     public NodeDescription[] GetAllComponentsOfType(string typeID)

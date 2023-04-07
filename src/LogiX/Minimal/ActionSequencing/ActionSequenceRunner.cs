@@ -37,7 +37,7 @@ public class ActionSequenceRunner : ActionSequenceBaseVisitor<object>
     private Dictionary<string, RootCommand> _extensions = new();
     private void InitExtensions()
     {
-        var extensions = ScriptManager.GetScriptTypes().Where(x => x.Type.IsAssignableTo(typeof(IActionSequenceExtension))).Select(x => (x.Identifier, (IActionSequenceExtension)Activator.CreateInstance(x.Type))).ToList();
+        var extensions = ScriptManager.GetScriptTypes().Where(x => x.Content.IsAssignableTo(typeof(IActionSequenceExtension))).Select(x => (x.Identifier, (IActionSequenceExtension)Activator.CreateInstance(x.Content))).ToList();
 
         foreach (var (id, ins) in extensions)
         {
