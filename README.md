@@ -1,4 +1,4 @@
-# ⚡ logix
+# ⚡ logix 
 
 ![GitHub Workflow Status](https://img.shields.io/github/actions/workflow/status/dcronqvist/logix/tests.yml?branch=master&label=tests)
 
