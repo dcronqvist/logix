@@ -7,7 +7,7 @@ namespace LogiX.Content;
 
 public class VertexShader : Shader
 {
-    public VertexShader(string identifier, IContentSource source, string content) : base(identifier, source, content)
+    public VertexShader(IContentSource source, string content) : base(source, content)
     {
     }
 

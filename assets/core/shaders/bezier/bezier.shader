@@ -1,4 +1,4 @@
 {
-    "vertexShader": "core.vertex_shader.bezier",
-    "fragmentShader": "core.fragment_shader.bezier"
+    "vertexShader": "logix_core:shaders/bezier/bezier.vs",
+    "fragmentShader": "logix_core:shaders/bezier/bezier.fs"
 }

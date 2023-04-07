@@ -160,7 +160,7 @@ public class StateDraggingWire : State<Editor, int>
         //     }
         // });
 
-        var pShader = LogiXWindow.ContentManager.GetContentItem<ShaderProgram>("core.shader_program.primitive");
+        var pShader = LogiXWindow.ContentManager.GetContentItem<ShaderProgram>("logix_core:shaders/primitive/primitive.shader");
         PrimitiveRenderer.RenderLine(startWorld, cornerWorld, Constants.WIRE_WIDTH, color);
         PrimitiveRenderer.RenderLine(cornerWorld, endWorld, Constants.WIRE_WIDTH, color);
 

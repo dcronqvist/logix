@@ -5,7 +5,7 @@ namespace LogiX.Content;
 
 public abstract class GLContentItem : ContentItem
 {
-    protected GLContentItem(string identifier, IContentSource source, object content) : base(identifier, source, content)
+    protected GLContentItem(IContentSource source, object content) : base(source, content)
     {
     }
 
@@ -33,7 +33,7 @@ public abstract class GLContentItem : ContentItem
 
 public abstract class GLContentItem<T> : GLContentItem
 {
-    public GLContentItem(string identifier, IContentSource source, T content) : base(identifier, source, content)
+    public GLContentItem(IContentSource source, T content) : base(source, content)
     {
     }
 

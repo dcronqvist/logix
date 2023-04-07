@@ -15,9 +15,10 @@ public class PluginContainer
 
     public IEnumerable<IPluginAction> GetActions()
     {
-        var identifier = this.ContentSource.GetIdentifier();
-        var actionTypes = ScriptManager.GetScriptTypes().Where(t => t.Type.IsAssignableTo(typeof(IPluginAction))).ToList();
-        return actionTypes.Where(t => t.Identifier.Split('.').First() == identifier).Select(t => t.CreateInstance<IPluginAction>());
+        //var identifier = this.ContentSource.GetIdentifier();
+        //var actionTypes = ScriptManager.GetScriptTypes().Where(t => t.Type.IsAssignableTo(typeof(IPluginAction))).ToList();
+        //return actionTypes.Where(t => t.Identifier.Split('.').First() == identifier).Select(t => t.CreateInstance<IPluginAction>());
+        yield break;
     }
 
     public ContentMeta GetMeta()

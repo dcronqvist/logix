@@ -1,4 +1,4 @@
 {
-    "vertexShader": "core.vertex_shader.fb_default",
-    "fragmentShader": "core.fragment_shader.fb_default"
+    "vertexShader": "logix_core:shaders/framebuffer/default/fb_default.vs",
+    "fragmentShader": "logix_core:shaders/framebuffer/default/fb_default.fs"
 }

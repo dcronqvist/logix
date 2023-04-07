@@ -67,11 +67,11 @@ public class ShaderProgram : GLContentItem<ShaderProgramDescription>
     public uint ProgramID { get; private set; }
     private static Stack<uint> _programStack = new Stack<uint>();
 
-    public ShaderProgram(string identifier, IContentSource source, ShaderProgramDescription content) : base(identifier, source, content)
+    public ShaderProgram(IContentSource source, ShaderProgramDescription content) : base(source, content)
     {
     }
 
-    private ShaderProgram(VertexShader vs, FragmentShader fs) : base("", null, new ShaderProgramDescription())
+    private ShaderProgram(VertexShader vs, FragmentShader fs) : base(null, new ShaderProgramDescription())
     {
         this.InitGL(vs, fs);
     }

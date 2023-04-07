@@ -1,3 +1,4 @@
+using System.Text.Json;
 using Symphony;
 
 namespace LogiX.Content;
@@ -17,6 +18,22 @@ public class ContentLoader : IContentLoader<ContentMeta>
         _loaders.Add(".md", new MarkdownFileLoader());
     }
 
+    public string GetIdentifierForSource(IContentSource source)
+    {
+        using var structure = source.GetStructure();
+
+        using (var stream = structure.GetEntryStream("meta.json", out var entry))
+        {
+            var options = new JsonSerializerOptions()
+            {
+                PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+            };
+            var metadata = JsonSerializer.Deserialize<ContentMeta>(stream, options);
+
+            return metadata.Identifier;
+        }
+    }
+
     public IEnumerable<IContentLoadingStage> GetLoadingStages()
     {
         yield return new ShaderLoadingStage(_loaders, true, ".fs", ".vs");
@@ -24,5 +41,10 @@ public class ContentLoader : IContentLoader<ContentMeta>
 
         yield return new CoreLoadingStage(_loaders, true, ".png", ".fontzip");
         yield return new NormalLoadingStage(_loaders, true, ".png", ".dll", ".fontzip", ".md");
+    }
+
+    public IEnumerable<IContentSource> GetSourceLoadOrder(IEnumerable<IContentSource> sources)
+    {
+        return sources;
     }
 }

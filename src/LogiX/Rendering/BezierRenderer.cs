@@ -48,7 +48,7 @@ public static class BezierRenderer
             glBufferData(GL_ARRAY_BUFFER, sizeof(float) * vertices.Length, v, GL_STREAM_DRAW);
         }
 
-        var shader = Utilities.ContentManager.GetContentItem<ShaderProgram>("core.shader_program.bezier");
+        var shader = Utilities.ContentManager.GetContentItem<ShaderProgram>("logix_core:shaders/bezier/bezier.shader");
 
         shader.Use(() =>
         {

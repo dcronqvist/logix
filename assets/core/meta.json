@@ -1,5 +1,6 @@
 {
     "name": "LogiX Core",
+    "identifier": "logix_core",
     "version": "1.0",
     "author": "dcronqvist",
     "description": "The core plugin for LogiX containing all built-in components and assets."

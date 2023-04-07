@@ -5,7 +5,7 @@ namespace LogiX.Content.Scripting;
 
 public class AssemblyContentItem : ContentItem<Assembly>
 {
-    public AssemblyContentItem(string identifier, IContentSource source, Assembly content) : base(identifier, source, content)
+    public AssemblyContentItem(IContentSource source, Assembly content) : base(source, content)
     {
     }
 
@@ -29,7 +29,7 @@ public class AssemblyContentItem : ContentItem<Assembly>
             var attr = type.GetCustomAttribute<ScriptTypeAttribute>();
             if (attr is not null)
             {
-                scriptTypes.Add(new ScriptType(this.Source.GetIdentifier() + ".script_type." + attr.Identifier, type));
+                //scriptTypes.Add(new ScriptType(this.Source.GetIdentifier() + ".script_type." + attr.Identifier, type));
             }
         }
         return scriptTypes.ToArray();

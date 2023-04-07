@@ -22,8 +22,8 @@ public class ShaderProgramLoader : IContentItemLoader
                 };
                 var programDescription = JsonSerializer.Deserialize<ShaderProgramDescription>(json, options);
 
-                var sp = new ShaderProgram($"{source.GetIdentifier()}.shader_program.{fileName}", source, programDescription);
-                yield return await LoadEntryResult.CreateSuccessAsync(sp);
+                var sp = new ShaderProgram(source, programDescription);
+                yield return await LoadEntryResult.CreateSuccessAsync(pathToItem, sp);
             }
         }
     }

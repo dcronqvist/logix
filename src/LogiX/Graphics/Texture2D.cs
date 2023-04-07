@@ -12,12 +12,12 @@ public class Texture2D : GLContentItem<ImageResult>
     public int Width => this.Content.Width;
     public int Height => this.Content.Height;
 
-    public Texture2D(string identifier, IContentSource source, ImageResult content) : base(identifier, source, content)
+    public Texture2D(IContentSource source, ImageResult content) : base(source, content)
     {
 
     }
 
-    public Texture2D(int width, int height, byte[] data) : base("", null, new ImageResult() { Width = width, Height = height, Data = data, Comp = ColorComponents.RedGreenBlueAlpha, SourceComp = ColorComponents.RedGreenBlueAlpha })
+    public Texture2D(int width, int height, byte[] data) : base(null, new ImageResult() { Width = width, Height = height, Data = data, Comp = ColorComponents.RedGreenBlueAlpha, SourceComp = ColorComponents.RedGreenBlueAlpha })
     {
         DisplayManager.LockedGLContext(() =>
         {

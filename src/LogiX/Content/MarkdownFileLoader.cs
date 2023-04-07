@@ -12,7 +12,7 @@ public class MarkdownFileLoader : IContentItemLoader
             using (StreamReader sr = new StreamReader(stream))
             {
                 var text = await sr.ReadToEndAsync();
-                yield return await LoadEntryResult.CreateSuccessAsync(new MarkdownFile($"{source.GetIdentifier()}.markdown.{fileName}", source, text));
+                yield return await LoadEntryResult.CreateSuccessAsync(pathToItem, new MarkdownFile(source, text));
             }
         }
     }

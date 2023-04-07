@@ -25,7 +25,7 @@ public class AssemblyLoader : IContentItemLoader
                 var defs = assembly.DefinedTypes;
 
                 var fileName = Path.GetFileNameWithoutExtension(pathToItem);
-                result = await LoadEntryResult.CreateSuccessAsync(new AssemblyContentItem($"{source.GetIdentifier()}.assembly.{fileName}", source, assembly));
+                result = await LoadEntryResult.CreateSuccessAsync(pathToItem, new AssemblyContentItem(source, assembly));
             }
         }
         catch (System.Exception ex)

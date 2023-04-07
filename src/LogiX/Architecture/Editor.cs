@@ -811,7 +811,7 @@ Under *projects*, you can see your circuits, and right clicking them in the side
 
         int pixelsInBetweenLines = Constants.GRIDSIZE;
 
-        var pShader = LogiXWindow.ContentManager.GetContentItem<ShaderProgram>("core.shader_program.primitive");
+        var pShader = LogiXWindow.ContentManager.GetContentItem<ShaderProgram>("logix_core:shaders/primitive/primitive.shader");
         var color = ColorF.Darken(ColorF.LightGray, 0.63f);
 
         // Draw vertical lines
@@ -843,9 +843,9 @@ Under *projects*, you can see your circuits, and right clicking them in the side
     public void Render()
     {
         this.ImGuiController.Update(GameTime.DeltaTime);
-        var fShader = LogiXWindow.ContentManager.GetContentItem<ShaderProgram>("core.shader_program.fb_default");
-        var pShader = LogiXWindow.ContentManager.GetContentItem<ShaderProgram>("core.shader_program.primitive");
-        var tShader = LogiXWindow.ContentManager.GetContentItem<ShaderProgram>("core.shader_program.text");
+        var fShader = LogiXWindow.ContentManager.GetContentItem<ShaderProgram>("logix_core:shaders/framebuffer/default/fb_default.shader");
+        var pShader = LogiXWindow.ContentManager.GetContentItem<ShaderProgram>("logix_core:shaders/primitive/primitive.shader");
+        var tShader = LogiXWindow.ContentManager.GetContentItem<ShaderProgram>("logix_core:shaders/text/text.shader");
         this._submittedInstances = 0;
 
         if (this.CurrentlyOpenCircuit is not null)
@@ -1006,7 +1006,7 @@ Under *projects*, you can see your circuits, and right clicking them in the side
         var open = true;
         if (ImGui.Begin("About LogiX", ref open))
         {
-            var about = LogiXWindow.ContentManager.GetContentItem<MarkdownFile>("core.markdown.about");
+            var about = LogiXWindow.ContentManager.GetContentItem<MarkdownFile>("logix_core:/docs/about.md");
             Utilities.RenderMarkdown(about.Text, (url) =>
             {
                 Utilities.OpenURL(url);

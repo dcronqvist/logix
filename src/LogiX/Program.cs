@@ -4,6 +4,7 @@ using Symphony.Common;
 using System.CommandLine;
 using LogiX.Architecture.Serialization;
 using LogiX.Minimal;
+using System.Reflection;
 
 namespace LogiX;
 

@@ -3078,81 +3078,81 @@ namespace LogiX.OpenGL
         /// </summary>
         /// <param name="type">Specifies the data type of each color components.</param>
         /// <param name="color">The packed color value.</param>
-        public static void glColorP3ui(int type, uint color) => _glColorP3ui(type, color);
+        // public static void glColorP3ui(int type, uint color) => _glColorP3ui(type, color);
 
-        /// <summary>
-        ///     Set the current color as a packed value.
-        /// </summary>
-        /// <param name="type">Specifies the data type of each color components.</param>
-        /// <param name="color">The packed color value.</param>
-        public static void glColorP3uiv(int type, /*const*/ uint* color) => _glColorP3uiv(type, color);
+        // /// <summary>
+        // ///     Set the current color as a packed value.
+        // /// </summary>
+        // /// <param name="type">Specifies the data type of each color components.</param>
+        // /// <param name="color">The packed color value.</param>
+        // public static void glColorP3uiv(int type, /*const*/ uint* color) => _glColorP3uiv(type, color);
 
-        /// <summary>
-        ///     Set the current color as a packed value.
-        /// </summary>
-        /// <param name="type">Specifies the data type of each color components.</param>
-        /// <param name="color">The packed color value.</param>
-        public static void glColorP4ui(int type, uint color) => _glColorP4ui(type, color);
+        // /// <summary>
+        // ///     Set the current color as a packed value.
+        // /// </summary>
+        // /// <param name="type">Specifies the data type of each color components.</param>
+        // /// <param name="color">The packed color value.</param>
+        // public static void glColorP4ui(int type, uint color) => _glColorP4ui(type, color);
 
-        /// <summary>
-        ///     Set the current color as a packed value.
-        /// </summary>
-        /// <param name="type">Specifies the data type of each color components.</param>
-        /// <param name="color">The packed color value.</param>
-        public static void glColorP4uiv(int type, /*const*/ uint* color) => _glColorP4uiv(type, color);
+        // /// <summary>
+        // ///     Set the current color as a packed value.
+        // /// </summary>
+        // /// <param name="type">Specifies the data type of each color components.</param>
+        // /// <param name="color">The packed color value.</param>
+        // public static void glColorP4uiv(int type, /*const*/ uint* color) => _glColorP4uiv(type, color);
 
-        /// <summary>
-        ///     Set the current color as a packed value.
-        /// </summary>
-        /// <param name="type">Specifies the data type of each color components.</param>
-        /// <param name="color">The packed color value.</param>
-        public static void glColorP3uiv(int type, uint[] color)
-        {
-            fixed (uint* c = &color[0])
-            {
-                _glColorP3uiv(type, c);
-            }
-        }
+        // /// <summary>
+        // ///     Set the current color as a packed value.
+        // /// </summary>
+        // /// <param name="type">Specifies the data type of each color components.</param>
+        // /// <param name="color">The packed color value.</param>
+        // public static void glColorP3uiv(int type, uint[] color)
+        // {
+        //     fixed (uint* c = &color[0])
+        //     {
+        //         _glColorP3uiv(type, c);
+        //     }
+        // }
 
-        /// <summary>
-        ///     Set the current color as a packed value.
-        /// </summary>
-        /// <param name="type">Specifies the data type of each color components.</param>
-        /// <param name="color">The packed color value.</param>
-        public static void glColorP4uiv(int type, uint[] color)
-        {
-            fixed (uint* c = &color[0])
-            {
-                _glColorP4uiv(type, c);
-            }
-        }
+        // /// <summary>
+        // ///     Set the current color as a packed value.
+        // /// </summary>
+        // /// <param name="type">Specifies the data type of each color components.</param>
+        // /// <param name="color">The packed color value.</param>
+        // public static void glColorP4uiv(int type, uint[] color)
+        // {
+        //     fixed (uint* c = &color[0])
+        //     {
+        //         _glColorP4uiv(type, c);
+        //     }
+        // }
 
-        /// <summary>
-        ///     Set the current color as a packed value.
-        /// </summary>
-        /// <param name="type">Specifies the data type of each color components.</param>
-        /// <param name="color">The packed color value.</param>
-        public static void glSecondaryColorP3ui(int type, uint color) => _glSecondaryColorP3ui(type, color);
+        // /// <summary>
+        // ///     Set the current color as a packed value.
+        // /// </summary>
+        // /// <param name="type">Specifies the data type of each color components.</param>
+        // /// <param name="color">The packed color value.</param>
+        // public static void glSecondaryColorP3ui(int type, uint color) => _glSecondaryColorP3ui(type, color);
 
-        /// <summary>
-        ///     Set the current color as a packed value.
-        /// </summary>
-        /// <param name="type">Specifies the data type of each color components.</param>
-        /// <param name="color">The packed color value.</param>
-        public static void glSecondaryColorP3uiv(int type, uint[] color)
-        {
-            fixed (uint* c = &color[0])
-            {
-                _glSecondaryColorP3uiv(type, c);
-            }
-        }
+        // /// <summary>
+        // ///     Set the current color as a packed value.
+        // /// </summary>
+        // /// <param name="type">Specifies the data type of each color components.</param>
+        // /// <param name="color">The packed color value.</param>
+        // public static void glSecondaryColorP3uiv(int type, uint[] color)
+        // {
+        //     fixed (uint* c = &color[0])
+        //     {
+        //         _glSecondaryColorP3uiv(type, c);
+        //     }
+        // }
 
-        /// <summary>
-        ///     Set the current color as a packed value.
-        /// </summary>
-        /// <param name="type">Specifies the data type of each color components.</param>
-        /// <param name="color">The packed color value.</param>
-        public static void glSecondaryColorP3uiv(int type, /*const*/ uint* color) => _glSecondaryColorP3uiv(type, color);
+        // /// <summary>
+        // ///     Set the current color as a packed value.
+        // /// </summary>
+        // /// <param name="type">Specifies the data type of each color components.</param>
+        // /// <param name="color">The packed color value.</param>
+        // public static void glSecondaryColorP3uiv(int type, /*const*/ uint* color) => _glSecondaryColorP3uiv(type, color);
 
         /// <summary>
         ///     Updates a subset of a buffer object's data store.
@@ -3208,27 +3208,27 @@ namespace LogiX.OpenGL
         /// </summary>
         /// <param name="type">The type.</param>
         /// <param name="coords">The coords.</param>
-        public static void glNormalP3ui(int type, uint coords) => _glNormalP3ui(type, coords);
+        // public static void glNormalP3ui(int type, uint coords) => _glNormalP3ui(type, coords);
 
-        /// <summary>
-        ///     Set the current normal vector.
-        /// </summary>
-        /// <param name="type">The type.</param>
-        /// <param name="coords">The coords.</param>
-        public static void glNormalP3uiv(int type, /*const*/ uint* coords) => _glNormalP3uiv(type, coords);
+        // /// <summary>
+        // ///     Set the current normal vector.
+        // /// </summary>
+        // /// <param name="type">The type.</param>
+        // /// <param name="coords">The coords.</param>
+        // public static void glNormalP3uiv(int type, /*const*/ uint* coords) => _glNormalP3uiv(type, coords);
 
-        /// <summary>
-        ///     Set the current normal vector.
-        /// </summary>
-        /// <param name="type">The type.</param>
-        /// <param name="coords">The coords.</param>
-        public static void glNormalP3uiv(int type, uint[] coords)
-        {
-            fixed (uint* c = &coords[0])
-            {
-                _glNormalP3uiv(type, c);
-            }
-        }
+        // /// <summary>
+        // ///     Set the current normal vector.
+        // /// </summary>
+        // /// <param name="type">The type.</param>
+        // /// <param name="coords">The coords.</param>
+        // public static void glNormalP3uiv(int type, uint[] coords)
+        // {
+        //     fixed (uint* c = &coords[0])
+        //     {
+        //         _glNormalP3uiv(type, c);
+        //     }
+        // }
 
         /// <summary>
         /// Bind a user-defined varying out variable to a fragment shader color number.
@@ -4106,304 +4106,304 @@ namespace LogiX.OpenGL
         /// </param>
         /// <param name="type">The data type.</param>
         /// <param name="coords">The value of the coordinates to set.</param>
-        public static void glMultiTexCoordP1ui(int texture, int type, uint coords) => _glMultiTexCoordP1ui(texture, type, coords);
+        // public static void glMultiTexCoordP1ui(int texture, int type, uint coords) => _glMultiTexCoordP1ui(texture, type, coords);
 
-        /// <summary>
-        ///     Set the current texture coordinates.
-        /// </summary>
-        /// <param name="texture">
-        ///     Specifies the texture unit whose coordinates should be modified.
-        ///     <para>
-        ///         The number of texture units is implementation dependent, but must be at least two. Symbolic constant must be
-        ///         one of GL_TEXTUREi, where i ranges from 0 to GL_MAX_TEXTURE_COORDS - 1, which is an implementation-dependent
-        ///         value.
-        ///     </para>
-        /// </param>
-        /// <param name="type">The data type.</param>
-        /// <param name="coords">The value of the coordinates to set.</param>
-        public static void glMultiTexCoordP2ui(int texture, int type, uint coords) => _glMultiTexCoordP2ui(texture, type, coords);
+        // /// <summary>
+        // ///     Set the current texture coordinates.
+        // /// </summary>
+        // /// <param name="texture">
+        // ///     Specifies the texture unit whose coordinates should be modified.
+        // ///     <para>
+        // ///         The number of texture units is implementation dependent, but must be at least two. Symbolic constant must be
+        // ///         one of GL_TEXTUREi, where i ranges from 0 to GL_MAX_TEXTURE_COORDS - 1, which is an implementation-dependent
+        // ///         value.
+        // ///     </para>
+        // /// </param>
+        // /// <param name="type">The data type.</param>
+        // /// <param name="coords">The value of the coordinates to set.</param>
+        // public static void glMultiTexCoordP2ui(int texture, int type, uint coords) => _glMultiTexCoordP2ui(texture, type, coords);
 
-        /// <summary>
-        ///     Set the current texture coordinates.
-        /// </summary>
-        /// <param name="texture">
-        ///     Specifies the texture unit whose coordinates should be modified.
-        ///     <para>
-        ///         The number of texture units is implementation dependent, but must be at least two. Symbolic constant must be
-        ///         one of GL_TEXTUREi, where i ranges from 0 to GL_MAX_TEXTURE_COORDS - 1, which is an implementation-dependent
-        ///         value.
-        ///     </para>
-        /// </param>
-        /// <param name="type">The data type.</param>
-        /// <param name="coords">The value of the coordinates to set.</param>
-        public static void glMultiTexCoordP3ui(int texture, int type, uint coords) => _glMultiTexCoordP3ui(texture, type, coords);
+        // /// <summary>
+        // ///     Set the current texture coordinates.
+        // /// </summary>
+        // /// <param name="texture">
+        // ///     Specifies the texture unit whose coordinates should be modified.
+        // ///     <para>
+        // ///         The number of texture units is implementation dependent, but must be at least two. Symbolic constant must be
+        // ///         one of GL_TEXTUREi, where i ranges from 0 to GL_MAX_TEXTURE_COORDS - 1, which is an implementation-dependent
+        // ///         value.
+        // ///     </para>
+        // /// </param>
+        // /// <param name="type">The data type.</param>
+        // /// <param name="coords">The value of the coordinates to set.</param>
+        // public static void glMultiTexCoordP3ui(int texture, int type, uint coords) => _glMultiTexCoordP3ui(texture, type, coords);
 
-        /// <summary>
-        ///     Set the current texture coordinates.
-        /// </summary>
-        /// <param name="texture">
-        ///     Specifies the texture unit whose coordinates should be modified.
-        ///     <para>
-        ///         The number of texture units is implementation dependent, but must be at least two. Symbolic constant must be
-        ///         one of GL_TEXTUREi, where i ranges from 0 to GL_MAX_TEXTURE_COORDS - 1, which is an implementation-dependent
-        ///         value.
-        ///     </para>
-        /// </param>
-        /// <param name="type">The data type.</param>
-        /// <param name="coords">The value of the coordinates to set.</param>
-        public static void glMultiTexCoordP4ui(int texture, int type, uint coords) => _glMultiTexCoordP4ui(texture, type, coords);
+        // /// <summary>
+        // ///     Set the current texture coordinates.
+        // /// </summary>
+        // /// <param name="texture">
+        // ///     Specifies the texture unit whose coordinates should be modified.
+        // ///     <para>
+        // ///         The number of texture units is implementation dependent, but must be at least two. Symbolic constant must be
+        // ///         one of GL_TEXTUREi, where i ranges from 0 to GL_MAX_TEXTURE_COORDS - 1, which is an implementation-dependent
+        // ///         value.
+        // ///     </para>
+        // /// </param>
+        // /// <param name="type">The data type.</param>
+        // /// <param name="coords">The value of the coordinates to set.</param>
+        // public static void glMultiTexCoordP4ui(int texture, int type, uint coords) => _glMultiTexCoordP4ui(texture, type, coords);
 
-        /// <summary>
-        ///     Set the current texture coordinates.
-        /// </summary>
-        /// <param name="texture">
-        ///     Specifies the texture unit whose coordinates should be modified.
-        ///     <para>
-        ///         The number of texture units is implementation dependent, but must be at least two. Symbolic constant must be
-        ///         one of GL_TEXTUREi, where i ranges from 0 to GL_MAX_TEXTURE_COORDS - 1, which is an implementation-dependent
-        ///         value.
-        ///     </para>
-        /// </param>
-        /// <param name="type">The data type.</param>
-        /// <param name="coords">The value of the coordinates to set.</param>
-        public static void glMultiTexCoordP1uiv(int texture, int type, /*const*/ uint* coords) => _glMultiTexCoordP1uiv(texture, type, coords);
+        // /// <summary>
+        // ///     Set the current texture coordinates.
+        // /// </summary>
+        // /// <param name="texture">
+        // ///     Specifies the texture unit whose coordinates should be modified.
+        // ///     <para>
+        // ///         The number of texture units is implementation dependent, but must be at least two. Symbolic constant must be
+        // ///         one of GL_TEXTUREi, where i ranges from 0 to GL_MAX_TEXTURE_COORDS - 1, which is an implementation-dependent
+        // ///         value.
+        // ///     </para>
+        // /// </param>
+        // /// <param name="type">The data type.</param>
+        // /// <param name="coords">The value of the coordinates to set.</param>
+        // public static void glMultiTexCoordP1uiv(int texture, int type, /*const*/ uint* coords) => _glMultiTexCoordP1uiv(texture, type, coords);
 
-        /// <summary>
-        ///     Set the current texture coordinates.
-        /// </summary>
-        /// <param name="texture">
-        ///     Specifies the texture unit whose coordinates should be modified.
-        ///     <para>
-        ///         The number of texture units is implementation dependent, but must be at least two. Symbolic constant must be
-        ///         one of GL_TEXTUREi, where i ranges from 0 to GL_MAX_TEXTURE_COORDS - 1, which is an implementation-dependent
-        ///         value.
-        ///     </para>
-        /// </param>
-        /// <param name="type">The data type.</param>
-        /// <param name="coords">The value of the coordinates to set.</param>
-        public static void glMultiTexCoordP2uiv(int texture, int type, /*const*/ uint* coords) => _glMultiTexCoordP2uiv(texture, type, coords);
+        // /// <summary>
+        // ///     Set the current texture coordinates.
+        // /// </summary>
+        // /// <param name="texture">
+        // ///     Specifies the texture unit whose coordinates should be modified.
+        // ///     <para>
+        // ///         The number of texture units is implementation dependent, but must be at least two. Symbolic constant must be
+        // ///         one of GL_TEXTUREi, where i ranges from 0 to GL_MAX_TEXTURE_COORDS - 1, which is an implementation-dependent
+        // ///         value.
+        // ///     </para>
+        // /// </param>
+        // /// <param name="type">The data type.</param>
+        // /// <param name="coords">The value of the coordinates to set.</param>
+        // public static void glMultiTexCoordP2uiv(int texture, int type, /*const*/ uint* coords) => _glMultiTexCoordP2uiv(texture, type, coords);
 
-        /// <summary>
-        ///     Set the current texture coordinates.
-        /// </summary>
-        /// <param name="texture">
-        ///     Specifies the texture unit whose coordinates should be modified.
-        ///     <para>
-        ///         The number of texture units is implementation dependent, but must be at least two. Symbolic constant must be
-        ///         one of GL_TEXTUREi, where i ranges from 0 to GL_MAX_TEXTURE_COORDS - 1, which is an implementation-dependent
-        ///         value.
-        ///     </para>
-        /// </param>
-        /// <param name="type">The data type.</param>
-        /// <param name="coords">The value of the coordinates to set.</param>
-        public static void glMultiTexCoordP3uiv(int texture, int type, /*const*/ uint* coords) => _glMultiTexCoordP3uiv(texture, type, coords);
+        // /// <summary>
+        // ///     Set the current texture coordinates.
+        // /// </summary>
+        // /// <param name="texture">
+        // ///     Specifies the texture unit whose coordinates should be modified.
+        // ///     <para>
+        // ///         The number of texture units is implementation dependent, but must be at least two. Symbolic constant must be
+        // ///         one of GL_TEXTUREi, where i ranges from 0 to GL_MAX_TEXTURE_COORDS - 1, which is an implementation-dependent
+        // ///         value.
+        // ///     </para>
+        // /// </param>
+        // /// <param name="type">The data type.</param>
+        // /// <param name="coords">The value of the coordinates to set.</param>
+        // public static void glMultiTexCoordP3uiv(int texture, int type, /*const*/ uint* coords) => _glMultiTexCoordP3uiv(texture, type, coords);
 
-        /// <summary>
-        ///     Set the current texture coordinates.
-        /// </summary>
-        /// <param name="texture">
-        ///     Specifies the texture unit whose coordinates should be modified.
-        ///     <para>
-        ///         The number of texture units is implementation dependent, but must be at least two. Symbolic constant must be
-        ///         one of GL_TEXTUREi, where i ranges from 0 to GL_MAX_TEXTURE_COORDS - 1, which is an implementation-dependent
-        ///         value.
-        ///     </para>
-        /// </param>
-        /// <param name="type">The data type.</param>
-        /// <param name="coords">The value of the coordinates to set.</param>
-        public static void glMultiTexCoordP4uiv(int texture, int type, /*const*/ uint* coords) => _glMultiTexCoordP4uiv(texture, type, coords);
+        // /// <summary>
+        // ///     Set the current texture coordinates.
+        // /// </summary>
+        // /// <param name="texture">
+        // ///     Specifies the texture unit whose coordinates should be modified.
+        // ///     <para>
+        // ///         The number of texture units is implementation dependent, but must be at least two. Symbolic constant must be
+        // ///         one of GL_TEXTUREi, where i ranges from 0 to GL_MAX_TEXTURE_COORDS - 1, which is an implementation-dependent
+        // ///         value.
+        // ///     </para>
+        // /// </param>
+        // /// <param name="type">The data type.</param>
+        // /// <param name="coords">The value of the coordinates to set.</param>
+        // public static void glMultiTexCoordP4uiv(int texture, int type, /*const*/ uint* coords) => _glMultiTexCoordP4uiv(texture, type, coords);
 
-        /// <summary>
-        ///     Set the current texture coordinates.
-        /// </summary>
-        /// <param name="texture">
-        ///     Specifies the texture unit whose coordinates should be modified.
-        ///     <para>
-        ///         The number of texture units is implementation dependent, but must be at least two. Symbolic constant must be
-        ///         one of GL_TEXTUREi, where i ranges from 0 to GL_MAX_TEXTURE_COORDS - 1, which is an implementation-dependent
-        ///         value.
-        ///     </para>
-        /// </param>
-        /// <param name="type">The data type.</param>
-        /// <param name="coords">The value of the coordinates to set.</param>
-        public static void glMultiTexCoordP1uiv(int texture, int type, uint[] coords)
-        {
-            fixed (uint* c = &coords[0])
-            {
-                _glMultiTexCoordP1uiv(texture, type, c);
-            }
-        }
+        // /// <summary>
+        // ///     Set the current texture coordinates.
+        // /// </summary>
+        // /// <param name="texture">
+        // ///     Specifies the texture unit whose coordinates should be modified.
+        // ///     <para>
+        // ///         The number of texture units is implementation dependent, but must be at least two. Symbolic constant must be
+        // ///         one of GL_TEXTUREi, where i ranges from 0 to GL_MAX_TEXTURE_COORDS - 1, which is an implementation-dependent
+        // ///         value.
+        // ///     </para>
+        // /// </param>
+        // /// <param name="type">The data type.</param>
+        // /// <param name="coords">The value of the coordinates to set.</param>
+        // public static void glMultiTexCoordP1uiv(int texture, int type, uint[] coords)
+        // {
+        //     fixed (uint* c = &coords[0])
+        //     {
+        //         _glMultiTexCoordP1uiv(texture, type, c);
+        //     }
+        // }
 
-        /// <summary>
-        ///     Set the current texture coordinates.
-        /// </summary>
-        /// <param name="texture">
-        ///     Specifies the texture unit whose coordinates should be modified.
-        ///     <para>
-        ///         The number of texture units is implementation dependent, but must be at least two. Symbolic constant must be
-        ///         one of GL_TEXTUREi, where i ranges from 0 to GL_MAX_TEXTURE_COORDS - 1, which is an implementation-dependent
-        ///         value.
-        ///     </para>
-        /// </param>
-        /// <param name="type">The data type.</param>
-        /// <param name="coords">The value of the coordinates to set.</param>
-        public static void glMultiTexCoordP2uiv(int texture, int type, uint[] coords)
-        {
-            fixed (uint* c = &coords[0])
-            {
-                _glMultiTexCoordP2uiv(texture, type, c);
-            }
-        }
+        // /// <summary>
+        // ///     Set the current texture coordinates.
+        // /// </summary>
+        // /// <param name="texture">
+        // ///     Specifies the texture unit whose coordinates should be modified.
+        // ///     <para>
+        // ///         The number of texture units is implementation dependent, but must be at least two. Symbolic constant must be
+        // ///         one of GL_TEXTUREi, where i ranges from 0 to GL_MAX_TEXTURE_COORDS - 1, which is an implementation-dependent
+        // ///         value.
+        // ///     </para>
+        // /// </param>
+        // /// <param name="type">The data type.</param>
+        // /// <param name="coords">The value of the coordinates to set.</param>
+        // public static void glMultiTexCoordP2uiv(int texture, int type, uint[] coords)
+        // {
+        //     fixed (uint* c = &coords[0])
+        //     {
+        //         _glMultiTexCoordP2uiv(texture, type, c);
+        //     }
+        // }
 
-        /// <summary>
-        ///     Set the current texture coordinates.
-        /// </summary>
-        /// <param name="texture">
-        ///     Specifies the texture unit whose coordinates should be modified.
-        ///     <para>
-        ///         The number of texture units is implementation dependent, but must be at least two. Symbolic constant must be
-        ///         one of GL_TEXTUREi, where i ranges from 0 to GL_MAX_TEXTURE_COORDS - 1, which is an implementation-dependent
-        ///         value.
-        ///     </para>
-        /// </param>
-        /// <param name="type">The data type.</param>
-        /// <param name="coords">The value of the coordinates to set.</param>
-        public static void glMultiTexCoordP3uiv(int texture, int type, uint[] coords)
-        {
-            fixed (uint* c = &coords[0])
-            {
-                _glMultiTexCoordP3uiv(texture, type, c);
-            }
-        }
+        // /// <summary>
+        // ///     Set the current texture coordinates.
+        // /// </summary>
+        // /// <param name="texture">
+        // ///     Specifies the texture unit whose coordinates should be modified.
+        // ///     <para>
+        // ///         The number of texture units is implementation dependent, but must be at least two. Symbolic constant must be
+        // ///         one of GL_TEXTUREi, where i ranges from 0 to GL_MAX_TEXTURE_COORDS - 1, which is an implementation-dependent
+        // ///         value.
+        // ///     </para>
+        // /// </param>
+        // /// <param name="type">The data type.</param>
+        // /// <param name="coords">The value of the coordinates to set.</param>
+        // public static void glMultiTexCoordP3uiv(int texture, int type, uint[] coords)
+        // {
+        //     fixed (uint* c = &coords[0])
+        //     {
+        //         _glMultiTexCoordP3uiv(texture, type, c);
+        //     }
+        // }
 
-        /// <summary>
-        ///     Set the current texture coordinates.
-        /// </summary>
-        /// <param name="texture">
-        ///     Specifies the texture unit whose coordinates should be modified.
-        ///     <para>
-        ///         The number of texture units is implementation dependent, but must be at least two. Symbolic constant must be
-        ///         one of GL_TEXTUREi, where i ranges from 0 to GL_MAX_TEXTURE_COORDS - 1, which is an implementation-dependent
-        ///         value.
-        ///     </para>
-        /// </param>
-        /// <param name="type">The data type.</param>
-        /// <param name="coords">The value of the coordinates to set.</param>
-        public static void glMultiTexCoordP4uiv(int texture, int type, uint[] coords)
-        {
-            fixed (uint* c = &coords[0])
-            {
-                _glMultiTexCoordP4uiv(texture, type, c);
-            }
-        }
+        // /// <summary>
+        // ///     Set the current texture coordinates.
+        // /// </summary>
+        // /// <param name="texture">
+        // ///     Specifies the texture unit whose coordinates should be modified.
+        // ///     <para>
+        // ///         The number of texture units is implementation dependent, but must be at least two. Symbolic constant must be
+        // ///         one of GL_TEXTUREi, where i ranges from 0 to GL_MAX_TEXTURE_COORDS - 1, which is an implementation-dependent
+        // ///         value.
+        // ///     </para>
+        // /// </param>
+        // /// <param name="type">The data type.</param>
+        // /// <param name="coords">The value of the coordinates to set.</param>
+        // public static void glMultiTexCoordP4uiv(int texture, int type, uint[] coords)
+        // {
+        //     fixed (uint* c = &coords[0])
+        //     {
+        //         _glMultiTexCoordP4uiv(texture, type, c);
+        //     }
+        // }
 
-        /// <summary>
-        /// Set the current texture coordinates.
-        /// </summary>
-        /// <param name="type">Specifies the texture unit whose coordinates should be modified.<para>The number of texture units is implementation dependent, but must be at least two. Symbolic constant must be one of GL_TEXTUREi, where i ranges from 0 to GL_MAX_TEXTURE_COORDS - 1, which is an implementation-dependent value.</para></param>
-        /// <param name="coords">A packed value.</param>
-        public static void glTexCoordP1ui(int type, uint coords) => _glTexCoordP1ui(type, coords);
+        // /// <summary>
+        // /// Set the current texture coordinates.
+        // /// </summary>
+        // /// <param name="type">Specifies the texture unit whose coordinates should be modified.<para>The number of texture units is implementation dependent, but must be at least two. Symbolic constant must be one of GL_TEXTUREi, where i ranges from 0 to GL_MAX_TEXTURE_COORDS - 1, which is an implementation-dependent value.</para></param>
+        // /// <param name="coords">A packed value.</param>
+        // public static void glTexCoordP1ui(int type, uint coords) => _glTexCoordP1ui(type, coords);
 
-        /// <summary>
-        /// Set the current texture coordinates.
-        /// </summary>
-        /// <param name="type">Specifies the texture unit whose coordinates should be modified.<para>The number of texture units is implementation dependent, but must be at least two. Symbolic constant must be one of GL_TEXTUREi, where i ranges from 0 to GL_MAX_TEXTURE_COORDS - 1, which is an implementation-dependent value.</para></param>
-        /// <param name="coords">Specifies a pointer to an array of packed elements.</param>
-        public static void glTexCoordP1uiv(int type, /*const*/ uint* coords) => _glTexCoordP1uiv(type, coords);
+        // /// <summary>
+        // /// Set the current texture coordinates.
+        // /// </summary>
+        // /// <param name="type">Specifies the texture unit whose coordinates should be modified.<para>The number of texture units is implementation dependent, but must be at least two. Symbolic constant must be one of GL_TEXTUREi, where i ranges from 0 to GL_MAX_TEXTURE_COORDS - 1, which is an implementation-dependent value.</para></param>
+        // /// <param name="coords">Specifies a pointer to an array of packed elements.</param>
+        // public static void glTexCoordP1uiv(int type, /*const*/ uint* coords) => _glTexCoordP1uiv(type, coords);
 
-        /// <summary>
-        /// Set the current texture coordinates.
-        /// </summary>
-        /// <param name="type">Specifies the texture unit whose coordinates should be modified.<para>The number of texture units is implementation dependent, but must be at least two. Symbolic constant must be one of GL_TEXTUREi, where i ranges from 0 to GL_MAX_TEXTURE_COORDS - 1, which is an implementation-dependent value.</para></param>
-        /// <param name="coords">An array of packed elements.</param>
-        public static void glTexCoordP1uiv(int type, uint[] coords)
-        {
-            fixed (uint* c = &coords[0])
-            {
-                _glTexCoordP1uiv(type, c);
-            }
-        }
+        // /// <summary>
+        // /// Set the current texture coordinates.
+        // /// </summary>
+        // /// <param name="type">Specifies the texture unit whose coordinates should be modified.<para>The number of texture units is implementation dependent, but must be at least two. Symbolic constant must be one of GL_TEXTUREi, where i ranges from 0 to GL_MAX_TEXTURE_COORDS - 1, which is an implementation-dependent value.</para></param>
+        // /// <param name="coords">An array of packed elements.</param>
+        // public static void glTexCoordP1uiv(int type, uint[] coords)
+        // {
+        //     fixed (uint* c = &coords[0])
+        //     {
+        //         _glTexCoordP1uiv(type, c);
+        //     }
+        // }
 
-        /// <summary>
-        /// Set the current texture coordinates.
-        /// </summary>
-        /// <param name="type">Specifies the texture unit whose coordinates should be modified.<para>The number of texture units is implementation dependent, but must be at least two. Symbolic constant must be one of GL_TEXTUREi, where i ranges from 0 to GL_MAX_TEXTURE_COORDS - 1, which is an implementation-dependent value.</para></param>
-        /// <param name="coords">A packed value.</param>
-        public static void glTexCoordP2ui(int type, uint coords) => _glTexCoordP2ui(type, coords);
+        // /// <summary>
+        // /// Set the current texture coordinates.
+        // /// </summary>
+        // /// <param name="type">Specifies the texture unit whose coordinates should be modified.<para>The number of texture units is implementation dependent, but must be at least two. Symbolic constant must be one of GL_TEXTUREi, where i ranges from 0 to GL_MAX_TEXTURE_COORDS - 1, which is an implementation-dependent value.</para></param>
+        // /// <param name="coords">A packed value.</param>
+        // public static void glTexCoordP2ui(int type, uint coords) => _glTexCoordP2ui(type, coords);
 
-        /// <summary>
-        /// Set the current texture coordinates.
-        /// </summary>
-        /// <param name="type">Specifies the texture unit whose coordinates should be modified.<para>The number of texture units is implementation dependent, but must be at least two. Symbolic constant must be one of GL_TEXTUREi, where i ranges from 0 to GL_MAX_TEXTURE_COORDS - 1, which is an implementation-dependent value.</para></param>
-        /// <param name="coords">An array of packed elements.</param>
-        public static void glTexCoordP2uiv(int type, /*const*/ uint* coords) => _glTexCoordP2uiv(type, coords);
+        // /// <summary>
+        // /// Set the current texture coordinates.
+        // /// </summary>
+        // /// <param name="type">Specifies the texture unit whose coordinates should be modified.<para>The number of texture units is implementation dependent, but must be at least two. Symbolic constant must be one of GL_TEXTUREi, where i ranges from 0 to GL_MAX_TEXTURE_COORDS - 1, which is an implementation-dependent value.</para></param>
+        // /// <param name="coords">An array of packed elements.</param>
+        // public static void glTexCoordP2uiv(int type, /*const*/ uint* coords) => _glTexCoordP2uiv(type, coords);
 
-        /// <summary>
-        /// Set the current texture coordinates.
-        /// </summary>
-        /// <param name="type">Specifies the texture unit whose coordinates should be modified.<para>The number of texture units is implementation dependent, but must be at least two. Symbolic constant must be one of GL_TEXTUREi, where i ranges from 0 to GL_MAX_TEXTURE_COORDS - 1, which is an implementation-dependent value.</para></param>
-        /// <param name="coords">An array of packed elements.</param>
-        public static void glTexCoordP2uiv(int type, uint[] coords)
-        {
-            fixed (uint* c = &coords[0])
-            {
-                _glTexCoordP2uiv(type, c);
-            }
-        }
+        // /// <summary>
+        // /// Set the current texture coordinates.
+        // /// </summary>
+        // /// <param name="type">Specifies the texture unit whose coordinates should be modified.<para>The number of texture units is implementation dependent, but must be at least two. Symbolic constant must be one of GL_TEXTUREi, where i ranges from 0 to GL_MAX_TEXTURE_COORDS - 1, which is an implementation-dependent value.</para></param>
+        // /// <param name="coords">An array of packed elements.</param>
+        // public static void glTexCoordP2uiv(int type, uint[] coords)
+        // {
+        //     fixed (uint* c = &coords[0])
+        //     {
+        //         _glTexCoordP2uiv(type, c);
+        //     }
+        // }
 
-        /// <summary>
-        /// Set the current texture coordinates.
-        /// </summary>
-        /// <param name="type">Specifies the texture unit whose coordinates should be modified.<para>The number of texture units is implementation dependent, but must be at least two. Symbolic constant must be one of GL_TEXTUREi, where i ranges from 0 to GL_MAX_TEXTURE_COORDS - 1, which is an implementation-dependent value.</para></param>
-        /// <param name="coords">A packed value.</param>
-        public static void glTexCoordP3ui(int type, uint coords) => _glTexCoordP3ui(type, coords);
+        // /// <summary>
+        // /// Set the current texture coordinates.
+        // /// </summary>
+        // /// <param name="type">Specifies the texture unit whose coordinates should be modified.<para>The number of texture units is implementation dependent, but must be at least two. Symbolic constant must be one of GL_TEXTUREi, where i ranges from 0 to GL_MAX_TEXTURE_COORDS - 1, which is an implementation-dependent value.</para></param>
+        // /// <param name="coords">A packed value.</param>
+        // public static void glTexCoordP3ui(int type, uint coords) => _glTexCoordP3ui(type, coords);
 
-        /// <summary>
-        /// Set the current texture coordinates.
-        /// </summary>
-        /// <param name="type">Specifies the texture unit whose coordinates should be modified.<para>The number of texture units is implementation dependent, but must be at least two. Symbolic constant must be one of GL_TEXTUREi, where i ranges from 0 to GL_MAX_TEXTURE_COORDS - 1, which is an implementation-dependent value.</para></param>
-        /// <param name="coords">An array of packed elements.</param>
-        public static void glTexCoordP3uiv(int type, /*const*/ uint* coords) => _glTexCoordP3uiv(type, coords);
+        // /// <summary>
+        // /// Set the current texture coordinates.
+        // /// </summary>
+        // /// <param name="type">Specifies the texture unit whose coordinates should be modified.<para>The number of texture units is implementation dependent, but must be at least two. Symbolic constant must be one of GL_TEXTUREi, where i ranges from 0 to GL_MAX_TEXTURE_COORDS - 1, which is an implementation-dependent value.</para></param>
+        // /// <param name="coords">An array of packed elements.</param>
+        // public static void glTexCoordP3uiv(int type, /*const*/ uint* coords) => _glTexCoordP3uiv(type, coords);
 
-        /// <summary>
-        /// Set the current texture coordinates.
-        /// </summary>
-        /// <param name="type">Specifies the texture unit whose coordinates should be modified.<para>The number of texture units is implementation dependent, but must be at least two. Symbolic constant must be one of GL_TEXTUREi, where i ranges from 0 to GL_MAX_TEXTURE_COORDS - 1, which is an implementation-dependent value.</para></param>
-        /// <param name="coords">An array of packed elements.</param>
-        public static void glTexCoordP3uiv(int type, uint[] coords)
-        {
-            fixed (uint* c = &coords[0])
-            {
-                _glTexCoordP3uiv(type, c);
-            }
-        }
+        // /// <summary>
+        // /// Set the current texture coordinates.
+        // /// </summary>
+        // /// <param name="type">Specifies the texture unit whose coordinates should be modified.<para>The number of texture units is implementation dependent, but must be at least two. Symbolic constant must be one of GL_TEXTUREi, where i ranges from 0 to GL_MAX_TEXTURE_COORDS - 1, which is an implementation-dependent value.</para></param>
+        // /// <param name="coords">An array of packed elements.</param>
+        // public static void glTexCoordP3uiv(int type, uint[] coords)
+        // {
+        //     fixed (uint* c = &coords[0])
+        //     {
+        //         _glTexCoordP3uiv(type, c);
+        //     }
+        // }
 
-        /// <summary>
-        /// Set the current texture coordinates.
-        /// </summary>
-        /// <param name="type">Specifies the texture unit whose coordinates should be modified.<para>The number of texture units is implementation dependent, but must be at least two. Symbolic constant must be one of GL_TEXTUREi, where i ranges from 0 to GL_MAX_TEXTURE_COORDS - 1, which is an implementation-dependent value.</para></param>
-        /// <param name="coords">A packed value.</param>
-        public static void glTexCoordP4ui(int type, uint coords) => _glTexCoordP4ui(type, coords);
+        // /// <summary>
+        // /// Set the current texture coordinates.
+        // /// </summary>
+        // /// <param name="type">Specifies the texture unit whose coordinates should be modified.<para>The number of texture units is implementation dependent, but must be at least two. Symbolic constant must be one of GL_TEXTUREi, where i ranges from 0 to GL_MAX_TEXTURE_COORDS - 1, which is an implementation-dependent value.</para></param>
+        // /// <param name="coords">A packed value.</param>
+        // public static void glTexCoordP4ui(int type, uint coords) => _glTexCoordP4ui(type, coords);
 
-        /// <summary>
-        /// Set the current texture coordinates.
-        /// </summary>
-        /// <param name="type">Specifies the texture unit whose coordinates should be modified.<para>The number of texture units is implementation dependent, but must be at least two. Symbolic constant must be one of GL_TEXTUREi, where i ranges from 0 to GL_MAX_TEXTURE_COORDS - 1, which is an implementation-dependent value.</para></param>
-        /// <param name="coords">An array of packed elements.</param>
-        public static void glTexCoordP4uiv(int type, /*const*/ uint* coords) => _glTexCoordP4uiv(type, coords);
+        // /// <summary>
+        // /// Set the current texture coordinates.
+        // /// </summary>
+        // /// <param name="type">Specifies the texture unit whose coordinates should be modified.<para>The number of texture units is implementation dependent, but must be at least two. Symbolic constant must be one of GL_TEXTUREi, where i ranges from 0 to GL_MAX_TEXTURE_COORDS - 1, which is an implementation-dependent value.</para></param>
+        // /// <param name="coords">An array of packed elements.</param>
+        // public static void glTexCoordP4uiv(int type, /*const*/ uint* coords) => _glTexCoordP4uiv(type, coords);
 
-        /// <summary>
-        /// Set the current texture coordinates.
-        /// </summary>
-        /// <param name="type">Specifies the texture unit whose coordinates should be modified.<para>The number of texture units is implementation dependent, but must be at least two. Symbolic constant must be one of GL_TEXTUREi, where i ranges from 0 to GL_MAX_TEXTURE_COORDS - 1, which is an implementation-dependent value.</para></param>
-        /// <param name="coords">An array of packed elements.</param>
-        public static void glTexCoordP4uiv(int type, uint[] coords)
-        {
-            fixed (uint* c = &coords[0])
-            {
-                _glTexCoordP4uiv(type, c);
-            }
-        }
+        // /// <summary>
+        // /// Set the current texture coordinates.
+        // /// </summary>
+        // /// <param name="type">Specifies the texture unit whose coordinates should be modified.<para>The number of texture units is implementation dependent, but must be at least two. Symbolic constant must be one of GL_TEXTUREi, where i ranges from 0 to GL_MAX_TEXTURE_COORDS - 1, which is an implementation-dependent value.</para></param>
+        // /// <param name="coords">An array of packed elements.</param>
+        // public static void glTexCoordP4uiv(int type, uint[] coords)
+        // {
+        //     fixed (uint* c = &coords[0])
+        //     {
+        //         _glTexCoordP4uiv(type, c);
+        //     }
+        // }
 
         /// <summary>
         ///     Specifies the value of a generic vertex attribute.
@@ -5581,81 +5581,81 @@ namespace LogiX.OpenGL
         /// </summary>
         /// <param name="type">Specify the vertex data type.</param>
         /// <param name="value">A pointer to the vertex data.</param>
-        public static void glVertexP2uiv(int type, /*const*/ uint* value) => _glVertexP2uiv(type, value);
+        // public static void glVertexP2uiv(int type, /*const*/ uint* value) => _glVertexP2uiv(type, value);
 
-        /// <summary>
-        ///     Specified a packed vertex.
-        /// </summary>
-        /// <param name="type">Specify the vertex data type.</param>
-        /// <param name="value">A pointer to the vertex data.</param>
-        public static void glVertexP3uiv(int type, /*const*/ uint* value) => _glVertexP3uiv(type, value);
+        // /// <summary>
+        // ///     Specified a packed vertex.
+        // /// </summary>
+        // /// <param name="type">Specify the vertex data type.</param>
+        // /// <param name="value">A pointer to the vertex data.</param>
+        // public static void glVertexP3uiv(int type, /*const*/ uint* value) => _glVertexP3uiv(type, value);
 
-        /// <summary>
-        ///     Specified a packed vertex.
-        /// </summary>
-        /// <param name="type">Specify the vertex data type.</param>
-        /// <param name="value">A pointer to the vertex data.</param>
-        public static void glVertexP4uiv(int type, /*const*/ uint* value) => _glVertexP4uiv(type, value);
-
-        /// <summary>
-        ///     Specified a packed vertex.
-        /// </summary>
-        /// <param name="type">Specify the vertex data type.</param>
-        /// <param name="value">A array of vertex data.</param>
-        public static void glVertexP2uiv(int type, uint[] value)
-        {
-            fixed (uint* v = &value[0])
-            {
-                _glVertexP2uiv(type, v);
-            }
-        }
+        // /// <summary>
+        // ///     Specified a packed vertex.
+        // /// </summary>
+        // /// <param name="type">Specify the vertex data type.</param>
+        // /// <param name="value">A pointer to the vertex data.</param>
+        // public static void glVertexP4uiv(int type, /*const*/ uint* value) => _glVertexP4uiv(type, value);
 
         /// <summary>
         ///     Specified a packed vertex.
         /// </summary>
         /// <param name="type">Specify the vertex data type.</param>
         /// <param name="value">A array of vertex data.</param>
-        public static void glVertexP3uiv(int type, uint[] value)
-        {
-            fixed (uint* v = &value[0])
-            {
-                _glVertexP3uiv(type, v);
-            }
-        }
+        // public static void glVertexP2uiv(int type, uint[] value)
+        // {
+        //     fixed (uint* v = &value[0])
+        //     {
+        //         _glVertexP2uiv(type, v);
+        //     }
+        // }
 
-        /// <summary>
-        ///     Specified a packed vertex.
-        /// </summary>
-        /// <param name="type">Specify the vertex data type.</param>
-        /// <param name="value">A array of vertex data.</param>
-        public static void glVertexP4uiv(int type, uint[] value)
-        {
-            fixed (uint* v = &value[0])
-            {
-                _glVertexP4uiv(type, v);
-            }
-        }
+        // /// <summary>
+        // ///     Specified a packed vertex.
+        // /// </summary>
+        // /// <param name="type">Specify the vertex data type.</param>
+        // /// <param name="value">A array of vertex data.</param>
+        // public static void glVertexP3uiv(int type, uint[] value)
+        // {
+        //     fixed (uint* v = &value[0])
+        //     {
+        //         _glVertexP3uiv(type, v);
+        //     }
+        // }
 
-        /// <summary>
-        ///     Specified a packed vertex.
-        /// </summary>
-        /// <param name="type">Specify the vertex data type.</param>
-        /// <param name="value">The vertex data.</param>
-        public static void glVertexP2ui(int type, uint value) => _glVertexP2ui(type, value);
+        // /// <summary>
+        // ///     Specified a packed vertex.
+        // /// </summary>
+        // /// <param name="type">Specify the vertex data type.</param>
+        // /// <param name="value">A array of vertex data.</param>
+        // public static void glVertexP4uiv(int type, uint[] value)
+        // {
+        //     fixed (uint* v = &value[0])
+        //     {
+        //         _glVertexP4uiv(type, v);
+        //     }
+        // }
 
-        /// <summary>
-        ///     Specified a packed vertex.
-        /// </summary>
-        /// <param name="type">Specify the vertex data type.</param>
-        /// <param name="value">The vertex data.</param>
-        public static void glVertexP3ui(int type, uint value) => _glVertexP3ui(type, value);
+        // /// <summary>
+        // ///     Specified a packed vertex.
+        // /// </summary>
+        // /// <param name="type">Specify the vertex data type.</param>
+        // /// <param name="value">The vertex data.</param>
+        // public static void glVertexP2ui(int type, uint value) => _glVertexP2ui(type, value);
 
-        /// <summary>
-        ///     Specified a packed vertex.
-        /// </summary>
-        /// <param name="type">Specify the vertex data type.</param>
-        /// <param name="value">The vertex data.</param>
-        public static void glVertexP4ui(int type, uint value) => _glVertexP4ui(type, value);
+        // /// <summary>
+        // ///     Specified a packed vertex.
+        // /// </summary>
+        // /// <param name="type">Specify the vertex data type.</param>
+        // /// <param name="value">The vertex data.</param>
+        // public static void glVertexP3ui(int type, uint value) => _glVertexP3ui(type, value);
+
+        // /// <summary>
+        // ///     Specified a packed vertex.
+        // /// </summary>
+        // /// <param name="type">Specify the vertex data type.</param>
+        // /// <param name="value">The vertex data.</param>
+        // public static void glVertexP4ui(int type, uint value) => _glVertexP4ui(type, value);
 
         /// <summary>
         ///     Specifies the value of a generic packed vertex attribute.
@@ -7297,7 +7297,7 @@ namespace LogiX.OpenGL
         /// <param name="bufferMode">Identifies the mode used to capture the varying variables when transform feedback is active.<para>ust be GL_INTERLEAVED_ATTRIBS or GL_SEPARATE_ATTRIBS.</para></param>
         public static void glTransformFeedbackVaryings(uint program, int count, /*const*/ byte** varyings, int bufferMode) => _glTransformFeedbackVaryings(program, count, varyings, bufferMode);
 
-        public static void glDebugMessageCallback(DebugMessageCallback callback, void* userparam) => _glDebugMessageCallback(callback, userparam);
+        // public static void glDebugMessageCallback(DebugMessageCallback callback, void* userparam) => _glDebugMessageCallback(callback, userparam);
 
         public delegate void DebugMessageCallback(int source, int type, int id, int severity, int length, string message, void* userParam);
         public const int GL_DEPTH_BUFFER_BIT = 0x00000100;
@@ -9590,37 +9590,37 @@ namespace LogiX.OpenGL
         private static PFNGLVERTEXATTRIBP3UIVPROC _glVertexAttribP3uiv;
         private static PFNGLVERTEXATTRIBP4UIPROC _glVertexAttribP4ui;
         private static PFNGLVERTEXATTRIBP4UIVPROC _glVertexAttribP4uiv;
-        private static PFNGLVERTEXP2UIPROC _glVertexP2ui;
-        private static PFNGLVERTEXP2UIVPROC _glVertexP2uiv;
-        private static PFNGLVERTEXP3UIPROC _glVertexP3ui;
-        private static PFNGLVERTEXP3UIVPROC _glVertexP3uiv;
-        private static PFNGLVERTEXP4UIPROC _glVertexP4ui;
-        private static PFNGLVERTEXP4UIVPROC _glVertexP4uiv;
-        private static PFNGLTEXCOORDP1UIPROC _glTexCoordP1ui;
-        private static PFNGLTEXCOORDP1UIVPROC _glTexCoordP1uiv;
-        private static PFNGLTEXCOORDP2UIPROC _glTexCoordP2ui;
-        private static PFNGLTEXCOORDP2UIVPROC _glTexCoordP2uiv;
-        private static PFNGLTEXCOORDP3UIPROC _glTexCoordP3ui;
-        private static PFNGLTEXCOORDP3UIVPROC _glTexCoordP3uiv;
-        private static PFNGLTEXCOORDP4UIPROC _glTexCoordP4ui;
-        private static PFNGLTEXCOORDP4UIVPROC _glTexCoordP4uiv;
-        private static PFNGLMULTITEXCOORDP1UIPROC _glMultiTexCoordP1ui;
-        private static PFNGLMULTITEXCOORDP1UIVPROC _glMultiTexCoordP1uiv;
-        private static PFNGLMULTITEXCOORDP2UIPROC _glMultiTexCoordP2ui;
-        private static PFNGLMULTITEXCOORDP2UIVPROC _glMultiTexCoordP2uiv;
-        private static PFNGLMULTITEXCOORDP3UIPROC _glMultiTexCoordP3ui;
-        private static PFNGLMULTITEXCOORDP3UIVPROC _glMultiTexCoordP3uiv;
-        private static PFNGLMULTITEXCOORDP4UIPROC _glMultiTexCoordP4ui;
-        private static PFNGLMULTITEXCOORDP4UIVPROC _glMultiTexCoordP4uiv;
-        private static PFNGLNORMALP3UIPROC _glNormalP3ui;
-        private static PFNGLNORMALP3UIVPROC _glNormalP3uiv;
-        private static PFNGLCOLORP3UIPROC _glColorP3ui;
-        private static PFNGLCOLORP3UIVPROC _glColorP3uiv;
-        private static PFNGLCOLORP4UIPROC _glColorP4ui;
-        private static PFNGLCOLORP4UIVPROC _glColorP4uiv;
-        private static PFNGLSECONDARYCOLORP3UIPROC _glSecondaryColorP3ui;
-        private static PFNGLSECONDARYCOLORP3UIVPROC _glSecondaryColorP3uiv;
-        private static PFNGLDEBUGMESSAGECALLBACK _glDebugMessageCallback;
+        // private static PFNGLVERTEXP2UIPROC _glVertexP2ui;
+        // private static PFNGLVERTEXP2UIVPROC _glVertexP2uiv;
+        // private static PFNGLVERTEXP3UIPROC _glVertexP3ui;
+        // private static PFNGLVERTEXP3UIVPROC _glVertexP3uiv;
+        // private static PFNGLVERTEXP4UIPROC _glVertexP4ui;
+        // private static PFNGLVERTEXP4UIVPROC _glVertexP4uiv;
+        // private static PFNGLTEXCOORDP1UIPROC _glTexCoordP1ui;
+        // private static PFNGLTEXCOORDP1UIVPROC _glTexCoordP1uiv;
+        // private static PFNGLTEXCOORDP2UIPROC _glTexCoordP2ui;
+        // private static PFNGLTEXCOORDP2UIVPROC _glTexCoordP2uiv;
+        // private static PFNGLTEXCOORDP3UIPROC _glTexCoordP3ui;
+        // private static PFNGLTEXCOORDP3UIVPROC _glTexCoordP3uiv;
+        // private static PFNGLTEXCOORDP4UIPROC _glTexCoordP4ui;
+        // private static PFNGLTEXCOORDP4UIVPROC _glTexCoordP4uiv;
+        // private static PFNGLMULTITEXCOORDP1UIPROC _glMultiTexCoordP1ui;
+        // private static PFNGLMULTITEXCOORDP1UIVPROC _glMultiTexCoordP1uiv;
+        // private static PFNGLMULTITEXCOORDP2UIPROC _glMultiTexCoordP2ui;
+        // private static PFNGLMULTITEXCOORDP2UIVPROC _glMultiTexCoordP2uiv;
+        // private static PFNGLMULTITEXCOORDP3UIPROC _glMultiTexCoordP3ui;
+        // private static PFNGLMULTITEXCOORDP3UIVPROC _glMultiTexCoordP3uiv;
+        // private static PFNGLMULTITEXCOORDP4UIPROC _glMultiTexCoordP4ui;
+        // private static PFNGLMULTITEXCOORDP4UIVPROC _glMultiTexCoordP4uiv;
+        // private static PFNGLNORMALP3UIPROC _glNormalP3ui;
+        // private static PFNGLNORMALP3UIVPROC _glNormalP3uiv;
+        // private static PFNGLCOLORP3UIPROC _glColorP3ui;
+        // private static PFNGLCOLORP3UIVPROC _glColorP3uiv;
+        // private static PFNGLCOLORP4UIPROC _glColorP4ui;
+        // private static PFNGLCOLORP4UIVPROC _glColorP4uiv;
+        // private static PFNGLSECONDARYCOLORP3UIPROC _glSecondaryColorP3ui;
+        // private static PFNGLSECONDARYCOLORP3UIVPROC _glSecondaryColorP3uiv;
+        // private static PFNGLDEBUGMESSAGECALLBACK _glDebugMessageCallback;
 
         /// <summary>
         ///     Imports all OpenGL functions using the specified loader.

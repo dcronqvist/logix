@@ -31,7 +31,7 @@ public class StateHoveringPin : State<Editor, int>
     public override void PostSimRender(Editor arg)
     {
         var mouseWorld = Input.GetMousePosition(arg.Camera);
-        var pShader = LogiXWindow.ContentManager.GetContentItem<ShaderProgram>("core.shader_program.primitive");
+        var pShader = LogiXWindow.ContentManager.GetContentItem<ShaderProgram>("logix_core:shaders/primitive/primitive.shader");
         arg.Sim.LockedAction(s =>
         {
             if (s.TryGetPinAtPos(mouseWorld, out var node, out var identifier))

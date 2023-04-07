@@ -18,8 +18,8 @@ public class TextureLoader : IContentItemLoader
                 ms.Seek(0, SeekOrigin.Begin);
 
                 var result = ImageResult.FromStream(ms, ColorComponents.RedGreenBlueAlpha);
-                var tex = new Texture2D($"{source.GetIdentifier()}.texture.{fileName}", source, result);
-                yield return await LoadEntryResult.CreateSuccessAsync(tex);
+                var tex = new Texture2D(source, result);
+                yield return await LoadEntryResult.CreateSuccessAsync(pathToItem, tex);
             }
         }
     }

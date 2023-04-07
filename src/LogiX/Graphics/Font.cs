@@ -48,7 +48,7 @@ public class Font : GLContentItem<FontData>
     public int AtlasHeight => this.Texture.Height;
     public Texture2D Texture { get; private set; }
 
-    public Font(string identifier, IContentSource source, FontData content) : base(identifier, source, content)
+    public Font(IContentSource source, FontData content) : base(source, content)
     {
         this.InitNoGL();
     }

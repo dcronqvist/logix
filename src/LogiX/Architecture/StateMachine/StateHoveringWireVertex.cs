@@ -48,7 +48,7 @@ public class StateHoveringWireVertex : State<Editor, int>
     public override void PostSimRender(Editor arg)
     {
         var mouseWorld = Input.GetMousePosition(arg.Camera);
-        var pShader = LogiXWindow.ContentManager.GetContentItem<ShaderProgram>("core.shader_program.primitive");
+        var pShader = LogiXWindow.ContentManager.GetContentItem<ShaderProgram>("logix_core:shaders/primitive/primitive.shader");
         arg.Sim.LockedAction(s =>
         {
             // if (s.TryGetWireVertexAtPos(mouseWorld, out var pos, out var wire))

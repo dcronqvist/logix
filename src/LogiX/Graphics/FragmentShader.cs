@@ -6,7 +6,7 @@ namespace LogiX.Content;
 
 public class FragmentShader : Shader
 {
-    public FragmentShader(string identifier, IContentSource source, string content) : base(identifier, source, content)
+    public FragmentShader(IContentSource source, string content) : base(source, content)
     {
     }
 

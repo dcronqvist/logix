@@ -103,7 +103,7 @@ public class TTY : Node<TTYData>
 
     public override Vector2i GetSize()
     {
-        var font = Utilities.GetFont("core.font.inconsolata");
+        var font = Utilities.GetFont("logix_core:core/fonts/inconsolata.fontzip");
         float scale = 0.30f;
         var measure = font.MeasureString("M", scale);
         var width = (this._data.Width * measure.X);
@@ -145,7 +145,7 @@ public class TTY : Node<TTYData>
         var pos = this.Position.ToVector2(Constants.GRIDSIZE);
         var size = this.GetSizeRotated().ToVector2(Constants.GRIDSIZE);
         var rect = pos.CreateRect(size);
-        var font = Utilities.GetFont("core.font.inconsolata");
+        var font = Utilities.GetFont("logix_core:core/fonts/inconsolata.fontzip");
 
         PrimitiveRenderer.RenderRectangleWithBorder(rect, Vector2.Zero, 0f, 1, this._data.BackgroundColor, ColorF.Black);
 

@@ -16,8 +16,8 @@ public static class Constants
     public static ColorF COLOR_UNDEFINED => ColorF.BlueGray;
     public static ColorF COLOR_ERROR => ColorF.Red;
 
-    public static string NODE_FONT = "core.font.inconsolata";
+    public static string NODE_FONT = "logix_core:core/fonts/inconsolata.fontzip";
     public static Font NODE_FONT_REAL => Utilities.GetFont(NODE_FONT);
-    public static string UI_FONT = "core.font.inconsolata";
+    public static string UI_FONT = "logix_core:core/fonts/inconsolata.fontzip";
     public static Font UI_FONT_REAL => Utilities.GetFont(UI_FONT);
 }

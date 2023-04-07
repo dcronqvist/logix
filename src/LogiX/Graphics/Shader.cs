@@ -7,7 +7,7 @@ public abstract class Shader : GLContentItem<string>
 {
     public uint ShaderID { get; protected set; }
 
-    public Shader(string identifier, IContentSource source, string content) : base(identifier, source, content)
+    public Shader(IContentSource source, string content) : base(source, content)
     {
     }
 

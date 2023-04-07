@@ -18,13 +18,13 @@ public class ShaderLoader : IContentItemLoader
 
                 if (extension == ".vs")
                 {
-                    var vs = new VertexShader($"{source.GetIdentifier()}.vertex_shader.{fileName}", source, code);
-                    yield return await LoadEntryResult.CreateSuccessAsync(vs);
+                    var vs = new VertexShader(source, code);
+                    yield return await LoadEntryResult.CreateSuccessAsync(pathToItem, vs);
                 }
                 else if (extension == ".fs")
                 {
-                    var fs = new FragmentShader($"{source.GetIdentifier()}.fragment_shader.{fileName}", source, code);
-                    yield return await LoadEntryResult.CreateSuccessAsync(fs);
+                    var fs = new FragmentShader(source, code);
+                    yield return await LoadEntryResult.CreateSuccessAsync(pathToItem, fs);
                 }
                 else
                 {

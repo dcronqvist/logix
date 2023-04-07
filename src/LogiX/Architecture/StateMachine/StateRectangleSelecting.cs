@@ -36,7 +36,7 @@ public class StateRectangleSelecting : State<Editor, int>
     public override void PostSimRender(Editor arg)
     {
         var currentPos = Input.GetMousePosition(arg.Camera);
-        var shader = LogiXWindow.ContentManager.GetContentItem<ShaderProgram>("core.shader_program.primitive");
+        var shader = LogiXWindow.ContentManager.GetContentItem<ShaderProgram>("logix_core:shaders/primitive/primitive.shader");
 
         var opacity = 0.3f;
         PrimitiveRenderer.RenderRectangle(Utilities.CreateRecFromTwoCorners(this._startWorldPos, currentPos), Vector2.Zero, 0f, (ColorF.LightSkyBlue * opacity));

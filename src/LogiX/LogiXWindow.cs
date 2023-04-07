@@ -128,7 +128,7 @@ public class LogiXWindow : Game
             Console.WriteLine($"Finished stage {e.Stage.StageName}!");
             if (e.Stage is CoreLoadingStage)
             {
-                var tex = e.CurrentlyLoaded.GetContentItem<Texture2D>("core.texture.icon");
+                var tex = e.CurrentlyLoaded.GetContentItem<Texture2D>("logix_core:core/icon.png");
                 tex.ContentUpdated += (sender, e) =>
                 {
                     DisplayManager.SetWindowIcon(tex);
@@ -191,8 +191,8 @@ public class LogiXWindow : Game
                     Framebuffer.BindDefaultFramebuffer();
                     Framebuffer.Clear(ColorF.Black);
 
-                    var shader = ContentManager.GetContentItem<ShaderProgram>("core.shader_program.text");
-                    var font = Utilities.GetFont("core.font.inconsolata");
+                    var shader = ContentManager.GetContentItem<ShaderProgram>("logix_core:shaders/text/text.shader");
+                    var font = Utilities.GetFont("logix_core:core/fonts/inconsolata.fontzip");
 
                     float scale = 0.4f;
 

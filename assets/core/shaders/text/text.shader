@@ -1,4 +1,4 @@
 {
-    "vertexShader": "core.vertex_shader.text",
-    "fragmentShader": "core.fragment_shader.text"
+    "vertexShader": "logix_core:shaders/text/text.vs",
+    "fragmentShader": "logix_core:shaders/text/text.fs"
 }

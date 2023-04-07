@@ -107,8 +107,8 @@ public class FontLoader : IContentItemLoader
             }
 
             var data = new FontData(bmfont, sdfTextureData, regularFontData, boldFontData, italicFontData, boldItalicFontData);
-            var font = new Font($"{source.GetIdentifier()}.font.{fileName}", source, data);
-            yield return await LoadEntryResult.CreateSuccessAsync(font);
+            var font = new Font(source, data);
+            yield return await LoadEntryResult.CreateSuccessAsync(pathToItem, font);
         }
     }
 }

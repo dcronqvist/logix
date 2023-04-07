@@ -64,7 +64,7 @@ public class LEDMatrixWindow : Game
         ContentManager.Load();
         DisplayManager.AcquireGLContext();
 
-        var tex = ContentManager.GetContentItem<Texture2D>("core.texture.icon");
+        var tex = ContentManager.GetContentItem<Texture2D>("logix_core:core/icon.png");
         DisplayManager.SetWindowIcon(tex);
 
         Task.Run(() =>
@@ -118,7 +118,7 @@ public class LEDMatrixWindow : Game
         var data = this.Matrix._matrix;
         var matrixData = this.Matrix.GetNodeData() as LEDMatrixData;
 
-        var shader = ContentManager.GetContentItem<ShaderProgram>("core.shader_program.primitive");
+        var shader = ContentManager.GetContentItem<ShaderProgram>("logix_core:shaders/primitive/primitive.shader");
 
         Framebuffer.BindDefaultFramebuffer();
         Framebuffer.Clear(matrixData.BackgroundColor);

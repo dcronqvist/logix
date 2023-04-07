@@ -227,9 +227,9 @@ void main()
     outputColor = color * texture(in_fontTexture, texCoord);
 }";
 
-            var vs = new VertexShader("", null, VertexSource);
+            var vs = new VertexShader(null, VertexSource);
             vs.InitGL(VertexSource);
-            var fs = new FragmentShader("", null, FragmentSource);
+            var fs = new FragmentShader(null, FragmentSource);
             fs.InitGL(FragmentSource);
             _shader = ShaderProgram.Create(vs, fs);
 
