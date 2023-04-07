@@ -137,7 +137,10 @@ public class Editor : Invoker<Circuit, Editor>
         DisplayManager.OnFramebufferResize += (sender, e) =>
         {
             // Let the ImGui backend know that the window changed size so it can update its internal framebuffer
-            this.ImGuiController.WindowResized((int)e.X, (int)e.Y);
+            DisplayManager.LockedGLContext(() =>
+            {
+                this.ImGuiController.WindowResized((int)e.X, (int)e.Y);
+            });
         };
 
         #endregion
