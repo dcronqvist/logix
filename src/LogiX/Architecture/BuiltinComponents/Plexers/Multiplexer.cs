@@ -31,7 +31,7 @@ public class MultiplexerData : INodeDescriptionData
     }
 }
 
-[ScriptType("MULTIPLEXER"), NodeInfo("Multiplexer", "Plexers", "core.markdown.multiplexer")]
+[ScriptType("MULTIPLEXER"), NodeInfo("Multiplexer", "Plexers", "logix_core:docs/components/multiplexer.md")]
 public class Multiplexer : BoxNode<MultiplexerData>
 {
     public override string Text => "MUX";

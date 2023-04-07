@@ -49,7 +49,7 @@ public class PinData : INodeDescriptionData
     }
 }
 
-[ScriptType("PIN"), NodeInfo("Pin", "Common", "core.markdown.pin")]
+[ScriptType("PIN"), NodeInfo("Pin", "Common", "logix_core:docs/components/pin.md")]
 public class Pin : Node<PinData>
 {
     private PinData _data;

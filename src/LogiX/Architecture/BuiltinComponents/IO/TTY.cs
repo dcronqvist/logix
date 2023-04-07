@@ -40,7 +40,7 @@ public class TTYData : INodeDescriptionData
     }
 }
 
-[ScriptType("TTY"), NodeInfo("TTY", "Input/Output", "core.markdown.tty")]
+[ScriptType("TTY"), NodeInfo("TTY", "Input/Output", "logix_core:docs/components/tty.md")]
 public class TTY : Node<TTYData>
 {
     private TTYData _data;

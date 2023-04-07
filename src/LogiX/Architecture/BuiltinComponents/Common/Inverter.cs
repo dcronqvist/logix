@@ -19,7 +19,7 @@ public class InverterData : INodeDescriptionData
     }
 }
 
-[ScriptType("INVERTER"), NodeInfo("Inverter", "Common", "core.markdown.inverter")]
+[ScriptType("INVERTER"), NodeInfo("Inverter", "Common", "logix_core:docs/components/inverter.md")]
 public class Inverter : BoxNode<InverterData>
 {
     private InverterData _data;

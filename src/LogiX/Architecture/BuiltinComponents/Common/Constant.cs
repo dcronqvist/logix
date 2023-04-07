@@ -24,7 +24,7 @@ public class ConstantData : INodeDescriptionData
     }
 }
 
-[ScriptType("CONSTANT"), NodeInfo("Constant", "Common", "core.markdown.constant")]
+[ScriptType("CONSTANT"), NodeInfo("Constant", "Common", "logix_core:docs/components/constant.md")]
 public class Constant : BoxNode<ConstantData>
 {
     private ConstantData _data;

@@ -25,7 +25,7 @@ public class ClockData : INodeDescriptionData
     }
 }
 
-[ScriptType("CLOCK"), NodeInfo("Clock", "Common", "core.markdown.clock")]
+[ScriptType("CLOCK"), NodeInfo("Clock", "Common", "logix_core:docs/components/clock.md")]
 public class Clock : BoxNode<ClockData>
 {
     public override string Text => "CLK";

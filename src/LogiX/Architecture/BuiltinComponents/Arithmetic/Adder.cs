@@ -4,7 +4,7 @@ using LogiX.Content.Scripting;
 
 namespace LogiX.Architecture.BuiltinComponents;
 
-[ScriptType("ADDER"), NodeInfo("Adder", "Arithmetic", "core.markdown.adder")]
+[ScriptType("ADDER"), NodeInfo("Adder", "Arithmetic", "logix_core:docs/components/adder.md")]
 public class Adder : ArithmeticNode<ArithmeticData>
 {
     public override string Text => "ADD";

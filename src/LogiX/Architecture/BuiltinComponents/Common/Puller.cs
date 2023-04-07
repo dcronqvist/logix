@@ -25,7 +25,7 @@ public class PullerData : INodeDescriptionData
     }
 }
 
-[ScriptType("PULLER"), NodeInfo("Puller", "Common", "core.markdown.puller")]
+[ScriptType("PULLER"), NodeInfo("Puller", "Common", "logix_core:docs/components/puller.md")]
 public class Puller : BoxNode<PullerData>
 {
     public override string Text => $"P{(this._data.PullerType == PullerType.PullDown ? 'D' : 'U')}";

@@ -209,7 +209,7 @@ public class ANDGateLogic : IGateLogic
     }
 }
 
-[ScriptType("AND_GATE"), NodeInfo("AND Gate", "Gates", "core.markdown.logicgate")]
+[ScriptType("AND_GATE"), NodeInfo("AND Gate", "Gates", "logix_core:docs/components/logicgate.md")]
 public class ANDGate : LogicGate<GateData>
 {
     public override IGateLogic GetLogic()
@@ -239,7 +239,7 @@ public class ORGateLogic : IGateLogic
     }
 }
 
-[ScriptType("OR_GATE"), NodeInfo("OR Gate", "Gates", "core.markdown.logicgate")]
+[ScriptType("OR_GATE"), NodeInfo("OR Gate", "Gates", "logix_core:docs/components/logicgate.md")]
 public class ORGate : LogicGate<GateData>
 {
     public override IGateLogic GetLogic()
@@ -269,7 +269,7 @@ public class XORGateLogic : IGateLogic
     }
 }
 
-[ScriptType("XOR_GATE"), NodeInfo("XOR Gate", "Gates", "core.markdown.logicgate")]
+[ScriptType("XOR_GATE"), NodeInfo("XOR Gate", "Gates", "logix_core:docs/components/logicgate.md")]
 public class XORGate : LogicGate<GateData>
 {
     public override IGateLogic GetLogic()
@@ -299,7 +299,7 @@ public class NORGateLogic : IGateLogic
     }
 }
 
-[ScriptType("NOR_GATE"), NodeInfo("NOR Gate", "Gates", "core.markdown.logicgate")]
+[ScriptType("NOR_GATE"), NodeInfo("NOR Gate", "Gates", "logix_core:docs/components/logicgate.md")]
 public class NORGate : LogicGate<GateData>
 {
     public override IGateLogic GetLogic()
@@ -329,7 +329,7 @@ public class NANDGateLogic : IGateLogic
     }
 }
 
-[ScriptType("NAND_GATE"), NodeInfo("NAND Gate", "Gates", "core.markdown.logicgate")]
+[ScriptType("NAND_GATE"), NodeInfo("NAND Gate", "Gates", "logix_core:docs/components/logicgate.md")]
 public class NANDGate : LogicGate<GateData>
 {
     public override IGateLogic GetLogic()
@@ -359,7 +359,7 @@ public class XNORGateLogic : IGateLogic
     }
 }
 
-[ScriptType("XNOR_GATE"), NodeInfo("XNOR Gate", "Gates", "core.markdown.logicgate")]
+[ScriptType("XNOR_GATE"), NodeInfo("XNOR Gate", "Gates", "logix_core:docs/components/logicgate.md")]
 public class XNORGate : LogicGate<GateData>
 {
     public override IGateLogic GetLogic()

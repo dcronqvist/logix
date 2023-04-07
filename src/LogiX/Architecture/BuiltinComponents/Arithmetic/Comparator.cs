@@ -19,7 +19,7 @@ public class ComparatorData : INodeDescriptionData
     }
 }
 
-[ScriptType("COMPARATOR"), NodeInfo("Comparator", "Arithmetic", "core.markdown.comparator")]
+[ScriptType("COMPARATOR"), NodeInfo("Comparator", "Arithmetic", "logix_core:docs/components/comparator.md")]
 public class Comparator : BoxNode<ComparatorData>
 {
     private ComparatorData _data;

@@ -13,7 +13,7 @@ public class SRFlipFlopData : INodeDescriptionData
     }
 }
 
-[ScriptType("SRFF"), NodeInfo("SR Flip-Flop", "Memory", "core.markdown.srff")]
+[ScriptType("SRFF"), NodeInfo("SR Flip-Flop", "Memory", "logix_core:docs/components/srff.md")]
 public class SRFlipFlop : BoxNode<SRFlipFlopData>
 {
     public override string Text => "SR FF";

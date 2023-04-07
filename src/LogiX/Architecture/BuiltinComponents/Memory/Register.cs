@@ -19,7 +19,7 @@ public class RegisterData : INodeDescriptionData
     }
 }
 
-[ScriptType("REGISTER"), NodeInfo("Register", "Memory", "core.markdown.register")]
+[ScriptType("REGISTER"), NodeInfo("Register", "Memory", "logix_core:docs/components/register.md")]
 public class Register : BoxNode<RegisterData>
 {
     public override string Text => this._currV.ToString($"X{(int)Math.Ceiling(this._data.DataBits / 4f)}");

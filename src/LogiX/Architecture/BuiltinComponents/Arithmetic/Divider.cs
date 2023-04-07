@@ -19,7 +19,7 @@ public class DividerData : INodeDescriptionData
     }
 }
 
-[ScriptType("DIVIDER"), NodeInfo("Divider", "Arithmetic", "core.markdown.divider")]
+[ScriptType("DIVIDER"), NodeInfo("Divider", "Arithmetic", "logix_core:docs/components/divider.md")]
 public class Divider : BoxNode<DividerData>
 {
     private DividerData _data;

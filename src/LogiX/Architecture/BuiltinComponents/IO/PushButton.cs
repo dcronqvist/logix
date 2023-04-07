@@ -27,7 +27,7 @@ public class PushButtonData : INodeDescriptionData
     }
 }
 
-[ScriptType("PUSHBUTTON"), NodeInfo("Button", "Input/Output", "core.markdown.pushbutton")]
+[ScriptType("PUSHBUTTON"), NodeInfo("Button", "Input/Output", "logix_core:docs/components/pushbutton.md")]
 public class PushButton : Node<PushButtonData>
 {
     private PushButtonData _data;

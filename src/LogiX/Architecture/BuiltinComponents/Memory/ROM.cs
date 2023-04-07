@@ -30,7 +30,7 @@ public class RomData : INodeDescriptionData
     }
 }
 
-[ScriptType("ROM"), NodeInfo("ROM", "Memory", "core.markdown.rom")]
+[ScriptType("ROM"), NodeInfo("ROM", "Memory", "logix_core:docs/components/rom.md")]
 public class ROM : BoxNode<RomData>
 {
     public override string Text => "ROM";

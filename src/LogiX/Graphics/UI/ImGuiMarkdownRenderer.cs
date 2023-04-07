@@ -37,21 +37,49 @@ public class ImGuiMarkdownRenderer : RendererBase
     public static void RenderWrappedString(string s)
     {
         float avail = ImGui.GetContentRegionAvail().X;
-        string[] words = s.Split(' ').Where(x => x != "").ToArray();
-        string currentLine = "";
+        // List of all words and if there is a space after it
+        List<(string, bool)> words = new();
 
-        while (words.Length > 0)
+        string currentWord = "";
+        bool space = false;
+        foreach (char c in s)
         {
-            string word = words[0];
+            if (c == ' ')
+            {
+                space = true;
+                words.Add((currentWord, space));
+                currentWord = "";
+            }
+            else
+            {
+                currentWord += c;
+                space = false;
+            }
+        }
+
+        if (currentWord != "")
+            words.Add((currentWord, space));
+
+        string currentLine = "";
+        int lines = 0;
+
+        while (words.Count > 0)
+        {
+            (string word, bool addSpace) = words.First();
             avail = ImGui.GetContentRegionAvail().X;
             if (ImGui.CalcTextSize(currentLine + word).X > avail)
             {
                 if (currentLine != "")
+                {
                     ImGui.Text(currentLine);
+                    lines++;
+                }
                 currentLine = "";
             }
-            currentLine += word + " ";
-            words = words.Skip(1).ToArray();
+            currentLine += word;
+            if (addSpace)
+                currentLine += " ";
+            words = words.Skip(1).ToList();
         }
 
         currentLine.Trim();
@@ -60,6 +88,7 @@ public class ImGuiMarkdownRenderer : RendererBase
         {
             ImGui.Text(currentLine);
         }
+        //ImGui.TextWrapped(s);
     }
 }
 
@@ -103,6 +132,7 @@ public class ParagraphRenderer : MarkdownObjectRenderer<ImGuiMarkdownRenderer, P
             renderer.Write(child);
         }
         ImGui.NewLine();
+        ImGui.Spacing();
         ImGui.Spacing();
     }
 }

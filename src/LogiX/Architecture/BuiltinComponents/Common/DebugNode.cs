@@ -4,7 +4,7 @@ using LogiX.Rendering;
 
 namespace LogiX.Architecture.BuiltinComponents;
 
-[ScriptType("DEBUG"), NodeInfo("Debug", "Common", "core.markdown.constant")]
+[ScriptType("DEBUG"), NodeInfo("Debug", "Common", "logix_core:docs/components/constant.md")]
 public class DebugNode : BoxNode<NoData>
 {
     private NoData _data;

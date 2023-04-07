@@ -19,7 +19,7 @@ public class NoData : INodeDescriptionData
     }
 }
 
-[ScriptType("TRISTATE_BUFFER"), NodeInfo("TriState Buffer", "Common", "core.markdown.tristatebuffer")]
+[ScriptType("TRISTATE_BUFFER"), NodeInfo("TriState Buffer", "Common", "logix_core:docs/components/tristatebuffer.md")]
 public class TriStateBuffer : BoxNode<NoData>
 {
     public override string Text => "TRI";

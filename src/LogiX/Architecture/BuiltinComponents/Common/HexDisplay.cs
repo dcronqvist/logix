@@ -26,7 +26,7 @@ public class HexDisplayData : INodeDescriptionData
     }
 }
 
-[ScriptType("HEXDISPLAY"), NodeInfo("Hex Display", "Common", "core.markdown.hexdisplay")]
+[ScriptType("HEXDISPLAY"), NodeInfo("Hex Display", "Common", "logix_core:docs/components/hexdisplay.md")]
 public class HexDisplay : BoxNode<HexDisplayData>
 {
     public override string Text => "";

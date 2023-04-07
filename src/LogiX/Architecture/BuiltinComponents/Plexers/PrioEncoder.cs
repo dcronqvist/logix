@@ -27,7 +27,7 @@ public class PrioEncoderData : INodeDescriptionData
     }
 }
 
-[ScriptType("PRIOENCODER"), NodeInfo("Priority Encoder", "Plexers", "core.markdown.decoder")]
+[ScriptType("PRIOENCODER"), NodeInfo("Priority Encoder", "Plexers", "logix_core:docs/components/decoder.md")]
 public class PrioEncoder : BoxNode<PrioEncoderData>
 {
     public override string Text => "PENC";

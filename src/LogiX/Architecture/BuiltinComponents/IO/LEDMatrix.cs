@@ -53,7 +53,7 @@ public class LEDMatrixData : INodeDescriptionData
     }
 }
 
-[ScriptType("LEDMATRIX"), NodeInfo("LED Matrix", "Input/Output", "core.markdown.ledmatrix")]
+[ScriptType("LEDMATRIX"), NodeInfo("LED Matrix", "Input/Output", "logix_core:docs/components/ledmatrix.md")]
 public class LEDMatrix : Node<LEDMatrixData>
 {
     private LEDMatrixData _data;

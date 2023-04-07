@@ -29,7 +29,7 @@ public class ShifterData : INodeDescriptionData
     }
 }
 
-[ScriptType("SHIFTER"), NodeInfo("Shifter", "Arithmetic", "core.markdown.shifter")]
+[ScriptType("SHIFTER"), NodeInfo("Shifter", "Arithmetic", "logix_core:docs/components/shifter.md")]
 public class Shifter : BoxNode<ShifterData>
 {
     private ShifterData _data;

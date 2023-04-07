@@ -55,7 +55,7 @@ public class KeyboardData : INodeDescriptionData
     }
 }
 
-[ScriptType("KEYBOARD"), NodeInfo("Keyboard", "Input/Output", "core.markdown.keyboard")]
+[ScriptType("KEYBOARD"), NodeInfo("Keyboard", "Input/Output", "logix_core:docs/components/keyboard.md")]
 public class Keyboard : Node<KeyboardData>
 {
     private KeyboardData _data;

@@ -19,7 +19,7 @@ public class MultiplierData : INodeDescriptionData
     }
 }
 
-[ScriptType("MULTIPLIER"), NodeInfo("Multiplier", "Arithmetic", "core.markdown.multiplier")]
+[ScriptType("MULTIPLIER"), NodeInfo("Multiplier", "Arithmetic", "logix_core:docs/components/multiplier.md")]
 public class Multiplier : BoxNode<MultiplierData>
 {
     private MultiplierData _data;

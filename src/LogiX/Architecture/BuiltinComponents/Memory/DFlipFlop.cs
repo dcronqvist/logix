@@ -13,7 +13,7 @@ public class DFlipFlopData : INodeDescriptionData
     }
 }
 
-[ScriptType("DFLIPFLOP"), NodeInfo("D Flip Flop", "Memory", "core.markdown.dflipflop")]
+[ScriptType("DFLIPFLOP"), NodeInfo("D Flip Flop", "Memory", "logix_core:docs/components/dflipflop.md")]
 public class DFlipFlop : BoxNode<DFlipFlopData>
 {
     public override string Text => "D FF";

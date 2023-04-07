@@ -31,7 +31,7 @@ public class DemultiplexerData : INodeDescriptionData
     }
 }
 
-[ScriptType("DEMULTIPLEXER"), NodeInfo("Demultiplexer", "Plexers", "core.markdown.demultiplexer")]
+[ScriptType("DEMULTIPLEXER"), NodeInfo("Demultiplexer", "Plexers", "logix_core:docs/components/demultiplexer.md")]
 public class Demultiplexer : BoxNode<DemultiplexerData>
 {
     public override string Text => "DEMUX";

@@ -19,7 +19,7 @@ public class CounterData : INodeDescriptionData
     }
 }
 
-[ScriptType("COUNTER"), NodeInfo("Counter", "Memory", "core.markdown.counter")]
+[ScriptType("COUNTER"), NodeInfo("Counter", "Memory", "logix_core:docs/components/counter.md")]
 public class Counter : BoxNode<CounterData>
 {
     public override string Text => "CNT";

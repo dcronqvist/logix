@@ -39,7 +39,7 @@ public class RamData : INodeDescriptionData
     }
 }
 
-[ScriptType("RAM"), NodeInfo("RAM", "Memory", "core.markdown.ram")]
+[ScriptType("RAM"), NodeInfo("RAM", "Memory", "logix_core:docs/components/ram.md")]
 public class RAM : BoxNode<RamData>
 {
     public override string Text => "RAM";

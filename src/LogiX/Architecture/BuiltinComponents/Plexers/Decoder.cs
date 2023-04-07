@@ -33,7 +33,7 @@ public class DecoderData : INodeDescriptionData
     }
 }
 
-[ScriptType("DECODER"), NodeInfo("Decoder", "Plexers", "core.markdown.decoder")]
+[ScriptType("DECODER"), NodeInfo("Decoder", "Plexers", "logix_core:docs/components/decoder.md")]
 public class Decoder : BoxNode<DecoderData>
 {
     public override string Text => "DEC";

@@ -1006,7 +1006,7 @@ Under *projects*, you can see your circuits, and right clicking them in the side
         var open = true;
         if (ImGui.Begin("About LogiX", ref open))
         {
-            var about = LogiXWindow.ContentManager.GetContentItem<MarkdownFile>("logix_core:/docs/about.md");
+            var about = LogiXWindow.ContentManager.GetContentItem<MarkdownFile>("logix_core:docs/about.md");
             Utilities.RenderMarkdown(about.Text, (url) =>
             {
                 Utilities.OpenURL(url);

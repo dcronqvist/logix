@@ -28,7 +28,7 @@ public class BidirectionalData : INodeDescriptionData
     }
 }
 
-[ScriptType("BIDIRECTIONAL"), NodeInfo("Bidirectional", "Common", "core.markdown.template")]
+[ScriptType("BIDIRECTIONAL"), NodeInfo("Bidirectional", "Common", "logix_core:docs/components/template.md")]
 public class Bidirectional : BoxNode<BidirectionalData>
 {
     public override string Text => "DIR";

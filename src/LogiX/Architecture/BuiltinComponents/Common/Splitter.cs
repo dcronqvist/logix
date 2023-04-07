@@ -34,7 +34,7 @@ public class SplitterData : INodeDescriptionData
     }
 }
 
-[ScriptType("SPLITTER"), NodeInfo("Splitter", "Common", "core.markdown.splitter")]
+[ScriptType("SPLITTER"), NodeInfo("Splitter", "Common", "logix_core:docs/components/splitter.md")]
 public class Splitter : BoxNode<SplitterData>
 {
     public override string Text => "SPLT";

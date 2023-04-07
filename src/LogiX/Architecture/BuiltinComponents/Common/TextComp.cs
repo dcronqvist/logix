@@ -22,7 +22,7 @@ public class TextCompData : INodeDescriptionData
     }
 }
 
-[ScriptType("TEXTCOMP"), NodeInfo("Text", "Common", "core.markdown.text")]
+[ScriptType("TEXTCOMP"), NodeInfo("Text", "Common", "logix_core:docs/components/text.md")]
 public class TextComp : BoxNode<TextCompData>
 {
     public override string Text => "";

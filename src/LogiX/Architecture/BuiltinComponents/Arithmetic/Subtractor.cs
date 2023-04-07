@@ -4,7 +4,7 @@ using LogiX.Content.Scripting;
 
 namespace LogiX.Architecture.BuiltinComponents;
 
-[ScriptType("SUBTRACTOR"), NodeInfo("Subtractor", "Arithmetic", "core.markdown.subtractor")]
+[ScriptType("SUBTRACTOR"), NodeInfo("Subtractor", "Arithmetic", "logix_core:docs/components/subtractor.md")]
 public class Subtractor : ArithmeticNode<ArithmeticData>
 {
     public override string Text => "SUB";
