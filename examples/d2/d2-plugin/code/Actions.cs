@@ -42,7 +42,7 @@ namespace D2Plugin;
 [ScriptType("ram_context_extension")]
 public class RAMContextExtension : INodeContextExtension
 {
-    public string NodeType => "logix_builtin.script_type.RAM";
+    public string NodeType => "logix_core:script/RAM";
     public string MenuItemName => "Assemble from D2Assembly";
 
     public void Execute(Editor editor, Node node)

@@ -13,12 +13,12 @@ public class PluginContainer
         this.ContentSource = source;
     }
 
-    public IEnumerable<IPluginAction> GetActions()
+    public IEnumerable<IPluginAction> GetActions(ContentManager<ContentMeta> contentManager)
     {
-        //var identifier = this.ContentSource.GetIdentifier();
-        //var actionTypes = ScriptManager.GetScriptTypes().Where(t => t.Type.IsAssignableTo(typeof(IPluginAction))).ToList();
-        //return actionTypes.Where(t => t.Identifier.Split('.').First() == identifier).Select(t => t.CreateInstance<IPluginAction>());
-        yield break;
+        var identifier = contentManager.GetConfiguration().Loader.GetIdentifierForSource(this.ContentSource);
+
+        var actionTypes = ScriptManager.GetScriptTypes().Where(t => t.Content.IsAssignableTo(typeof(IPluginAction))).ToList();
+        return actionTypes.Where(t => t.Identifier.Split(':').First() == identifier).Select(t => t.CreateInstance<IPluginAction>());
     }
 
     public ContentMeta GetMeta()

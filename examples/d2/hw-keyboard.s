@@ -1,9 +1,3 @@
-; This is a program that prints "Hello World!" and then
-; allows the user to input as much text as they want
-; throught their keyboard, and it will be displayed on the
-; screen.  It is written in the D2 assembly language.
-
-
 .org $8000          ; Must start at $8000, since IO
                     ; is reserved for lower half
 

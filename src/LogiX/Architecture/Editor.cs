@@ -551,7 +551,7 @@ Under *projects*, you can see your circuits, and right clicking them in the side
         {
             var meta = plugin.GetMeta();
 
-            var allPluginActions = new NestedEditorAction((e) => plugin.GetActions().Count() > 0, plugin.GetActions().Select(a =>
+            var allPluginActions = new NestedEditorAction((e) => plugin.GetActions(Utilities.ContentManager).Count() > 0, plugin.GetActions(Utilities.ContentManager).Select(a =>
             {
                 return (a.Name, new EditorAction((e) => true, (e) => false, (e) =>
                 {

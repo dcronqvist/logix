@@ -149,6 +149,9 @@ public class LogiXWindow : Game
             Console.WriteLine($"Reloaded {e.Entry.EntryPath} in {e.Stage.StageName}!");
         };
 
+        var sources = ContentManager.CollectValidSources().ToList();
+        Console.WriteLine($"Found {sources.Count} valid sources!");
+
         Utilities.ContentManager = ContentManager;
 
         DisplayManager.OnFramebufferResize += (sender, e) =>
