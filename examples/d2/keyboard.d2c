@@ -1,0 +1,27 @@
+#define DDRA   0x0001
+#define PORTA  0x0000
+#define DDRB   0x0003
+#define PORTB  0x0002
+
+void printchar(char c) {
+   // print a character to the connected TTY
+
+   c = c + (char)0x0080;   // enable the 8th bit of character
+   *PORTB = c;             // send the character
+   *PORTB = (char)0;       // clear the character
+}
+
+void irq() {
+   // interrupt routine for printing pressed character
+
+   char c = *PORTA;        // read the character
+   *PORTA = (char)0x0080;  // clear the interrupt
+   *PORTA = (char)0x0000;  // clear character
+
+   printchar(c);
+}
+
+void main() {
+   *DDRB = (char)0x00ff; // set all 8 pins on port B to output
+   *DDRA = (char)0x0080; // set msb of port A to output, and rest input
+}

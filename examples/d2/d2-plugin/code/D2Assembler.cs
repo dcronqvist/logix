@@ -646,6 +646,7 @@ public class D2Assembler : D2AssemblyBaseVisitor<object>
         else if (dir.asciizdir() is not null)
         {
             var s = dir.asciizdir().STRINGLITERAL().GetText().Substring(1, dir.asciizdir().STRINGLITERAL().GetText().Length - 2);
+            s = s.Replace("\\n", "\n");
             foreach (var c in s)
             {
                 this.Emit((byte)c);

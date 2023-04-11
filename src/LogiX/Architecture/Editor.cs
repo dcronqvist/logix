@@ -62,6 +62,9 @@ public class Editor : Invoker<Circuit, Editor>
 
     public float CurrentActivity { get; set; } = 0f;
 
+    // Additional editor windows
+    public List<EditorWindow> EditorWindows { get; private set; } = new();
+
     // Some variables for popups, like the FileDialog modal and stuff
     public bool RequestedPopupModal { get; set; }
     public Modal PopupModal { get; set; }
@@ -616,6 +619,16 @@ Under *projects*, you can see your circuits, and right clicking them in the side
     {
         this.OpenPopup(new DynamicModal(title, ImGuiWindowFlags.AlwaysAutoResize, ImGuiPopupFlags.None, (e) => submit()));
         this.SimulationRunning = !stopSim;
+    }
+
+    public void OpenEditorWindow(EditorWindow window)
+    {
+        this.EditorWindows.Add(window);
+    }
+
+    public void CloseEditorWindow(EditorWindow window)
+    {
+        this.EditorWindows.Remove(window);
     }
 
     public async IAsyncEnumerable<string> TimedMessages(params (string, int)[] messages)
@@ -1398,6 +1411,15 @@ Under *projects*, you can see your circuits, and right clicking them in the side
         }
     }
 
+    private void SubmitEditorWindows()
+    {
+        var windows = this.EditorWindows.ToArray();
+        foreach (var ew in windows)
+        {
+            ew.SubmitUI(this);
+        }
+    }
+
     private bool styleEditorOpen = false;
     public void SubmitGUI()
     {
@@ -1470,6 +1492,9 @@ Under *projects*, you can see your circuits, and right clicking them in the side
 
         // Show the currently open popup modal
         this.SubmitPopupModals();
+
+        // Show open editor windows
+        this.SubmitEditorWindows();
 
         if (this.ShowMousePosition)
         {

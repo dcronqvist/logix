@@ -308,7 +308,7 @@ def alu_imm(alu_f, before, cin):
 
 def alu_abs(alu_f, before, cin, store_in_a):
     states_abs = [Q0, Q1, Q2, Q3, Q4, FETCH, MAM_PC | MR | LD_MARL | PC_INC, MAM_PC | MR | LD_MARH | PC_INC, before, MAM_MAR | MR | cin | alu_f | LD_R | LD_F | FSL_Z_ALU | FSL_C_ALU | FSL_N_ALU | FSL_I_REG, OE_R | MW | MAM_MAR, NF, NF, NF, NF, NF, NF, NF]
-    states_a = [Q0, Q1, Q2, Q3, Q4, FETCH, MAM_PC | MR | LD_MARL | PC_INC, MAM_PC | MR | LD_MARH | PC_INC, before, MAM_MAR | MR | cin | alu_f | LD_R | LD_F | FSL_Z_ALU | FSL_C_ALU | FSL_N_ALU | FSL_I_REG, MAM_PC | OE_R | LD_A, NF, NF, NF, NF, NF, NF, NF]
+    states_a = [Q0, Q1, Q2, Q3, Q4, FETCH, MAM_PC | MR | LD_MARL | PC_INC, MAM_PC | MR | LD_MARH | PC_INC, MAM_MAR | MR | LD_T, before, MAM_MAR | OE_A | cin | alu_f | LD_R | LD_F | FSL_Z_ALU | FSL_C_ALU | FSL_N_ALU | FSL_I_REG, MAM_PC | OE_R | LD_A, NF, NF, NF, NF, NF, NF, NF]
     if store_in_a:
         instr(states_a)
     else:

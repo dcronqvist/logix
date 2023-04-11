@@ -104,7 +104,7 @@ INSTRUCTION:
 	| 'lsp'
 	| 'brk';
 
-LABEL: [a-zA-Z][a-zA-Z0-9]*;
+LABEL: [a-zA-Z_][a-zA-Z_0-9]*;
 BINARY: '%' [0-1]+;
 HEXADECIMAL: '$' [0-9a-fA-F]+;
 DECIMAL: [0-9]+;

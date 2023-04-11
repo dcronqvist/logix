@@ -8,7 +8,7 @@
 // </auto-generated>
 //------------------------------------------------------------------------------
 
-// Generated from c:\Users\RichieZ\repos\logix\examples\d2\d2-plugin\code\D2Assembly\D2Assembly.g4 by ANTLR 4.9.2
+// Generated from c:\Users\Daniel\winrepos\logix\examples\d2\d2-plugin\code\D2Assembly\D2Assembly.g4 by ANTLR 4.9.2
 
 // Unreachable code detected
 #pragma warning disable 0162
@@ -19,7 +19,6 @@
 // Ambiguous reference in cref attribute
 #pragma warning disable 419
 
-namespace D2Plugin {
 using System;
 using System.IO;
 using System.Text;
@@ -1335,4 +1334,3 @@ public partial class D2AssemblyParser : Parser {
 
 
 }
-} // namespace D2Plugin

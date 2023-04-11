@@ -8,7 +8,7 @@
 // </auto-generated>
 //------------------------------------------------------------------------------
 
-// Generated from c:\Users\RichieZ\repos\logix\examples\d2\d2-plugin\code\D2Assembly\D2Assembly.g4 by ANTLR 4.9.2
+// Generated from c:\Users\Daniel\winrepos\logix\examples\d2\d2-plugin\code\D2Assembly\D2Assembly.g4 by ANTLR 4.9.2
 
 // Unreachable code detected
 #pragma warning disable 0162
@@ -19,7 +19,6 @@
 // Ambiguous reference in cref attribute
 #pragma warning disable 419
 
-namespace D2Plugin {
 using Antlr4.Runtime.Misc;
 using Antlr4.Runtime.Tree;
 using IToken = Antlr4.Runtime.IToken;
@@ -186,4 +185,3 @@ public partial class D2AssemblyBaseVisitor<Result> : AbstractParseTreeVisitor<Re
 	/// <return>The visitor result.</return>
 	public virtual Result VisitNumber([NotNull] D2AssemblyParser.NumberContext context) { return VisitChildren(context); }
 }
-} // namespace D2Plugin
