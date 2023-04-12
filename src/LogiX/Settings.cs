@@ -28,6 +28,7 @@ public static class Settings
     public const string UI_SCALE = "uiScale";
     public const string WINDOW_SIZE = "windowSize";
     public const string WINDOW_FULLSCREEN = "windowFullscreen";
+    public const string SHOW_URL_WARNING = "showUrlWarning";
 
     private static string _settingsFileLocation = "./";
     private static string _settingsFile = "settings.json";
@@ -47,7 +48,8 @@ public static class Settings
             new Setting() { Name = RECENT_OPEN_PROJECTS, Value = new List<string>() },
             new Setting() { Name = UI_SCALE, Value = "Medium" },
             new Setting() { Name = WINDOW_SIZE, Value = new Vector2i(1280, 720) },
-            new Setting() { Name = WINDOW_FULLSCREEN, Value = false }
+            new Setting() { Name = WINDOW_FULLSCREEN, Value = false },
+            new Setting() { Name = SHOW_URL_WARNING, Value = true }
         };
     }
 

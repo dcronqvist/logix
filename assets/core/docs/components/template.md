@@ -4,7 +4,7 @@ In this markdown file, you should describe the Component that you have created, 
 
 Make sure to include information about what the different pins do, and how they can be used as well.
 
-You can include images in your documentation by using the following syntax: ![image](core.texture.icon)
+You can include images in your documentation by using the following syntax: ![image alternative text](logix_core:core/icon.png)
 
 You can also create tables in your documentation, using the following syntax:
 

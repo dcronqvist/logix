@@ -12,6 +12,7 @@ namespace LogiX;
 public class ImGuiMarkdownRenderer : RendererBase
 {
     public Action<string> OnLinkClicked;
+    private string _popupID = "##markdownPopup";
 
     public ImGuiMarkdownRenderer(Action<string> onLinkClicked)
     {
@@ -189,16 +190,63 @@ public class LinkRenderer : MarkdownObjectRenderer<ImGuiMarkdownRenderer, LinkIn
 
     public void DoHyperlink(ImGuiMarkdownRenderer renderer, LinkInline obj)
     {
+        var popupID = $"Link Warning##{obj.Url}";
         var color = ColorF.LightSkyBlue;
         ImGui.PushStyleColor(ImGuiCol.Text, color.ToVector4());
         renderer.Render(obj.FirstChild);
         Underline(color.ToVector4());
         if (ImGui.IsItemClicked())
         {
-            renderer.OnLinkClicked?.Invoke(obj.Url);
+            var showWarning = Settings.GetSetting<bool>(Settings.SHOW_URL_WARNING);
+
+            if (!showWarning)
+            {
+                renderer.OnLinkClicked?.Invoke(obj.Url);
+            }
+            else
+            {
+                ImGui.OpenPopup(popupID);
+            }
         }
         ImGui.PopStyleColor();
         ImGui.SameLine(0, 0);
+
+        bool open = true;
+        if (ImGui.BeginPopupModal(popupID, ref open, ImGuiWindowFlags.AlwaysAutoResize))
+        {
+            ImGui.Text("You are about to open a link to an external website!\nThis may be unsafe. Pressing \"Open link\" will\nopen the link in your default browser.");
+
+            ImGui.Spacing();
+
+            ImGui.Text($"Link: {obj.Url}");
+
+            ImGui.Spacing();
+
+            var showWarning = Settings.GetSetting<bool>(Settings.SHOW_URL_WARNING);
+            var disableWarning = !showWarning;
+            ImGui.Checkbox("Don't show this warning again", ref disableWarning);
+            Settings.SetSetting(Settings.SHOW_URL_WARNING, !disableWarning);
+
+            ImGui.Spacing();
+
+            if (ImGui.Button("Open link"))
+            {
+                renderer.OnLinkClicked?.Invoke(obj.Url);
+                ImGui.CloseCurrentPopup();
+            }
+            ImGui.SameLine();
+            if (ImGui.Button("Cancel"))
+            {
+                ImGui.CloseCurrentPopup();
+            }
+
+            ImGui.EndPopup();
+        }
+
+        if (!open)
+        {
+            ImGui.CloseCurrentPopup();
+        }
     }
 
     public void DoImage(ImGuiMarkdownRenderer renderer, LinkInline obj)

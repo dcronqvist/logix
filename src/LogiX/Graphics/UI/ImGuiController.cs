@@ -93,7 +93,7 @@ namespace LogiX.Graphics.UI
             var style = ImGui.GetStyle();
             var colors = style.Colors;
 
-            Vector4 bgColor = new ColorF(37, 37, 38, 220).ToVector4();
+            Vector4 bgColor = new ColorF(37, 37, 38, 240).ToVector4();
             Vector4 lightBgColor = new ColorF(82, 82, 85, 255).ToVector4();
             Vector4 veryLightBgColor = new ColorF(90, 90, 95, 255).ToVector4();
 
