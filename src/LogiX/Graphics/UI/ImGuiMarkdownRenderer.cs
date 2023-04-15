@@ -199,6 +199,8 @@ public class LinkRenderer : MarkdownObjectRenderer<ImGuiMarkdownRenderer, LinkIn
         {
             var showWarning = Settings.GetSetting<bool>(Settings.SHOW_URL_WARNING);
 
+            if (!obj.Url.StartsWith("http")) showWarning = false; // Don't show warning for local links
+
             if (!showWarning)
             {
                 renderer.OnLinkClicked?.Invoke(obj.Url);

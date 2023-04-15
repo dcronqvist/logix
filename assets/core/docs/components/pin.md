@@ -4,7 +4,7 @@ The pin is one of the most fundamental components in LogiX. It allows you to int
 
 ### Pin Types
 
-There are two types of pins: **Input** and **Output.** It is however very important to note that this pin type only affects the way it interacts with you the user, and the direct circuit that you are currently editing. It does not affect the way that the pin is able to be used when used as a sub circuit. Any pin, regardless of type, can be used as an input or output pin in a sub circuit. This is to make sure that you can use a pin in any way you want.
+There are two types of pins: **Input** and **Output.** It is however very important to note that this pin type only affects the way it interacts with you the user, and the direct circuit that you are currently editing. It does not affect the way that the pin is able to be used when used as a sub circuit. Any pin, regardless of type, can be used as an input or output pin in a sub circuit. This is to make sure that you can use a pin in any way you want, and to allow for bidirectional pins (very useful for components that use buses).
 
 **Input** pins will allow you as the user to interact with the component, by toggling bits on the pin. It will output the value of the pin.
 

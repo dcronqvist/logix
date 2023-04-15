@@ -8,7 +8,7 @@ public class NodeInfoAttribute : Attribute
     public string DocumentationAsset { get; set; }
     public bool Hidden { get; set; }
 
-    public NodeInfoAttribute(string displayName, string category, string documentationAsset = "core.markdown.template", bool hidden = false)
+    public NodeInfoAttribute(string displayName, string category, string documentationAsset = "logix_core:core/docs/components/template.md", bool hidden = false)
     {
         this.DocumentationAsset = documentationAsset;
         DisplayName = displayName;

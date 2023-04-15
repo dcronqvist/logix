@@ -501,24 +501,9 @@ public class Editor : Invoker<Circuit, Editor>
             this._displayAboutWindow = true;
         }, 0, Keys.Unknown));
 
-        this.AddMainMenuItem("Help", "Documentation", new EditorAction((e) => true, (e) => false, (e) =>
+        this.AddMainMenuItem("Help", "Documentation", new EditorAction((e) => !this.EditorWindows.Any(ew => ew is DocumentationWindow), (e) => false, (e) =>
         {
-            this.OpenPopup(new DynamicModal("Documentation", ImGuiWindowFlags.None, ImGuiPopupFlags.None, (e) =>
-            {
-                Utilities.RenderMarkdown(@"
-# Docs
-
-This is a work in progress, and documentation will be added later, when stuff stops changing so much.
-
-For now, you can always right click a component in the left component window and click _**Show Help**_ to get help for that specific component.
-
-Under *projects*, you can see your circuits, and right clicking them in the sidebar will allow you to edit them!
-                ", (link) => { });
-                if (ImGui.Button("OK"))
-                {
-                    ImGui.CloseCurrentPopup();
-                }
-            }));
+            this.OpenEditorWindow(new DocumentationWindow());
         }, 0, Keys.Unknown));
 
         // ALL VIEW ACTIONS
@@ -1328,17 +1313,14 @@ Under *projects*, you can see your circuits, and right clicking them in the side
                         {
                             if (ImGui.MenuItem("Show Help"))
                             {
-                                if (cInfo.DocumentationAsset is null)
+                                if (this.EditorWindows.Any(w => w is DocumentationWindow))
                                 {
-                                    this.OpenErrorPopup("Missing documentation", false, () => ImGui.Text("No documentation available for this component."));
-                                }
-                                else if (LogiXWindow.ContentManager.GetContentItem<MarkdownFile>(cInfo.DocumentationAsset) is null)
-                                {
-                                    this.OpenErrorPopup("Missing documentation", false, () => ImGui.Text("No documentation available for this component."));
+                                    var window = this.EditorWindows.First(w => w is DocumentationWindow) as DocumentationWindow;
+                                    window.GoTo(cInfo.DocumentationAsset);
                                 }
                                 else
                                 {
-                                    this.CurrentlyOpenCircuitInfoDocumentation = cInfo;
+                                    this.OpenEditorWindow(new DocumentationWindow(cInfo.DocumentationAsset));
                                 }
                             }
                             ImGui.EndPopup();
@@ -1428,33 +1410,6 @@ Under *projects*, you can see your circuits, and right clicking them in the side
         {
             ImGui.Begin("Style Editor", ref styleEditorOpen);
             ImGui.ShowStyleEditor();
-            ImGui.End();
-        }
-
-        if (this.CurrentlyOpenCircuitInfoDocumentation is not null)
-        {
-            var open = true;
-            if (ImGui.Begin("Component Documentation", ref open, ImGuiWindowFlags.None))
-            {
-                var docAsset = LogiXWindow.ContentManager.GetContentItem<MarkdownFile>(this.CurrentlyOpenCircuitInfoDocumentation.DocumentationAsset);
-                Utilities.RenderMarkdown(docAsset.Text, (url) =>
-                {
-                    if (url.StartsWith("http"))
-                    {
-                        Utilities.OpenURL(url);
-                    }
-                    else if (url.StartsWith("component://"))
-                    {
-                        var component = NodeDescription.GetNodeInfo(url.Substring("component://".Length));
-                        this.CurrentlyOpenCircuitInfoDocumentation = component;
-                    }
-                });
-            }
-
-            if (!open)
-            {
-                this.CurrentlyOpenCircuitInfoDocumentation = null;
-            }
             ImGui.End();
         }
 
