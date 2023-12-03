@@ -1,7 +1,0 @@
-{
-    "name": "D2 Plugin",
-    "identifier": "d2-plugin",
-    "version": "X.X",
-    "author": "dcronqvist",
-    "description": "Plugin for the D2 Processor. Adds ability to assemble D2ASM into the RAM of the D2 Processor."
-}

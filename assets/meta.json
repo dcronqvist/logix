@@ -1,0 +1,9 @@
+{
+  "identifier": "logix-core",
+  "author": "dcronqvist",
+  "name": "LogiX Core",
+  "description": "Core functionality for LogiX",
+  "version": "1.0.0",
+  "overwrites": [],
+  "dependencies": []
+}

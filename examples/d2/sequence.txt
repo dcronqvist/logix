@@ -1,7 +1,0 @@
-connect_tty TTY_MAIN;
-connect_keyboard KBD_MAIN;
-
-push RESET, 2000;
-set AUTO_CLK=0b1;
-
-continue;

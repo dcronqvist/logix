@@ -1,71 +1,59 @@
 <Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup Condition="'$(Configuration)'=='Debug'">
+    <OutputType>Exe</OutputType>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)'=='Release'">
+    <OutputType>WinExe</OutputType>
+    <IncludeDebugSymbols>false</IncludeDebugSymbols>
+  </PropertyGroup>
+
   <PropertyGroup>
-    <TargetFramework>net7.0</TargetFramework>
-    <ImplicitUsings>enable</ImplicitUsings>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>disable</ImplicitUsings>
+    <Nullable>disable</Nullable>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <LangVersion>preview</LangVersion>
-    <EnablePreviewFeatures>True</EnablePreviewFeatures>
-    <ApplicationIcon>../../assets/core/core/icon.ico</ApplicationIcon>
-    <PublishSingleFile>true</PublishSingleFile>
-    <LogiXPlatform>$(OS)</LogiXPlatform>
-    <OutputType>Exe</OutputType>
+    <RunWorkingDirectory>$(MSBuildProjectDirectory)/../..</RunWorkingDirectory>
+    <ApplicationIcon>_static/icon.ico</ApplicationIcon>
   </PropertyGroup>
 
-  <PropertyGroup Condition="$(LogiXType) == 'GUI'">
-    <OutputType>WinExe</OutputType>
-  </PropertyGroup>
+  <PropertyGroup>
+    <!-- GL.cs configuration options! -->
 
-  <PropertyGroup Condition="$(LogiXType) == 'CLI'">
-    <OutputType>Exe</OutputType>
-  </PropertyGroup>
+    <!-- Profile: CORE/COMPAT -->
+    <!-- COMPAT not implemented yet -->
+    <OpenGLProfile>CORE</OpenGLProfile>
 
-  <PropertyGroup Condition="$(LogiXPlatform) == 'WINDOWS_NT'">
-    <DefineConstants>_WINDOWS</DefineConstants>
-  </PropertyGroup>
+    <!-- Version: Any valid OpenGL version from 1.0-4.6 -->
+    <OpenGLVersionMajor>3</OpenGLVersionMajor>
+    <OpenGLVersionMinor>3</OpenGLVersionMinor>
 
-  <PropertyGroup Condition="$(LogiXPlatform) == 'OSX'">
-    <DefineConstants>_OSX</DefineConstants>
+    <!-- Defining exposed wrapper API (SAFE/UNSAFE/BOTH) -->
+    <!-- SAFE: Only safe functions are exposed -->
+    <!-- UNSAFE: Only unsafe functions are exposed -->
+    <!-- BOTH: Both safe and unsafe functions are exposed -->
+    <OpenGLWrapperAPI>BOTH</OpenGLWrapperAPI>
+
+    <!-- Defining constants for compile time availability of APIs -->
+    <DefineConstants>$(DefineConstants);OGL_V_$(OpenGLVersionMajor)_$(OpenGLVersionMinor);OGL_P_$(OpenGLProfile);OGL_WRAPPER_API_$(OpenGLWrapperAPI)</DefineConstants>
   </PropertyGroup>
 
   <ItemGroup>
-    <WinLibDlls Include="$(ProjectDir)\libs\win\**\*.*" />
-    <OSXLibDlls Include="$(ProjectDir)\libs\osx\**\*.*" />
-    <AssetFiles Include="$(ProjectDir)\..\..\assets\**\*" />
+    <PackageReference Include="DotGLFW" Version="1.0.2" />
+    <PackageReference Include="ImGui.NET" Version="1.90.0.1" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="7.0.0" />
+    <PackageReference Include="NLua" Version="1.6.3" />
+    <PackageReference Include="StbImageSharp" Version="2.27.13" />
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\modules\Symphony\Symphony\Symphony.csproj" />
+    <ProjectReference Include="../../modules/Symphony/Symphony/Symphony.csproj" />
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="ANTLR4.Runtime.Standard" Version="4.9.3" />
-    <PackageReference Include="Cyotek.Drawing.BitmapFont" Version="2.0.4" />
-    <PackageReference Include="FreeTypeSharp" Version="2.0.0.12-ci" />
-    <PackageReference Include="Markdig" Version="0.30.4" />
-    <PackageReference Include="QuikGraph" Version="2.5.0" />
-    <PackageReference Include="StbImageSharp" Version="2.27.11" />
-    <PackageReference Include="ImGui.NET" Version="1.88.0" />
-    <PackageReference Include="System.CommandLine" Version="2.0.0-beta4.22272.1" />
+    <EmbeddedResource Include="_embeds/*" />
   </ItemGroup>
 
-  <Target Name="CopyWinLibDlls" AfterTargets="Build" Condition="$(LogiXPlatform) == 'WINDOWS_NT'">
-    <Message Text="Copying Win Libs @(WinLibDlls) to output directory $(OutputPath)..." Importance="High" />
-    <Copy SourceFiles="@(WinLibDlls)" DestinationFolder="$(OutputPath)" SkipUnchangedFiles="true" />
-  </Target>
-
-  <Target Name="CopyOSXLibDlls" AfterTargets="Build" Condition="$(LogiXPlatform) == 'OSX'">
-    <Message Text="Copying OSX Libs @(OSXLibDlls) to output directory $(OutputPath)..." Importance="High" />
-    <Copy SourceFiles="@(OSXLibDlls)" DestinationFolder="$(OutputPath)" SkipUnchangedFiles="true" />
-  </Target>
-
-  <Target Name="CopyAssetFiles" AfterTargets="Build">
-    <Message Text="Copying Asset Files to output directory $(OutputPath)..." Importance="High" />
-    <Message Text="Built $(LogiXType) LogiX, $(OutputType)" Importance="High" />
-    <Copy SourceFiles="@(AssetFiles)" DestinationFolder="$(OutputPath)\assets\%(RecursiveDir)" SkipUnchangedFiles="true" />
-  </Target>
-
-  <Target Name="CleanAssetFiles" AfterTargets="Clean">
-    <Message Text="Cleaning Asset Files from output directory $(OutputPath)..." Importance="High" />
-    <RemoveDir Directories="$(OutputPath)\assets" />
-  </Target>
 </Project>

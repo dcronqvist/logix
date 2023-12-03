@@ -1,0 +1,16 @@
+{
+  "identifier": "logix-dev",
+  "author": "dcronqvist",
+  "name": "LogiX Core",
+  "description": "Development functionality for LogiX",
+  "version": "0.0.1",
+  "overwrites": [
+    "logix-core:textures/icon.png"
+  ],
+  "dependencies": [
+    {
+      "identifier": "logix-core",
+      "version": "1.0.0"
+    }
+  ]
+}

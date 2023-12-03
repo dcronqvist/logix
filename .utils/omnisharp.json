@@ -1,7 +1,0 @@
-{
-    "FileOptions": {
-        "ExcludeSearchPatterns": [
-            "modules/**/*.*"
-        ]
-    }
-}

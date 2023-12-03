@@ -60,7 +60,7 @@ public struct ColorF
 
     public static ColorF operator *(ColorF left, float right)
     {
-        return new ColorF(left.R, left.G, left.B, left.A * right);
+        return new ColorF(left.R * right, left.G * right, left.B * right, left.A * right);
     }
 
     public float[] ToFloatArray()
@@ -101,6 +101,16 @@ public struct ColorF
             left.G + right.G,
             left.B + right.B,
             left.A + right.A
+        );
+    }
+
+    public static ColorF FromHue(float hue)
+    {
+        return new ColorF(
+            MathF.Sin(hue) / 2f + 0.5f,
+            MathF.Sin(hue + 2f) / 2f + 0.5f,
+            MathF.Sin(hue + 4f) / 2f + 0.5f,
+            1f
         );
     }
 

@@ -1,52 +1,100 @@
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
 using System.Text.Json;
+using LogiX.Content.Loaders;
+using LogiX.UserInterfaceContext;
 using Symphony;
 
 namespace LogiX.Content;
 
-public class ContentLoader : IContentLoader<ContentMeta>
+public class ContentLoader : IContentLoader
 {
-    private Dictionary<string, IContentItemLoader> _loaders = new Dictionary<string, IContentItemLoader>();
+    private readonly IAsyncGLContextProvider _gLContextProvider;
 
-    public ContentLoader()
+    public ContentLoader(IAsyncGLContextProvider gLContextProvider)
     {
-        _loaders.Add(".png", new TextureLoader());
-        _loaders.Add(".fs", new ShaderLoader());
-        _loaders.Add(".vs", new ShaderLoader());
-        _loaders.Add(".shader", new ShaderProgramLoader());
-        _loaders.Add(".dll", new AssemblyLoader());
-        _loaders.Add(".fontzip", new FontLoader());
-        _loaders.Add(".md", new MarkdownFileLoader());
+        _gLContextProvider = gLContextProvider;
     }
 
     public string GetIdentifierForSource(IContentSource source)
     {
-        using var structure = source.GetStructure();
-
-        using (var stream = structure.GetEntryStream("meta.json", out var entry))
-        {
-            var options = new JsonSerializerOptions()
-            {
-                PropertyNamingPolicy = JsonNamingPolicy.CamelCase
-            };
-            var metadata = JsonSerializer.Deserialize<ContentMeta>(stream, options);
-
-            return metadata.Identifier;
-        }
+        return GetContentMeta(source).Identifier;
     }
 
     public IEnumerable<IContentLoadingStage> GetLoadingStages()
     {
-        yield return new ShaderLoadingStage(_loaders, true, ".fs", ".vs");
-        yield return new ShaderProgramLoadingStage(_loaders, true, ".shader");
-
-        yield return new CoreLoadingStage(_loaders, true, ".png", ".fontzip");
-        yield return new NormalLoadingStage(_loaders, true, ".png", ".dll", ".fontzip", ".md");
-
-        yield return new ScriptTypeStage(this);
+        yield return new LoadingStage("Core",
+            new ShaderLoader(_gLContextProvider));
+        yield return new LoadingStage("Main",
+            new TextureLoader(_gLContextProvider),
+            new FontLoader(_gLContextProvider),
+            new LuaScriptLoader());
     }
 
     public IEnumerable<IContentSource> GetSourceLoadOrder(IEnumerable<IContentSource> sources)
     {
-        return sources;
+        // Topologically order sources by dependencies
+        var sourceList = sources.ToList();
+        var sourceDictionary = sourceList.ToDictionary(source => $"{GetContentMeta(source).Identifier}:{GetContentMeta(source).Version}");
+        var sourceDependencies = sourceList.ToDictionary(source => $"{GetContentMeta(source).Identifier}:{GetContentMeta(source).Version}", source => GetContentMeta(source).Dependencies);
+
+        var orderedSources = new List<IContentSource>();
+        var visitedSources = new HashSet<string>();
+
+        void visit(IContentSource source)
+        {
+            string identifier = GetContentMeta(source).Identifier;
+            string version = GetContentMeta(source).Version;
+            string key = $"{identifier}:{version}";
+            if (visitedSources.Contains(key))
+            {
+                return;
+            }
+
+            visitedSources.Add(key);
+
+            foreach (var dependency in sourceDependencies[key])
+            {
+                if (!sourceDictionary.ContainsKey($"{dependency.Identifier}:{dependency.Version}"))
+                {
+                    throw new System.Exception($"Missing dependency {dependency.Identifier}:{dependency.Version}");
+                }
+
+                visit(sourceDictionary[$"{dependency.Identifier}:{dependency.Version}"]);
+            }
+
+            orderedSources.Add(source);
+        }
+
+        foreach (var source in sourceList)
+        {
+            visit(source);
+        }
+
+        return orderedSources;
+    }
+
+    private ContentMeta GetContentMeta(IContentSource source)
+    {
+        var structure = source.GetStructure();
+        var metadata = structure.GetEntryStream("meta.json");
+        var deserialized = DeserializeJson<ContentMeta>(metadata);
+        return deserialized;
+    }
+
+    private T DeserializeJson<T>(Stream stream)
+    {
+        using var reader = new StreamReader(stream);
+        string jsonText = reader.ReadToEnd();
+
+        var options = new JsonSerializerOptions
+        {
+            AllowTrailingCommas = true,
+            ReadCommentHandling = JsonCommentHandling.Skip,
+            PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+        };
+
+        return JsonSerializer.Deserialize<T>(jsonText, options);
     }
 }

@@ -1,7 +1,9 @@
-using LogiX.Content;
-using static LogiX.OpenGL.GL;
-using Symphony;
+using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Numerics;
+using Symphony;
+using static DotGL.GL;
 
 namespace LogiX.Graphics;
 
@@ -56,118 +58,54 @@ public struct ShaderVariable
     }
 }
 
-public class ShaderProgramDescription
+public class ShaderProgram : Content<ShaderProgram>
 {
-    public string VertexShader { get; set; }
-    public string FragmentShader { get; set; }
-}
+    private uint _programId;
+    public uint ProgramID => _programId;
 
-public class ShaderProgram : GLContentItem<ShaderProgramDescription>
-{
-    public uint ProgramID { get; private set; }
-    private static Stack<uint> _programStack = new Stack<uint>();
-
-    public ShaderProgram(IContentSource source, ShaderProgramDescription content) : base(source, content)
+    private unsafe static bool TryCompileShader(int shaderType, string source, out uint shaderId, out string error)
     {
-    }
+        uint shader = glCreateShader(shaderType);
+        glShaderSource(shader, source);
 
-    private ShaderProgram(VertexShader vs, FragmentShader fs) : base(null, new ShaderProgramDescription())
-    {
-        this.InitGL(vs, fs);
-    }
+        glCompileShader(shader);
 
-    public static ShaderProgram Create(VertexShader vs, FragmentShader fs)
-    {
-        return new ShaderProgram(vs, fs);
-    }
-
-    public unsafe void InitGL(VertexShader vs, FragmentShader fs)
-    {
-        // Create program
-        uint programID = glCreateProgram();
-        glAttachShader(programID, vs.ShaderID);
-        glAttachShader(programID, fs.ShaderID);
-
-        // Link program
-        glLinkProgram(programID);
         int* status = stackalloc int[1];
-        glGetProgramiv(programID, GL_LINK_STATUS, status);
+        glGetShaderiv(shader, GL_COMPILE_STATUS, status);
 
-        if (*status == GL_FALSE)
+        if (*status == 0)
         {
+            // An error occured
             int* length = stackalloc int[1];
-            glGetProgramiv(programID, GL_INFO_LOG_LENGTH, length);
-            string info = glGetProgramInfoLog(programID, *length);
-
-            throw new Exception($"Failed to link shader program: {info}");
+            glGetShaderiv(shader, GL_INFO_LOG_LENGTH, length);
+            error = glGetShaderInfoLog(shader, *length);
+            shaderId = 0;
+            return false;
         }
 
-        this.ProgramID = programID;
+        error = null;
+        shaderId = shader;
+        return true;
     }
 
-    public unsafe override void InitGL(ShaderProgramDescription newContent)
+    private unsafe static bool TryLinkProgram(uint shaderProgram, out string error)
     {
-        var vertexShader = Utilities.ContentManager.GetContentItem<VertexShader>(newContent.VertexShader);
-        var fragmentShader = Utilities.ContentManager.GetContentItem<FragmentShader>(newContent.FragmentShader);
+        glLinkProgram(shaderProgram);
 
-        vertexShader.ContentUpdated += (sender, e) => { this.OnContentUpdated(newContent); };
-        fragmentShader.ContentUpdated += (sender, e) => { this.OnContentUpdated(newContent); };
-
-        // Create program
-        uint programID = glCreateProgram();
-        glAttachShader(programID, vertexShader.ShaderID);
-        glAttachShader(programID, fragmentShader.ShaderID);
-
-        // Link program
-        glLinkProgram(programID);
         int* status = stackalloc int[1];
-        glGetProgramiv(programID, GL_LINK_STATUS, status);
+        glGetProgramiv(shaderProgram, GL_LINK_STATUS, status);
 
-        if (*status == GL_FALSE)
+        if (*status == 0)
         {
+            // An error occured
             int* length = stackalloc int[1];
-            glGetProgramiv(programID, GL_INFO_LOG_LENGTH, length);
-            string info = glGetProgramInfoLog(programID, *length);
-
-            throw new Exception($"Failed to link shader program: {info}");
+            glGetProgramiv(shaderProgram, GL_INFO_LOG_LENGTH, length);
+            error = glGetProgramInfoLog(shaderProgram, *length);
+            return false;
         }
 
-        this.ProgramID = programID;
-    }
-
-    public override void DestroyGL()
-    {
-        if (this.ProgramID != 0)
-        {
-            glDeleteProgram(this.ProgramID);
-            this.ProgramID = 0;
-        }
-    }
-
-    public void Use(Action action)
-    {
-        ShaderProgram.Push(this);
-        action();
-        ShaderProgram.Pop();
-    }
-
-    public static void Push(ShaderProgram program)
-    {
-        _programStack.Push(program.ProgramID);
-        glUseProgram(program.ProgramID);
-    }
-
-    public static void Pop()
-    {
-        var removed = _programStack.Pop();
-        if (_programStack.TryPeek(out uint next))
-        {
-            glUseProgram(next);
-        }
-        else
-        {
-            glUseProgram(0);
-        }
+        error = null;
+        return true;
     }
 
     public bool HasAttribs(out string[] missing, params (string, string, int)[] attributes)
@@ -177,7 +115,7 @@ public class ShaderProgram : GLContentItem<ShaderProgramDescription>
 
         foreach ((var attrib, var type, var loc) in attributes)
         {
-            if (!existing.Any(a => a.Name == attrib && a.TypeName == type))
+            if (!existing.Any(a => a.Name == attrib && a.TypeName == type && a.Location == loc))
             {
                 miss.Add(attrib);
             }
@@ -213,7 +151,7 @@ public class ShaderProgram : GLContentItem<ShaderProgramDescription>
 
         for (uint i = 0; i < *uniformAmount; i++)
         {
-            glGetActiveUniform(this.ProgramID, i, 16, out int length, out int size, out int type, out string name);
+            string name = glGetActiveUniform(this.ProgramID, i, 16, out int size, out int type);
             var variable = new ShaderVariable()
             {
                 Name = name,
@@ -235,7 +173,7 @@ public class ShaderProgram : GLContentItem<ShaderProgramDescription>
 
         for (uint i = 0; i < *attribAmount; i++)
         {
-            glGetActiveAttrib(this.ProgramID, i, 16, out int length, out int size, out int type, out string name);
+            string name = glGetActiveAttrib(this.ProgramID, i, 16, out int size, out int type);
             var variable = new ShaderVariable()
             {
                 Name = name,
@@ -248,55 +186,104 @@ public class ShaderProgram : GLContentItem<ShaderProgramDescription>
         return attribs;
     }
 
-    public void SetInt(string name, int value)
+    public static bool TryCreateShader(string vertexShaderSource, string fragmentShaderSource, out ShaderProgram program, out string[] errors)
     {
-        glUniform1i(glGetUniformLocation(this.ProgramID, name), value);
+        program = null;
+        List<string> errorList = new List<string>();
+
+        if (!TryCompileShader(GL_VERTEX_SHADER, vertexShaderSource, out uint vertexShader, out string vertexError))
+        {
+            errorList.Add($"Vertex Shader error: {vertexError.Trim()}");
+        }
+        if (!TryCompileShader(GL_FRAGMENT_SHADER, fragmentShaderSource, out uint fragmentShader, out string fragmentError))
+        {
+            errorList.Add($"Fragment Shader error: {fragmentError.Trim()}");
+        }
+
+        if (errorList.Count > 0)
+        {
+            errors = errorList.ToArray();
+            return false;
+        }
+
+        uint programId = glCreateProgram();
+        glAttachShader(programId, vertexShader);
+        glAttachShader(programId, fragmentShader);
+
+        if (!TryLinkProgram(programId, out string linkError))
+        {
+            errorList.Add(linkError);
+        }
+
+        errors = errorList.ToArray();
+        program = new ShaderProgram()
+        {
+            _programId = programId
+        };
+
+        return true;
     }
 
-    public void SetFloat(string name, float value)
+    private void Use() => glUseProgram(_programId);
+
+    private static Stack<uint> _boundPrograms = new Stack<uint>();
+
+    private static void PushUse(ShaderProgram program)
     {
-        glUniform1f(glGetUniformLocation(this.ProgramID, name), value);
+        _boundPrograms.Push(program._programId);
+        program.Use();
     }
 
-    public void SetVec2(string name, float x, float y)
+    private static void PopUse()
     {
-        glUniform2f(glGetUniformLocation(this.ProgramID, name), x, y);
+        _boundPrograms.Pop();
+        glUseProgram(_boundPrograms.TryPeek(out uint program) ? program : 0); // 0 is the default program (no program)
     }
 
-    public void SetVec3(string name, float x, float y, float z)
+    public void UseWith(Action action)
     {
-        glUniform3f(glGetUniformLocation(this.ProgramID, name), x, y, z);
+        PushUse(this);
+        action();
+        PopUse();
     }
 
-    public void SetVec4(string name, float x, float y, float z, float w)
+    private static float[] GetMatrix4x4Values(Matrix4x4 matrix)
     {
-        glUniform4f(glGetUniformLocation(this.ProgramID, name), x, y, z, w);
+        return new float[]
+        {
+            matrix.M11, matrix.M12, matrix.M13, matrix.M14,
+            matrix.M21, matrix.M22, matrix.M23, matrix.M24,
+            matrix.M31, matrix.M32, matrix.M33, matrix.M34,
+            matrix.M41, matrix.M42, matrix.M43, matrix.M44
+        };
     }
 
-    public void SetMatrix4x4(string name, Matrix4x4 matrix)
+    // Uniform API
+    public void SetUniform1f(string name, float value) => glUniform1f(glGetUniformLocation(_programId, name), value);
+    public void SetUniform2f(string name, float x, float y) => glUniform2f(glGetUniformLocation(_programId, name), x, y);
+    public void SetUniform2f(string name, Vector2 vector) => SetUniform2f(name, vector.X, vector.Y);
+    public void SetUniform3f(string name, float x, float y, float z) => glUniform3f(glGetUniformLocation(_programId, name), x, y, z);
+    public void SetUniform3f(string name, Vector3 vector) => SetUniform3f(name, vector.X, vector.Y, vector.Z);
+    public void SetUniform4f(string name, float x, float y, float z, float w) => glUniform4f(glGetUniformLocation(_programId, name), x, y, z, w);
+    public void SetUniform4f(string name, Vector4 vector) => SetUniform4f(name, vector.X, vector.Y, vector.Z, vector.W);
+    public void SetUniformfv(string name, float[] values) => glUniform1fv(glGetUniformLocation(_programId, name), values);
+    public void SetUniform1i(string name, int value) => glUniform1i(glGetUniformLocation(_programId, name), value);
+    public void SetUniform2i(string name, int x, int y) => glUniform2i(glGetUniformLocation(_programId, name), x, y);
+    public void SetUniform3i(string name, int x, int y, int z) => glUniform3i(glGetUniformLocation(_programId, name), x, y, z);
+    public void SetUniform4i(string name, int x, int y, int z, int w) => glUniform4i(glGetUniformLocation(_programId, name), x, y, z, w);
+    public void SetUniformiv(string name, int[] values) => glUniform1iv(glGetUniformLocation(_programId, name), values);
+    public unsafe void SetUniformMatrix2fv(string name, int amount, bool transpose, float[] values) { fixed (float* f = &values[0]) glUniformMatrix2fv(glGetUniformLocation(_programId, name), amount, transpose, f); }
+    public unsafe void SetUniformMatrix3fv(string name, int amount, bool transpose, float[] values) { fixed (float* f = &values[0]) glUniformMatrix3fv(glGetUniformLocation(_programId, name), amount, transpose, f); }
+    public unsafe void SetUniformMatrix4fv(string name, int amount, bool transpose, float[] values) { fixed (float* f = &values[0]) glUniformMatrix4fv(glGetUniformLocation(_programId, name), amount, transpose, f); }
+    public unsafe void SetUniformMatrix4f(string name, bool transpose, Matrix4x4 matrix) { float[] vals = GetMatrix4x4Values(matrix); fixed (float* f = &vals[0]) glUniformMatrix4fv(glGetUniformLocation(_programId, name), 1, transpose, f); }
+
+    protected override void OnContentUpdated(ShaderProgram newContent)
     {
-        glUniformMatrix4fv(glGetUniformLocation(ProgramID, name), 1, false, Utilities.GetMatrix4x4Values(matrix));
+        _programId = newContent._programId;
     }
 
-    public void SetFloatArray(string name, float[] values)
+    public override void Unload()
     {
-        glUniform1fv(glGetUniformLocation(ProgramID, name), values.Length, values);
-    }
-
-    public void SetTexture2D(int activeTexture, string name, Texture2D texture)
-    {
-        glActiveTexture(GL_TEXTURE0 + activeTexture);
-        glBindTexture(GL_TEXTURE_2D, texture.GLID);
-        glUniform1i(glGetUniformLocation(ProgramID, name), activeTexture);
-    }
-
-    public void SetBool(string name, bool value)
-    {
-        glUniform1i(glGetUniformLocation(this.ProgramID, name), value ? 1 : 0);
-    }
-
-    public override bool IsGLInitialized()
-    {
-        return this.ProgramID != 0;
+        glDeleteProgram(_programId);
     }
 }
