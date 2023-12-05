@@ -126,6 +126,7 @@ public class DataEntryNode
     public LuaFunction Evaluate { get; set; }
 
     [LuaMember(Name = "get_parts")]
+    [LuaTypeHint(TypeHint = "fun(state: table, pins: any): node_part[]")]
     public LuaFunction GetParts { get; set; }
 
     [LuaMember(Name = "initialize")]

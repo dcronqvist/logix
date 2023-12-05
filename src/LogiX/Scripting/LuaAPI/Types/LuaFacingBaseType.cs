@@ -40,6 +40,12 @@ public class LuaFacingBaseType<TBase>(params Type[] derivedTypes) : ILuaFacingTy
             var attrib = property.GetCustomAttribute<LuaMemberAttribute>();
             string typeName = EmmyLuaHelpers.GetEmmyLuaType(property.PropertyType);
 
+            if (property.GetCustomAttribute<LuaTypeHintAttribute>() is LuaTypeHintAttribute hint)
+            {
+                sb.AppendLine($"---@field {attrib.Name} {hint.TypeHint}");
+                continue;
+            }
+
             sb.AppendLine($"---@field {attrib.Name} {typeName}");
         }
 

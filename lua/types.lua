@@ -5,6 +5,15 @@
 ---@field datatype scripting_data_type
 ---@field id string
 
+---@class data_entry_node : lua_data_entry
+---@field id string
+---@field name string
+---@field create_init_state fun()
+---@field get_pin_configs fun()
+---@field evaluate fun()
+---@field get_parts fun(state: table, pins: any): node_part[]
+---@field initialize fun()
+
 ---@class pin_config
 ---@field id string
 ---@field bit_width integer
@@ -28,3 +37,4 @@
 ---@field b number
 ---@field a number
 
+---@class node_part

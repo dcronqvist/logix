@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Numerics;
 using System.Text;
@@ -114,7 +115,7 @@ public class LuaService(
         yield return new LuaFacingFunctionDelegate(
             luaFunctionName: "require",
             docs: "Requires a script",
-            delegateFactory: (string scriptSourceIdentifier) => (string file) =>
+            delegateFactory: (string scriptSourceIdentifier, string scriptPath) => (string file) =>
             {
                 string requiredScriptSourceIdentifier = _contentManager.GetSourceIdentifierForContent(file);
                 var scriptItem = _contentManager.GetContentItem(file);
@@ -137,12 +138,12 @@ public class LuaService(
         yield return new LuaFacingFunctionDelegate(
             luaFunctionName: "table.extend",
             docs: "Extends a table with another table, in place",
-            delegateFactory: (string scriptSourceIdentifier) => (LuaTable t1, LuaTable t2) => LuaServiceHelpers.ExtendData(t1, t2));
+            delegateFactory: (string scriptSourceIdentifier, string scriptPath) => (LuaTable t1, LuaTable t2) => LuaServiceHelpers.ExtendData(t1, t2));
 
         yield return new LuaFacingFunctionDelegate(
             luaFunctionName: "table.concat",
             docs: "Extends a table with another table, in place",
-            delegateFactory: (string scriptSourceIdentifier) => (LuaTable t1, LuaTable t2) =>
+            delegateFactory: (string scriptSourceIdentifier, string scriptPath) => (LuaTable t1, LuaTable t2) =>
             {
                 LuaServiceHelpers.ExtendData(t1, t2);
                 return t1;
@@ -151,7 +152,7 @@ public class LuaService(
         yield return new LuaFacingFunctionDelegate(
             luaFunctionName: "log",
             docs: "Logs a message",
-            delegateFactory: (string scriptSourceIdentifier) => (LogLevel logLevel, string s) =>
+            delegateFactory: (string scriptSourceIdentifier, string scriptPath) => (LogLevel logLevel, string s) =>
             {
                 Task.Run(() => _log.LogMessage(logLevel, s));
                 return;
@@ -160,22 +161,23 @@ public class LuaService(
         yield return new LuaFacingFunctionDelegate(
             luaFunctionName: "new_id",
             docs: "Creates a new identifier, with the given id as a suffix to the script source identifier",
-            delegateFactory: (string scriptSourceIdentifier) => (string id) => $"{scriptSourceIdentifier}:{id}");
+            delegateFactory: (string scriptSourceIdentifier, string scriptPath) => (string id) => $"{scriptSourceIdentifier}:{id}");
 
         yield return new LuaFacingFunctionDelegate(
             luaFunctionName: "color_rgba",
             docs: "Creates a new color",
-            delegateFactory: (string scriptSourceIdentifier) => (float r, float g, float b, float a) => new ColorF(r, g, b, a));
+            delegateFactory: (string scriptSourceIdentifier, string scriptPath) => (float r, float g, float b, float a) => new ColorF(r, g, b, a));
 
         yield return new LuaFacingFunctionDelegate(
             luaFunctionName: "get_logic_value_color",
             docs: "Gets the color for a given logic value",
-            delegateFactory: (string scriptSourceIdentifier) => (LogicValue logicValue) => logicValue.GetValueColor());
+            delegateFactory: (string scriptSourceIdentifier, string scriptPath) => (LogicValue logicValue) => logicValue.GetValueColor());
 
         yield return new LuaFacingFunctionDelegate(
             luaFunctionName: "part_rect",
             docs: "Returns a rectangle part",
-            delegateFactory: (string scriptSourceIdentifier) => (LuaTable position, LuaTable size, ColorF color, bool renderSelected) =>
+            delegateFactory: (string scriptSourceIdentifier, string scriptPath) =>
+            [LuaTypeHint(TypeHint = "node_part")] (LuaTable position, LuaTable size, ColorF color, bool renderSelected) =>
             {
                 return new RectangleVisualNodePart(
                     position: position.ParseLuaTableAs<Vector2>(),
@@ -187,7 +189,8 @@ public class LuaService(
         yield return new LuaFacingFunctionDelegate(
             luaFunctionName: "part_rect_rightclickable",
             docs: "Returns a rectangle part that can be right clicked",
-            delegateFactory: (string scriptSourceIdentifier) => (LuaTable position, LuaTable size, ColorF color, bool renderSelected, LuaFunction rightClick) =>
+            delegateFactory: (string scriptSourceIdentifier, string scriptPath) =>
+            [LuaTypeHint(TypeHint = "node_part")] (LuaTable position, LuaTable size, ColorF color, bool renderSelected, [LuaTypeHint(TypeHint = "fun(): pin_event[]")] LuaFunction rightClick) =>
             {
                 return new RectangleVisualNodePart(
                     position: position.ParseLuaTableAs<Vector2>(),
@@ -200,7 +203,8 @@ public class LuaService(
         yield return new LuaFacingFunctionDelegate(
             luaFunctionName: "part_text",
             docs: "Returns a text part",
-            delegateFactory: (string scriptSourceIdentifier) => (LuaTable position, string text, float scale) =>
+            delegateFactory: (string scriptSourceIdentifier, string scriptPath) =>
+            [LuaTypeHint(TypeHint = "node_part")] (LuaTable position, string text, float scale) =>
             {
                 return new TextVisualNodePart(
                     text: text,
@@ -211,13 +215,18 @@ public class LuaService(
         yield return new LuaFacingFunctionDelegate(
             luaFunctionName: "list_files_in_dir",
             docs: "Lists all files in an asset directory",
-            delegateFactory: (string scriptSourceIdentifier) => (string dir) =>
+            delegateFactory: (string scriptSourceIdentifier, string scriptPath) =>
+
+            [LuaTypeHint(TypeHint = "string[]")] (string dir) =>
             {
-                string directory = $"{scriptSourceIdentifier}:{dir}";
+                string scriptPathWithoutPrefix = scriptPath.Split(':').Last();
+                string scriptLocationDirectory = Path.GetDirectoryName(scriptPathWithoutPrefix);
+
+                string requestedDirectoryWithPrefix = $"{scriptSourceIdentifier}:{scriptLocationDirectory}/{dir}";
 
                 string[] items = _contentManager
                     .GetContentItems()
-                    .Where(x => x.Identifier.StartsWith(directory))
+                    .Where(x => x.Identifier.StartsWith(requestedDirectoryWithPrefix))
                     .Select(x => x.Identifier).ToArray();
 
                 return items.ToLuaTable(_luaState);
@@ -226,11 +235,19 @@ public class LuaService(
 
     private static IEnumerable<ILuaFacingType> GetAvailableTypes()
     {
-        yield return new LuaFacingType<LuaDataEntry>();
+        yield return new LuaFacingBaseType<LuaDataEntry>(
+            typeof(DataEntryNode)
+        );
+
         yield return new LuaFacingType<PinConfig>();
         yield return new LuaFacingType<Vector2i>();
         yield return new LuaFacingType<PinEvent>();
         yield return new LuaFacingType<ColorF>();
+
+        yield return new LuaFacingRawType(
+        """
+        ---@class node_part
+        """);
     }
 
     private static IEnumerable<ILuaFacingConstant> GetAvailableConstants()
@@ -253,7 +270,7 @@ public class LuaService(
         var availableFunctions = GetAvailableFunctions();
         foreach (var function in availableFunctions)
         {
-            function.Register(_luaState, scriptSourceIdentifier);
+            function.Register(_luaState, scriptSourceIdentifier, scriptIdentifier);
         }
 
         _luaState.DoString($"{ConstantsTable} = {{}}");

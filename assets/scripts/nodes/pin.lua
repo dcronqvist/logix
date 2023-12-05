@@ -1,15 +1,6 @@
----@param logic_value logic_value
----@return logic_value
-local invert_logic_value = function(logic_value)
-    if logic_value == defs.logic_value.high then
-        return defs.logic_value.low
-    elseif logic_value == defs.logic_value.low then
-        return defs.logic_value.high
-    else
-        return defs.logic_value.undefined
-    end
-end
+local utils = require("utils")
 
+---@type data_entry_node
 return {
     datatype = defs.scripting_data_type.node,
     id = new_id("node_pin"),
@@ -53,7 +44,7 @@ return {
 
             part_rect({ 0.3, 0.3 }, { 1.4, 1.4 }, defs.colors.black, false),
             part_rect_rightclickable({ 0.35, 0.35 }, { 1.3, 1.3 }, color, false, function()
-                state.value = invert_logic_value(state.value)
+                state.value = utils.invert_logic_value(state.value)
                 return {
                     {
                         pin_id = "A",

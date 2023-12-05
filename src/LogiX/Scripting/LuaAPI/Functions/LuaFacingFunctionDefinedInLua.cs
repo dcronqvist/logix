@@ -14,7 +14,7 @@ public class LuaFacingFunctionDefinedInLua(
     IEnumerable<(string parameterName, string parameterType)> parameters,
     IEnumerable<string> genericTypes) : ILuaFacingFunction
 {
-    public void Register(Lua luaState, string scriptSourceIdentifier) => luaState.DoString(luaFunction);
+    public void Register(Lua luaState, string scriptSourceIdentifier, string scriptPath) => luaState.DoString(luaFunction);
 
     public void WriteEmmyLua(StringBuilder sb)
     {
