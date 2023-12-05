@@ -39,6 +39,8 @@ public class ProjectService(
     {
         var circuitTree = new VirtualFileTree<ICircuitDefinition>("root");
 
+        circuitTree.AddFile("main", new CircuitDefinition());
+
         circuitTree.AddDirectory("latches")
             .AddFile("sr-latch", new CircuitDefinition());
 
@@ -127,6 +129,9 @@ public class ProjectService(
 
     public IProject LoadProjectFromDisk(string path)
     {
+        if (!fileSystemProvider.FileExists(path))
+            return CreateNewProject(new ProjectMetadata() { Name = "Untitled project" });
+
         var jsonStream = fileSystemProvider.ReadFile(path);
         string jsonText = GetStringFromStream(jsonStream);
 

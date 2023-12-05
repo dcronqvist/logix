@@ -1,13 +1,21 @@
 using System;
 using System.Numerics;
+using NLua;
 
 namespace LogiX.Graphics;
 
 public struct ColorF
 {
+    [LuaMember(Name = "r")]
     public float R { get; set; }
+
+    [LuaMember(Name = "g")]
     public float G { get; set; }
+
+    [LuaMember(Name = "b")]
     public float B { get; set; }
+
+    [LuaMember(Name = "a")]
     public float A { get; set; }
 
     public ColorF()

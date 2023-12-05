@@ -48,7 +48,6 @@ public interface INodeState
 
     bool HasEditorGUI();
     bool SubmitStateEditorGUI();
-    string GetStateEditorGUIName();
 }
 
 public class EmptyState : INodeState
@@ -56,7 +55,6 @@ public class EmptyState : INodeState
     public INodeState Clone() => new EmptyState();
     public bool HasEditorGUI() => false;
     public bool SubmitStateEditorGUI() => false;
-    public string GetStateEditorGUIName() => "EmptyState";
 }
 
 public interface INode
@@ -148,7 +146,6 @@ public class PinState : INodeState
     public LogicValue CurrentValue { get; set; }
 
     public INodeState Clone() => new PinState() { IsInput = IsInput, CurrentValue = CurrentValue };
-    public string GetStateEditorGUIName() => "Pin";
     public bool HasEditorGUI() => true;
 
     public bool SubmitStateEditorGUI()

@@ -51,3 +51,45 @@ function log(logLevel, s) end -- Logs a message
 ---@diagnostic disable-next-line: missing-return, duplicate-set-field
 function new_id(id) end -- Creates a new identifier, with the given id as a suffix to the script source identifier
 
+---@param r number
+---@param g number
+---@param b number
+---@param a number
+---@return color_f
+---@diagnostic disable-next-line: missing-return, duplicate-set-field
+function color_rgba(r, g, b, a) end -- Creates a new color
+
+---@param logicValue logic_value
+---@return color_f
+---@diagnostic disable-next-line: missing-return, duplicate-set-field
+function get_logic_value_color(logicValue) end -- Gets the color for a given logic value
+
+---@param position table
+---@param size table
+---@param color color_f
+---@param renderSelected boolean
+---@return rectangle_visual_node_part
+---@diagnostic disable-next-line: missing-return, duplicate-set-field
+function part_rect(position, size, color, renderSelected) end -- Returns a rectangle part
+
+---@param position table
+---@param size table
+---@param color color_f
+---@param renderSelected boolean
+---@param rightClick fun()
+---@return rectangle_visual_node_part
+---@diagnostic disable-next-line: missing-return, duplicate-set-field
+function part_rect_rightclickable(position, size, color, renderSelected, rightClick) end -- Returns a rectangle part that can be right clicked
+
+---@param position table
+---@param text string
+---@param scale number
+---@return text_visual_node_part
+---@diagnostic disable-next-line: missing-return, duplicate-set-field
+function part_text(position, text, scale) end -- Returns a text part
+
+---@param dir string
+---@return table
+---@diagnostic disable-next-line: missing-return, duplicate-set-field
+function list_files_in_dir(dir) end -- Lists all files in an asset directory
+

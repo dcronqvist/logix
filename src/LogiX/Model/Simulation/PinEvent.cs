@@ -1,12 +1,26 @@
-using System.Collections.Generic;
+using NLua;
 
 namespace LogiX.Model.Simulation;
 
-public class PinEvent(string pinID, int occursInTicks, params LogicValue[] newValues)
+public class PinEvent
 {
-    public string PinID { get; } = pinID;
-    public IReadOnlyCollection<LogicValue> NewValues { get; } = newValues;
-    public int OccursInTicks { get; } = occursInTicks;
+    public PinEvent() { }
+
+    public PinEvent(string pinID, int occursInTicks, params LogicValue[] newValues)
+    {
+        PinID = pinID;
+        OccursInTicks = occursInTicks;
+        NewValues = newValues;
+    }
+
+    [LuaMember(Name = "pin_id")]
+    public string PinID { get; set; }
+
+    [LuaMember(Name = "new_values")]
+    public LogicValue[] NewValues { get; set; }
+
+    [LuaMember(Name = "occurs_in_ticks")]
+    public int OccursInTicks { get; set; }
 
     public override string ToString() => $"{PinID} [{string.Join(", ", NewValues)}] @ {OccursInTicks}";
 }

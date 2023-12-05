@@ -1,4 +1,6 @@
 using System.Collections.Generic;
+using System.Linq;
+using NLua;
 
 namespace LogiX.Model.NodeModel;
 
@@ -11,6 +13,7 @@ public class PinCollection : IPinCollection
         _pinValues[pinName] = values;
     }
 
+    [LuaMember(Name = "read")]
     public IReadOnlyCollection<LogicValue> Read(string pinName)
     {
         if (!_pinValues.ContainsKey(pinName))
@@ -18,4 +21,7 @@ public class PinCollection : IPinCollection
 
         return _pinValues[pinName];
     }
+
+    [LuaMember(Name = "read_at")]
+    public LogicValue Read(string pinName, int index) => Read(pinName).ElementAt(index);
 }

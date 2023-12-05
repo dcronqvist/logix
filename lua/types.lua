@@ -5,12 +5,6 @@
 ---@field datatype scripting_data_type
 ---@field id string
 
----@class data_entry_node
----@field id string
----@field name string
----@field create_init_state fun()
----@field get_pin_configs fun()
-
 ---@class pin_config
 ---@field id string
 ---@field bit_width integer
@@ -22,4 +16,15 @@
 ---@class vector2i
 ---@field x integer
 ---@field y integer
+
+---@class pin_event
+---@field pin_id string
+---@field new_values logic_value[]
+---@field occurs_in_ticks integer
+
+---@class color_f
+---@field r number
+---@field g number
+---@field b number
+---@field a number
 

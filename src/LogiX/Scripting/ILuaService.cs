@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Numerics;
 using System.Text;
 using System.Threading.Tasks;
 using LogiX.Content;
@@ -8,6 +9,7 @@ using LogiX.Debug.Logging;
 using LogiX.Graphics;
 using LogiX.Model;
 using LogiX.Model.NodeModel;
+using LogiX.Model.Simulation;
 using NLua;
 using Symphony;
 
@@ -159,15 +161,76 @@ public class LuaService(
             luaFunctionName: "new_id",
             docs: "Creates a new identifier, with the given id as a suffix to the script source identifier",
             delegateFactory: (string scriptSourceIdentifier) => (string id) => $"{scriptSourceIdentifier}:{id}");
+
+        yield return new LuaFacingFunctionDelegate(
+            luaFunctionName: "color_rgba",
+            docs: "Creates a new color",
+            delegateFactory: (string scriptSourceIdentifier) => (float r, float g, float b, float a) => new ColorF(r, g, b, a));
+
+        yield return new LuaFacingFunctionDelegate(
+            luaFunctionName: "get_logic_value_color",
+            docs: "Gets the color for a given logic value",
+            delegateFactory: (string scriptSourceIdentifier) => (LogicValue logicValue) => logicValue.GetValueColor());
+
+        yield return new LuaFacingFunctionDelegate(
+            luaFunctionName: "part_rect",
+            docs: "Returns a rectangle part",
+            delegateFactory: (string scriptSourceIdentifier) => (LuaTable position, LuaTable size, ColorF color, bool renderSelected) =>
+            {
+                return new RectangleVisualNodePart(
+                    position: position.ParseLuaTableAs<Vector2>(),
+                    size: size.ParseLuaTableAs<Vector2>(),
+                    color: color,
+                    renderSelected: renderSelected);
+            });
+
+        yield return new LuaFacingFunctionDelegate(
+            luaFunctionName: "part_rect_rightclickable",
+            docs: "Returns a rectangle part that can be right clicked",
+            delegateFactory: (string scriptSourceIdentifier) => (LuaTable position, LuaTable size, ColorF color, bool renderSelected, LuaFunction rightClick) =>
+            {
+                return new RectangleVisualNodePart(
+                    position: position.ParseLuaTableAs<Vector2>(),
+                    size: size.ParseLuaTableAs<Vector2>(),
+                    color: color,
+                    renderSelected: renderSelected,
+                    onRightClicked: () => (rightClick.Call().First() as LuaTable).ParseLuaTableAsArrayOf<PinEvent>());
+            });
+
+        yield return new LuaFacingFunctionDelegate(
+            luaFunctionName: "part_text",
+            docs: "Returns a text part",
+            delegateFactory: (string scriptSourceIdentifier) => (LuaTable position, string text, float scale) =>
+            {
+                return new TextVisualNodePart(
+                    text: text,
+                    position: position.ParseLuaTableAs<Vector2>(),
+                    scale: scale);
+            });
+
+        yield return new LuaFacingFunctionDelegate(
+            luaFunctionName: "list_files_in_dir",
+            docs: "Lists all files in an asset directory",
+            delegateFactory: (string scriptSourceIdentifier) => (string dir) =>
+            {
+                string directory = $"{scriptSourceIdentifier}:{dir}";
+
+                string[] items = _contentManager
+                    .GetContentItems()
+                    .Where(x => x.Identifier.StartsWith(directory))
+                    .Select(x => x.Identifier).ToArray();
+
+                return items.ToLuaTable(_luaState);
+            });
     }
 
     private static IEnumerable<ILuaFacingType> GetAvailableTypes()
     {
-        yield return new LuaFacingBaseType<LuaDataEntry>(
-            new LuaFacingType<DataEntryNode>()
-        );
+        yield return new LuaFacingType<LuaDataEntry>();
         yield return new LuaFacingType<PinConfig>();
         yield return new LuaFacingType<Vector2i>();
+        yield return new LuaFacingType<PinEvent>();
+        yield return new LuaFacingType<ColorF>();
     }
 
     private static IEnumerable<ILuaFacingConstant> GetAvailableConstants()
@@ -176,6 +239,11 @@ public class LuaService(
         yield return new LuaFacingEnum<LogLevel>(ConstantsTable);
         yield return new LuaFacingEnum<LogicValue>(ConstantsTable);
         yield return new LuaFacingEnum<PinSide>(ConstantsTable);
+
+        yield return new LuaFacingConstDict<ColorF>(ConstantsTable, "colors", new Dictionary<string, ColorF>() {
+            { "black", ColorF.Black },
+            { "white", ColorF.White }
+        });
     }
 
     private void BeginStage() => _luaState ??= _luaFactory.Create();

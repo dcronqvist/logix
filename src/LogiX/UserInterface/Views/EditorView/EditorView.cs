@@ -113,23 +113,23 @@ public partial class EditorView : IView
 
         var dataEntries = luaService.GetAllDataEntries();
 
-        Task.Run(async () =>
-        {
-            while (true)
-            {
-                if (!_running)
-                {
-                    await Task.Delay(100);
-                    continue;
-                }
-                else
-                {
-                    _simulator.Locked(sim => sim.PerformSimulationStep());
-                }
+        // Task.Run(async () =>
+        // {
+        //     while (true)
+        //     {
+        //         if (!_running)
+        //         {
+        //             await Task.Delay(100);
+        //             continue;
+        //         }
+        //         else
+        //         {
+        //             _simulator.Locked(sim => sim.PerformSimulationStep());
+        //         }
 
-                await Task.Delay(100);
-            }
-        });
+        //         await Task.Delay(100);
+        //     }
+        // });
     }
 
     private static Stream GetStringStream(string str) => new MemoryStream(System.Text.Encoding.UTF8.GetBytes(str));
@@ -180,6 +180,8 @@ public partial class EditorView : IView
 
     public void Update(float deltaTime, float totalTime)
     {
+        _simulator.Locked(sim => sim.PerformSimulationStep());
+
         _userInterfaceContext.SetWindowTitle($"LogiX - {_projectService.GetCurrentProject().GetProjectMetadata().Name}");
 
         _coroutineService.Update(deltaTime);

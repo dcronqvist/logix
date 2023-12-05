@@ -1,12 +1,37 @@
 using System;
+using System.Collections;
+using System.Collections.Generic;
 using System.Linq;
+using System.Numerics;
 using System.Reflection;
+using LogiX.Graphics;
 using NLua;
 
 namespace LogiX.Scripting;
 
 public static class LuaExtensions
 {
+    public static LuaTable ToLuaTable<T>(this IReadOnlyCollection<T> array, Lua lua)
+    {
+        lua.State.CreateTable(0, array.Count);
+
+        int i = 1;
+        foreach (var item in array)
+        {
+            lua.State.PushInteger(i++);
+            lua.Push(item);
+            lua.State.SetTable(-3);
+        }
+
+        return lua.Pop() as LuaTable;
+    }
+
+    public static T[] ParseLuaTableAsArrayOf<T>(this LuaTable table) where T : new()
+    {
+        var type = typeof(T);
+        return (T[])ParseLuaTableAs(typeof(T[]), table);
+    }
+
     public static T ParseLuaTableAs<T>(this LuaTable table) where T : new()
     {
         var type = typeof(T);
@@ -15,6 +40,21 @@ public static class LuaExtensions
 
     private static object ParseLuaTableAs(Type targetType, LuaTable obj)
     {
+        if (targetType == typeof(Vector2i) && obj.Keys.Cast<object>().All(x => x is long) && obj.Keys.Count == 2)
+        {
+            var x = FixValue(typeof(int), obj[1]);
+            var y = FixValue(typeof(int), obj[2]);
+
+            return new Vector2i((int)x, (int)y);
+        }
+        if (targetType == typeof(Vector2) && obj.Keys.Cast<object>().All(x => x is long) && obj.Keys.Count == 2)
+        {
+            var x = FixValue(typeof(float), obj[1]);
+            var y = FixValue(typeof(float), obj[2]);
+
+            return new Vector2((float)x, (float)y);
+        }
+
         if (targetType.IsArray)
         {
             // Get the array type
@@ -95,6 +135,11 @@ public static class LuaExtensions
         }
         if (targetType == typeof(float)) // value will be Double
         {
+            if (value is double d)
+                return (float)d;
+            else if (value is long l)
+                return (float)l;
+
             return (float)(double)value;
         }
 

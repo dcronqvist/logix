@@ -590,10 +590,11 @@ public class CircuitDefinitionViewModel
         _circuitDefinition.Locked(circDef =>
         {
             var nodeState = circDef.GetNodeState(nodeID);
+            var node = circDef.GetNodes()[nodeID];
             if (!nodeState.HasEditorGUI())
                 return;
 
-            string nodeStateEditorTitle = $"Edit {nodeState.GetStateEditorGUIName()}";
+            string nodeStateEditorTitle = $"Edit {node.GetNodeName()}";
 
             if (ImGui.Begin($"{nodeStateEditorTitle}###NODESTATEEDITOR"))
             {

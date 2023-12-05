@@ -34,7 +34,7 @@ public class DataEntryNodeState(Dictionary<string, object> state) : INodeState
 
 public class LuaNode(
     string luaDataEntryIdentifier,
-    ILuaService luaService) : INode
+    ILuaService luaService) : INode<DataEntryNodeState>
 {
     public string LuaDataEntryIdentifier => luaDataEntryIdentifier;
 
@@ -48,12 +48,12 @@ public class LuaNode(
         return _dataEntryNode;
     }
 
-    public void ConfigureUIHandlers(INodeState state, INodeUIHandlerConfigurer configurer)
+    public void ConfigureUIHandlers(DataEntryNodeState state, INodeUIHandlerConfigurer configurer)
     {
 
     }
 
-    public INodeState CreateInitialState()
+    public DataEntryNodeState CreateInitialState()
     {
         var luaState = GetDataEntryNode().CreateInitState.Call().First() as LuaTable;
 
@@ -66,31 +66,45 @@ public class LuaNode(
         return new DataEntryNodeState(state);
     }
 
-    public IEnumerable<PinEvent> Evaluate(INodeState state, IPinCollection pins)
+    public IEnumerable<PinEvent> Evaluate(DataEntryNodeState state, IPinCollection pins)
     {
-        yield break;
+        var evaluation = GetDataEntryNode()
+            .Evaluate.Call(state, pins).First() as LuaTable;
+
+        var pinEvents = evaluation.ParseLuaTableAsArrayOf<PinEvent>();
+
+        return pinEvents;
     }
 
-    public Vector2 GetMiddleRelativeToOrigin(INodeState state)
+    public Vector2 GetMiddleRelativeToOrigin(DataEntryNodeState state)
     {
         return new Vector2(1, 1);
     }
 
     public string GetNodeName() => GetDataEntryNode().Name;
 
-    public IEnumerable<INodePart> GetParts(INodeState state, IPinCollection pins)
+    public IEnumerable<INodePart> GetParts(DataEntryNodeState state, IPinCollection pins)
     {
-        yield return new RectangleVisualNodePart(new Vector2(0, 0), new Vector2(2, 2), ColorF.White, renderSelected: true);
+        var parts = GetDataEntryNode()
+            .GetParts.Call(state.State, pins).First() as LuaTable;
+
+        return parts.Values.Cast<INodePart>();
     }
 
-    public IEnumerable<PinConfig> GetPinConfigs(INodeState state)
+    public IEnumerable<PinConfig> GetPinConfigs(DataEntryNodeState state)
     {
-        return (GetDataEntryNode().GetPinConfigs.Call()[0] as LuaTable).Values.Cast<LuaTable>().Select(table => LuaDataEntry.ParseData(typeof(PinConfig), table) as PinConfig);
+        var nodePinConfigs = GetDataEntryNode()
+            .GetPinConfigs.Call(state.State).First() as LuaTable;
+
+        return nodePinConfigs.ParseLuaTableAsArrayOf<PinConfig>();
     }
 
-    public IEnumerable<PinEvent> Initialize(INodeState state)
+    public IEnumerable<PinEvent> Initialize(DataEntryNodeState state)
     {
-        yield break;
+        var init = GetDataEntryNode()
+            .Initialize.Call(state.State).First() as LuaTable;
+
+        return init.ParseLuaTableAsArrayOf<PinEvent>();
     }
 }
 
@@ -107,4 +121,13 @@ public class DataEntryNode
 
     [LuaMember(Name = "get_pin_configs")]
     public LuaFunction GetPinConfigs { get; set; }
+
+    [LuaMember(Name = "evaluate")]
+    public LuaFunction Evaluate { get; set; }
+
+    [LuaMember(Name = "get_parts")]
+    public LuaFunction GetParts { get; set; }
+
+    [LuaMember(Name = "initialize")]
+    public LuaFunction Initialize { get; set; }
 }

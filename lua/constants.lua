@@ -73,3 +73,15 @@ defs.pin_side = {
   bottom = pin_side_bottom,
 }
 
+---@type color_f
+local colors_black
+
+---@type color_f
+local colors_white
+
+---@enum colors
+defs.colors = {
+  black = colors_black,
+  white = colors_white,
+}
+
