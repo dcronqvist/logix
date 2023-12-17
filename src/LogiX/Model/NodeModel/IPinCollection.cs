@@ -1,15 +1,13 @@
-using System;
 using System.Collections.Generic;
 using System.Linq;
-using NLua;
 
 namespace LogiX.Model.NodeModel;
 
+#pragma warning disable CA1711 // Identifiers should not have incorrect suffix
 public interface IPinCollection
+#pragma warning restore CA1711 // Identifiers should not have incorrect suffix
 {
-    [LuaMember(Name = "read")]
     IReadOnlyCollection<LogicValue> Read(string pinID);
 
-    [LuaMember(Name = "read_at")]
     LogicValue Read(string pinID, int index) => Read(pinID).ElementAt(index);
 }

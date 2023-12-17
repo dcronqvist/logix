@@ -2,10 +2,9 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
-using System.Numerics;
 using DotGLFW;
-using ImGuiNET;
 using LogiX.Graphics;
+using LogiX.Model;
 using LogiX.Model.Circuits;
 using LogiX.Model.Commands;
 using LogiX.Model.NodeModel;
@@ -15,12 +14,19 @@ namespace LogiX.UserInterface.Views.EditorView;
 
 public partial class EditorView
 {
+    private sealed class FakePinCollection : IPinCollection
+    {
+        public IReadOnlyCollection<LogicValue> Read(string pinID) => LogicValue.UNDEFINED.Repeat(100);
+        public LogicValue Read(string pinID, int index) => LogicValue.UNDEFINED;
+    }
+
     private IEnumerator MoveSelection()
     {
         // Get the initial positions of the mouse
         var selectedNodes = _currentlySimulatedCircuitViewModel.GetSelectedNodes().ToArray();
         var selectedSignalSegments = _currentlySimulatedCircuitViewModel.GetSelectedSignalSegments().ToArray();
         var initialMousePosGridAligned = GetGridAlignedMousePositionInWorkspace();
+        var fakePinCollection = new FakePinCollection();
 
         yield return CoroutineHelpers.Render((renderer) =>
         {
@@ -30,11 +36,12 @@ public partial class EditorView
             foreach (var nodeID in selectedNodes)
             {
                 var node = _currentlySimulatedCircuitDefinition.Locked(circDef => circDef.GetNodes()[nodeID]);
-                var nodeMiddle = node.GetMiddleRelativeToOrigin(node.CreateInitialState());
+                var nodeState = _currentlySimulatedCircuitDefinition.Locked(circDef => circDef.GetNodeState(nodeID));
+                var nodeMiddle = node.GetMiddleRelativeToOrigin(nodeState);
                 var nodePos = _currentlySimulatedCircuitDefinition.Locked(circDef => circDef.GetNodePosition(nodeID)) + tempMoveOffset;
                 int nodeRotation = _currentlySimulatedCircuitDefinition.Locked(circDef => circDef.GetNodeRotation(nodeID));
 
-                _presentation.Render(node, node.CreateInitialState(), new PinCollection(), nodePos, nodeRotation, _gridSize, _camera, 0.5f, false);
+                _presentation.Render(node, nodeState, fakePinCollection, nodePos, nodeRotation, _gridSize, _camera, 0.5f, false);
             }
 
             foreach (var segment in selectedSignalSegments)

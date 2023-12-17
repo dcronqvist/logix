@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -8,19 +9,11 @@ using Symphony;
 
 namespace LogiX.Content;
 
-public class ContentLoader : IContentLoader
+public class ContentLoader(IAsyncGLContextProvider gLContextProvider) : IContentLoader
 {
-    private readonly IAsyncGLContextProvider _gLContextProvider;
+    private readonly IAsyncGLContextProvider _gLContextProvider = gLContextProvider;
 
-    public ContentLoader(IAsyncGLContextProvider gLContextProvider)
-    {
-        _gLContextProvider = gLContextProvider;
-    }
-
-    public string GetIdentifierForSource(IContentSource source)
-    {
-        return GetContentMeta(source).Identifier;
-    }
+    public string GetIdentifierForSource(IContentSource source) => GetContentMeta(source).Identifier;
 
     public IEnumerable<IContentLoadingStage> GetLoadingStages()
     {
@@ -28,8 +21,7 @@ public class ContentLoader : IContentLoader
             new ShaderLoader(_gLContextProvider));
         yield return new LoadingStage("Main",
             new TextureLoader(_gLContextProvider),
-            new FontLoader(_gLContextProvider),
-            new LuaScriptLoader());
+            new FontLoader(_gLContextProvider));
     }
 
     public IEnumerable<IContentSource> GetSourceLoadOrder(IEnumerable<IContentSource> sources)
@@ -58,7 +50,7 @@ public class ContentLoader : IContentLoader
             {
                 if (!sourceDictionary.ContainsKey($"{dependency.Identifier}:{dependency.Version}"))
                 {
-                    throw new System.Exception($"Missing dependency {dependency.Identifier}:{dependency.Version}");
+                    throw new ArgumentException($"Missing dependency {dependency.Identifier}:{dependency.Version}");
                 }
 
                 visit(sourceDictionary[$"{dependency.Identifier}:{dependency.Version}"]);
@@ -75,7 +67,7 @@ public class ContentLoader : IContentLoader
         return orderedSources;
     }
 
-    private ContentMeta GetContentMeta(IContentSource source)
+    private static ContentMeta GetContentMeta(IContentSource source)
     {
         var structure = source.GetStructure();
         var metadata = structure.GetEntryStream("meta.json");
@@ -83,17 +75,19 @@ public class ContentLoader : IContentLoader
         return deserialized;
     }
 
-    private T DeserializeJson<T>(Stream stream)
+    private static T DeserializeJson<T>(Stream stream)
     {
         using var reader = new StreamReader(stream);
         string jsonText = reader.ReadToEnd();
 
+#pragma warning disable CA1869 // Cache and reuse 'JsonSerializerOptions' instances
         var options = new JsonSerializerOptions
         {
             AllowTrailingCommas = true,
             ReadCommentHandling = JsonCommentHandling.Skip,
             PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
         };
+#pragma warning restore CA1869 // Cache and reuse 'JsonSerializerOptions' instances
 
         return JsonSerializer.Deserialize<T>(jsonText, options);
     }

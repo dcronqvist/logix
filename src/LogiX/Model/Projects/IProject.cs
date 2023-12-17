@@ -4,12 +4,11 @@ using System.Linq;
 using System.Text.Json.Serialization;
 using DotGLFW;
 using ImGuiNET;
+using LogiX.Addons;
 using LogiX.Content;
 using LogiX.Model.Circuits;
 using LogiX.Model.NodeModel;
-using LogiX.Scripting;
 using LogiX.UserInterface.Actions;
-using NLua;
 using Symphony;
 
 namespace LogiX.Model.Projects;
@@ -120,7 +119,9 @@ public class VirtualFileTree<TValue>(string directory) : IVirtualFileTree<string
         _directories[firstDirectoryName].RecursivelySetFileContents(fileNameWithoutFirstDirectory, fileContents);
     }
 
+#pragma warning disable CA1000 // Do not declare static members on generic types
     public static IVirtualFileTree<string, TValue> Merge(IVirtualFileTree<string, TValue> tree1, IVirtualFileTree<string, TValue> tree2)
+#pragma warning restore CA1000 // Do not declare static members on generic types
     {
         // Perform a recursive merge of the two trees
         // If a directory exists in both trees, merge the two directories
@@ -135,6 +136,14 @@ public class VirtualFileTree<TValue>(string directory) : IVirtualFileTree<string
                 mergedTree.AddDirectory(directory.Directory, Merge(directory, tree2.GetDirectories().First(d => d.Directory == directory.Directory)));
             }
             else
+            {
+                mergedTree.AddDirectory(directory.Directory, directory);
+            }
+        }
+
+        foreach (var directory in tree2.GetDirectories())
+        {
+            if (!mergedTree.GetDirectories().Any(d => d.Directory == directory.Directory))
             {
                 mergedTree.AddDirectory(directory.Directory, directory);
             }
@@ -155,17 +164,32 @@ public class VirtualFileTree<TValue>(string directory) : IVirtualFileTree<string
 
         return mergedTree;
     }
+
+#pragma warning disable CA1000 // Do not declare static members on generic types
+    public static void Traverse(IVirtualFileTree<string, TValue> tree, Action<string, TValue> action) => Traverse(tree, action, tree.Directory);
+#pragma warning restore CA1000 // Do not declare static members on generic types
+
+    private static void Traverse(IVirtualFileTree<string, TValue> tree, Action<string, TValue> action, string currentDirectory)
+    {
+        foreach (var file in tree.GetFiles())
+        {
+            action($"{currentDirectory}/{file.Key}", file.Value);
+        }
+
+        foreach (var directory in tree.GetDirectories())
+        {
+            Traverse(directory, action, $"{currentDirectory}/{directory.Directory}");
+        }
+    }
 }
 
 public record ProjectMetadata
 {
-    [LuaMember(Name = "name")]
     public string Name { get; init; }
 }
 
 public interface IProject
 {
-    [LuaMember(Name = "get_project_metadata")]
     ProjectMetadata GetProjectMetadata();
 
     IVirtualFileTree<string, ICircuitDefinition> GetProjectCircuitTree();
@@ -180,34 +204,24 @@ public class Project(
     ProjectMetadata metadata,
     IContentManager<ContentMeta> contentManager,
     IProjectService projectService,
-    ILuaService luaService,
+    IAddonService addonService,
     IVirtualFileTree<string, ICircuitDefinition> initialCircuitFileTree) : IProject
 {
     private readonly IVirtualFileTree<string, ICircuitDefinition> _circuitFileTree = initialCircuitFileTree;
 
-    [LuaMember(Name = "get_project_metadata")]
     public ProjectMetadata GetProjectMetadata() => metadata;
 
     public IVirtualFileTree<string, ICircuitDefinition> GetProjectCircuitTree() => _circuitFileTree;
 
     public IVirtualFileTree<string, INode> GetAvailableNodesTree()
     {
-        var root = new VirtualFileTree<INode>("root");
+        IVirtualFileTree<string, INode> root = new VirtualFileTree<INode>("root");
 
-        root.AddDirectory("Gates")
-                .AddFile(new NorNode().GetNodeName(), new NorNode());
+        var addons = addonService.GetAddons();
 
-        root.AddDirectory("Common")
-                .AddFile(new PinNode().GetNodeName(), new PinNode());
-
-        var luaDir = root.AddDirectory("Lua");
-
-        var nodeEntries = luaService.GetAllDataEntries(entry => entry.DataType == ScriptingDataType.Node);
-        var nodeEntriesCasted = nodeEntries.Select(entry => entry.GetEntryAs<DataEntryNode>());
-
-        foreach (var nodeEntry in nodeEntriesCasted)
+        foreach (var addon in addons)
         {
-            luaDir.AddFile(nodeEntry.Name, new LuaNode(nodeEntry.Identifier, luaService));
+            root = VirtualFileTree<INode>.Merge(root, addon.GetAddonNodeTree());
         }
 
         return root;
@@ -323,7 +337,7 @@ public class Project(
         }
     }
 
-    private IDictionary<string, List<ContentItem>> GroupContentItemsByDirectory(IEnumerable<ContentItem> contentItems)
+    private static IDictionary<string, List<ContentItem>> GroupContentItemsByDirectory(IEnumerable<ContentItem> contentItems)
     {
         // Identifier are always "namespace:path/to/file.extension"
         // namespace will be same for all content items, so we can just group by the directory path

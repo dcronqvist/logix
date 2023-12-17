@@ -1,15 +1,12 @@
 using System;
 using System.Numerics;
-using NLua;
 
 namespace LogiX.Graphics;
 
 public struct Vector2i(int x, int y)
 {
-    [LuaMember(Name = "x")]
     public int X { get; set; } = x;
 
-    [LuaMember(Name = "y")]
     public int Y { get; set; } = y;
 
     public static Vector2i Zero => new(0, 0);
@@ -53,4 +50,8 @@ public struct Vector2i(int x, int y)
     public readonly Vector2 Normalize() => Vector2.Normalize(this);
 
     public override readonly string ToString() => $"({X}, {Y})";
+
+    public override readonly bool Equals(object obj) => obj is Vector2i v && this == v;
+
+    public override readonly int GetHashCode() => HashCode.Combine(X, Y);
 }

@@ -1,11 +1,8 @@
 using ImGuiNET;
 using LogiX.Graphics;
 using LogiX.Model.Simulation;
-using NLua;
 using System.Collections.Generic;
-using System.ComponentModel;
 using System.Numerics;
-using System.Text.Json.Serialization;
 
 namespace LogiX.Model.NodeModel;
 
@@ -23,22 +20,16 @@ public record PinConfig
         DisplayPinName = displayPinName;
     }
 
-    [LuaMember(Name = "id")]
     public string ID { get; init; }
 
-    [LuaMember(Name = "bit_width")]
     public int BitWidth { get; init; }
 
-    [LuaMember(Name = "update_causes_evaluation")]
     public bool UpdateCausesEvaluation { get; init; }
 
-    [LuaMember(Name = "position")]
     public Vector2i Position { get; init; }
 
-    [LuaMember(Name = "side")]
     public PinSide Side { get; init; }
 
-    [LuaMember(Name = "display_pin_name")]
     public bool DisplayPinName { get; init; }
 }
 

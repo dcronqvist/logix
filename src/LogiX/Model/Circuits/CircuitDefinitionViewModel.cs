@@ -108,8 +108,8 @@ public class CircuitDefinitionViewModel
             int minY = Math.Min(segment.Start.Y, segment.End.Y);
             int maxY = Math.Max(segment.Start.Y, segment.End.Y);
 
-            if (segment.Start.X == segment.End.X && segment.Start.X == point.X && point.Y > minY && point.Y < maxY ||
-                   segment.Start.Y == segment.End.Y && segment.Start.Y == point.Y && point.X > minX && point.X < maxX)
+            if ((segment.Start.X == segment.End.X && segment.Start.X == point.X && point.Y > minY && point.Y < maxY) ||
+                   (segment.Start.Y == segment.End.Y && segment.Start.Y == point.Y && point.X > minX && point.X < maxX))
             {
                 onSegment = segment;
                 return true;
@@ -568,13 +568,7 @@ public class CircuitDefinitionViewModel
             return eventsToReturn;
         }, (ex) => throw ex);
 
-        _simulator.Locked(sim =>
-        {
-            nodePinEvents.ToList().ForEach((tuple) =>
-            {
-                sim.EnqueueEvent(tuple.nodeID, tuple.pinEvent);
-            });
-        });
+        _simulator.Locked(sim => nodePinEvents.ToList().ForEach((tuple) => sim.EnqueueEvent(tuple.nodeID, tuple.pinEvent)));
 
         renderer.Primitives.FinalizeRender(primitivesShader, camera);
         renderer.Text.FinalizeRender(font, camera);

@@ -1,4 +1,3 @@
-using LogiX.App.Debug.Logging;
 using NSubstitute;
 
 namespace LogiX.App.Tests.Debug.Logging;

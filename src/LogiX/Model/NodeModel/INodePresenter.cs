@@ -28,8 +28,8 @@ public class SimplePresentation(
 
     public IEnumerable<PinEvent> Render(INode node, INodeState nodeState, IPinCollection pinCollection, Vector2i position, int rotation, int gridSize, ICamera2D camera, float globalAlpha, bool isSelected)
     {
-        var nodeParts = node.GetParts(nodeState, pinCollection).ToArray();
-        var pinConfigs = node.GetPinConfigs(nodeState).ToArray();
+        var nodeParts = node.GetParts(nodeState, pinCollection);
+        var pinConfigs = node.GetPinConfigs(nodeState);
 
         var pinEvents = RenderVisualNodeParts(nodeParts, position, node.GetMiddleRelativeToOrigin(nodeState), rotation, gridSize, globalAlpha, isSelected).ToArray();
         RenderIOPositions(pinConfigs, pinCollection, position, node.GetMiddleRelativeToOrigin(nodeState), rotation, gridSize, camera, globalAlpha, isSelected);
@@ -115,7 +115,7 @@ public class SimplePresentation(
 
         var textPosition =
             finalIOPosition +
-            (new Vector2(MathF.Cos(angleToMiddle), MathF.Sin(angleToMiddle)) * (ioRadius * 1.2f + textSize.X)) +
+            (new Vector2(MathF.Cos(angleToMiddle), MathF.Sin(angleToMiddle)) * ((ioRadius * 1.2f) + textSize.X)) +
             new Vector2(MathF.Sin(angleToMiddle) * -textSize.Y / 2f, MathF.Cos(angleToMiddle) * textSize.Y / 2f);
 
         _renderer.Text.AddText(_font, pinID, textPosition, textScale, rotation * MathF.PI / 2f, color);
@@ -138,7 +138,7 @@ public class SimplePresentation(
             (new Vector2(MathF.Cos(angleToMiddle), MathF.Sin(angleToMiddle)) * (ioRadius * 1.2f)) +
             new Vector2(MathF.Sin(angleToMiddle) * textSize.Y / 2f, MathF.Cos(angleToMiddle) * -textSize.Y / 2f);
 
-        _renderer.Text.AddText(_font, pinID, textPosition, textScale, (rotation * MathF.PI / 2f) + MathF.PI / 2f, color);
+        _renderer.Text.AddText(_font, pinID, textPosition, textScale, (rotation * MathF.PI / 2f) + (MathF.PI / 2f), color);
 
         if (addBar)
         {
@@ -155,10 +155,10 @@ public class SimplePresentation(
 
         var textPosition =
             finalIOPosition +
-            (new Vector2(MathF.Cos(angleToMiddle), MathF.Sin(angleToMiddle)) * (ioRadius * 1.2f + textSize.X)) +
+            (new Vector2(MathF.Cos(angleToMiddle), MathF.Sin(angleToMiddle)) * ((ioRadius * 1.2f) + textSize.X)) +
             new Vector2(MathF.Sin(angleToMiddle) * -textSize.Y / 2f, MathF.Cos(angleToMiddle) * textSize.Y / 2f);
 
-        _renderer.Text.AddText(_font, pinID, textPosition, textScale, (rotation * MathF.PI / 2f) + MathF.PI / 2f, color);
+        _renderer.Text.AddText(_font, pinID, textPosition, textScale, (rotation * MathF.PI / 2f) + (MathF.PI / 2f), color);
 
         if (addBar)
         {

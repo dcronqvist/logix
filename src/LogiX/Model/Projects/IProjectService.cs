@@ -4,11 +4,10 @@ using System.IO;
 using System.Linq;
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using System.Text.Json.Serialization.Metadata;
+using LogiX.Addons;
 using LogiX.Content;
 using LogiX.Model.Circuits;
 using LogiX.Model.NodeModel;
-using LogiX.Scripting;
 using LogiX.UserInterfaceContext;
 using Symphony;
 
@@ -30,7 +29,7 @@ public interface IProjectService
 public class ProjectService(
     IContentManager<ContentMeta> contentManager,
     IFileSystemProvider fileSystemProvider,
-    ILuaService luaService
+    IAddonService addonService
 ) : IProjectService
 {
     private IProject _currentProject;
@@ -44,7 +43,7 @@ public class ProjectService(
         circuitTree.AddDirectory("latches")
             .AddFile("sr-latch", new CircuitDefinition());
 
-        return new Project(projectMetadata, contentManager, this, luaService, circuitTree);
+        return new Project(projectMetadata, contentManager, this, addonService, circuitTree);
     }
 
     public void SetProject(IProject project) => _currentProject = project;
@@ -54,47 +53,14 @@ public class ProjectService(
     public bool HasProject() => _currentProject != null;
     public IProject GetCurrentProject() => _currentProject;
 
-    private static void ResolveNodeTypes(JsonTypeInfo typeInfo, ILuaService luaService)
-    {
-        if (typeInfo.Type != typeof(INodeState))
-            return;
-
-        var builtinNodes = new Dictionary<string, (Type nodeType, Type stateType)>
-        {
-            { "pin-node", (typeof(PinNode), typeof(PinState))},
-            { "nor-gate", (typeof(NorNode), typeof(EmptyState))}
-        };
-
-        var luaNodeEntries = luaService.GetAllDataEntries(entry => entry.DataType == ScriptingDataType.Node);
-        var luaNodes = luaNodeEntries.Select(entry => (entry.Identifier, (typeof(LuaNode), typeof(DataEntryNodeState)))).ToDictionary(x => x.Identifier, x => x.Item2);
-
-        var allNodes = builtinNodes.Concat(luaNodes);
-
-        var polymorphismDerivedTypesNodes = allNodes.Select(x => new JsonDerivedType(x.Value.Item1, x.Key));
-        var polymorphismDerivedTypesStates = allNodes.Select(x => new JsonDerivedType(x.Value.Item2, x.Key));
-        typeInfo.PolymorphismOptions = new JsonPolymorphismOptions()
-        {
-            TypeDiscriminatorPropertyName = "$node-type",
-            IgnoreUnrecognizedTypeDiscriminators = true,
-            UnknownDerivedTypeHandling = JsonUnknownDerivedTypeHandling.FailSerialization,
-        };
-
-        polymorphismDerivedTypesStates.ToList().ForEach(typeInfo.PolymorphismOptions.DerivedTypes.Add);
-    }
-
     private readonly JsonSerializerOptions _jsonSerializerOptions = new()
     {
         WriteIndented = true,
         PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-        TypeInfoResolver = new DefaultJsonTypeInfoResolver
-        {
-            Modifiers = {
-                (jti) => ResolveNodeTypes(jti, luaService)
-            }
-        },
         Converters = {
             new JsonStringEnumConverter(),
-            new NodeConverter(luaService)
+            new NodeConverter(addonService),
+            new NodeStateConverter(addonService),
         }
     };
 
@@ -141,45 +107,101 @@ public class ProjectService(
             projectJsonRepresentation.Metadata,
             contentManager,
             this,
-            luaService,
+            addonService,
             projectJsonRepresentation.CircuitDefinitions);
         return project;
     }
 }
 
-public class NodeConverter(ILuaService luaService) : JsonConverter<INode>
+public class NodeStateConverter(IAddonService addonService) : JsonConverter<INodeState>
 {
-    private Dictionary<string, (Type nodeType, Type stateType)> builtinNodes = new Dictionary<string, (Type nodeType, Type stateType)>
-    {
-        { "pin-node", (typeof(PinNode), typeof(PinState))},
-        { "nor-gate", (typeof(NorNode), typeof(EmptyState))}
-    };
+    private readonly string _nodeTypePropertyName = "$node-type";
 
-    public override INode Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
+    private static IReadOnlyDictionary<string, Type> GetNodeTypeIdentifiersAndStateTypeFromAddon(IAddon addon)
     {
+        var nodeTree = addon.GetAddonNodeTree();
+        var dict = new Dictionary<string, Type>();
+        VirtualFileTree<INode>.Traverse(nodeTree, (path, node) => dict.Add(path, node.CreateInitialState().GetType()));
+        return dict;
+    }
+
+    public override INodeState Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
+    {
+        var addons = addonService.GetAddons();
+        var nodeTypesIdentifiersAndStateTypes = addons.SelectMany(GetNodeTypeIdentifiersAndStateTypeFromAddon).ToDictionary(x => x.Key, x => x.Value);
+
         var document = JsonDocument.ParseValue(ref reader);
-        document.RootElement.TryGetProperty("$node-type", out var nodeType);
+        document.RootElement.TryGetProperty(_nodeTypePropertyName, out var nodeType);
         string nodeTypeString = nodeType.GetString();
 
-        if (luaService.GetAllDataEntries().Any(entry => entry.Identifier == nodeTypeString))
+        if (nodeTypesIdentifiersAndStateTypes.TryGetValue(nodeTypeString, out var value))
         {
-            return new LuaNode(nodeTypeString, luaService);
+            object nodeState = JsonSerializer.Deserialize(document.RootElement.GetProperty("state"), value, options);
+            return (INodeState)nodeState;
         }
         else
         {
-            var (builtinNodeType, _) = builtinNodes[nodeTypeString];
-            var node = (INode)Activator.CreateInstance(builtinNodeType);
+            throw new ArgumentException($"Unknown node type: {nodeTypeString}");
+        }
+    }
+
+    public override void Write(Utf8JsonWriter writer, INodeState value, JsonSerializerOptions options)
+    {
+        var addons = addonService.GetAddons();
+        var nodeTypesIdentifiersAndStateTypes = addons.SelectMany(GetNodeTypeIdentifiersAndStateTypeFromAddon).ToDictionary(x => x.Key, x => x.Value);
+
+#pragma warning disable CA1869 // Cache and reuse 'JsonSerializerOptions' instances
+        var newOptionsWithoutConverter = new JsonSerializerOptions(options);
+#pragma warning restore CA1869 // Cache and reuse 'JsonSerializerOptions' instances
+        newOptionsWithoutConverter.Converters.Remove(this);
+
+        writer.WriteStartObject();
+        writer.WriteString(_nodeTypePropertyName, nodeTypesIdentifiersAndStateTypes.First(x => x.Value == value.GetType()).Key);
+        writer.WritePropertyName("state");
+        JsonSerializer.Serialize(writer, value, value.GetType(), newOptionsWithoutConverter);
+        writer.WriteEndObject();
+    }
+}
+
+public class NodeConverter(IAddonService addonService) : JsonConverter<INode>
+{
+    private readonly string _nodeTypePropertyName = "$node-type";
+
+    private static IReadOnlyDictionary<string, Type> GetNodeTypeIdentifiersAndTypeFromAddon(IAddon addon)
+    {
+        var nodeTree = addon.GetAddonNodeTree();
+        var dict = new Dictionary<string, Type>();
+        VirtualFileTree<INode>.Traverse(nodeTree, (path, node) => dict.Add(path, node.GetType()));
+        return dict;
+    }
+
+    public override INode Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
+    {
+        var addons = addonService.GetAddons();
+        var nodeTypesIdentifiersAndTypes = addons.SelectMany(GetNodeTypeIdentifiersAndTypeFromAddon).ToDictionary(x => x.Key, x => x.Value);
+
+        var document = JsonDocument.ParseValue(ref reader);
+        document.RootElement.TryGetProperty(_nodeTypePropertyName, out var nodeType);
+        string nodeTypeString = nodeType.GetString();
+
+        if (nodeTypesIdentifiersAndTypes.TryGetValue(nodeTypeString, out var value))
+        {
+            var node = (INode)Activator.CreateInstance(value);
             return node;
+        }
+        else
+        {
+            throw new ArgumentException($"Unknown node type: {nodeTypeString}");
         }
     }
 
     public override void Write(Utf8JsonWriter writer, INode value, JsonSerializerOptions options)
     {
+        var addons = addonService.GetAddons();
+        var nodeTypesIdentifiersAndTypes = addons.SelectMany(GetNodeTypeIdentifiersAndTypeFromAddon).ToDictionary(x => x.Key, x => x.Value);
+
         writer.WriteStartObject();
-        if (value is LuaNode luaNode)
-            writer.WriteString("$node-type", luaNode.LuaDataEntryIdentifier);
-        else
-            writer.WriteString("$node-type", builtinNodes.First(x => x.Value.nodeType == value.GetType()).Key);
+        writer.WriteString(_nodeTypePropertyName, nodeTypesIdentifiersAndTypes.First(x => x.Value == value.GetType()).Key);
         writer.WriteEndObject();
     }
 }

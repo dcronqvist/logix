@@ -17,8 +17,7 @@ using LogiX.Graphics;
 using LogiX.UserInterface.Coroutines;
 using LogiX.UserInterface.Views.EditorView;
 using LogiX.Model.Projects;
-using NLua;
-using LogiX.Scripting;
+using LogiX.Addons;
 
 namespace LogiX;
 
@@ -91,8 +90,7 @@ public class Program
 
         // LogiX stuff
         services.AddSingleton<IProjectService, ProjectService>();
-        AddFactory<Lua>(services);
-        services.AddSingleton<ILuaService, LuaService>();
+        services.AddSingleton<IAddonService, AddonService>();
 
         return services.BuildServiceProvider();
     }
@@ -120,20 +118,17 @@ public class Program
             var addonZipSources = Directory.GetFiles(addonsPath)
                 .Select<string, IContentSource>(addonPath =>
                 {
-                    if (addonPath.EndsWith(".zip"))
+                    if (addonPath.EndsWith(".zip", StringComparison.OrdinalIgnoreCase))
                     {
                         return new ZipFileContentSource(addonPath);
                     }
 
-                    throw new Exception($"Unknown addon file type: {addonPath}");
+                    throw new ArgumentException($"Unknown addon file type: {addonPath}");
                 })
                 .ToList();
 
             var addonDirectorySources = Directory.GetDirectories(addonsPath)
-                .Select<string, IContentSource>(addonPath =>
-                {
-                    return new DirectoryContentSource(addonPath);
-                })
+                .Select<string, IContentSource>(addonPath => new DirectoryContentSource(addonPath))
                 .ToList();
 
             sources.AddRange(addonZipSources);
@@ -143,7 +138,7 @@ public class Program
         return sources;
     }
 
-    static void Main(string[] args)
+    public static void Main(string[] args)
     {
         var services = ConfigureServices();
 

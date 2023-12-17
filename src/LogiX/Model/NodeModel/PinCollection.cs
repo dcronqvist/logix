@@ -1,27 +1,23 @@
 using System.Collections.Generic;
 using System.Linq;
-using NLua;
 
 namespace LogiX.Model.NodeModel;
 
+#pragma warning disable CA1711 // Identifiers should not have incorrect suffix
 public class PinCollection : IPinCollection
+#pragma warning restore CA1711 // Identifiers should not have incorrect suffix
 {
-    private readonly Dictionary<string, IReadOnlyCollection<LogicValue>> _pinValues = new();
+    private readonly Dictionary<string, IReadOnlyCollection<LogicValue>> _pinValues = [];
 
-    public void Write(string pinName, IReadOnlyCollection<LogicValue> values)
-    {
-        _pinValues[pinName] = values;
-    }
+    public void Write(string pinName, IReadOnlyCollection<LogicValue> values) => _pinValues[pinName] = values;
 
-    [LuaMember(Name = "read")]
-    public IReadOnlyCollection<LogicValue> Read(string pinName)
+    public IReadOnlyCollection<LogicValue> Read(string pinID)
     {
-        if (!_pinValues.ContainsKey(pinName))
+        if (!_pinValues.TryGetValue(pinID, out var value))
             return new List<LogicValue>();
 
-        return _pinValues[pinName];
+        return value;
     }
 
-    [LuaMember(Name = "read_at")]
-    public LogicValue Read(string pinName, int index) => Read(pinName).ElementAt(index);
+    public LogicValue Read(string pinID, int index) => Read(pinID).ElementAt(index);
 }

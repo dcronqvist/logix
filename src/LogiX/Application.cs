@@ -1,5 +1,4 @@
 using DotGLFW;
-using LogiX.Debug.Logging;
 using LogiX.Input;
 using LogiX.UserInterfaceContext;
 

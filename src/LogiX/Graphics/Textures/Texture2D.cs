@@ -1,5 +1,3 @@
-using System.Diagnostics.CodeAnalysis;
-using DotGLFW;
 using Symphony;
 using static DotGL.GL;
 

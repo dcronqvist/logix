@@ -1,7 +1,4 @@
-using System.Collections;
-using System.IO;
 using System.Numerics;
-using System.Text;
 using System.Threading.Tasks;
 using DotGL;
 using DotGLFW;
@@ -12,8 +9,6 @@ using LogiX.Graphics.Cameras;
 using LogiX.Graphics.Framebuffers;
 using LogiX.Graphics.Rendering;
 using LogiX.Graphics.Textures;
-using LogiX.Scripting;
-using LogiX.UserInterface.Coroutines;
 using LogiX.UserInterface.Views;
 using LogiX.UserInterface.Views.EditorView;
 using LogiX.UserInterfaceContext;

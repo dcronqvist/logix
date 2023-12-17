@@ -1,13 +1,6 @@
-using System;
 using System.Collections;
 using System.Linq;
-using System.Numerics;
-using DotGLFW;
-using ImGuiNET;
-using LogiX.Graphics;
 using LogiX.Model.Commands;
-using LogiX.Model.NodeModel;
-using LogiX.UserInterface.Coroutines;
 
 namespace LogiX.UserInterface.Views.EditorView;
 

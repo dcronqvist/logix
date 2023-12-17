@@ -1,6 +1,5 @@
 using System.Collections.Generic;
 using System.IO;
-using System.Threading.Tasks;
 using LogiX.Graphics.Textures;
 using LogiX.UserInterfaceContext;
 using StbImageSharp;

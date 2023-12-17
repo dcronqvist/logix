@@ -1,4 +1,3 @@
-using System.Text.Json.Serialization;
 using LogiX.Model.Circuits;
 
 namespace LogiX.Model.Projects;
