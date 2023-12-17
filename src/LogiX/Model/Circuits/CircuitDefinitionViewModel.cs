@@ -387,8 +387,12 @@ public class CircuitDefinitionViewModel
                 if (!pinPositions.Any(x => x.positionInCircuit == segmentStart || x.positionInCircuit == segmentEnd))
                     continue;
 
-                var (nodeID, pinID, positionInCircuit) = pinPositions.First(x => x.positionInCircuit == segmentStart || x.positionInCircuit == segmentEnd);
-                nodePinsConnectedToSignal.Add(new NodePin(nodeID, pinID));
+                var (nodeIDStart, pinIDStart, positionInCircuitStart) = pinPositions.FirstOrDefault(x => x.positionInCircuit == segmentStart, (Guid.Empty, "", default));
+                if (nodeIDStart != Guid.Empty)
+                    nodePinsConnectedToSignal.Add(new NodePin(nodeIDStart, pinIDStart));
+                var (nodeIDEnd, pinIDEnd, positionInCircuitEnd) = pinPositions.FirstOrDefault(x => x.positionInCircuit == segmentEnd, (Guid.Empty, "", default));
+                if (nodeIDEnd != Guid.Empty)
+                    nodePinsConnectedToSignal.Add(new NodePin(nodeIDEnd, pinIDEnd));
             }
 
             var signalID = Guid.NewGuid();
