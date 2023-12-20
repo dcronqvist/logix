@@ -96,4 +96,74 @@ public static class CoroutineHelpers
                     finished = true;
             });
     }
+
+    public static IEnumerator ShowMessageBox(string title, Action<Action> content)
+    {
+        bool open = true;
+        void closeAction() => open = false;
+
+        yield return WaitUntil(
+            predicate: () => !open,
+            whileWaiting: () =>
+            {
+                ImGui.OpenPopup(title);
+                if (ImGui.BeginPopupModal(title, ref open, ImGuiWindowFlags.AlwaysAutoResize))
+                {
+                    content(closeAction);
+                    ImGui.EndPopup();
+                }
+
+                if (!open)
+                    ImGui.CloseCurrentPopup();
+            });
+    }
+
+    public static IEnumerator ShowMessageBoxOK(string title, string message) => ShowMessageBox(title, (close) =>
+    {
+        ImGui.Text(message);
+        ImGui.Separator();
+
+        if (ImGui.Button("OK"))
+            close();
+    });
+
+    public static IEnumerator ShowMessageBoxOKCancel(string title, string message, Action<bool> result) => ShowMessageBox(title, (close) =>
+    {
+        ImGui.Text(message);
+        ImGui.Separator();
+
+        if (ImGui.Button("OK"))
+        {
+            result(true);
+            close();
+        }
+
+        ImGui.SameLine();
+
+        if (ImGui.Button("Cancel"))
+        {
+            result(false);
+            close();
+        }
+    });
+
+    public static IEnumerator ShowMessageBoxYesNo(string title, string message, Action<bool> result) => ShowMessageBox(title, (close) =>
+    {
+        ImGui.Text(message);
+        ImGui.Separator();
+
+        if (ImGui.Button("Yes"))
+        {
+            result(true);
+            close();
+        }
+
+        ImGui.SameLine();
+
+        if (ImGui.Button("No"))
+        {
+            result(false);
+            close();
+        }
+    });
 }

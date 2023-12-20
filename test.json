@@ -1,0 +1,323 @@
+{
+  "metadata": {
+    "name": "Untitled project"
+  },
+  "circuitDefinitions": {
+    "$type": "circuit-tree",
+    "directory": "root",
+    "files": {
+      "main": {
+        "$type": "circuit-def",
+        "nodes": {
+          "5ce19100-d0a0-413e-b7ff-c106172904c8": {
+            "$node-type": "root/LogiX Core/pin"
+          },
+          "3aefbfde-996c-43df-9d4c-6f37b1da8b7a": {
+            "$node-type": "root/LogiX Core/nor"
+          },
+          "8654f9ca-9409-48e8-83e2-ae3141a2e233": {
+            "$node-type": "root/LogiX Core/pin"
+          },
+          "35b72ff8-28e8-4c85-bc58-a4c13ad1d64f": {
+            "$node-type": "root/LogiX Core/nor"
+          },
+          "cfbd2aa2-6c26-477b-8cec-bbc9888c97f2": {
+            "$node-type": "root/LogiX Core/pin"
+          }
+        },
+        "signals": {
+          "0987684d-3907-49a3-a19f-0e0d5ad60c23": {
+            "connectedPins": [
+              {
+                "nodeID": "35b72ff8-28e8-4c85-bc58-a4c13ad1d64f",
+                "pinID": "A"
+              },
+              {
+                "nodeID": "3aefbfde-996c-43df-9d4c-6f37b1da8b7a",
+                "pinID": "Y"
+              },
+              {
+                "nodeID": "cfbd2aa2-6c26-477b-8cec-bbc9888c97f2",
+                "pinID": "A"
+              }
+            ]
+          },
+          "3f7f13c4-e64d-44b0-ad3c-5e19f90d8f2c": {
+            "connectedPins": [
+              {
+                "nodeID": "35b72ff8-28e8-4c85-bc58-a4c13ad1d64f",
+                "pinID": "Y"
+              },
+              {
+                "nodeID": "3aefbfde-996c-43df-9d4c-6f37b1da8b7a",
+                "pinID": "B"
+              }
+            ]
+          },
+          "0b915be0-c4e3-4871-823a-9346c44ce5ee": {
+            "connectedPins": [
+              {
+                "nodeID": "8654f9ca-9409-48e8-83e2-ae3141a2e233",
+                "pinID": "A"
+              },
+              {
+                "nodeID": "3aefbfde-996c-43df-9d4c-6f37b1da8b7a",
+                "pinID": "A"
+              }
+            ]
+          },
+          "9b2e75fc-256a-4ab6-9986-7c3a624a9e7c": {
+            "connectedPins": [
+              {
+                "nodeID": "5ce19100-d0a0-413e-b7ff-c106172904c8",
+                "pinID": "A"
+              },
+              {
+                "nodeID": "35b72ff8-28e8-4c85-bc58-a4c13ad1d64f",
+                "pinID": "B"
+              }
+            ]
+          }
+        },
+        "signalSegments": {
+          "0987684d-3907-49a3-a19f-0e0d5ad60c23": [
+            {
+              "start": {
+                "x": 31,
+                "y": 18
+              },
+              "end": {
+                "x": 31,
+                "y": 17
+              }
+            },
+            {
+              "start": {
+                "x": 31,
+                "y": 17
+              },
+              "end": {
+                "x": 34,
+                "y": 17
+              }
+            },
+            {
+              "start": {
+                "x": 34,
+                "y": 17
+              },
+              "end": {
+                "x": 34,
+                "y": 14
+              }
+            },
+            {
+              "start": {
+                "x": 33,
+                "y": 14
+              },
+              "end": {
+                "x": 34,
+                "y": 14
+              }
+            },
+            {
+              "start": {
+                "x": 34,
+                "y": 14
+              },
+              "end": {
+                "x": 38,
+                "y": 14
+              }
+            }
+          ],
+          "3f7f13c4-e64d-44b0-ad3c-5e19f90d8f2c": [
+            {
+              "start": {
+                "x": 33,
+                "y": 19
+              },
+              "end": {
+                "x": 35,
+                "y": 19
+              }
+            },
+            {
+              "start": {
+                "x": 35,
+                "y": 19
+              },
+              "end": {
+                "x": 35,
+                "y": 16
+              }
+            },
+            {
+              "start": {
+                "x": 35,
+                "y": 16
+              },
+              "end": {
+                "x": 31,
+                "y": 16
+              }
+            },
+            {
+              "start": {
+                "x": 31,
+                "y": 16
+              },
+              "end": {
+                "x": 31,
+                "y": 15
+              }
+            }
+          ],
+          "0b915be0-c4e3-4871-823a-9346c44ce5ee": [
+            {
+              "start": {
+                "x": 26,
+                "y": 15
+              },
+              "end": {
+                "x": 30,
+                "y": 15
+              }
+            },
+            {
+              "start": {
+                "x": 30,
+                "y": 15
+              },
+              "end": {
+                "x": 30,
+                "y": 13
+              }
+            },
+            {
+              "start": {
+                "x": 30,
+                "y": 13
+              },
+              "end": {
+                "x": 31,
+                "y": 13
+              }
+            }
+          ],
+          "9b2e75fc-256a-4ab6-9986-7c3a624a9e7c": [
+            {
+              "start": {
+                "x": 26,
+                "y": 18
+              },
+              "end": {
+                "x": 30,
+                "y": 18
+              }
+            },
+            {
+              "start": {
+                "x": 30,
+                "y": 18
+              },
+              "end": {
+                "x": 30,
+                "y": 20
+              }
+            },
+            {
+              "start": {
+                "x": 30,
+                "y": 20
+              },
+              "end": {
+                "x": 31,
+                "y": 20
+              }
+            }
+          ]
+        },
+        "nodePositions": {
+          "5ce19100-d0a0-413e-b7ff-c106172904c8": {
+            "x": 24,
+            "y": 17
+          },
+          "3aefbfde-996c-43df-9d4c-6f37b1da8b7a": {
+            "x": 31,
+            "y": 13
+          },
+          "8654f9ca-9409-48e8-83e2-ae3141a2e233": {
+            "x": 24,
+            "y": 14
+          },
+          "35b72ff8-28e8-4c85-bc58-a4c13ad1d64f": {
+            "x": 31,
+            "y": 18
+          },
+          "cfbd2aa2-6c26-477b-8cec-bbc9888c97f2": {
+            "x": 38,
+            "y": 13
+          }
+        },
+        "nodeRotations": {
+          "5ce19100-d0a0-413e-b7ff-c106172904c8": -2,
+          "3aefbfde-996c-43df-9d4c-6f37b1da8b7a": 0,
+          "8654f9ca-9409-48e8-83e2-ae3141a2e233": -2,
+          "35b72ff8-28e8-4c85-bc58-a4c13ad1d64f": 0,
+          "cfbd2aa2-6c26-477b-8cec-bbc9888c97f2": 0
+        },
+        "nodeStates": {
+          "5ce19100-d0a0-413e-b7ff-c106172904c8": {
+            "$node-type": "root/LogiX Core/pin",
+            "state": {
+              "isInput": true,
+              "currentValue": "LOW"
+            }
+          },
+          "3aefbfde-996c-43df-9d4c-6f37b1da8b7a": {
+            "$node-type": "root/LogiX Core/nor",
+            "state": {}
+          },
+          "8654f9ca-9409-48e8-83e2-ae3141a2e233": {
+            "$node-type": "root/LogiX Core/pin",
+            "state": {
+              "isInput": true,
+              "currentValue": "LOW"
+            }
+          },
+          "35b72ff8-28e8-4c85-bc58-a4c13ad1d64f": {
+            "$node-type": "root/LogiX Core/nor",
+            "state": {}
+          },
+          "cfbd2aa2-6c26-477b-8cec-bbc9888c97f2": {
+            "$node-type": "root/LogiX Core/pin",
+            "state": {
+              "isInput": false,
+              "currentValue": "LOW"
+            }
+          }
+        }
+      }
+    },
+    "directories": {
+      "latches": {
+        "$type": "circuit-tree",
+        "directory": "latches",
+        "files": {
+          "sr-latch": {
+            "$type": "circuit-def",
+            "nodes": {},
+            "signals": {},
+            "signalSegments": {},
+            "nodePositions": {},
+            "nodeRotations": {},
+            "nodeStates": {}
+          }
+        },
+        "directories": {}
+      }
+    }
+  }
+}

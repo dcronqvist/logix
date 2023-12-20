@@ -34,12 +34,12 @@ public partial class EditorView : IView
     private readonly IProjectService _projectService;
 
     private readonly INodeUIHandlerConfigurer _nodeUIHandlerConfigurer;
-    private readonly IThreadSafe<ISimulator> _simulator;
-    private readonly IThreadSafe<ICircuitDefinition> _currentlySimulatedCircuitDefinition;
-    private readonly CircuitDefinitionViewModel _currentlySimulatedCircuitViewModel;
+    private IThreadSafe<ISimulator> _simulator;
+    private IThreadSafe<ICircuitDefinition> _currentlySimulatedCircuitDefinition;
+    private CircuitDefinitionViewModel _currentlySimulatedCircuitViewModel;
 
     private readonly INodePresenter _presentation;
-    private readonly Invoker _invoker;
+    private Invoker _invoker;
 
     private ICamera2D _camera;
     private Vector2 _cameraFocusPosition;
@@ -73,16 +73,7 @@ public partial class EditorView : IView
 
         var loadedProject = _projectService.LoadProjectFromDisk("test.json");
         _projectService.SetProject(loadedProject);
-
-        _currentlySimulatedCircuitDefinition = new ThreadSafe<ICircuitDefinition>(_projectService.GetCurrentProject().GetProjectCircuitTree().RecursivelyGetFileContents("main"));
-        var simulator = _currentlySimulatedCircuitDefinition.Locked(cd =>
-        {
-            var simulator = new Simulator(cd, _nodeUIHandlerConfigurer);
-            cd.Subscribe(simulator);
-            return simulator;
-        });
-        _simulator = new ThreadSafe<ISimulator>(simulator);
-        _currentlySimulatedCircuitViewModel = new CircuitDefinitionViewModel(_currentlySimulatedCircuitDefinition, _simulator);
+        var mainCircuit = loadedProject.GetProjectCircuitTree().RecursivelyGetFileContents("main");
 
         // Task.Run(async () =>
         // {
@@ -102,6 +93,21 @@ public partial class EditorView : IView
         //     }
         // });
     }
+
+    // private void OpenCircuit(ICircuitDefinition circuitDefinition)
+    // {
+    //     _currentlySimulatedCircuitDefinition = new ThreadSafe<ICircuitDefinition>(circuitDefinition);
+    //     var simulator = _currentlySimulatedCircuitDefinition.Locked(cd =>
+    //     {
+    //         var simulator = new Simulator(cd, _nodeUIHandlerConfigurer);
+    //         cd.Subscribe(simulator);
+    //         return simulator;
+    //     });
+    //     _simulator = new ThreadSafe<ISimulator>(simulator);
+    //     _currentlySimulatedCircuitViewModel = new CircuitDefinitionViewModel(_currentlySimulatedCircuitDefinition, _simulator);
+
+    //     _invoker = new Invoker();
+    // }
 
     private Vector2 GetMousePositionInWorkspace()
     {
@@ -149,11 +155,14 @@ public partial class EditorView : IView
 
     public void Update(float deltaTime, float totalTime)
     {
+        _coroutineService.Update(deltaTime);
+
+        if (_currentlySimulatedCircuitDefinition == null)
+            return;
+
         _simulator.Locked(sim => sim.PerformSimulationStep());
 
         _userInterfaceContext.SetWindowTitle($"LogiX - {_projectService.GetCurrentProject().GetProjectMetadata().Name}");
-
-        _coroutineService.Update(deltaTime);
 
         if (ImGui.GetIO().WantCaptureMouse || ImGui.GetIO().WantCaptureKeyboard)
             return;
@@ -223,31 +232,32 @@ public partial class EditorView : IView
 
     public void Render(float deltaTime, float totalTime)
     {
-        var backgroundColor = ColorF.Darken(ColorF.LightGray, 0.7f);
+        var backgroundColor = _currentlySimulatedCircuitDefinition is null ? ColorF.Darken(ColorF.LightGray, 0.2f) : ColorF.Darken(ColorF.LightGray, 0.7f);
         GL.glClearColor(backgroundColor.R, backgroundColor.G, backgroundColor.B, backgroundColor.A);
         GL.glClear(GL.GL_COLOR_BUFFER_BIT | GL.GL_DEPTH_BUFFER_BIT);
 
         GL.glEnable(GL.GL_BLEND);
         GL.glBlendFunc(GL.GL_ONE, GL.GL_ONE_MINUS_SRC_ALPHA);
-
-        DrawGrid(_camera);
-
         var pShader = _contentManager.GetContent<ShaderProgram>("logix-core:shaders/primitives.shader");
         var font = _contentManager.GetContent<Font>("logix-core:fonts/firacode.font");
 
-        var mousePos = GetMousePositionInWorkspace();
-        bool isHoveringAnyWireSegment = _currentlySimulatedCircuitViewModel.IsPositionOnAnyWireSegment(mousePos, out var hoveredWireSegment, out var hoveredSignal);
+        if (_currentlySimulatedCircuitDefinition != null)
+        {
+            DrawGrid(_camera);
 
-        _currentlySimulatedCircuitViewModel.Render(
-            _presentation,
-            pShader,
-            font,
-            _renderer,
-            _gridSize,
-            _camera,
-            hoveredWireSegment
-        );
+            var mousePos = GetMousePositionInWorkspace();
+            bool isHoveringAnyWireSegment = _currentlySimulatedCircuitViewModel.IsPositionOnAnyWireSegment(mousePos, out var hoveredWireSegment, out var hoveredSignal);
 
+            _currentlySimulatedCircuitViewModel.Render(
+                _presentation,
+                pShader,
+                font,
+                _renderer,
+                _gridSize,
+                _camera,
+                hoveredWireSegment
+            );
+        }
         _coroutineService.Render(_renderer, deltaTime, totalTime);
         _renderer.Primitives.FinalizeRender(pShader, _camera);
         _renderer.Text.FinalizeRender(font, _camera);
@@ -292,28 +302,7 @@ public partial class EditorView : IView
         SubmitBottomMenuBar(out var bottomBarSize);
         SubmitSideBar(new Vector2(0, topBarSize.Y), _userInterfaceContext.GetWindowHeight() - topBarSize.Y - bottomBarSize.Y, out float sidebarWidth);
 
-        ImGui.SetNextWindowPos(new Vector2(sidebarWidth, topBarSize.Y), ImGuiCond.Always);
-        ImGui.SetNextWindowSize(new Vector2(_userInterfaceContext.GetWindowWidth() - sidebarWidth, 33), ImGuiCond.Always);
-        ImGui.Begin("HEJ", ImGuiWindowFlags.NoTitleBar | ImGuiWindowFlags.NoResize | ImGuiWindowFlags.NoDecoration);
-
-        if (ImGui.BeginTabBar("##TABBAR", ImGuiTabBarFlags.Reorderable | ImGuiTabBarFlags.TabListPopupButton | ImGuiTabBarFlags.FittingPolicyScroll | ImGuiTabBarFlags.NoTooltip))
-        {
-            bool open = true;
-            if (ImGui.BeginTabItem("main", ref open, ImGuiTabItemFlags.UnsavedDocument | ImGuiTabItemFlags.NoTooltip))
-            {
-                ImGui.EndTabItem();
-            }
-            if (ImGui.BeginTabItem("sr_latch", ref open, ImGuiTabItemFlags.UnsavedDocument | ImGuiTabItemFlags.NoTooltip))
-            {
-                ImGui.EndTabItem();
-            }
-
-            ImGui.EndTabBar();
-        }
-
-        ImGui.End();
-
-        _currentlySimulatedCircuitViewModel.SubmitGUI(_invoker);
+        _currentlySimulatedCircuitViewModel?.SubmitGUI(_invoker);
 
         _guiCoroutineService.Update(deltaTime);
     }
@@ -372,15 +361,15 @@ public partial class EditorView : IView
         ImGui.BeginMenuBar();
         menuBarSize = ImGui.GetWindowSize();
 
-        ImGui.Text($"Selected nodes: {_currentlySimulatedCircuitViewModel.GetSelectedNodes().Count}");
+        // ImGui.Text($"Selected nodes: {_currentlySimulatedCircuitViewModel.GetSelectedNodes().Count}");
 
         ImGui.Text($"Coroutines: {_coroutineService.RunningCount}");
         ImGui.Text($"GUI Coroutines: {_guiCoroutineService.RunningCount}");
 
         var mousePos = GetMousePositionInWorkspace();
-        bool isHoveringAnyNodePin = _currentlySimulatedCircuitViewModel.IsPositionOnAnyPin(mousePos, out var hoveredNodePin);
+        // bool isHoveringAnyNodePin = _currentlySimulatedCircuitViewModel.IsPositionOnAnyPin(mousePos, out var hoveredNodePin);
 
-        ImGui.Text($"Hovering node pin: {hoveredNodePin?.PinID}");
+        // ImGui.Text($"Hovering node pin: {hoveredNodePin?.PinID}");
 
         ImGui.EndMenuBar();
     }
@@ -397,7 +386,7 @@ public partial class EditorView : IView
         ImGui.SeparatorText("Project circuits");
         var projectCircuitTree = _projectService.GetCurrentProject().GetProjectCircuitTree();
 
-        static void submitTreeNode<TValue>(IVirtualFileTree<string, TValue> node, Action<string, TValue> onClickNode, bool skipRoot = false)
+        static void submitTreeNode<TValue>(IVirtualFileTree<string, TValue> node, Action<string, TValue> onClickNode, Action<string, TValue> contextMenu, bool skipRoot = false)
         {
             if (!skipRoot)
             {
@@ -405,7 +394,7 @@ public partial class EditorView : IView
                 {
                     foreach (var child in node.GetDirectories())
                     {
-                        submitTreeNode<TValue>(child, onClickNode);
+                        submitTreeNode<TValue>(child, onClickNode, contextMenu);
                     }
 
                     foreach (var childItem in node.GetFiles())
@@ -414,6 +403,11 @@ public partial class EditorView : IView
                         if (ImGui.IsItemClicked())
                         {
                             onClickNode.Invoke(childItem.Key, childItem.Value);
+                        }
+                        if (ImGui.BeginPopupContextItem())
+                        {
+                            contextMenu.Invoke(childItem.Key, childItem.Value);
+                            ImGui.EndPopup();
                         }
                     }
 
@@ -424,7 +418,7 @@ public partial class EditorView : IView
             {
                 foreach (var child in node.GetDirectories())
                 {
-                    submitTreeNode<TValue>(child, onClickNode);
+                    submitTreeNode<TValue>(child, onClickNode, contextMenu);
                 }
 
                 foreach (var childItem in node.GetFiles())
@@ -434,16 +428,27 @@ public partial class EditorView : IView
                     {
                         onClickNode.Invoke(childItem.Key, childItem.Value);
                     }
+                    if (ImGui.BeginPopupContextItem())
+                    {
+                        contextMenu.Invoke(childItem.Key, childItem.Value);
+                        ImGui.EndPopup();
+                    }
                 }
             }
         }
 
-        submitTreeNode(projectCircuitTree, (_, _) => { }, true);
+        submitTreeNode(projectCircuitTree, (_, _) => { }, (circName, circ) =>
+        {
+            if (ImGui.MenuItem("Open"))
+            {
+                _guiCoroutineService.Run(OpenCircuit(circ));
+            }
+        }, true);
 
         ImGui.SeparatorText("Available nodes");
 
         var availableNodes = _projectService.GetCurrentProject().GetAvailableNodesTree();
-        submitTreeNode(availableNodes, (name, node) => _coroutineService.Run(PlaceNode(node)), true);
+        submitTreeNode(availableNodes, (name, node) => _coroutineService.Run(PlaceNode(node)), (_, _) => { }, true);
 
         width = ImGui.GetWindowSize().X;
         ImGui.End();
